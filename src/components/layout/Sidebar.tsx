@@ -8,12 +8,13 @@ import React from "react";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
     Home, Users, Briefcase, MessageSquare, BarChart, CreditCard,
-    MoreHorizontal, LogOut, Settings, BrainCircuit, PlusCircle, Hexagon, Sparkles, DollarSign,
+    MoreHorizontal, LogOut, Settings, BrainCircuit, PlusCircle, Sparkles, DollarSign,
     BookOpen, FileText, MessageSquarePlus, Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlanBadge } from "@/components/credits/PlanBadge";
+import { QodeeLogo } from "@/components/QodeeLogo";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -82,9 +83,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
         <aside className="hidden lg:flex w-64 h-screen flex-col border-r border-white/5 bg-black/40 backdrop-blur-xl fixed left-0 top-0 z-50">
             {/* BRAND */}
             <div className="p-6 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-900 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                    <Hexagon className="w-5 h-5 text-white fill-white/20" />
-                </div>
+                <QodeeLogo className="w-10 h-10 object-contain" />
                 <div className="flex flex-col">
                     <span className="font-heading font-black tracking-wider text-white text-sm">SKILLED CORE</span>
                     <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Enterprise Node</span>

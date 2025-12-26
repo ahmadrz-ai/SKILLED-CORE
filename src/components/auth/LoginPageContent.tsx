@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Github, Loader2, Eye, EyeOff, Hexagon, User, Lock, AlertCircle } from "lucide-react";
+import { Github, Loader2, Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { QodeeLogo } from "@/components/QodeeLogo";
 
 // Custom Google Icon
 const GoogleIcon = () => (
@@ -69,9 +70,7 @@ export default function LoginPageContent() {
 
                 {/* Logo */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-violet-600/20 border border-violet-500/20 flex items-center justify-center">
-                        <Hexagon className="w-6 h-6 text-violet-500 fill-violet-500/20" />
-                    </div>
+                    <QodeeLogo className="w-12 h-12 object-contain" />
                     <div>
                         <h3 className="font-heading font-black tracking-widest text-lg">SKILLED CORE</h3>
                         <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Enterprise Node</p>
