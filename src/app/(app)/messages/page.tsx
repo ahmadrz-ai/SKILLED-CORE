@@ -118,7 +118,8 @@ export default function MessagesPage() {
             }
 
             if (!selectedContactId && res.conversations.length > 0 && !initialUserId) {
-                setSelectedContactId(res.conversations[0]?.contactId);
+                const firstContact = res.conversations[0];
+                if (firstContact) setSelectedContactId(firstContact.contactId);
             }
         }
         setLoading(false);
