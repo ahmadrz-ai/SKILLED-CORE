@@ -432,7 +432,7 @@ export default function JobWizardPage() {
                                                         toast.success("Logo uploaded");
                                                     }
                                                 }}
-                                                onUploadError={(error: Error) => toast.error(`Error: ${error.message}`)}
+                                                onUploadError={(error: Error) => { toast.error(`Error: ${error.message}`); }}
                                                 appearance={{
                                                     button: "w-full h-full opacity-0 cursor-pointer",
                                                     allowedContent: "hidden"
