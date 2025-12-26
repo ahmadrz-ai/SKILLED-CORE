@@ -118,7 +118,7 @@ export default function MessagesPage() {
             }
 
             if (!selectedContactId && res.conversations.length > 0 && !initialUserId) {
-                setSelectedContactId(res.conversations[0].contactId);
+                setSelectedContactId(res.conversations[0]?.contactId);
             }
         }
         setLoading(false);
