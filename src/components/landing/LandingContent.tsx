@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BentoGrid } from "@/components/landing/BentoGrid";
 import { MetricMarquee } from "@/components/landing/MetricMarquee";
-import { ArrowRight, ChevronDown, Hexagon } from "lucide-react";
+import { QodeeLogo } from "@/components/QodeeLogo";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LandingContent() {
@@ -19,14 +20,12 @@ export default function LandingContent() {
 
                 {/* Brand Emblem */}
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8 }}
-                    className="mb-8 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md"
+                    className="mb-8"
                 >
-                    <div className="w-12 h-12 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.5)]">
-                        <Hexagon className="w-7 h-7 text-white fill-white/20" />
-                    </div>
+                    <QodeeLogo className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-[0_0_25px_rgba(139,92,246,0.3)]" />
                 </motion.div>
 
                 {/* Headlines */}
