@@ -37,7 +37,7 @@ export async function addCredits(amount: number) {
 
 export async function deductCredits(amount: number) {
     const session = await auth();
-    if (!session?.user?.id) return false;
+    if (!session?.user?.id) return { success: false, remaining: 0 };
 
     try {
         const user = await prisma.user.findUnique({
