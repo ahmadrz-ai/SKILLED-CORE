@@ -18,14 +18,13 @@ export default function LandingContent() {
             {/* HERO SECTION */}
             <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
 
-                {/* Brand Emblem */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8 }}
-                    className="mb-8"
+                    className="mb-10"
                 >
-                    <QodeeLogo className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-[0_0_25px_rgba(139,92,246,0.3)]" />
+                    <QodeeLogo className="w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-[0_0_35px_rgba(139,92,246,0.4)]" />
                 </motion.div>
 
                 {/* Headlines */}
@@ -107,7 +106,7 @@ export default function LandingContent() {
 
             {/* Footer */}
             <footer className="border-t border-white/5 py-12 text-center text-xs text-zinc-600">
-                <p>&copy; 2042 SkilledCore Industries. All rights reserved.</p>
+                <p>&copy; 2025 SkilledCore Industries. All rights reserved.</p>
             </footer>
         </div>
     );
