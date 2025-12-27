@@ -23,6 +23,7 @@ export async function searchPosts(query: string) {
             include: {
                 author: {
                     select: {
+                        id: true,
                         name: true,
                         image: true,
                         username: true,

@@ -59,8 +59,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     events: {
         async createUser({ user }) {
-            if (!user.username && user.email) {
-                const baseName = user.email.split('@')[0];
+            // Type assertion for user that may have username
+            const dbUser = user as typeof user & { username?: string | null };
+            if (!dbUser.username && dbUser.email) {
+                const baseName = dbUser.email.split('@')[0];
                 let uniqueName = baseName;
                 let counter = 1;
 
@@ -71,7 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
 
                 await prisma.user.update({
-                    where: { id: user.id },
+                    where: { id: dbUser.id },
                     data: { username: uniqueName }
                 });
             }

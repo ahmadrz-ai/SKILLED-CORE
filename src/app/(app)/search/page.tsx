@@ -91,13 +91,13 @@ export default async function SearchPage(props: SearchPageProps) {
             }))
         } : undefined,
         author: {
-            id: post.author.id || post.userId, // generic safety
+            id: post.userId,
             name: post.author.name || "Anonymous",
             handle: post.author.username ? `@${post.author.username}` : "@user",
             avatar: post.author.image,
             headline: post.author.headline,
             isFollowing: followingIds.has(post.userId),
-            connectionStatus: connectionMap.get(post.userId) || 'NONE',
+            connectionStatus: (connectionMap.get(post.userId) || 'NONE') as 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'CONNECTED',
             role: post.author.role,
             nodeType: post.author.nodeType,
             isHiring: false

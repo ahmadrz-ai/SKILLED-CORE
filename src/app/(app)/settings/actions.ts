@@ -61,12 +61,15 @@ export async function updateNodeStatus(status: 'OPEN' | 'BROADCAST') {
     if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
 
     try {
-        await prisma.user.update({
+        const user = await prisma.user.update({
             where: { id: session.user.id },
-            data: { nodeType: status }
+            data: { nodeType: status },
+            select: { username: true }
         });
         revalidatePath('/settings');
-        revalidatePath(`/profile/${session.user.username}`);
+        if (user.username) {
+            revalidatePath(`/profile/${user.username}`);
+        }
         return { success: true };
     } catch (error) {
         return { success: false, message: 'Failed to update settings' };
