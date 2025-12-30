@@ -348,7 +348,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     <div className="mt-1 text-sm text-zinc-300 leading-relaxed">
                         {(() => {
                             // Check if content starts with a badge pattern (e.g., "Stop Guessing: Rest of text")
-                            const badgeMatch = post.content.match(/^([^:]+):\s*(.+)$/s);
+                            const badgeMatch = post.content.match(/^([^:]+):\s*([\s\S]+)$/);
 
                             if (badgeMatch) {
                                 const [_, badgeText, restOfContent] = badgeMatch;
