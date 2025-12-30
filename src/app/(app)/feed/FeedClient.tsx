@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Building2, TrendingUp } from 'lucide-react';
+
 import { PostCard, type PostProps } from '@/components/feed/PostCard';
 import { StartPostWidget } from '@/components/feed/StartPostWidget';
 import { TrendingWidget } from '@/components/feed/TrendingWidget';
 import { ProfileSideWidget } from '@/components/feed/ProfileSideWidget';
 import { RecommendationsWidget } from '@/components/feed/RecommendationsWidget';
 import { PromotedWidget } from '@/components/feed/PromotedWidget';
+import { RecommendedJobsWidget } from '@/components/feed/RecommendedJobsWidget';
 
 
 import Link from 'next/link';
@@ -213,47 +214,22 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Right Column: Trending & Jobs */}
-            <div className="hidden lg:block space-y-4">
+            <motion.div
+                className="hidden lg:block space-y-4 sticky top-6 self-start"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                    visible: {
+                        transition: {
+                            staggerChildren: 0.1
+                        }
+                    }
+                }}
+            >
                 <TrendingWidget topics={trendingTopics} />
                 <RecommendationsWidget />
-
-                <div className="bg-zinc-900/40 rounded-xl p-6 border border-white/5 sticky top-[280px] backdrop-blur-md">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Recommended Jobs</h2>
-                        <Briefcase className="w-4 h-4 text-zinc-600" />
-                    </div>
-                    <ul className="space-y-4">
-                        {latestJobs.length === 0 ? (
-                            <li className="text-zinc-500 text-xs text-center py-4">
-                                No active jobs detected.
-                            </li>
-                        ) : latestJobs.map((job) => (
-                            <Link href={`/jobs/${job.id}`} key={job.id}>
-                                <li className="group cursor-pointer p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
-                                    <h3 className="font-bold text-sm text-zinc-200 group-hover:text-violet-400 transition-colors">{job.title}</h3>
-                                    <div className="flex items-center text-xs text-zinc-500 mt-1">
-                                        <Building2 className="w-3 h-3 mr-1" />
-                                        {job.company.name}
-                                    </div>
-                                    <div className="flex justify-between items-center mt-2">
-                                        <span className="text-xs text-zinc-600">{job.location}</span>
-                                        {(job.salaryMin || 0) > 0 && (
-                                            <span className="text-xs text-green-400/80 font-mono">
-                                                ${(job.salaryMin || 0) / 1000}k - ${(job.salaryMax || 0) / 1000}k
-                                            </span>
-                                        )}
-                                    </div>
-                                </li>
-                            </Link>
-                        ))}
-                    </ul>
-                    <div className="pt-4 mt-2 border-t border-white/5 text-center">
-                        <Link href="/jobs" className="text-xs text-violet-400 hover:text-violet-300 font-bold tracking-wide flex items-center justify-center">
-                            VIEW ALL JOBS <TrendingUp className="w-3 h-3 ml-1" />
-                        </Link>
-                    </div>
-                </div>
-            </div>
+                <RecommendedJobsWidget jobs={latestJobs} />
+            </motion.div>
 
 
         </div>

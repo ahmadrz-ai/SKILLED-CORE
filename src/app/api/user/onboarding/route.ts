@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         const {
             role, name, username, image, headline, bio, skills,
             companyName, industry, workEmail,
-            location, portfolio, linkedin, github, experience
+            location, portfolio, linkedin, github, experience, education
         } = body;
 
         // Build update data based on role
@@ -50,6 +50,25 @@ export async function POST(request: Request) {
                         startDate: e.start || "",
                         endDate: e.end || null,
                         description: e.desc || ""
+                    }))
+                });
+            }
+        }
+
+        // Handle Education (Reset & Recreate)
+        if (education && Array.isArray(education)) {
+            await prisma.education.deleteMany({ where: { userId: session.user.id } });
+
+            const validEducation = education.filter((e: any) => e.school && e.degree);
+
+            if (validEducation.length > 0) {
+                await prisma.education.createMany({
+                    data: validEducation.map((e: any) => ({
+                        userId: session.user.id,
+                        school: e.school,
+                        degree: e.degree,
+                        startDate: e.start || null,
+                        endDate: e.end || null,
                     }))
                 });
             }

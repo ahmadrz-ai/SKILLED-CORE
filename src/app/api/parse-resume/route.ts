@@ -1,74 +1,98 @@
+import { auth } from "@/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
+import { createRequire } from 'module';
 
-import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-// @ts-ignore
-import pdf from 'pdf-parse';
+const require = createRequire(import.meta.url);
+const pdf = require('pdf-parse');
+
+// Force Node.js runtime for pdf-parse
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
     try {
-        const formData = await req.formData();
-        const file = formData.get('file') as File;
-
-        if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+        const session = await auth();
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const pdfData = await pdf(buffer);
-        const text = pdfData.text;
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
 
+        if (!file) {
+            return NextResponse.json({ error: "No file provided" }, { status: 400 });
+        }
+
+        // Convert File to Buffer
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // Extract Text from PDF
+        let text = "";
+        try {
+            const data = await pdf(buffer);
+            text = data.text;
+        } catch (e) {
+            console.error("PDF Parse Error:", e);
+            return NextResponse.json({ error: "Failed to parse PDF" }, { status: 500 });
+        }
+
+        // Initialize Gemini
         const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!apiKey) {
-            return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+            return NextResponse.json({ error: "AI Configuration missing" }, { status: 500 });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = `You are an expert resume parser. Extract the following structured data from the resume text provided below. Return ONLY a valid JSON object with no additional text or markdown formatting.
+        const prompt = `
+            You are an expert Resume Parser. 
+            Analyze the following resume text and extract structured data in strict JSON format.
+            
+            Target Schema:
+            {
+                "headline": "Current professional title (e.g. Senior Frontend Engineer)",
+                "summary": "A professional summary (max 300 chars)",
+                "skills": ["Skill 1", "Skill 2"],
+                "experience": [
+                    { 
+                        "position": "Job Title", 
+                        "company": "Company Name", 
+                        "startDate": "2020",
+                        "endDate": "Present",
+                        "description": "Short summary of responsibilities"
+                    }
+                ],
+                "education": [
+                    { 
+                        "school": "University Name", 
+                        "degree": "Degree Name", 
+                        "startDate": "2015",
+                        "endDate": "2019"
+                    }
+                ]
+            }
 
-        Schema:
-        {
-            "headline": "string (e.g. Senior Frontend Engineer)",
-            "summary": "string (a professional bio summary, max 50 words)",
-            "skills": ["string", "string"],
-            "experience": [
-                {
-                    "position": "string",
-                    "company": "string",
-                    "startDate": "string (YYYY-MM or YYYY)",
-                    "endDate": "string (YYYY-MM or YYYY or Present)",
-                    "description": "string (short description)"
-                }
-            ],
-            "education": [
-                {
-                    "school": "string",
-                    "degree": "string",
-                    "startDate": "string (YYYY)",
-                    "endDate": "string (YYYY)"
-                }
-            ]
-        }
-        
-        Note: If a field is not found, leave it as empty string or dry array. Format dates consistently.
-
-        Resume Text:
-        ${text.slice(0, 10000)} // Limit context if very large
+            If fields are missing, leave them empty or empty arrays. 
+            Do NOT hallucinate. Only extract what is there.
+            
+            RESUME TEXT:
+            ${text.substring(0, 10000)} 
         `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const jsonString = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
+        const jsonString = result.response.text();
         const parsedData = JSON.parse(jsonString);
 
         return NextResponse.json(parsedData);
-    } catch (error) {
-        console.error('Resume Parse Error:', error);
-        return NextResponse.json(
-            { error: 'Failed to process resume' },
-            { status: 500 }
-        );
+
+    } catch (error: any) {
+        console.error("Resume Analysis Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

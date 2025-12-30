@@ -1,10 +1,16 @@
 "use client";
 
 import { TrendingUp, Hash } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function TrendingWidget({ topics = [] }: { topics: { tag: string; posts: string }[] }) {
     return (
-        <div className="bg-zinc-900/40 rounded-xl border border-white/5 sticky top-6 backdrop-blur-md overflow-hidden">
+        <motion.div
+            className="bg-zinc-900/40 rounded-xl border border-white/5 backdrop-blur-md overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+        >
             <div className="p-4 border-b border-white/5 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-violet-500" />
                 <h3 className="font-bold text-white text-sm">Trending Intelligence</h3>
@@ -40,6 +46,6 @@ export function TrendingWidget({ topics = [] }: { topics: { tag: string; posts: 
                     </button>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

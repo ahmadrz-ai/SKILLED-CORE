@@ -345,45 +345,64 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     </Dialog>
 
                     {/* Text Body */}
-                    <div className="mt-1 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                    <div className="mt-1 text-sm text-zinc-300 leading-relaxed">
                         {(() => {
-                            // Split by whitespace to preserve formatting but isolate words
-                            // Ideally, we'd use a more robust parser for punctuation, but simple split matches standard behavior for now.
-                            // To handle "@user." we need to check if the word starts with @ and clean trailing punctuation.
-                            const words = post.content.split(/(\s+)/);
-                            return words.map((word, i) => {
-                                if (word.startsWith('#') && word.length > 1) {
-                                    return (
-                                        <Link
-                                            key={i}
-                                            href={`/search?q=${encodeURIComponent(word)}`}
-                                            className="text-blue-400 hover:underline"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {word}
-                                        </Link>
-                                    );
-                                } else if (word.startsWith('@') && word.length > 1) {
-                                    const rawHandle = word.substring(1);
-                                    // Remove common trailing punctuation for the link href
-                                    const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
-                                    const punctuation = rawHandle.substring(cleanHandle.length);
+                            // Check if content starts with a badge pattern (e.g., "Stop Guessing: Rest of text")
+                            const badgeMatch = post.content.match(/^([^:]+):\s*(.+)$/s);
 
+                            if (badgeMatch) {
+                                const [_, badgeText, restOfContent] = badgeMatch;
+                                // Only create badge if the prefix is short (< 30 chars) to avoid false positives
+                                if (badgeText.length < 30 && !badgeText.includes('\n')) {
                                     return (
-                                        <span key={i}>
-                                            <Link
-                                                href={`/profile/${cleanHandle}`}
-                                                className="text-blue-400 hover:underline font-medium"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                @{cleanHandle}
-                                            </Link>
-                                            {punctuation}
-                                        </span>
+                                        <>
+                                            <span className="inline-block px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 mr-2">
+                                                {badgeText}
+                                            </span>
+                                            <span className="whitespace-pre-wrap">{restOfContent}</span>
+                                        </>
                                     );
                                 }
-                                return word;
-                            });
+                            }
+
+                            // Standard rendering with link parsing
+                            const words = post.content.split(/(\s+)/);
+                            return (
+                                <span className="whitespace-pre-wrap">
+                                    {words.map((word, i) => {
+                                        if (word.startsWith('#') && word.length > 1) {
+                                            return (
+                                                <Link
+                                                    key={i}
+                                                    href={`/search?q=${encodeURIComponent(word)}`}
+                                                    className="text-blue-400 hover:underline"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {word}
+                                                </Link>
+                                            );
+                                        } else if (word.startsWith('@') && word.length > 1) {
+                                            const rawHandle = word.substring(1);
+                                            const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
+                                            const punctuation = rawHandle.substring(cleanHandle.length);
+
+                                            return (
+                                                <span key={i}>
+                                                    <Link
+                                                        href={`/profile/${cleanHandle}`}
+                                                        className="text-blue-400 hover:underline font-medium"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        @{cleanHandle}
+                                                    </Link>
+                                                    {punctuation}
+                                                </span>
+                                            );
+                                        }
+                                        return word;
+                                    })}
+                                </span>
+                            );
                         })()}
                     </div>
 

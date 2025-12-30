@@ -52,6 +52,8 @@ function OnboardingContent() {
         companyName: '',
         industry: '',
         workEmail: '',
+        experience: [] as any[],
+        education: [] as any[],
         // resumeUrl removed
     });
 
@@ -172,6 +174,7 @@ function OnboardingContent() {
 
     const TagInput = () => {
         const [input, setInput] = useState('');
+        const inputRef = useRef<HTMLInputElement>(null);
 
         const addSkill = (skill: string) => {
             if (!formData.skills.includes(skill) && formData.skills.length < 10) {
@@ -182,18 +185,20 @@ function OnboardingContent() {
 
         return (
             <div className="space-y-4">
-                <div className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-zinc-900/50 border border-white/5 rounded-xl focus-within:border-violet-500/50 transition-all">
-                    {formData.skills.length === 0 && !input && (
-                        <span className="text-zinc-600 text-sm self-center">Add skills (e.g. React, UX Design)...</span>
-                    )}
+                <div
+                    onClick={() => inputRef.current?.focus()}
+                    className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-zinc-900/50 border border-white/5 rounded-xl focus-within:border-violet-500/50 transition-all cursor-text"
+                >
                     {formData.skills.map(s => (
                         <span key={s} className="px-2 py-1 bg-amber-500/10 text-amber-300 rounded-md text-sm flex items-center gap-1 border border-amber-500/20 animate-in fade-in zoom-in duration-200">
                             {s}
-                            <button onClick={() => setFormData(prev => ({ ...prev, skills: prev.skills.filter(i => i !== s) }))} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, skills: prev.skills.filter(i => i !== s) })); }} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
                         </span>
                     ))}
                     <input
+                        ref={inputRef}
                         className="bg-transparent outline-none flex-1 min-w-[120px] text-white placeholder:text-zinc-600 text-sm h-full"
+                        placeholder={formData.skills.length === 0 ? "Add skills (e.g. React, UX Design)..." : "Add more..."}
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => {
@@ -221,18 +226,31 @@ function OnboardingContent() {
         );
     };
 
-    const handleResumeUpload = async (url: string) => {
-        setUploadStatus('uploading'); // Actually 'processing' now
-
+    const handleResumeUpload = async (url: string, file: File) => {
+        setUploadStatus('parsing');
         try {
-            // Call our new API to parse from URL
-            const res = await fetch("/api/ai/parse-resume-from-url", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
+            const formData = new FormData();
+            formData.append("url", url);
+            formData.append("file", file);
+
+            // Call API to parse resume (now accepting File via FormData)
+            const res = await fetch('/api/ai/parse-resume-from-url', {
+                method: 'POST',
+                body: formData,
             });
 
-            if (!res.ok) throw new Error("Parse failed");
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("API Error Details:", errorText);
+
+                if (res.status === 429) {
+                    toast.error("AI usage limit reached. Please wait a minute and try again.");
+                    setUploadStatus('idle');
+                    return;
+                }
+
+                throw new Error("Parse failed: " + res.statusText);
+            }
 
             const json = await res.json();
             const aiData = json.aiData;
@@ -244,18 +262,41 @@ function OnboardingContent() {
                 headline: aiData?.headline || prev.headline,
                 bio: aiData?.summary || prev.bio,
                 location: aiData?.location || prev.location,
-                skills: Array.from(new Set([...prev.skills, ...(aiData?.skills || [])])).slice(0, 10)
+                skills: Array.from(new Set([...prev.skills, ...(aiData?.skills || [])])).slice(0, 10),
+                experience: aiData?.experience?.map((exp: any) => ({
+                    role: exp.position,
+                    company: exp.company,
+                    start: exp.startDate,
+                    end: exp.endDate,
+                    desc: exp.description
+                })) || [],
+                education: aiData?.education?.map((edu: any) => ({
+                    school: edu.school,
+                    degree: edu.degree,
+                    start: edu.startDate,
+                    end: edu.endDate
+                })) || []
             }));
 
             setUploadStatus('complete');
             toast.success("Resume processed successfully");
-
+            // Auto-advance handled by useEffect now
         } catch (error) {
             console.error(error);
             setUploadStatus('idle');
             toast.error("Failed to parse resume");
         }
     };
+
+    // Auto-advance when upload is complete
+    useEffect(() => {
+        if (role === 'candidate' && currentStep === 3 && uploadStatus === 'complete') {
+            const timer = setTimeout(() => {
+                nextStep();
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [uploadStatus, currentStep, role]);
 
     // Replaced internal FileUpload with ResumeUploadZone
     const ResumeUploader = () => {
