@@ -362,7 +362,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                                 </Button>
                                                             </TooltipTrigger>
                                                             <TooltipContent className="bg-zinc-800 border-white/10 text-zinc-300 text-xs shadow-xl">
-                                                                <p>Upload resume again to make it viewable for public</p>
+                                                                <p>Update your resume with new achievements</p>
                                                             </TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
@@ -476,28 +476,43 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 </DropdownMenu>
                                             )}
                                         </div>
-                                        {/* MORE MENU */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" size="icon" className="border-zinc-700 text-zinc-400 hover:text-white">
-                                                    <MoreHorizontal className="w-4 h-4" />
+                                        {/* MORE MENU & VIEW RESUME */}
+                                        <div className="flex gap-2">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" size="icon" className="border-zinc-700 text-zinc-400 hover:text-white">
+                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-zinc-300">
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5">
+                                                        <Send className="w-4 h-4" /> Send profile via message
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => setEditSection('share')}>
+                                                        <Share2 className="w-4 h-4" /> Share Profile
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => window.print()}>
+                                                        <Download className="w-4 h-4" /> Save to PDF
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5 text-red-400">
+                                                        <Flag className="w-4 h-4" /> Report User
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+
+                                            {/* Resume View for Visitors - Only show for Candidates with resume */}
+                                            {user.role !== 'RECRUITER' && user.resumeUrl && (
+                                                <Button
+                                                    variant="outline"
+                                                    asChild
+                                                    className="flex-1 border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                                >
+                                                    <Link href={user.resumeUrl} target="_blank" rel="noopener noreferrer">
+                                                        <FileText className="w-4 h-4 mr-2" /> View Resume
+                                                    </Link>
                                                 </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-zinc-300">
-                                                <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5">
-                                                    <Send className="w-4 h-4" /> Send profile via message
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => setEditSection('share')}>
-                                                    <Share2 className="w-4 h-4" /> Share Profile
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => window.print()}>
-                                                    <Download className="w-4 h-4" /> Save to PDF
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5 text-red-400">
-                                                    <Flag className="w-4 h-4" /> Report User
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
