@@ -197,7 +197,8 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 const trigger = lastWordMatch[1];
                 const lastWord = lastWordMatch[2];
                 const textBeforeTrigger = quotedText.substring(0, quotedText.length - lastWordMatch[0].length);
-                const badgeText = textBeforeTrigger + lastWord;
+                // Add space between text and last word to preserve spacing
+                const badgeText = (textBeforeTrigger + ' ' + lastWord).trim();
 
                 // Add text before the quoted badge
                 if (match.index > currentIndex) {
