@@ -162,6 +162,143 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         }
     };
 
+    const renderBadge = (text: string, type: string) => {
+        const styles = {
+            ':': 'bg-red-500/10 text-red-400 border-red-500/20',
+            '/': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+            '~': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+            '+': 'bg-zinc-800 text-zinc-300 border-zinc-700'
+        };
+        return (
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${styles[type as keyof typeof styles] || styles[':']}`}>
+                {text}
+            </span>
+        );
+    };
+
+    const parseContent = (content: string) => {
+        const parts: React.ReactNode[] = [];
+        let currentIndex = 0;
+
+        // Pattern: "text with :word" or "text with /word" etc. OR standalone :word
+        // Quoted badge: capture everything in quotes, then check last word for trigger
+        const quotedBadgeRegex = /"([^"]+)"/g;
+        const singleBadgeRegex = /([:\\/~+])(\w+)/g;
+
+        let match;
+        const processedRanges: Array<{ start: number, end: number }> = [];
+
+        // First pass: find quoted badges
+        while ((match = quotedBadgeRegex.exec(content)) !== null) {
+            const quotedText = match[1]; // text inside quotes
+            const lastWordMatch = quotedText.match(/\s*([:\\/~+])(\w+)$/); // trigger on last word
+
+            if (lastWordMatch) {
+                const trigger = lastWordMatch[1];
+                const lastWord = lastWordMatch[2];
+                const textBeforeTrigger = quotedText.substring(0, quotedText.length - lastWordMatch[0].length);
+                const badgeText = textBeforeTrigger + lastWord;
+
+                // Add text before the quoted badge
+                if (match.index > currentIndex) {
+                    const textBefore = content.substring(currentIndex, match.index);
+                    parts.push(...parseLinks(textBefore, currentIndex));
+                }
+
+                parts.push(' ');
+                parts.push(renderBadge(badgeText.trim(), trigger));
+                parts.push(' ');
+
+                processedRanges.push({ start: match.index, end: match.index + match[0].length });
+                currentIndex = match.index + match[0].length;
+            }
+        }
+
+        // Second pass: find single-word badges in unprocessed text
+        quotedBadgeRegex.lastIndex = 0;
+        let searchIndex = 0;
+
+        while (searchIndex < content.length) {
+            // Skip processed ranges
+            const inProcessed = processedRanges.find(r => searchIndex >= r.start && searchIndex < r.end);
+            if (inProcessed) {
+                searchIndex = inProcessed.end;
+                continue;
+            }
+
+            // Find next quote or end
+            const nextQuote = content.indexOf('"', searchIndex);
+            const searchEnd = nextQuote !== -1 ? nextQuote : content.length;
+            const searchText = content.substring(searchIndex, searchEnd);
+
+            singleBadgeRegex.lastIndex = 0;
+            let singleMatch;
+            let lastPos = 0;
+
+            while ((singleMatch = singleBadgeRegex.exec(searchText)) !== null) {
+                if (singleMatch.index > lastPos) {
+                    const textBefore = searchText.substring(lastPos, singleMatch.index);
+                    parts.push(...parseLinks(textBefore, searchIndex + lastPos));
+                }
+
+                parts.push(renderBadge(singleMatch[2], singleMatch[1]));
+                lastPos = singleMatch.index + singleMatch[0].length;
+            }
+
+            if (lastPos < searchText.length) {
+                const remaining = searchText.substring(lastPos);
+                parts.push(...parseLinks(remaining, searchIndex + lastPos));
+            }
+
+            searchIndex = searchEnd;
+
+            // Skip the quote if exists
+            if (nextQuote !== -1) {
+                const quoteEnd = content.indexOf('"', nextQuote + 1);
+                if (quoteEnd !== -1) {
+                    // Check if this quote was already processed
+                    const alreadyProcessed = processedRanges.find(r => r.start === nextQuote);
+                    if (!alreadyProcessed) {
+                        // Regular quoted text, not a badge
+                        parts.push(content.substring(nextQuote, quoteEnd + 1));
+                    }
+                    searchIndex = quoteEnd + 1;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return parts.length > 0 ? <>{parts}</> : content;
+    };
+
+    const parseLinks = (text: string, baseIndex: number): React.ReactNode[] => {
+        const words = text.split(/(\s+)/);
+        return words.map((word, i) => {
+            const key = `${baseIndex}-${i}`;
+            if (word.startsWith('#') && word.length > 1) {
+                return (
+                    <Link key={key} href={`/search?q=${encodeURIComponent(word)}`} className="text-blue-400 hover:underline" onClick={(e) => e.stopPropagation()}>
+                        {word}
+                    </Link>
+                );
+            } else if (word.startsWith('@') && word.length > 1) {
+                const rawHandle = word.substring(1);
+                const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
+                const punctuation = rawHandle.substring(cleanHandle.length);
+                return (
+                    <span key={key}>
+                        <Link href={`/profile/${cleanHandle}`} className="text-blue-400 hover:underline font-medium" onClick={(e) => e.stopPropagation()}>
+                            @{cleanHandle}
+                        </Link>
+                        {punctuation}
+                    </span>
+                );
+            }
+            return <span key={key}>{word}</span>;
+        });
+    };
+
     return (
         <div className="group border-b border-white/5 py-4 hover:bg-white/2 transition-colors -mx-4 px-4 lg:mx-0 lg:px-4 lg:rounded-xl">
             <div className="flex gap-4">
@@ -344,66 +481,9 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         </DialogContent>
                     </Dialog>
 
-                    {/* Text Body */}
-                    <div className="mt-1 text-sm text-zinc-300 leading-relaxed">
-                        {(() => {
-                            // Check if content starts with a badge pattern (e.g., "Stop Guessing: Rest of text")
-                            const badgeMatch = post.content.match(/^([^:]+):\s*([\s\S]+)$/);
-
-                            if (badgeMatch) {
-                                const [_, badgeText, restOfContent] = badgeMatch;
-                                // Only create badge if the prefix is short (< 30 chars) to avoid false positives
-                                if (badgeText.length < 30 && !badgeText.includes('\n')) {
-                                    return (
-                                        <>
-                                            <span className="inline-block px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 mr-2">
-                                                {badgeText}
-                                            </span>
-                                            <span className="whitespace-pre-wrap">{restOfContent}</span>
-                                        </>
-                                    );
-                                }
-                            }
-
-                            // Standard rendering with link parsing
-                            const words = post.content.split(/(\s+)/);
-                            return (
-                                <span className="whitespace-pre-wrap">
-                                    {words.map((word, i) => {
-                                        if (word.startsWith('#') && word.length > 1) {
-                                            return (
-                                                <Link
-                                                    key={i}
-                                                    href={`/search?q=${encodeURIComponent(word)}`}
-                                                    className="text-blue-400 hover:underline"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {word}
-                                                </Link>
-                                            );
-                                        } else if (word.startsWith('@') && word.length > 1) {
-                                            const rawHandle = word.substring(1);
-                                            const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
-                                            const punctuation = rawHandle.substring(cleanHandle.length);
-
-                                            return (
-                                                <span key={i}>
-                                                    <Link
-                                                        href={`/profile/${cleanHandle}`}
-                                                        className="text-blue-400 hover:underline font-medium"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        @{cleanHandle}
-                                                    </Link>
-                                                    {punctuation}
-                                                </span>
-                                            );
-                                        }
-                                        return word;
-                                    })}
-                                </span>
-                            );
-                        })()}
+                    {/* Text Body with Badges */}
+                    <div className="mt-1 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                        {parseContent(post.content)}
                     </div>
 
                     {/* Poll Rendering */}
