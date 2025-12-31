@@ -179,6 +179,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const parseContent = (content: string) => {
         const parts: React.ReactNode[] = [];
         let currentIndex = 0;
+        let keyCounter = 0; // Global unique key counter
 
         // Pattern: "text with :word" or "text with /word" etc. OR standalone :word
         // Quoted badge: capture everything in quotes, then check last word for trigger
@@ -261,7 +262,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     const alreadyProcessed = processedRanges.find(r => r.start === nextQuote);
                     if (!alreadyProcessed) {
                         // Regular quoted text, not a badge
-                        parts.push(content.substring(nextQuote, quoteEnd + 1));
+                        parts.push(<span key={`text-${keyCounter++}`}>{content.substring(nextQuote, quoteEnd + 1)}</span>);
                     }
                     searchIndex = quoteEnd + 1;
                 } else {
