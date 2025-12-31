@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, X, Trash2, Camera, Link as LinkIcon, Save, Image as ImageIcon, CloudUpload, FileText, Copy, Share2, CheckCircle2 } from 'lucide-react';
+import { Loader2, Plus, X, Trash2, Camera, Link as LinkIcon, Save, Image as ImageIcon, CloudUpload, FileText, Copy, Share2, CheckCircle2, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateUserProfile, addProject, updateProject, deleteProject } from '@/app/(app)/profile/actions'; // We will create these
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { IconPicker } from './IconPicker';
+import * as SiIcons from 'react-icons/si';
+import * as FaIcons from 'react-icons/fa';
 
 // --- Types ---
 interface ProfileEditModalsProps {
@@ -47,7 +50,8 @@ const projectSchema = z.object({
 const customLinksSchema = z.object({
     customLinks: z.array(z.object({
         title: z.string().min(1, "Title required"),
-        url: z.string().url("Valid URL required")
+        url: z.string().url("Valid URL required"),
+        icon: z.string().optional()
     }))
 });
 
@@ -647,6 +651,7 @@ function ProjectForm({ user, project, onSave }: any) {
 
 function CustomLinksForm({ user, onSave }: any) {
     const [isLoading, setIsLoading] = useState(false);
+    const [iconPickerIndex, setIconPickerIndex] = useState<number | null>(null);
 
     // Parse initial links
     let initialLinks = [];
@@ -672,34 +677,87 @@ function CustomLinksForm({ user, onSave }: any) {
         onSave(res);
     };
 
+    //Helper to render icon
+    const renderIcon = (iconName?: string) => {
+        if (!iconName) return <Globe className="w-5 h-5" />;
+        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        if (IconComponent) {
+            return <IconComponent className="w-5 h-5" />;
+        }
+        return <Globe className="w-5 h-5" />;
+    };
+
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-end gap-2 animate-in slide-in-from-left-2">
-                        <div className="flex-1 space-y-2">
-                            <Label className="text-xs uppercase text-zinc-500">Label</Label>
-                            <Input {...form.register(`customLinks.${index}.title` as const)} placeholder="My Blog" className="bg-black/50 border-white/10" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Label className="text-xs uppercase text-zinc-500">URL</Label>
-                            <Input {...form.register(`customLinks.${index}.url` as const)} placeholder="https://..." className="bg-black/50 border-white/10" />
-                        </div>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="hover:bg-red-500/10 hover:text-red-500">
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </div>
-                ))}
-            </div>
+        <>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-4">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-3 animate-in slide-in-from-left-2 bg-zinc-900/30 p-4 rounded-xl border border-white/5 hover:border-violet-500/20 transition-all group">
+                            {/* Icon Selector - No Label */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-14 w-14 p-0 bg-gradient-to-br from-zinc-800 to-zinc-900 border-violet-500/30 hover:border-violet-500/60 hover:from-violet-500/10 hover:to-fuchsia-500/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/20 relative group/icon"
+                                onClick={() => setIconPickerIndex(index)}
+                                title="Click to change icon"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-fuchsia-500/0 group-hover/icon:from-violet-500/20 group-hover/icon:to-fuchsia-500/20 rounded-lg transition-all duration-300" />
+                                <div className="relative text-zinc-400 group-hover/icon:text-white transition-colors duration-200">
+                                    {renderIcon(form.watch(`customLinks.${index}.icon`))}
+                                </div>
+                            </Button>
 
-            <Button type="button" variant="outline" onClick={() => append({ title: '', url: '' })} className="w-full border-dashed border-white/10 text-zinc-400 hover:text-white">
-                <Plus className="w-4 h-4 mr-2" /> Add Link
-            </Button>
+                            <div className="flex-1 space-y-2">
+                                <Label className="text-xs uppercase text-zinc-500 tracking-wider">Label</Label>
+                                <Input
+                                    {...form.register(`customLinks.${index}.title` as const)}
+                                    placeholder="e.g., LinkedIn, Portfolio..."
+                                    className="bg-black/50 border-white/10 focus:border-violet-500/50 transition-colors"
+                                />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                <Label className="text-xs uppercase text-zinc-500 tracking-wider">URL</Label>
+                                <Input
+                                    {...form.register(`customLinks.${index}.url` as const)}
+                                    placeholder="https://..."
+                                    className="bg-black/50 border-white/10 focus:border-violet-500/50 transition-colors font-mono text-sm"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className="hover:bg-red-500/10 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 mt-auto mb-2"
+                                title="Remove link"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
 
-            <Button type="submit" disabled={isLoading} className="w-full bg-violet-600 hover:bg-violet-500">
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Links
-            </Button>
-        </form>
+                <Button type="button" variant="outline" onClick={() => append({ title: '', url: '', icon: '' })} className="w-full border-dashed border-white/10 text-zinc-400 hover:text-white">
+                    <Plus className="w-4 h-4 mr-2" /> Add Link
+                </Button>
+
+                <Button type="submit" disabled={isLoading} className="w-full bg-violet-600 hover:bg-violet-500">
+                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Links
+                </Button>
+            </form>
+
+            {/* Icon Picker Modal */}
+            {iconPickerIndex !== null && (
+                <IconPicker
+                    isOpen={true}
+                    onClose={() => setIconPickerIndex(null)}
+                    selectedIcon={form.watch(`customLinks.${iconPickerIndex}.icon`)}
+                    onSelect={(icon) => {
+                        form.setValue(`customLinks.${iconPickerIndex}.icon`, icon);
+                    }}
+                />
+            )}
+        </>
     );
 }
 

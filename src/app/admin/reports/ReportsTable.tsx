@@ -11,6 +11,7 @@ import { updateReportStatus } from '../actions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageLightbox } from '@/components/admin/ImageLightbox';
 
 type ExtendedReport = Report & {
     reporter: User;
@@ -177,25 +178,80 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                 {details.files && details.files.length > 0 && (
                                                                     <div className="space-y-4">
                                                                         <h4 className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Attachments</h4>
-                                                                        <div className="grid grid-cols-2 gap-2">
-                                                                            {details.files.map((file: string, i: number) => (
-                                                                                <a
-                                                                                    key={i}
-                                                                                    href={file}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="block p-3 bg-zinc-900 border border-white/10 rounded-lg hover:border-violet-500/50 transition-colors"
-                                                                                >
-                                                                                    <div className="flex items-center gap-2 mb-2">
-                                                                                        <FileText className="w-4 h-4 text-violet-400" />
-                                                                                        <span className="text-xs truncate">Attachment {i + 1}</span>
+                                                                        <div className="grid grid-cols-2 gap-3">
+                                                                            {details.files.map((file: string, i: number) => {
+                                                                                const isVideo = file.startsWith('data:video/') || file.match(/\.(mp4|webm|mov)($|\?)/i);
+                                                                                const isImage = file.startsWith('data:image/') || file.match(/\.(jpg|jpeg|png|gif|webp)($|\?)/i);
+
+                                                                                return (
+                                                                                    <div
+                                                                                        key={i}
+                                                                                        className="group relative bg-zinc-900 border border-white/10 rounded-xl overflow-hidden hover:border-violet-500/50 transition-all duration-300"
+                                                                                    >
+                                                                                        {/* Preview */}
+                                                                                        <div className="aspect-video bg-black/50 relative overflow-hidden">
+                                                                                            {isVideo ? (
+                                                                                                <video
+                                                                                                    src={file}
+                                                                                                    className="w-full h-full object-cover"
+                                                                                                    muted
+                                                                                                />
+                                                                                            ) : isImage ? (
+                                                                                                <img
+                                                                                                    src={file}
+                                                                                                    alt={`Attachment ${i + 1}`}
+                                                                                                    className="w-full h-full object-cover"
+                                                                                                />
+                                                                                            ) : (
+                                                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                                                    <FileText className="w-12 h-12 text-zinc-700" />
+                                                                                                </div>
+                                                                                            )}
+
+                                                                                            {/* Overlay on hover */}
+                                                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                                                                                                <button
+                                                                                                    onClick={() => {
+                                                                                                        setExpandedIds(prev => {
+                                                                                                            const newSet = new Set(prev);
+                                                                                                            newSet.add(`lightbox-${report.id}-${i}`);
+                                                                                                            return newSet;
+                                                                                                        });
+                                                                                                    }}
+                                                                                                    className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-violet-500/30"
+                                                                                                >
+                                                                                                    <span className="w-4 h-4">🔍</span>
+                                                                                                    Click to Enlarge
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Info bar */}
+                                                                                        <div className="p-2 bg-zinc-900/50 border-t border-white/5">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <FileText className="w-3 h-3 text-violet-400" />
+                                                                                                <span className="text-[10px] text-zinc-400 truncate">Attachment {i + 1}</span>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Lightbox */}
+                                                                                        {expandedIds.has(`lightbox-${report.id}-${i}`) && (
+                                                                                            <ImageLightbox
+                                                                                                isOpen={true}
+                                                                                                onClose={() => {
+                                                                                                    setExpandedIds(prev => {
+                                                                                                        const newSet = new Set(prev);
+                                                                                                        newSet.delete(`lightbox-${report.id}-${i}`);
+                                                                                                        return newSet;
+                                                                                                    });
+                                                                                                }}
+                                                                                                imageUrl={file}
+                                                                                                title={`Attachment ${i + 1} - Report ${report.reason}`}
+                                                                                            />
+                                                                                        )}
                                                                                     </div>
-                                                                                    {/* Use a proper image preview if possible, simplistic for now */}
-                                                                                    <div className="h-20 bg-black/50 rounded flex items-center justify-center text-xs text-zinc-600">
-                                                                                        PREVIEW
-                                                                                    </div>
-                                                                                </a>
-                                                                            ))}
+                                                                                );
+                                                                            })}
                                                                         </div>
                                                                     </div>
                                                                 )}

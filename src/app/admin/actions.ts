@@ -98,12 +98,38 @@ export async function updateReportStatus(reportId: string, status: 'RESOLVED' | 
     try {
         const session = await ensureAdmin();
 
+        // Fetch the report with reporter info
+        const report = await prisma.report.findUnique({
+            where: { id: reportId },
+            include: { reporter: true }
+        });
+
+        if (!report) {
+            return { success: false, message: "Report not found" };
+        }
+
+        // Update report status
         await prisma.report.update({
             where: { id: reportId },
             data: {
                 status,
                 adminNotes: notes,
                 resolvedBy: session.user?.id
+            }
+        });
+
+        // Create notification for the reporter
+        const notificationMessages = {
+            RESOLVED: "✅ Your Report Successfully Reviewed!\n\nYour report has been successfully reviewed and implemented by the author. You can enjoy the features now. Thank you for helping us improve! 🎉",
+            DISMISSED: "📋 Report Update\n\nYour suggestion/report has been revoked due to insufficient evidence or incorrect information. If you believe this was an error, please submit additional details. Thank you for your understanding."
+        };
+
+        await prisma.notification.create({
+            data: {
+                userId: report.reporterId,
+                type: 'SYSTEM',
+                message: notificationMessages[status],
+                read: false
             }
         });
 

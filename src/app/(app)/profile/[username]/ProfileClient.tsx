@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toggleFollow } from '@/app/(app)/feed/actions';
 import { sendConnectionRequest, updateConnectionStatus } from '@/app/(app)/network/actions';
 import { toast } from 'sonner';
+import * as SiIcons from 'react-icons/si';
+import * as FaIcons from 'react-icons/fa';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -88,10 +90,20 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         }
     } catch { parsedSkills = []; }
 
-    let parsedLinks: { title: string, url: string }[] = [];
+    let parsedLinks: { title: string; url: string; icon?: string }[] = [];
     try {
         if (user.customLinks) parsedLinks = JSON.parse(user.customLinks);
     } catch { parsedLinks = []; }
+
+    // Helper to render brand icons
+    const renderLinkIcon = (iconName?: string) => {
+        if (!iconName) return <Globe className="w-4 h-4 text-violet-400" />;
+        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        if (IconComponent) {
+            return <IconComponent className="w-4 h-4 text-violet-400" />;
+        }
+        return <Globe className="w-4 h-4 text-violet-400" />;
+    };
 
     // Helpers
     const openModal = (section: any, project: any = null) => {
@@ -524,7 +536,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 {parsedLinks.map((link, i) => (
                                     <Link key={i} href={link.url} target="_blank" className="block">
                                         <Button variant="outline" className="w-full justify-start border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white">
-                                            <Globe className="w-4 h-4 mr-2 text-violet-400" /> {link.title}
+                                            {renderLinkIcon(link.icon)} <span className="ml-2">{link.title}</span>
                                         </Button>
                                     </Link>
                                 ))}

@@ -178,100 +178,82 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
     const parseContent = (content: string) => {
         const parts: React.ReactNode[] = [];
-        let currentIndex = 0;
-        let keyCounter = 0; // Global unique key counter
+        let keyCounter = 0;
 
-        // Pattern: "text with :word" or "text with /word" etc. OR standalone :word
-        // Quoted badge: capture everything in quotes, then check last word for trigger
+        // Find all quoted badges first
         const quotedBadgeRegex = /"([^"]+)"/g;
-        const singleBadgeRegex = /([:\\/~+])(\w+)/g;
+        const quotedBadges: Array<{ start: number, end: number, badge: React.ReactNode }> = [];
 
         let match;
-        const processedRanges: Array<{ start: number, end: number }> = [];
-
-        // First pass: find quoted badges
         while ((match = quotedBadgeRegex.exec(content)) !== null) {
-            const quotedText = match[1]; // text inside quotes
-            const lastWordMatch = quotedText.match(/\s*([:\\/~+])(\w+)$/); // trigger on last word
+            const quotedText = match[1];
+            const lastWordMatch = quotedText.match(/\s*([:\/~+])(\w+)$/);
 
             if (lastWordMatch) {
                 const trigger = lastWordMatch[1];
                 const lastWord = lastWordMatch[2];
                 const textBeforeTrigger = quotedText.substring(0, quotedText.length - lastWordMatch[0].length);
-                // Add space between text and last word to preserve spacing
                 const badgeText = (textBeforeTrigger + ' ' + lastWord).trim();
 
-                // Add text before the quoted badge
-                if (match.index > currentIndex) {
-                    const textBefore = content.substring(currentIndex, match.index);
-                    parts.push(...parseLinks(textBefore, currentIndex));
-                }
-
-                parts.push(' ');
-                parts.push(renderBadge(badgeText.trim(), trigger));
-                parts.push(' ');
-
-                processedRanges.push({ start: match.index, end: match.index + match[0].length });
-                currentIndex = match.index + match[0].length;
+                quotedBadges.push({
+                    start: match.index,
+                    end: match.index + match[0].length,
+                    badge: <span key={`badge-${keyCounter++}`}>{renderBadge(badgeText, trigger)}</span>
+                });
             }
         }
 
-        // Second pass: find single-word badges in unprocessed text
-        quotedBadgeRegex.lastIndex = 0;
-        let searchIndex = 0;
+        // Process content linearly
+        let currentIndex = 0;
 
-        while (searchIndex < content.length) {
-            // Skip processed ranges
-            const inProcessed = processedRanges.find(r => searchIndex >= r.start && searchIndex < r.end);
-            if (inProcessed) {
-                searchIndex = inProcessed.end;
-                continue;
+        // Sort quoted badges by position
+        quotedBadges.sort((a, b) => a.start - b.start);
+
+        for (const quotedBadge of quotedBadges) {
+            // Add text before this quoted badge
+            if (quotedBadge.start > currentIndex) {
+                const textBefore = content.substring(currentIndex, quotedBadge.start);
+                parts.push(...parseSingleBadges(textBefore, currentIndex, keyCounter));
+                keyCounter += textBefore.length; // Rough counter increment
             }
 
-            // Find next quote or end
-            const nextQuote = content.indexOf('"', searchIndex);
-            const searchEnd = nextQuote !== -1 ? nextQuote : content.length;
-            const searchText = content.substring(searchIndex, searchEnd);
+            // Add the quoted badge
+            parts.push(quotedBadge.badge);
+            currentIndex = quotedBadge.end;
+        }
 
-            singleBadgeRegex.lastIndex = 0;
-            let singleMatch;
-            let lastPos = 0;
-
-            while ((singleMatch = singleBadgeRegex.exec(searchText)) !== null) {
-                if (singleMatch.index > lastPos) {
-                    const textBefore = searchText.substring(lastPos, singleMatch.index);
-                    parts.push(...parseLinks(textBefore, searchIndex + lastPos));
-                }
-
-                parts.push(renderBadge(singleMatch[2], singleMatch[1]));
-                lastPos = singleMatch.index + singleMatch[0].length;
-            }
-
-            if (lastPos < searchText.length) {
-                const remaining = searchText.substring(lastPos);
-                parts.push(...parseLinks(remaining, searchIndex + lastPos));
-            }
-
-            searchIndex = searchEnd;
-
-            // Skip the quote if exists
-            if (nextQuote !== -1) {
-                const quoteEnd = content.indexOf('"', nextQuote + 1);
-                if (quoteEnd !== -1) {
-                    // Check if this quote was already processed
-                    const alreadyProcessed = processedRanges.find(r => r.start === nextQuote);
-                    if (!alreadyProcessed) {
-                        // Regular quoted text, not a badge
-                        parts.push(<span key={`text-${keyCounter++}`}>{content.substring(nextQuote, quoteEnd + 1)}</span>);
-                    }
-                    searchIndex = quoteEnd + 1;
-                } else {
-                    break;
-                }
-            }
+        // Add remaining text
+        if (currentIndex < content.length) {
+            const remaining = content.substring(currentIndex);
+            parts.push(...parseSingleBadges(remaining, currentIndex, keyCounter));
         }
 
         return parts.length > 0 ? <>{parts}</> : content;
+    };
+
+    const parseSingleBadges = (text: string, baseIndex: number, startKeyCounter: number): React.ReactNode[] => {
+        const parts: React.ReactNode[] = [];
+        const singleBadgeRegex = /([:\/~+])(\w+)/g;
+        let keyCounter = startKeyCounter;
+        let lastPos = 0;
+        let match;
+
+        while ((match = singleBadgeRegex.exec(text)) !== null) {
+            if (match.index > lastPos) {
+                const textBefore = text.substring(lastPos, match.index);
+                parts.push(...parseLinks(textBefore, baseIndex + lastPos));
+            }
+
+            parts.push(<span key={`badge-${keyCounter++}`}>{renderBadge(match[2], match[1])}</span>);
+            lastPos = match.index + match[0].length;
+        }
+
+        if (lastPos < text.length) {
+            const remaining = text.substring(lastPos);
+            parts.push(...parseLinks(remaining, baseIndex + lastPos));
+        }
+
+        return parts;
     };
 
     const parseLinks = (text: string, baseIndex: number): React.ReactNode[] => {
