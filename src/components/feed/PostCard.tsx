@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     ThumbsUp, MessageCircle, Repeat, Send, MoreHorizontal,
-    Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus
+    Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ export interface PostProps {
         connectionStatus?: 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'CONNECTED';
         role?: string;
         nodeType?: string;
+        plan?: string;
     };
     poll?: {
         id: string;
@@ -85,6 +86,14 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Optimistic Content State
+    const [content, setContent] = useState(post.content);
+
+    // Sync with server updates
+    useEffect(() => {
+        setContent(post.content);
+    }, [post.content]);
 
     const handleFollow = async () => {
         setLoadingFollow(true);
@@ -134,9 +143,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         setIsSaving(false);
 
         if (result.success) {
+            setContent(editContent); // Update UI immediately
             toast.success(result.message);
             setIsEditModalOpen(false);
-            router.refresh();
+            router.refresh(); // Sync server in background
         } else {
             toast.error(result.message);
         }
@@ -271,12 +281,14 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
                 const punctuation = rawHandle.substring(cleanHandle.length);
                 return (
-                    <span key={key}>
-                        <Link href={`/profile/${cleanHandle}`} className="text-blue-400 hover:underline font-medium" onClick={(e) => e.stopPropagation()}>
-                            @{cleanHandle}
-                        </Link>
-                        {punctuation}
-                    </span>
+                    (
+                        <span key={key}>
+                            <Link href={`/profile/${cleanHandle}`} className="text-blue-400 hover:underline font-medium" onClick={(e) => e.stopPropagation()}>
+                                @{cleanHandle}
+                            </Link>
+                            {punctuation}
+                        </span>
+                    )
                 );
             }
             return <span key={key}>{word}</span>;
@@ -303,8 +315,33 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 <span className="font-bold text-white text-sm group-hover/author:text-violet-400 transition-colors">
                                     {post.author.name}
                                 </span>
-                                <span className="text-zinc-500 text-xs mb-0.5 group-hover/author:text-zinc-400">{post.author.handle}</span>
                             </Link>
+
+                            {/* Verified Badge (Paid Users) */}
+                            {(post.author.plan === 'PRO' || post.author.plan === 'ULTRA') && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-500/10" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+
+                            {/* Role Badges */}
+                            {post.author.role === 'ADMIN' && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase tracking-wide border border-amber-500/20">
+                                    ADMIN
+                                </span>
+                            )}
+                            {post.author.role === 'RECRUITER' && (
+                                <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wide border border-blue-500/20">
+                                    RECRUITER
+                                </span>
+                            )}
                             <span className="text-zinc-600 text-xs">· {post.timestamp}</span>
 
                             {post.author.isHiring && (
@@ -467,7 +504,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                     {/* Text Body with Badges */}
                     <div className="mt-1 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                        {parseContent(post.content)}
+                        {parseContent(content)}
                     </div>
 
                     {/* Poll Rendering */}

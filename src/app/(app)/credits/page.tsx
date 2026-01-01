@@ -135,6 +135,7 @@ export default function CreditsPage() {
             price: "$5",
             credits: 50,
             features: [
+                "Verified Badge",
                 "50 Monthly Credits",
                 "Reach More People (Ad Feed)",
                 "Who Viewed Your Profile",
@@ -147,6 +148,7 @@ export default function CreditsPage() {
             price: "$10",
             credits: 100,
             features: [
+                "Verified Badge",
                 "100 Monthly Credits",
                 "Everything in PRO",
                 "Priority Support",

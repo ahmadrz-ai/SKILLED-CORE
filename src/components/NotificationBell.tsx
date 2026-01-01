@@ -20,7 +20,7 @@ export function NotificationBell() {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        const interval = setInterval(fetchNotifications, 5000); // Poll every 5s for near real-time
         return () => clearInterval(interval);
     }, []);
 

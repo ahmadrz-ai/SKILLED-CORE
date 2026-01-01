@@ -64,7 +64,8 @@ export default async function FeedPage() {
                         username: true,
                         headline: true,
                         nodeType: true,
-                        role: true
+                        role: true,
+                        plan: true
                     }
                 },
                 likes: true,

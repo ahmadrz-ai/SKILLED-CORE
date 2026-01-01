@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2 } from "lucide-react";
+import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -285,14 +285,27 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 </div>
                             </div>
 
-                            {/* Plan Badge (Top Right) */}
-                            <div className="absolute top-4 right-4">
-                                <PlanBadge plan={user.plan || "BASIC"} />
-                            </div>
+                            {/* Plan Badge (Top Right) - Only for Paid Plans */}
+                            {(user.plan === 'PRO' || user.plan === 'ULTRA') && (
+                                <div className="absolute top-4 right-4">
+                                    <PlanBadge plan={user.plan} />
+                                </div>
+                            )}
 
                             <h1 className="text-2xl font-bold font-cinzel tracking-wide mb-1 flex items-center justify-center gap-2">
                                 {user.name}
-                                <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                                {(user.plan === 'PRO' || user.plan === 'ULTRA') && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <BadgeCheck className="w-5 h-5 text-sky-400 fill-sky-500/10" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{user.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
                             </h1>
                             {user.username && (
                                 <p className="text-sm text-zinc-500 mb-1">@{user.username}</p>
@@ -696,30 +709,49 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {user.projects && user.projects.map((project: any) => (
-                                            <div key={project.id} className="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden group relative hover:border-violet-500/30 transition-all">
+                                            <div key={project.id} className="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden group relative hover:border-violet-500/30 transition-all flex flex-col">
                                                 {isOwner && (
                                                     <Button
                                                         variant="secondary"
                                                         size="icon"
-                                                        onClick={() => openModal('projects', project)}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            openModal('projects', project);
+                                                        }}
                                                         className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100"
                                                     >
                                                         <Pencil className="w-4 h-4" />
                                                     </Button>
                                                 )}
-                                                {project.imageUrl && (
-                                                    <div className="h-32 w-full overflow-hidden">
+
+                                                <Link href={`/project/${project.id}`} className="block h-32 w-full overflow-hidden">
+                                                    {project.imageUrl ? (
                                                         <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                    </div>
-                                                )}
-                                                <div className="p-4">
-                                                    <h3 className="font-bold text-lg text-white mb-1">{project.title}</h3>
-                                                    <p className="text-zinc-400 text-sm mb-4 line-clamp-3">{project.description}</p>
-                                                    {project.link && (
-                                                        <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-400 hover:text-violet-300 flex items-center">
-                                                            <LinkIcon className="w-3 h-3 mr-1" /> View Project
-                                                        </a>
+                                                    ) : (
+                                                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-600">
+                                                            <FolderOpen className="w-8 h-8 opacity-50" />
+                                                        </div>
                                                     )}
+                                                </Link>
+
+                                                <div className="p-4 flex flex-col flex-1">
+                                                    <Link href={`/project/${project.id}`}>
+                                                        <h3 className="font-bold text-lg text-white mb-1 hover:text-violet-400 transition-colors">{project.title}</h3>
+                                                    </Link>
+
+                                                    <p className="text-zinc-400 text-sm mb-4 line-clamp-3 flex-1">{project.description}</p>
+
+                                                    <div className="flex items-center gap-4 mt-auto pt-4 border-t border-white/5">
+                                                        <Link href={`/project/${project.id}`} className="text-xs text-white hover:text-violet-400 font-bold flex items-center transition-colors">
+                                                            View Details
+                                                        </Link>
+                                                        {project.link && (
+                                                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center ml-auto transition-colors">
+                                                                <LinkIcon className="w-3 h-3 mr-1" /> External Link
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

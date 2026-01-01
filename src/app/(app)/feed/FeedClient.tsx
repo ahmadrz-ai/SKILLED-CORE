@@ -62,7 +62,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             avatar: p.author?.image,
             isFollowing: p.author?.isFollowing, // Mapped from server
             connectionStatus: p.author?.connectionStatus, // Mapped from server
-            isHiring: false // Not yet in schema/fetch, placeholder if needed
+            isHiring: false, // Not yet in schema/fetch, placeholder if needed
+            role: p.author?.role,
+            nodeType: p.author?.nodeType,
+            plan: p.author?.plan
         },
         content: p.content,
         timestamp: new Date(p.createdAt).toLocaleString(),
@@ -149,7 +152,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
             {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block space-y-4">
+            <div className="hidden lg:block space-y-4 sticky top-6 self-start">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
