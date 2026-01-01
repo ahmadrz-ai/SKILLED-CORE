@@ -10,17 +10,21 @@ export async function POST(req: Request) {
         console.log("REGISTER POST: Body parsed", body);
         const { username, email, password, role, name } = body;
 
-        if (!email || !password || !username || !name) {
+        if (!email || !password || !name) {
             console.log("REGISTER POST: Missing fields");
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
+
+        // Auto-generate temporary username if not provided
+        // Format: user_TIMESTAMP_RANDOM (e.g. user_1677721600000_abc12)
+        const finalUsername = username || `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
         console.log("REGISTER POST: Checking existing user");
         const existingUser = await prisma.user.findFirst({
             where: {
                 OR: [
                     { email },
-                    { username }
+                    { username: finalUsername }
                 ]
             }
         });
@@ -30,7 +34,7 @@ export async function POST(req: Request) {
             if (existingUser.email === email) {
                 return NextResponse.json({ error: "Email already exists" }, { status: 400 });
             }
-            if (existingUser.username === username) {
+            if (existingUser.username === finalUsername) {
                 return NextResponse.json({ error: "Username already taken" }, { status: 400 });
             }
         }
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
         const user = await prisma.user.create({
             data: {
                 name,
-                username,
+                username: finalUsername,
                 email,
                 password: hashedPassword,
                 role: role || 'CANDIDATE',

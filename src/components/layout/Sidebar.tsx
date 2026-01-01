@@ -215,7 +215,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
                             </Avatar>
                             <div className="flex-1 text-left">
                                 <p className="text-sm font-bold text-white group-hover:text-violet-300 transition-colors">
-                                    {user?.name || 'Guest User'}
+                                    {user?.name || 'User'}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
                                     {user?.role && (

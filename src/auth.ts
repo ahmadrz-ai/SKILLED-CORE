@@ -84,13 +84,68 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                password: { label: "Password", type: "password" },
+                otp: { label: "OTP", type: "text" }
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) return null;
+                if (!credentials?.email) return null;
+
+                const identifier = credentials.email as string;
+
+                // --- OTP LOGIN FLOW ---
+                if (credentials.otp) {
+                    const otp = credentials.otp as string;
+
+                    const token = await prisma.verificationToken.findFirst({
+                        where: {
+                            identifier: identifier,
+                            token: otp
+                        }
+                    });
+
+                    if (!token) {
+                        throw new Error("Invalid code");
+                    }
+
+                    if (new Date() > token.expires) {
+                        throw new Error("Code expired");
+                    }
+
+                    // Find User
+                    const user = await prisma.user.findFirst({
+                        where: {
+                            OR: [
+                                { email: identifier },
+                                { username: identifier } // Handle username as identifier too if needed
+                            ]
+                        }
+                    });
+
+                    if (!user) return null;
+
+                    // Verify User Email
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { emailVerified: new Date() },
+                    });
+
+                    // Consume Token
+                    await prisma.verificationToken.delete({
+                        where: {
+                            identifier_token: {
+                                identifier: token.identifier,
+                                token: token.token
+                            }
+                        }
+                    });
+
+                    return user;
+                }
+
+                // --- PASSWORD LOGIN FLOW ---
+                if (!credentials.password) return null;
 
                 try {
-                    const identifier = credentials.email as string;
                     const user = await prisma.user.findFirst({
                         where: {
                             OR: [
@@ -115,15 +170,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     console.error("Authorize Error:", e);
                     const errMessage = (e as any).message;
                     const isDbConnectionError = errMessage.includes('Can\'t reach database server') || errMessage.includes('connect to database');
-
-                    // Fallback for demo/dev only if DB is down AND we are using a "test" user.
-                    // OR if we want to allow the "mock" registration flow to work for "final_test_user".
-                    const identifier = credentials.email as string;
-                    const isTestUser = identifier.includes("test") || identifier.includes("mock") || identifier === "founder"; // Allowing 'founder' as requested if DB is down? No, user wants 'founder' to FAIL.
-
-                    // User "founder" with wrong password should FAIL.
-                    // But if DB is down, we can't check password.
-                    // So we only fallback if it's a connection error AND it matches our known "mock" patterns used in registration verification.
 
                     if (process.env.NODE_ENV === 'development' && isDbConnectionError && (identifier.includes('test') || identifier.includes('mock'))) {
                         console.warn("Using MOCK login success due to DB connection error for TEST user");
