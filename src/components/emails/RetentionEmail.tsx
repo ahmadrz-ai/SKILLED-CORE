@@ -14,12 +14,15 @@ import * as React from 'react';
 
 interface RetentionEmailProps {
     userName: string;
+    senderNames?: string[];
 }
 
 export const RetentionEmail = ({
     userName,
+    senderNames = [],
 }: RetentionEmailProps) => {
-    const previewText = `We miss you at Skilled Core`;
+    const senderText = senderNames.slice(0, 3).join(', ') + (senderNames.length > 3 ? ` and ${senderNames.length - 3} others` : '');
+    const previewText = `You have unread messages from ${senderText}`;
 
     return (
         <Html>
@@ -32,16 +35,22 @@ export const RetentionEmail = ({
                     </Section>
 
                     <Section style={content}>
-                        <Text style={paragraph}>Hi {userName},</Text>
+                        <Text style={greeting}>Hi {userName},</Text>
 
                         <Text style={paragraph}>
-                            We noticed you haven't checked your dashboard in a while. You might be missing opportunities.
+                            You have unread messages waiting for you from <span style={highlight}>{senderText}</span>.
                         </Text>
+
+                        <div style={messageBox}>
+                            <Text style={messageText}>
+                                "Hey, are you available for a quick chat?"
+                            </Text>
+                        </div>
 
                         <Hr style={hr} />
 
-                        <Button style={button} href="https://skilledcore.com/feed">
-                            See What's New
+                        <Button style={button} href="https://skilledcore.com/messages">
+                            View Messages
                         </Button>
                     </Section>
 
@@ -66,63 +75,91 @@ const main = {
 
 const container = {
     margin: '0 auto',
-    padding: '20px 0 48px',
+    padding: '40px 20px',
     maxWidth: '560px',
 };
 
 const header = {
-    padding: '20px 0',
+    marginBottom: '32px',
     textAlign: 'center' as const,
 };
 
 const logo = {
-    color: '#FCD34D', // Amber-300 / Gold
+    color: '#ffffff',
     fontSize: '24px',
-    fontWeight: 'bold',
-    letterSpacing: '0.1em',
+    fontWeight: '800',
+    letterSpacing: '0.2em',
     margin: '0',
     textTransform: 'uppercase' as const,
+    textShadow: '0 0 10px rgba(255,255,255,0.3)',
 };
 
 const content = {
-    backgroundColor: '#111111',
-    border: '1px solid #333333',
-    borderRadius: '12px',
+    backgroundColor: '#0A0A0A',
+    border: '1px solid #1F1F1F',
+    borderRadius: '16px',
     padding: '40px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)',
+    background: 'linear-gradient(145deg, #111111, #050505)',
+};
+
+const greeting = {
+    fontSize: '20px',
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: '16px',
 };
 
 const paragraph = {
     fontSize: '16px',
     lineHeight: '26px',
-    color: '#E5E7EB', // Gray-200
-    marginBottom: '20px',
+    color: '#A1A1AA', // Zinc-400
+    marginBottom: '24px',
+};
+
+const highlight = {
+    color: '#E879F9', // Purple-400 equivalent or similar
+    fontWeight: '600',
+};
+
+const messageBox = {
+    backgroundColor: '#1E1E1E',
+    borderLeft: '4px solid #8B5CF6', // Purple-500
+    padding: '16px',
+    borderRadius: '0 8px 8px 0',
+    marginBottom: '24px',
+};
+
+const messageText = {
+    margin: '0',
+    color: '#D4D4D8', // Zinc-300
+    fontStyle: 'italic',
 };
 
 const hr = {
-    borderColor: '#333333',
-    margin: '20px 0',
+    borderColor: '#1F1F1F',
+    margin: '32px 0',
 };
 
 const button = {
-    backgroundColor: '#FCD34D', // Gold
-    borderRadius: '8px',
-    color: '#000000', // Black text on Gold
+    backgroundColor: '#8B5CF6', // Purple-500
+    borderRadius: '12px',
+    color: '#ffffff',
     fontSize: '16px',
-    fontWeight: 'bold',
+    fontWeight: '600',
     textDecoration: 'none',
     textAlign: 'center' as const,
     display: 'block',
-    padding: '12px 20px',
-    marginTop: '20px',
+    padding: '14px 24px',
+    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
 };
 
 const footer = {
     textAlign: 'center' as const,
-    paddingTop: '20px',
+    paddingTop: '32px',
 };
 
 const footerText = {
     fontSize: '12px',
-    color: '#6B7280', // Gray-500
+    color: '#52525B', // Zinc-600
 };

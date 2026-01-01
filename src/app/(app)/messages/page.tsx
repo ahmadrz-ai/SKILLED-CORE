@@ -5,18 +5,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import {
     Search, Phone, Video, MoreVertical, Paperclip, Send,
-    Check, CheckCircle2, Circle, MessageSquare, CheckCheck
+    Check, CheckCircle2, Circle, MessageSquare, CheckCheck,
+    Smile, CornerUpLeft, Trash2, Copy, AlertCircle, Heart,
+    ThumbsUp
 } from 'lucide-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
-import { getConversations, getMessages, sendMessage, startConversation, getUserDetails } from './actions';
+import {
+    getConversations, getMessages, sendMessage, startConversation,
+    getUserDetails, reactToMessage, unsendMessage
+} from './actions';
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing";
 import { Loader2 } from "lucide-react";
 import InvitationCard from "@/components/chat/InvitationCard";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 
-// ...
+const EMOJI_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
 export default function MessagesPage() {
     const searchParams = useSearchParams();
@@ -31,6 +39,7 @@ export default function MessagesPage() {
     const [chatLoading, setChatLoading] = useState(false);
     const [currentUserRole, setCurrentUserRole] = useState<string>('User');
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [replyingTo, setReplyingTo] = useState<any | null>(null);
 
     // UploadThing
     const [isUploading, setIsUploading] = useState(false);
@@ -38,10 +47,8 @@ export default function MessagesPage() {
         onClientUploadComplete: async (res) => {
             if (res && res[0]) {
                 const file = res[0];
-                // Determine type
                 const type = file.type.startsWith('image') ? 'image' : 'file';
-                // Send message with attachment
-                await handleSendWithAttachment(file.url, type);
+                await handleSend(undefined, file.url, type);
             }
             setIsUploading(false);
         },
@@ -49,36 +56,11 @@ export default function MessagesPage() {
             toast.error("Upload failed");
             setIsUploading(false);
         },
-        onUploadBegin: () => {
-            setIsUploading(true);
-        }
+        onUploadBegin: () => setIsUploading(true)
     });
 
-    const handleSendWithAttachment = async (url: string, type: string) => {
-        if (!selectedContactId) return;
-
-        // Optimistic
-        const optimisticMsg = {
-            id: 'temp-' + Date.now(),
-            text: "Sent an attachment", // Placeholder
-            attachmentUrl: url,
-            attachmentType: type,
-            sender: 'me',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'sent'
-        };
-        setMessages(prev => [...prev, optimisticMsg]);
-
-        await sendMessage(selectedContactId, "", url, type); // Send empty text with attachment
-        loadConversations(true); // silent reload
-    };
-
-    // Initial Load
-    useEffect(() => {
-        loadConversations();
-    }, []);
-
-    // Handle initial user selection
+    // ... (Keep existing useEffects for loading/polling/scrolling)
+    useEffect(() => { loadConversations(); }, []);
     useEffect(() => {
         if (initialUserId) {
             const existing = conversations.find(c => c.contactId === initialUserId);
@@ -109,18 +91,15 @@ export default function MessagesPage() {
     }
 
     async function loadConversations(silent = false) {
-        if (!silent) setLoading(true); // Only show loader on full refresh if intended
+        if (!silent) setLoading(true);
         const res = await getConversations();
         if (res.success) {
             setConversations(res.conversations);
             setCurrentUserRole(res.userRole || 'User');
-
-            // Check if temp contact is now in the list
             if (tempContact) {
                 const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
                 if (inList) setTempContact(null);
             }
-
             if (!selectedContactId && res.conversations.length > 0 && !initialUserId) {
                 const firstContact = res.conversations[0];
                 if (firstContact) setSelectedContactId(firstContact.contactId);
@@ -129,17 +108,13 @@ export default function MessagesPage() {
         if (!silent) setLoading(false);
     }
 
-    // Load Messages when contact changes
     useEffect(() => {
         if (!selectedContactId) return;
-
-        // 1. Initial Load for this Contact
         const load = async () => {
             if (tempContact && tempContact.contactId === selectedContactId) {
                 setMessages([]);
                 return;
             }
-
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
                 setChatLoading(true);
@@ -149,54 +124,73 @@ export default function MessagesPage() {
             }
         };
         load();
-
-        // 2. Poll (Faster - 3s)
         const interval = setInterval(async () => {
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
                 const res = await getMessages(conversation.id);
                 if (res.success) setMessages(res.messages);
             }
-        }, 3000); // 3s polling for "Real-time" feel
-
+        }, 3000);
         return () => clearInterval(interval);
-
     }, [selectedContactId, conversations, tempContact]);
 
-
-    // Auto-scroll to bottom
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages, selectedContactId]);
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, [messages, selectedContactId, replyingTo]);
 
-    const handleSend = async (e?: React.FormEvent) => {
+
+    const handleSend = async (e?: React.FormEvent, attachmentUrl?: string, attachmentType?: string) => {
         e?.preventDefault();
-        if (!messageInput.trim() || !selectedContactId) return;
+        if ((!messageInput.trim() && !attachmentUrl) || !selectedContactId) return;
 
         const currentInput = messageInput;
-        setMessageInput(''); // Optimistic clear
+        const currentReply = replyingTo;
+        setMessageInput('');
+        setReplyingTo(null);
 
-        // Optimistic append
         const optimisticMsg = {
             id: 'temp-' + Date.now(),
-            text: currentInput,
+            text: currentInput || (attachmentUrl ? "Sent an attachment" : ""),
+            attachmentUrl,
+            attachmentType,
             sender: 'me',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'sent'
+            status: 'sent',
+            replyTo: currentReply ? { id: currentReply.id, content: currentReply.text, senderName: currentReply.sender === 'me' ? 'You' : selectedContact?.name } : null
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
-        const res = await sendMessage(selectedContactId, currentInput);
+        const res = await sendMessage(selectedContactId, currentInput, attachmentUrl, attachmentType, currentReply?.id);
         if (res.success) {
-            // Update real message ID or refresh
-            // We reload conversations to update the sidebar preview
-            // Passing 'true' to silent load prevents any global loading state flicker
             loadConversations(true);
         } else {
             toast.error("Failed to send");
         }
+    };
+
+    const handleReaction = async (msgId: string, emoji: string) => {
+        // Optimistic update
+        setMessages(prev => prev.map(m => {
+            if (m.id === msgId) {
+                const current = (m.reactions || []) as any[];
+                const exists = current.find(r => r.userId === 'ME_PLACEHOLDER' || r.userId === selectedContact?.contactId); // Ideally needs real session ID but for optimistic we toggle abstractly
+                // This is hard to do perfectly optimistic without Session ID, relying on fast server refresh for now or simple toggle visual
+                return m;
+            }
+            return m;
+        }));
+        await reactToMessage(msgId, emoji);
+        // Polling will catch it shortly
+    };
+
+    const handleUnsend = async (msgId: string) => {
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isDeleted: true, text: "Message unsent" } : m));
+        await unsendMessage(msgId);
+    };
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success("Copied to clipboard");
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -209,214 +203,256 @@ export default function MessagesPage() {
     const selectedContact = conversations.find(c => c.contactId === selectedContactId) || tempContact;
     const canCall = currentUserRole === 'ADMIN' || currentUserRole?.includes('Recruiter');
 
-    return (
-        <div className="absolute inset-0 bg-obsidian flex text-white overflow-hidden">
+    const [searchTerm, setSearchTerm] = useState('');
 
-            {/* Sidebar: Contacts */}
-            <div className="w-80 border-r border-white/5 bg-zinc-950/50 flex flex-col">
-                <div className="p-4 border-b border-white/5">
-                    <h2 className="text-xl font-bold font-cinzel tracking-wider text-white mb-4">MESSAGES</h2>
+    const filteredConversations = conversations.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="absolute inset-0 bg-black flex text-white overflow-hidden font-sans">
+            {/* Sidebar */}
+            <div className="w-96 border-r border-white/10 bg-black flex flex-col">
+                <div className="p-6 border-b border-white/10 flex flex-col gap-4 bg-black/50 backdrop-blur-xl">
+                    <h2 className="text-2xl font-black text-white tracking-wide uppercase">
+                        MESSAGES
+                    </h2>
                     <div className="relative">
-                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <input
+                            type="text"
                             placeholder="Search conversations..."
-                            className="w-full bg-zinc-900 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-violet-500/50"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-[#1A1A1A] border border-white/5 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/10 transition-colors"
                         />
                     </div>
                 </div>
-
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {loading ? (
-                        <div className="p-4 text-zinc-500 text-sm text-center">Loading chats...</div>
-                    ) : (
-                        conversations.map(contact => (
-                            <div
-                                key={contact.id}
-                                onClick={() => setSelectedContactId(contact.contactId)}
-                                className={cn(
-                                    "p-4 flex gap-3 cursor-pointer transition-colors border-b border-white/5 hover:bg-white/5",
-                                    selectedContactId === contact.contactId ? "bg-violet-900/10 border-l-2 border-l-violet-500" : "border-l-2 border-l-transparent"
-                                )}
-                            >
-                                <div className="relative">
-                                    <Avatar className="w-12 h-12 border border-white/10">
-                                        <AvatarImage src={contact.avatar} />
-                                        <AvatarFallback className="bg-zinc-800 text-zinc-400">{contact.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    {contact.online && (
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-zinc-950 rounded-full" />
-                                    )}
+                        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+                    ) : filteredConversations.map(contact => (
+                        <div
+                            key={contact.id}
+                            onClick={() => setSelectedContactId(contact.contactId)}
+                            className={cn(
+                                "flex items-center gap-4 p-4 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 mx-2 rounded-xl my-1",
+                                selectedContactId === contact.contactId ? "bg-white/10" : "bg-transparent"
+                            )}
+                        >
+                            <div className="relative">
+                                <Avatar className="w-12 h-12 border border-white/10">
+                                    <AvatarImage src={contact.avatar} />
+                                    <AvatarFallback className="bg-zinc-800 text-zinc-400">{contact.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {contact.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h3 className="font-semibold text-sm truncate text-white/90">{contact.name}</h3>
+                                    <span className="text-[11px] text-zinc-500 font-medium">{contact.time}</span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-0.5">
-                                        <h3 className={cn("font-medium truncate", selectedContactId === contact.contactId ? "text-white" : "text-zinc-300")}>
-                                            {contact.name}
-                                        </h3>
-                                        <span className="text-[10px] text-zinc-500">{contact.time}</span>
-                                    </div>
-                                    <p className={cn("text-xs truncate", contact.unread > 0 ? "text-white font-semibold" : "text-zinc-500")}>
+                                <div className="flex justify-between items-center">
+                                    <p className={cn("text-xs truncate w-40", contact.unread > 0 ? "text-white font-medium" : "text-zinc-500")}>
                                         {contact.lastMessage}
                                     </p>
+                                    {contact.unread > 0 && (
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                    )}
                                 </div>
-                                {contact.unread > 0 && (
-                                    <div className="flex flex-col justify-center">
-                                        <span className="w-5 h-5 bg-violet-600 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
-                                            {contact.unread}
-                                        </span>
-                                    </div>
-                                )}
                             </div>
-                        ))
-                    )}
-                    {!loading && conversations.length === 0 && (
-                        <div className="p-8 text-center text-zinc-600">
-                            <p className="text-sm">No messages yet.</p>
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
 
-            {/* Main Chat Area */}
+            {/* Chat Area */}
             {selectedContact ? (
-                <div className="flex-1 flex flex-col bg-zinc-900/20 backdrop-blur-sm relative">
-                    {/* Chat Header */}
-                    <div className="h-16 px-6 border-b border-white/5 flex items-center justify-between bg-zinc-950/80 backdrop-blur-md">
-                        <div className="flex items-center gap-3">
+                <div className="flex-1 flex flex-col bg-black relative">
+                    {/* Header */}
+                    <div className="h-20 px-6 border-b border-white/10 flex items-center justify-between bg-black/80 backdrop-blur-xl z-20">
+                        <div className="flex items-center gap-4">
                             <Avatar className="w-10 h-10 border border-white/10">
                                 <AvatarImage src={selectedContact.avatar} />
                                 <AvatarFallback className="bg-zinc-800 text-zinc-400">{selectedContact.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <h2 className="font-bold text-white flex items-center gap-2">
-                                    {selectedContact.name}
-                                    {selectedContact.role?.includes('Recruiter') && (
-                                        <span className="px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 text-[10px] border border-teal-500/20">RECRUITER</span>
-                                    )}
-                                </h2>
-                                <p className="text-xs text-zinc-500 flex items-center gap-1">
-                                    {selectedContact.role || "Member"}
-                                </p>
+                                <h3 className="font-semibold text-base">{selectedContact.name}</h3>
+                                <p className="text-xs text-zinc-500">{selectedContact.role || 'Active now'}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {/* Call buttons restricted to Admin/Recruiter */}
-                            {canCall && (
-                                <>
-                                    <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                                        <Video className="w-5 h-5" />
-                                    </Button>
-                                    {/* Removed Phone icon as requested ("just a video call section") */}
-                                </>
-                            )}
-                            <div className="h-6 w-px bg-white/10 mx-2" />
-                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                                <MoreVertical className="w-5 h-5" />
-                            </Button>
+                        <div className="flex items-center gap-6">
+                            {canCall && <Video className="w-7 h-7 stroke-[1.5] text-white cursor-pointer" />}
+                            <AlertCircle className="w-7 h-7 stroke-[1.5] text-white cursor-pointer" />
                         </div>
                     </div>
 
-                    {/* Chat Stream */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar" ref={scrollRef}>
-                        {chatLoading ? (
-                            <div className="h-full flex flex-col items-center justify-center text-zinc-500">
-                                <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                                <p className="text-xs">Decrypting history...</p>
-                            </div>
-                        ) : messages.length > 0 ? (
-                            messages.map(msg => (
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar scroll-smooth" ref={scrollRef}>
+                        {messages.map((msg, i) => {
+                            const isMe = msg.sender === 'me';
+                            const prev = messages[i - 1];
+                            const next = messages[i + 1];
+                            const isFirst = !prev || prev.sender !== msg.sender;
+                            const isLast = !next || next.sender !== msg.sender;
+                            const showAvatar = !isMe && isLast;
+
+                            return (
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     key={msg.id}
-                                    className={cn("flex", msg.sender === 'me' ? "justify-end" : "justify-start")}
+                                    className={cn("flex group items-end mb-1", isMe ? "justify-end" : "justify-start")}
                                 >
-                                    <div className={cn(
-                                        "max-w-[70%] px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed relative group",
-                                        msg.sender === 'me'
-                                            ? "bg-violet-900/80 text-white rounded-br-none" // Less shiny (darker)
-                                            : "bg-zinc-800 text-zinc-300 rounded-bl-none border border-white/5"
-                                    )}>
-                                        <RenderMessageContent msg={msg} />
-                                        <div className={cn(
-                                            "text-[9px] mt-1 opacity-50 flex items-center gap-1",
-                                            msg.sender === 'me' ? "justify-end text-violet-200" : "text-zinc-500"
-                                        )}>
-                                            {msg.time}
-                                            {msg.sender === 'me' && (
-                                                msg.status === 'read'
-                                                    ? <CheckCheck className="w-3.5 h-3.5 text-blue-400" /> // Double Blue Tick
-                                                    : <CheckCheck className="w-3.5 h-3.5 text-white/50" /> // Double Grey Tick (Sent/Delivered equivalent)
+                                    {/* Action Helper (Left for Me, Right for Them) */}
+                                    {isMe && <MessageActions msg={msg} onReply={() => setReplyingTo(msg)} onUnsend={() => handleUnsend(msg.id)} onCopy={handleCopy} />}
+
+                                    {!isMe && (
+                                        <div className="w-8 mr-2 flex-shrink-0">
+                                            {showAvatar && (
+                                                <Avatar className="w-7 h-7">
+                                                    <AvatarImage src={selectedContact.avatar} />
+                                                    <AvatarFallback>{selectedContact.name[0]}</AvatarFallback>
+                                                </Avatar>
                                             )}
                                         </div>
-                                    </div>
+                                    )}
+
+                                    <ContextMenu>
+                                        <ContextMenuTrigger>
+                                            <div className={cn(
+                                                "max-w-[500px] relative px-4 py-2.5 text-[15px]",
+                                                isMe
+                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#3797F0] text-white rounded-l-2xl`
+                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-[#262626] text-white rounded-r-2xl`,
+                                                msg.isDeleted && "italic text-zinc-400 bg-transparent border border-white/10"
+                                            )}>
+                                                {/* Reply Context */}
+                                                {msg.replyTo && (
+                                                    <div className={cn(
+                                                        "mb-2 pl-3 border-l-2 text-xs opacity-80 py-1 rounded bg-black/10",
+                                                        isMe ? "border-white/50" : "border-zinc-500"
+                                                    )}>
+                                                        <p className="font-semibold mb-0.5">{msg.replyTo.senderName}</p>
+                                                        <p className="truncate">{msg.replyTo.content}</p>
+                                                    </div>
+                                                )}
+
+                                                <RenderMessageContent msg={msg} />
+
+                                                {/* Reactions */}
+                                                {msg.reactions && msg.reactions.length > 0 && !msg.isDeleted && (
+                                                    <div className={cn(
+                                                        "absolute -bottom-2 h-5 px-1 bg-[#262626] border border-black rounded-full flex items-center justify-center text-[10px] shadow-sm whitespace-nowrap z-10",
+                                                        isMe ? "right-0" : "left-0"
+                                                    )}>
+                                                        {msg.reactions.map((r: any, idx: number) => <span key={idx}>{r.emoji}</span>)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </ContextMenuTrigger>
+                                        <ContextMenuContent className="w-48 bg-[#262626] border-white/10 text-white">
+                                            <ContextMenuItem onSelect={() => setReplyingTo(msg)} className="focus:bg-white/10 cursor-pointer">Reply</ContextMenuItem>
+                                            <ContextMenuItem onSelect={() => handleCopy(msg.text)} className="focus:bg-white/10 cursor-pointer">Copy</ContextMenuItem>
+                                            {isMe && !msg.isDeleted && (
+                                                <ContextMenuItem onSelect={() => handleUnsend(msg.id)} className="focus:bg-red-500/20 text-red-500 focus:text-red-400 cursor-pointer">
+                                                    Unsend
+                                                </ContextMenuItem>
+                                            )}
+                                        </ContextMenuContent>
+                                    </ContextMenu>
+
+                                    {/* Action Helper (Right for Theirs, Left for Mine) */}
+                                    {!isMe && <MessageActions msg={msg} onReply={() => setReplyingTo(msg)} onReact={(emoji) => handleReaction(msg.id, emoji)} onCopy={handleCopy} />}
+
                                 </motion.div>
-                            ))
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-zinc-500 opacity-50">
-                                <MessageSquare className="w-12 h-12 mb-2" />
-                                <p className="text-sm">Start the secure channel.</p>
-                            </div>
-                        )}
+                            );
+                        })}
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-zinc-950/80 backdrop-blur-md border-t border-white/5 pr-24">
-                        {/* Smart Actions Hint */}
-                        {selectedContact.role?.includes('Recruiter') && (
-                            <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-                                <button className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs hover:bg-teal-500/20 transition-colors whitespace-nowrap">
-                                    Request Interview Slot
-                                </button>
-                                <button className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-xs hover:bg-zinc-700 transition-colors whitespace-nowrap">
-                                    Share Portfolio
-                                </button>
+                    <div className="p-4 bg-black/80 backdrop-blur-md border-t border-white/5 pr-4">
+                        {replyingTo && (
+                            <div className="flex justify-between items-center ml-4 mr-16 mb-2 p-3 bg-[#262626] rounded-t-xl border-b border-white/5">
+                                <div>
+                                    <p className="text-xs text-zinc-400">Replying to <span className="text-white font-medium">{replyingTo.sender === 'me' ? 'Yourself' : selectedContact.name}</span></p>
+                                    <p className="text-sm text-zinc-300 truncate max-w-xs">{replyingTo.text}</p>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 rounded-full p-0">X</Button>
                             </div>
                         )}
 
-                        <div className="flex items-end gap-2 bg-zinc-900/50 p-2 rounded-xl border border-white/10 focus-within:border-violet-500/50 transition-colors">
-                            <input
-                                type="file"
-                                id="file-upload"
-                                className="hidden"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files.length > 0) {
-                                        startUpload([e.target.files[0]]);
-                                    }
-                                }}
-                            />
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-zinc-400 hover:text-white h-10 w-10 shrink-0"
-                                onClick={() => document.getElementById('file-upload')?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-                            </Button>
-                            <textarea
-                                value={messageInput}
-                                onChange={e => setMessageInput(e.target.value)}
-                                onKeyDown={handleKeyPress}
-                                placeholder={isUploading ? "Uploading..." : "Type your message..."}
-                                className="flex-1 bg-transparent border-none focus:outline-none text-white placeholder:text-zinc-600 resize-none max-h-32 min-h-[40px] py-2.5 text-sm custom-scrollbar"
-                                rows={1}
-                            />
-                            <Button
-                                onClick={() => handleSend()}
-                                disabled={(!messageInput.trim() && !isUploading)}
-                                className={cn(
-                                    "h-10 w-10 shrink-0 rounded-lg transition-all",
-                                    messageInput.trim() || isUploading ? "bg-violet-600 hover:bg-violet-500 text-white" : "bg-zinc-800 text-zinc-600"
-                                )}
-                            >
-                                <Send className="w-4 h-4" />
-                            </Button>
+                        <div className="flex items-center gap-4">
+                            {/* Main Input Bar */}
+                            <div className="flex-1 flex items-center gap-3 bg-[#111111] rounded-full px-4 py-3 border border-white/5 focus-within:border-white/10 focus-within:bg-[#151515] transition-all shadow-lg inner-shadow">
+
+                                {/* File Upload */}
+                                <label htmlFor="file-upload" className="cursor-pointer text-zinc-500 hover:text-zinc-300 transition-colors shrink-0">
+                                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                                </label>
+                                <input
+                                    type="file"
+                                    id="file-upload"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files.length > 0) {
+                                            startUpload([e.target.files[0]]);
+                                        }
+                                    }}
+                                />
+
+                                <textarea
+                                    value={messageInput}
+                                    onChange={e => setMessageInput(e.target.value)}
+                                    onKeyDown={handleKeyPress}
+                                    placeholder="Type your message..."
+                                    className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-white resize-none max-h-32 min-h-[24px] py-0 placeholder:text-zinc-600 custom-scrollbar"
+                                    rows={1}
+                                    style={{ height: '24px' }} // Fix initial height
+                                />
+
+                                {/* Right Actions inside Input */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {/* Emoji Trigger */}
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                                                <Smile className="w-5 h-5" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0 border-none bg-transparent" side="top" align="end">
+                                            <EmojiPicker
+                                                theme={Theme.DARK}
+                                                onEmojiClick={(e: any) => setMessageInput(prev => prev + e.emoji)}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    <button
+                                        onClick={() => handleSend()}
+                                        disabled={!messageInput.trim()}
+                                        className={cn(
+                                            "p-2 rounded-lg transition-all",
+                                            messageInput.trim() ? "bg-[#3797F0] text-white hover:bg-[#2a85d5]" : "bg-[#262626] text-zinc-600 cursor-not-allowed"
+                                        )}
+                                    >
+                                        <Send className="w-4 h-4 ml-0.5" />
+                                    </button>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex items-center justify-center text-zinc-500">
-                    <p>Select a contact to decrypt message stream.</p>
+                <div className="flex-1 flex flex-col items-center justify-center bg-black">
+                    <div className="w-24 h-24 rounded-full border-2 border-white flex items-center justify-center mb-4">
+                        <Send className="-rotate-45 w-10 h-10 text-white ml-2 mt-1" />
+                    </div>
+                    <h2 className="text-xl font-light">Your Messages</h2>
+                    <p className="text-zinc-500 mt-2">Send private photos and messages to a friend.</p>
+                    <Button className="mt-6 bg-[#3797F0] hover:bg-[#2c7abe]">Send Message</Button>
                 </div>
             )}
         </div>
@@ -424,16 +460,14 @@ export default function MessagesPage() {
 }
 
 function RenderMessageContent({ msg }: { msg: any }) {
+    if (msg.isDeleted) return <p className="italic text-sm">Message unsent</p>;
+
     if (msg.attachmentType === 'INTERVIEW_INVITE') {
         let data: any = {};
-        try {
-            data = JSON.parse(msg.attachmentUrl || '{}');
-        } catch (e) {
-            console.error("Failed to parse invite data", e);
-        }
+        try { data = JSON.parse(msg.attachmentUrl || '{}'); } catch (e) { }
 
         return (
-            <div className="my-2">
+            <div className="my-1">
                 <InvitationCard
                     candidateName={data.candidateName || "Candidate"}
                     companyName={data.companyName || "Skilled Core"}
@@ -449,21 +483,56 @@ function RenderMessageContent({ msg }: { msg: any }) {
             return (
                 <div className="space-y-1">
                     <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                        <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[200px] rounded-lg border border-white/10" />
+                        <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[240px] rounded-lg mb-1" />
                     </a>
-                    {msg.text && <p>{msg.text}</p>}
+                    {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
                 </div>
             );
         }
         return (
             <div className="space-y-1">
-                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-violet-400 underline decoration-violet-500/30 underline-offset-4">
+                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline text-white/90">
                     <Paperclip className="w-4 h-4" />
-                    <span>View Attachment</span>
+                    <span>Attachment</span>
                 </a>
-                {msg.text && <p>{msg.text}</p>}
+                {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
             </div>
         )
     }
-    return <p>{msg.text}</p>;
+    return <p className="whitespace-pre-wrap break-words">{msg.text}</p>;
+}
+
+function MessageActions({ msg, onReply, onReact, onUnsend, onCopy }: any) {
+    const isMe = msg.sender === 'me';
+    return (
+        <div className={cn(
+            "opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-2",
+            isMe ? "flex-row-reverse" : "flex-row"
+        )}>
+            {!msg.isDeleted && <button onClick={onReply} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><CornerUpLeft className="w-4 h-4" /></button>}
+            {onReact && !msg.isDeleted && (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <button className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><Smile className="w-4 h-4" /></button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-1.5 bg-[#262626] border border-white/10 rounded-full flex gap-1">
+                        {EMOJI_REACTIONS.map(emoji => (
+                            <button key={emoji} onClick={() => onReact(emoji)} className="p-1 hover:bg-white/10 rounded-full text-lg hover:scale-125 transition-transform">{emoji}</button>
+                        ))}
+                    </PopoverContent>
+                </Popover>
+            )}
+            <Popover>
+                <PopoverTrigger asChild>
+                    <button className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                </PopoverTrigger>
+                <PopoverContent className="w-32 p-1 bg-[#262626] border border-white/10 text-white rounded-lg">
+                    <div className="flex flex-col text-sm">
+                        <button onClick={() => onCopy(msg.text)} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 w-full text-left rounded-md"><Copy className="w-3 h-3" /> Copy</button>
+                        {isMe && !msg.isDeleted && <button onClick={onUnsend} className="flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 text-red-500 w-full text-left rounded-md"><Trash2 className="w-3 h-3" /> Unsend</button>}
+                    </div>
+                </PopoverContent>
+            </Popover>
+        </div>
+    )
 }

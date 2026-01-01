@@ -11,67 +11,93 @@ export async function GET(req: Request) {
     }
 
     try {
-        // 2. Calculate Date (7 days ago)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        // 3. Query Users
-        // Logic: Last login was BEFORE 7 days ago OR lastLogin is null (never logged in? maybe exclude never logged in if we only want re-engagement, but let's include valid users)
-        // Optimization: Limit to 20 to prevent rate limits
-        const users = await prisma.user.findMany({
+        // 2. Fetch all unread conversation participants
+        // This finds people who ARE waiting for a reply/read
+        // We want to notify the USER (userId) that they have unread messages in these conversations.
+        const unreadParticipants = await prisma.conversationParticipant.findMany({
             where: {
-                lastLogin: {
-                    lt: sevenDaysAgo
-                },
-                email: { not: null } // Ensure email exists
-                // Note: In a real/strict marketing scenario, we would check marketingEmails: true
+                hasUnread: true,
+                user: {
+                    email: { not: null },
+                    emailNotifications: true // Respect user preference if exists, defaults to true
+                }
             },
-            take: 20,
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                username: true
+            include: {
+                user: true, // The recipient
+                conversation: {
+                    include: {
+                        participants: {
+                            include: {
+                                user: true // To find the sender names
+                            }
+                        }
+                    }
+                }
             }
         });
 
-        if (users.length === 0) {
-            return NextResponse.json({ success: true, message: "No inactive users found." });
+        if (unreadParticipants.length === 0) {
+            return NextResponse.json({ success: true, message: "No unread messages found." });
+        }
+
+        // 3. Group by Recipient (User)
+        const userMap = new Map();
+
+        for (const p of unreadParticipants) {
+            const recipient = p.user;
+            if (!recipient.email) continue;
+
+            if (!userMap.has(recipient.id)) {
+                userMap.set(recipient.id, {
+                    user: recipient,
+                    senders: new Set<string>()
+                });
+            }
+
+            // Find the OTHER participant(s) who are the senders
+            // In a 1:1 chat, it's the other person. In group, it's anyone else.
+            const otherParticipants = p.conversation.participants.filter(cp => cp.userId !== recipient.id);
+            otherParticipants.forEach(op => {
+                if (op.user.name) userMap.get(recipient.id).senders.add(op.user.name);
+                else if (op.user.username) userMap.get(recipient.id).senders.add(op.user.username);
+            });
         }
 
         const resend = new Resend(process.env.RESEND_API_KEY);
-        const subjectLines = [
-            "Your profile is getting noticed 👀",
-            "Don't let your rank drop..."
-        ];
+        const results = [];
 
         // 4. Send Emails
-        const results = await Promise.allSettled(users.map(async (user) => {
-            if (!user.email) return;
+        for (const [userId, data] of userMap.entries()) {
+            const { user, senders } = data;
+            const senderNames = Array.from(senders) as string[];
 
-            const subject = subjectLines[Math.floor(Math.random() * subjectLines.length)];
-            const userName = user.name || user.username || "Friend";
+            if (senderNames.length === 0) continue;
 
-            return resend.emails.send({
-                from: 'Ahmad from Skilled Core <ahmad@skilledcore.com>',
-                to: user.email,
-                subject: subject,
-                react: RetentionEmail({ userName })
-            });
-        }));
+            const senderText = senderNames.slice(0, 2).join(', ') + (senderNames.length > 2 ? ` +${senderNames.length - 2}` : '');
 
-        // Log results
-        const successful = results.filter(r => r.status === 'fulfilled').length;
-        console.log(`Cron: Sent ${successful}/${users.length} retention emails.`);
+            results.push(resend.emails.send({
+                from: 'Skilled Core <notifications@skilledcore.com>',
+                to: user.email!,
+                subject: `You have unread messages from ${senderText}`,
+                react: RetentionEmail({
+                    userName: user.name || user.username || "Member",
+                    senderNames: senderNames
+                })
+            }));
+        }
+
+        await Promise.allSettled(results);
+
+        console.log(`Cron: Sent ${results.length} unread message notifications.`);
 
         return NextResponse.json({
             success: true,
-            processed: users.length,
-            sent: successful
+            processed: unreadParticipants.length,
+            emailsSent: results.length
         });
 
     } catch (error) {
-        console.error("Cron Retention Error:", error);
+        console.error("Cron Notification Error:", error);
         return new NextResponse('Internal Server Error', { status: 500 });
     }
 }

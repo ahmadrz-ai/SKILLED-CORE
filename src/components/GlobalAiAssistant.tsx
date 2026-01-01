@@ -9,6 +9,7 @@ import { QodeeLogo } from "@/components/QodeeLogo";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
 import { useChat } from "@ai-sdk/react";
+import { usePathname } from "next/navigation";
 
 const SUGGESTED_ACTIONS = [
     { id: '1', label: "Navigate to Feed", icon: Globe, action: "/feed" },
@@ -17,6 +18,7 @@ const SUGGESTED_ACTIONS = [
 ];
 
 export function GlobalAiAssistant() {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +97,9 @@ export function GlobalAiAssistant() {
     const handleAction = async (action: string) => {
         setInputValue(`I would like to ${action}`);
     }
+
+    // Hide on messages page - MOVED HERE TO FIX HOOKS ORDER
+    if (pathname?.startsWith('/messages')) return null;
 
     return (
         <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end pointer-events-none">

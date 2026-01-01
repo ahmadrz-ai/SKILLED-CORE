@@ -103,6 +103,15 @@ export async function getMessages(conversationId: string) {
         const messages = await prisma.message.findMany({
             where: { conversationId },
             orderBy: { createdAt: 'asc' },
+            include: {
+                replyTo: {
+                    select: {
+                        id: true,
+                        content: true,
+                        sender: { select: { name: true } }
+                    }
+                }
+            }
         });
 
         console.log(`Fetching messages for ${conversationId}, found: ${messages.length}`);
@@ -110,12 +119,20 @@ export async function getMessages(conversationId: string) {
             success: true,
             messages: messages.map(m => ({
                 id: m.id,
-                text: m.content,
-                attachmentUrl: m.attachmentUrl,
-                attachmentType: m.attachmentType,
+                text: m.isDeleted ? "Message unsent" : m.content,
+                attachmentUrl: m.isDeleted ? null : m.attachmentUrl,
+                attachmentType: m.isDeleted ? null : m.attachmentType,
                 sender: m.senderId === session.user!.id ? 'me' : 'them',
+                senderId: m.senderId,
                 time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                status: isReadByRecipient ? 'read' : 'sent' // Simplified logic: if they are up to date, all are read.
+                status: isReadByRecipient ? 'read' : 'sent', // Simplified logic: if they are up to date, all are read.
+                reactions: m.reactions || [],
+                isDeleted: m.isDeleted,
+                replyTo: m.replyTo ? {
+                    id: m.replyTo.id,
+                    content: m.replyTo.content,
+                    senderName: m.replyTo.sender.name
+                } : null
             })),
             isReadByRecipient
         };
@@ -125,7 +142,7 @@ export async function getMessages(conversationId: string) {
     }
 }
 
-export async function sendMessage(recipientId: string, content: string | null, attachmentUrl?: string, attachmentType?: string) {
+export async function sendMessage(recipientId: string, content: string | null, attachmentUrl?: string, attachmentType?: string, replyToId?: string) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
@@ -181,7 +198,8 @@ export async function sendMessage(recipientId: string, content: string | null, a
                 attachmentUrl,
                 attachmentType,
                 senderId: userId,
-                conversationId
+                conversationId,
+                replyToId
             }
         });
 
@@ -237,6 +255,58 @@ export async function sendMessage(recipientId: string, content: string | null, a
     } catch (error) {
         console.error("Send Message Error:", error);
         return { success: false, message: "Failed to send" };
+    }
+}
+
+export async function reactToMessage(messageId: string, emoji: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+
+    try {
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message) return { success: false };
+
+        const currentReactions = (message.reactions as any[]) || [];
+        // Toggle reaction
+        const existingIndex = currentReactions.findIndex((r: any) => r.userId === session.user?.id && r.emoji === emoji);
+
+        let newReactions;
+        if (existingIndex > -1) {
+            // Remove
+            newReactions = currentReactions.filter((_, i) => i !== existingIndex);
+        } else {
+            // Add
+            newReactions = [...currentReactions, { userId: session.user?.id, emoji }];
+        }
+
+        await prisma.message.update({
+            where: { id: messageId },
+            data: { reactions: newReactions }
+        });
+        revalidatePath('/messages');
+        return { success: true };
+    } catch (e) {
+        console.error(e);
+        return { success: false };
+    }
+}
+
+export async function unsendMessage(messageId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+
+    try {
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message || message.senderId !== session.user.id) return { success: false };
+
+        await prisma.message.update({
+            where: { id: messageId },
+            data: { isDeleted: true, content: "Message unsent", attachmentUrl: null }
+        });
+        revalidatePath('/messages');
+        return { success: true };
+    } catch (e) {
+        return { success: false };
     }
 }
 

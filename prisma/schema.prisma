@@ -112,10 +112,13 @@ model Interview {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// ... (previous content)
+
 model Conversation {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  theme     String   @default("default")
 
   participants ConversationParticipant[]
   messages     Message[]
@@ -134,14 +137,25 @@ model ConversationParticipant {
   @@unique([userId, conversationId])
 }
 
+// ... (previous content)
+
 model Message {
   id             String   @id @default(uuid())
-  content        String? // Made optional because a message could be just an attachment
+  content        String?
   attachmentUrl  String?
-  attachmentType String? // 'image', 'file', etc.
+  attachmentType String?
   senderId       String
   conversationId String
   createdAt      DateTime @default(now())
+
+  // New Chat Features
+  replyToId String?
+  replyTo   Message?  @relation("ReplyRelation", fields: [replyToId], references: [id])
+  replies   Message[] @relation("ReplyRelation")
+
+  reactions Json? // Stores array of { userId: string, emoji: string }
+  isDeleted Boolean @default(false)
+  forwarded Boolean @default(false)
 
   sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
