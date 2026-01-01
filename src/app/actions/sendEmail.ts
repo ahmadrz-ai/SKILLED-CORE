@@ -23,7 +23,8 @@ export async function sendContactEmail(formData: FormData) {
             react: MessageNotification({
                 senderName: name,
                 senderEmail: email,
-                messageContent: message
+                messageContent: message,
+                actionUrl: `mailto:${email}`
             }) as React.ReactElement,
         });
 
