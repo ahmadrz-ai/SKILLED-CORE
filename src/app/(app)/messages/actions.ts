@@ -11,6 +11,12 @@ export async function getConversations() {
     if (!session?.user?.id) return { success: false, conversations: [] };
 
     try {
+        // Fetch current user role for UI permissions
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { role: true }
+        });
+
         const conversations = await prisma.conversation.findMany({
             where: {
                 participants: {
@@ -29,7 +35,6 @@ export async function getConversations() {
                                 image: true,
                                 role: true,
                                 headline: true,
-                                // online status is not persisted, we can infer last active later
                             }
                         }
                     }
@@ -47,23 +52,23 @@ export async function getConversations() {
             const myParticipant = c.participants.find(p => p.userId === session.user!.id);
             const lastMessage = c.messages[0];
 
-            if (!otherParticipant) return null; // Should not happen
+            if (!otherParticipant) return null;
 
             return {
                 id: c.id,
                 contactId: otherParticipant.userId,
                 name: otherParticipant.user.name || otherParticipant.user.username || "Unknown",
                 role: otherParticipant.user.headline || otherParticipant.user.role,
-                avatar: otherParticipant.user.image, // URL
-                online: false, // Placeholder
+                avatar: otherParticipant.user.image,
+                online: false,
                 lastMessage: lastMessage ? lastMessage.content : "Start a conversation",
                 time: lastMessage ? new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
-                unread: myParticipant?.hasUnread ? 1 : 0, // Boolean to count
+                unread: myParticipant?.hasUnread ? 1 : 0,
                 updatedAt: c.updatedAt
             };
         }).filter(Boolean);
 
-        return { success: true, conversations: formatted };
+        return { success: true, conversations: formatted, userRole: currentUser?.role || 'User' };
     } catch (error) {
         console.error("Get Conversations Error:", error);
         return { success: false, conversations: [] };
@@ -86,10 +91,18 @@ export async function getMessages(conversationId: string) {
             data: { hasUnread: false }
         });
 
+        // Get updated conversation status to check if OTHER user has read messages
+        const conversationCallback = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { participants: true }
+        });
+
+        const otherParticipant = conversationCallback?.participants.find(p => p.userId !== session.user!.id);
+        const isReadByRecipient = otherParticipant ? !otherParticipant.hasUnread : false;
+
         const messages = await prisma.message.findMany({
             where: { conversationId },
             orderBy: { createdAt: 'asc' },
-            include: { sender: true }
         });
 
         console.log(`Fetching messages for ${conversationId}, found: ${messages.length}`);
@@ -101,8 +114,10 @@ export async function getMessages(conversationId: string) {
                 attachmentUrl: m.attachmentUrl,
                 attachmentType: m.attachmentType,
                 sender: m.senderId === session.user!.id ? 'me' : 'them',
-                time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }))
+                time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                status: isReadByRecipient ? 'read' : 'sent' // Simplified logic: if they are up to date, all are read.
+            })),
+            isReadByRecipient
         };
     } catch (error) {
         console.error("Get Messages Error:", error);
@@ -114,17 +129,11 @@ export async function sendMessage(recipientId: string, content: string | null, a
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-    if (!content?.trim() && !attachmentUrl) return { success: false, message: "Empty message" }; // Must have either content or attachment
+    if (!content?.trim() && !attachmentUrl) return { success: false, message: "Empty message" };
 
     try {
         const userId = session.user.id;
 
-        // 1. Find existing conversation OR create new
-        // We need to find a conversation where BOTH participants exist
-        // Prisma doesn't have a direct "find conversation with exact participants" query easily without raw SQL or double checking
-        // Easier approach: Find active conversations for ME, then filter in memory or via improved query.
-
-        // Better:
         const existingConversations = await prisma.conversation.findMany({
             where: {
                 participants: {
@@ -136,13 +145,10 @@ export async function sendMessage(recipientId: string, content: string | null, a
             include: { participants: true }
         });
 
-        // Filter for exactly 2 participants to avoid group chat confusions (if we ever add them)
         const match = existingConversations.find(c => c.participants.length === 2);
-
         let conversationId = match?.id;
 
         if (!conversationId) {
-            // Create new
             const newConv = await prisma.conversation.create({
                 data: {
                     participants: {
@@ -155,7 +161,6 @@ export async function sendMessage(recipientId: string, content: string | null, a
             });
             conversationId = newConv.id;
         } else {
-            // Update existing: Set unread for recipient
             await prisma.conversationParticipant.updateMany({
                 where: {
                     conversationId,
@@ -169,10 +174,10 @@ export async function sendMessage(recipientId: string, content: string | null, a
             });
         }
 
-        // 2. Create Message
+        // Create Message
         const newMessage = await prisma.message.create({
             data: {
-                content: content || "", // Content can be empty string if attachment exists
+                content: content || "",
                 attachmentUrl,
                 attachmentType,
                 senderId: userId,
@@ -180,29 +185,39 @@ export async function sendMessage(recipientId: string, content: string | null, a
             }
         });
 
-        // 3. Send Email Notification (Async - fire and forget)
+        // Create System Notification for Bell
+        const sender = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, username: true }
+        });
+        const senderName = sender?.name || sender?.username || "A user";
+
+        await prisma.notification.create({
+            data: {
+                userId: recipientId,
+                type: 'MESSAGE',
+                message: `New message from <strong>${senderName}</strong>`,
+                resourcePath: `/messages?userId=${userId}`,
+                read: false
+            }
+        });
+
+        // Send Email Notification (Async)
         (async () => {
             try {
-                // Fetch recipient email
                 const recipient = await prisma.user.findUnique({
                     where: { id: recipientId },
                     select: { email: true, emailNotifications: true }
                 });
 
                 if (recipient?.email && recipient.emailNotifications) {
-                    const sender = await prisma.user.findUnique({
-                        where: { id: userId },
-                        select: { name: true, username: true }
-                    });
-
-                    const senderName = sender?.name || sender?.username || "A user";
                     const resend = new Resend(process.env.RESEND_API_KEY);
                     const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://skilledcore.com'}/messages?userId=${userId}`;
 
                     await resend.emails.send({
                         from: 'Skilled Core <notifications@skilledcore.com>',
                         to: recipient.email,
-                        replyTo: 'ahmad@skilledcore.com',
+                        replyTo: 'ahmad@skilledcore.com', // In future could use sender's email if available and safe, or a proxy
                         subject: `New message from ${senderName}`,
                         react: MessageNotification({
                             senderName,

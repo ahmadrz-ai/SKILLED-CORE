@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import {
     Search, Phone, Video, MoreVertical, Paperclip, Send,
-    Check, CheckCircle2, Circle, MessageSquare
+    Check, CheckCircle2, Circle, MessageSquare, CheckCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +29,7 @@ export default function MessagesPage() {
     const [messages, setMessages] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [chatLoading, setChatLoading] = useState(false);
+    const [currentUserRole, setCurrentUserRole] = useState<string>('User');
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // UploadThing
@@ -63,12 +64,13 @@ export default function MessagesPage() {
             attachmentUrl: url,
             attachmentType: type,
             sender: 'me',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'sent'
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
         await sendMessage(selectedContactId, "", url, type); // Send empty text with attachment
-        loadConversations();
+        loadConversations(true); // silent reload
     };
 
     // Initial Load
@@ -106,10 +108,12 @@ export default function MessagesPage() {
         }
     }
 
-    async function loadConversations() {
+    async function loadConversations(silent = false) {
+        if (!silent) setLoading(true); // Only show loader on full refresh if intended
         const res = await getConversations();
         if (res.success) {
             setConversations(res.conversations);
+            setCurrentUserRole(res.userRole || 'User');
 
             // Check if temp contact is now in the list
             if (tempContact) {
@@ -122,35 +126,10 @@ export default function MessagesPage() {
                 if (firstContact) setSelectedContactId(firstContact.contactId);
             }
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
     }
 
     // Load Messages when contact changes
-    // This was the old one
-    // useEffect(() => {
-    //     if (!selectedContactId) return;
-
-    //     async function fetchMsgs() {
-    //         // Check if it's a temp contact (no conversation yet)
-    //         if (tempContact && tempContact.contactId === selectedContactId) {
-    //             setMessages([]);
-    //             return;
-    //         }
-
-    //         const conversation = conversations.find(c => c.contactId === selectedContactId);
-    //         if (conversation) {
-    //             const res = await getMessages(conversation.id);
-    //             if (res.success) setMessages(res.messages);
-    //         }
-    //     }
-    //     fetchMsgs();
-
-    //     const interval = setInterval(fetchMsgs, 5000);
-    //     return () => clearInterval(interval);
-
-    // }, [selectedContactId, conversations, tempContact]);
-
-    // New Logic:
     useEffect(() => {
         if (!selectedContactId) return;
 
@@ -171,14 +150,14 @@ export default function MessagesPage() {
         };
         load();
 
-        // 2. Poll
+        // 2. Poll (Faster - 3s)
         const interval = setInterval(async () => {
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
                 const res = await getMessages(conversation.id);
                 if (res.success) setMessages(res.messages);
             }
-        }, 8000); // 8s polling
+        }, 3000); // 3s polling for "Real-time" feel
 
         return () => clearInterval(interval);
 
@@ -204,19 +183,18 @@ export default function MessagesPage() {
             id: 'temp-' + Date.now(),
             text: currentInput,
             sender: 'me',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'sent'
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
         const res = await sendMessage(selectedContactId, currentInput);
         if (res.success) {
             // Update real message ID or refresh
-            // Refreshing ensures correct server timestamp/ID
-            // But for smoothness we might just leave it? 
-            // Better to refresh conversation list to update "Last message" preview
-            loadConversations();
+            // We reload conversations to update the sidebar preview
+            // Passing 'true' to silent load prevents any global loading state flicker
+            loadConversations(true);
         } else {
-            // Error handling - remove optimistic message?
             toast.error("Failed to send");
         }
     };
@@ -229,6 +207,7 @@ export default function MessagesPage() {
     };
 
     const selectedContact = conversations.find(c => c.contactId === selectedContactId) || tempContact;
+    const canCall = currentUserRole === 'ADMIN' || currentUserRole?.includes('Recruiter');
 
     return (
         <div className="absolute inset-0 bg-obsidian flex text-white overflow-hidden">
@@ -320,12 +299,15 @@ export default function MessagesPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                                <Phone className="w-5 h-5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                                <Video className="w-5 h-5" />
-                            </Button>
+                            {/* Call buttons restricted to Admin/Recruiter */}
+                            {canCall && (
+                                <>
+                                    <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+                                        <Video className="w-5 h-5" />
+                                    </Button>
+                                    {/* Removed Phone icon as requested ("just a video call section") */}
+                                </>
+                            )}
                             <div className="h-6 w-px bg-white/10 mx-2" />
                             <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
                                 <MoreVertical className="w-5 h-5" />
@@ -351,7 +333,7 @@ export default function MessagesPage() {
                                     <div className={cn(
                                         "max-w-[70%] px-4 py-3 rounded-2xl shadow-sm text-sm leading-relaxed relative group",
                                         msg.sender === 'me'
-                                            ? "bg-violet-600 text-white rounded-br-none"
+                                            ? "bg-violet-900/80 text-white rounded-br-none" // Less shiny (darker)
                                             : "bg-zinc-800 text-zinc-300 rounded-bl-none border border-white/5"
                                     )}>
                                         <RenderMessageContent msg={msg} />
@@ -360,7 +342,11 @@ export default function MessagesPage() {
                                             msg.sender === 'me' ? "justify-end text-violet-200" : "text-zinc-500"
                                         )}>
                                             {msg.time}
-                                            {msg.sender === 'me' && <CheckCircle2 className="w-3 h-3" />}
+                                            {msg.sender === 'me' && (
+                                                msg.status === 'read'
+                                                    ? <CheckCheck className="w-3.5 h-3.5 text-blue-400" /> // Double Blue Tick
+                                                    : <CheckCheck className="w-3.5 h-3.5 text-white/50" /> // Double Grey Tick (Sent/Delivered equivalent)
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>
