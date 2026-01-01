@@ -40,7 +40,7 @@ export const RetentionEmail = ({
 
                         <Hr style={hr} />
 
-                        <Button style={button} href="https://skilledcore.com/dashboard">
+                        <Button style={button} href="https://skilledcore.com/feed">
                             See What's New
                         </Button>
                     </Section>

@@ -17,12 +17,14 @@ interface MessageNotificationProps {
     senderName: string;
     senderEmail: string;
     messageContent: string;
+    actionUrl: string;
 }
 
 export const MessageNotification = ({
     senderName,
     senderEmail,
     messageContent,
+    actionUrl,
 }: MessageNotificationProps) => {
     const previewText = `New message from ${senderName}`;
 
@@ -47,8 +49,8 @@ export const MessageNotification = ({
 
                         <Hr style={hr} />
 
-                        <Button style={button} href="https://skilledcore.com/dashboard">
-                            Go to Dashboard
+                        <Button style={button} href={actionUrl}>
+                            Reply to Message
                         </Button>
                     </Section>
 

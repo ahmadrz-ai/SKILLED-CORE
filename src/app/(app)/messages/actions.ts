@@ -197,6 +197,7 @@ export async function sendMessage(recipientId: string, content: string | null, a
 
                     const senderName = sender?.name || sender?.username || "A user";
                     const resend = new Resend(process.env.RESEND_API_KEY);
+                    const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://skilledcore.com'}/messages?userId=${userId}`;
 
                     await resend.emails.send({
                         from: 'Skilled Core <notifications@skilledcore.com>',
@@ -205,8 +206,9 @@ export async function sendMessage(recipientId: string, content: string | null, a
                         subject: `New message from ${senderName}`,
                         react: MessageNotification({
                             senderName,
-                            senderEmail: 'notifications@skilledcore.com', // Don't expose real email in arg if not needed, or use a placeholder
-                            messageContent: content || "Sent an attachment"
+                            senderEmail: 'notifications@skilledcore.com',
+                            messageContent: content || "Sent an attachment",
+                            actionUrl
                         })
                     });
                 }
