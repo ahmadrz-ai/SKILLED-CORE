@@ -58,6 +58,7 @@ model User {
   nodeType               String                @default("OPEN") // OPEN, BROADCAST
   emailNotifications     Boolean               @default(true)
   marketingEmails        Boolean               @default(false)
+  lastLogin              DateTime?
   credits                Int                   @default(10)
   plan                   String                @default("BASIC") // BASIC, PRO, ULTRA
   savedJobs              SavedJob[]

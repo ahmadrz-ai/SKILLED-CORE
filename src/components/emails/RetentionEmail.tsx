@@ -6,25 +6,20 @@ import {
     Heading,
     Hr,
     Html,
-    Link,
     Preview,
     Section,
     Text,
 } from '@react-email/components';
 import * as React from 'react';
 
-interface MessageNotificationProps {
-    senderName: string;
-    senderEmail: string;
-    messageContent: string;
+interface RetentionEmailProps {
+    userName: string;
 }
 
-export const MessageNotification = ({
-    senderName,
-    senderEmail,
-    messageContent,
-}: MessageNotificationProps) => {
-    const previewText = `New message from ${senderName}`;
+export const RetentionEmail = ({
+    userName,
+}: RetentionEmailProps) => {
+    const previewText = `We miss you at Skilled Core`;
 
     return (
         <Html>
@@ -37,18 +32,16 @@ export const MessageNotification = ({
                     </Section>
 
                     <Section style={content}>
-                        <Text style={paragraph}>You have a new message from <strong>{senderName}</strong>. Click to reply.</Text>
+                        <Text style={paragraph}>Hi {userName},</Text>
 
-                        <Hr style={hr} />
-
-                        <Text style={messageText}>
-                            "{messageContent}"
+                        <Text style={paragraph}>
+                            We noticed you haven't checked your dashboard in a while. You might be missing opportunities.
                         </Text>
 
                         <Hr style={hr} />
 
                         <Button style={button} href="https://skilledcore.com/dashboard">
-                            Go to Dashboard
+                            See What's New
                         </Button>
                     </Section>
 
@@ -63,7 +56,7 @@ export const MessageNotification = ({
     );
 };
 
-export default MessageNotification;
+export default RetentionEmail;
 
 // Styles
 const main = {
@@ -103,19 +96,7 @@ const paragraph = {
     fontSize: '16px',
     lineHeight: '26px',
     color: '#E5E7EB', // Gray-200
-};
-
-const link = {
-    color: '#FCD34D',
-    textDecoration: 'none',
-};
-
-const messageText = {
-    fontSize: '18px',
-    lineHeight: '28px',
-    color: '#FFFFFF',
-    fontStyle: 'italic',
-    padding: '10px 0',
+    marginBottom: '20px',
 };
 
 const hr = {

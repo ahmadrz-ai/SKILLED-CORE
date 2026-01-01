@@ -3,6 +3,8 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
+import { Resend } from 'resend';
+import { MessageNotification } from '@/components/emails/MessageNotification';
 
 export async function getConversations() {
     const session = await auth();
@@ -177,6 +179,41 @@ export async function sendMessage(recipientId: string, content: string | null, a
                 conversationId
             }
         });
+
+        // 3. Send Email Notification (Async - fire and forget)
+        (async () => {
+            try {
+                // Fetch recipient email
+                const recipient = await prisma.user.findUnique({
+                    where: { id: recipientId },
+                    select: { email: true, emailNotifications: true }
+                });
+
+                if (recipient?.email && recipient.emailNotifications) {
+                    const sender = await prisma.user.findUnique({
+                        where: { id: userId },
+                        select: { name: true, username: true }
+                    });
+
+                    const senderName = sender?.name || sender?.username || "A user";
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+
+                    await resend.emails.send({
+                        from: 'Skilled Core <notifications@skilledcore.com>',
+                        to: recipient.email,
+                        replyTo: 'ahmad@skilledcore.com',
+                        subject: `New message from ${senderName}`,
+                        react: MessageNotification({
+                            senderName,
+                            senderEmail: 'notifications@skilledcore.com', // Don't expose real email in arg if not needed, or use a placeholder
+                            messageContent: content || "Sent an attachment"
+                        })
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to send email notification:", err);
+            }
+        })();
 
         revalidatePath('/messages');
         return { success: true, message: newMessage, conversationId };

@@ -163,6 +163,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     const isValid = await bcrypt.compare(credentials.password, user.password);
 
                     if (isValid) {
+                        try {
+                            // Update last login
+                            await prisma.user.update({
+                                where: { id: user.id },
+                                data: { lastLogin: new Date() }
+                            });
+                        } catch (err) {
+                            console.error("Failed to update lastLogin:", err);
+                            // Don't block login
+                        }
                         return user;
                     }
                     return null;
