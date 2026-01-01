@@ -364,7 +364,7 @@ export default function MessagesPage() {
                                     </ContextMenu>
 
                                     {/* Action Helper (Right for Theirs, Left for Mine) */}
-                                    {!isMe && <MessageActions msg={msg} onReply={() => setReplyingTo(msg)} onReact={(emoji) => handleReaction(msg.id, emoji)} onCopy={handleCopy} />}
+                                    {!isMe && <MessageActions msg={msg} onReply={() => setReplyingTo(msg)} onReact={(emoji: string) => handleReaction(msg.id, emoji)} onCopy={handleCopy} />}
 
                                 </motion.div>
                             );
