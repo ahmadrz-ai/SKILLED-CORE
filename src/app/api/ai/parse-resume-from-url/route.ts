@@ -61,7 +61,7 @@ export async function POST(request: Request) {
             if (!apiKey) throw new Error("No API Key");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
             const base64Data = buffer.toString('base64');
 
             const prompt = `You are an expert Resume Parser. Analyze the attached PDF and extract structured data in JSON:

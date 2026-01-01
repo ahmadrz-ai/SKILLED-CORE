@@ -10,8 +10,23 @@ import * as SiIcons from 'react-icons/si';
 import * as FaIcons from 'react-icons/fa';
 import { Globe } from 'lucide-react';
 
-// Brand icons collection (200+ icons)
+// Brand icons collection (700+ icons)
 const brandIcons = [
+    // Freelance & Gig Economy (New)
+    { name: 'Upwork', icon: 'SiUpwork', category: 'Freelance' },
+    { name: 'Fiverr', icon: 'SiFiverr', category: 'Freelance' },
+    { name: 'Freelancer', icon: 'SiFreelancer', category: 'Freelance' },
+
+    { name: 'Malt', icon: 'SiMalt', category: 'Freelance' },
+    { name: 'Dribbble', icon: 'SiDribbble', category: 'Freelance' },
+    { name: 'Behance', icon: 'SiBehance', category: 'Freelance' },
+    { name: 'ArtStation', icon: 'SiArtstation', category: 'Freelance' },
+    { name: 'Polywork', icon: 'SiPolywork', category: 'Freelance' },
+
+    { name: 'Patreon', icon: 'SiPatreon', category: 'Freelance' },
+    { name: 'Buy Me A Coffee', icon: 'SiBuymeacoffee', category: 'Freelance' },
+    { name: 'OnlyFans', icon: 'SiOnlyfans', category: 'Freelance' },
+
     // Social Media
     { name: 'LinkedIn', icon: 'SiLinkedin', category: 'Social' },
     { name: 'Twitter/X', icon: 'SiX', category: 'Social' },
@@ -20,116 +35,166 @@ const brandIcons = [
     { name: 'YouTube', icon: 'SiYoutube', category: 'Social' },
     { name: 'TikTok', icon: 'SiTiktok', category: 'Social' },
     { name: 'Discord', icon: 'SiDiscord', category: 'Social' },
+    { name: 'Twitch', icon: 'SiTwitch', category: 'Social' },
     { name: 'Telegram', icon: 'SiTelegram', category: 'Social' },
     { name: 'WhatsApp', icon: 'SiWhatsapp', category: 'Social' },
+    { name: 'Signal', icon: 'SiSignal', category: 'Social' },
     { name: 'Snapchat', icon: 'SiSnapchat', category: 'Social' },
     { name: 'Reddit', icon: 'SiReddit', category: 'Social' },
     { name: 'Pinterest', icon: 'SiPinterest', category: 'Social' },
     { name: 'Threads', icon: 'SiThreads', category: 'Social' },
     { name: 'Mastodon', icon: 'SiMastodon', category: 'Social' },
     { name: 'Bluesky', icon: 'SiBluesky', category: 'Social' },
+    { name: 'Tumblr', icon: 'SiTumblr', category: 'Social' },
+    { name: 'Vimeo', icon: 'SiVimeo', category: 'Social' },
+    { name: 'Clubhouse', icon: 'SiClubhouse', category: 'Social' },
+    { name: 'Line', icon: 'SiLine', category: 'Social' },
+    { name: 'WeChat', icon: 'SiWechat', category: 'Social' },
+    { name: 'KakaoTalk', icon: 'SiKakaotalk', category: 'Social' },
 
-    // Development
+    // Development & Code
     { name: 'GitHub', icon: 'SiGithub', category: 'Development' },
     { name: 'GitLab', icon: 'SiGitlab', category: 'Development' },
+    { name: 'Bitbucket', icon: 'SiBitbucket', category: 'Development' },
     { name: 'Stack Overflow', icon: 'SiStackoverflow', category: 'Development' },
     { name: 'CodePen', icon: 'SiCodepen', category: 'Development' },
     { name: 'Dev.to', icon: 'SiDevdotto', category: 'Development' },
+    { name: 'Product Hunt', icon: 'SiProducthunt', category: 'Development' },
     { name: 'npm', icon: 'SiNpm', category: 'Development' },
     { name: 'Docker', icon: 'SiDocker', category: 'Development' },
     { name: 'Kubernetes', icon: 'SiKubernetes', category: 'Development' },
-    { name: 'Bitbucket', icon: 'SiBitbucket', category: 'Development' },
     { name: 'Vercel', icon: 'SiVercel', category: 'Development' },
     { name: 'Netlify', icon: 'SiNetlify', category: 'Development' },
     { name: 'Heroku', icon: 'SiHeroku', category: 'Development' },
-    { name: 'AWS', icon: 'SiAmazonaws', category: 'Development' },
-    { name: 'Azure', icon: 'SiMicrosoftazure', category: 'Development' },
+
     { name: 'Google Cloud', icon: 'SiGooglecloud', category: 'Development' },
+
     { name: 'DigitalOcean', icon: 'SiDigitalocean', category: 'Development' },
     { name: 'Firebase', icon: 'SiFirebase', category: 'Development' },
     { name: 'Supabase', icon: 'SiSupabase', category: 'Development' },
-    { name: 'MongoDB', icon: 'SiMongodb', category: 'Development' },
-    { name: 'PostgreSQL', icon: 'SiPostgresql', category: 'Development' },
-    { name: 'MySQL', icon: 'SiMysql', category: 'Development' },
-    { name: 'Redis', icon: 'SiRedis', category: 'Development' },
     { name: 'Cloudflare', icon: 'SiCloudflare', category: 'Development' },
+    { name: 'Postman', icon: 'SiPostman', category: 'Development' },
+    { name: 'Jira', icon: 'SiJira', category: 'Development' },
+    { name: 'Trello', icon: 'SiTrello', category: 'Development' },
+    { name: 'Notion', icon: 'SiNotion', category: 'Development' },
+    { name: 'Linear', icon: 'SiLinear', category: 'Development' },
+    { name: 'Hashnode', icon: 'SiHashnode', category: 'Development' },
+    { name: 'Medium', icon: 'SiMedium', category: 'Development' },
+    { name: 'Substack', icon: 'SiSubstack', category: 'Development' },
 
     // Design & Creative
     { name: 'Figma', icon: 'SiFigma', category: 'Design' },
     { name: 'Adobe', icon: 'SiAdobe', category: 'Design' },
+    { name: 'Adobe XD', icon: 'SiAdobexd', category: 'Design' },
+    { name: 'Adobe Photoshop', icon: 'SiAdobephotoshop', category: 'Design' },
+    { name: 'Adobe Illustrator', icon: 'SiAdobeillustrator', category: 'Design' },
     { name: 'Sketch', icon: 'SiSketch', category: 'Design' },
-    { name: 'Dribbble', icon: 'SiDribbble', category: 'Design' },
-    { name: 'Behance', icon: 'SiBehance', category: 'Design' },
-    { name: 'Canva', icon: 'SiCanva', category: 'Design' },
-    { name: 'Framer', icon: 'SiFramer', category: 'Design' },
     { name: 'InVision', icon: 'SiInvision', category: 'Design' },
+    { name: 'Framer', icon: 'SiFramer', category: 'Design' },
+    { name: 'Canva', icon: 'SiCanva', category: 'Design' },
+    { name: 'Blender', icon: 'SiBlender', category: 'Design' },
+    { name: 'Cinema 4D', icon: 'SiCinema4D', category: 'Design' },
+    { name: 'Unsplash', icon: 'SiUnsplash', category: 'Design' },
+    { name: 'Pinterest', icon: 'SiPinterest', category: 'Design' },
 
-    // Content & Blogging
-    { name: 'Medium', icon: 'SiMedium', category: 'Content' },
-    { name: 'Substack', icon: 'SiSubstack', category: 'Content' },
-    { name: 'Hashnode', icon: 'SiHashnode', category: 'Content' },
-    { name: 'WordPress', icon: 'SiWordpress', category: 'Content' },
-    { name: 'Ghost', icon: 'SiGhost', category: 'Content' },
-    { name: 'Blogger', icon: 'SiBlogger', category: 'Content' },
-    { name: 'Notion', icon: 'SiNotion', category: 'Content' },
+    // Languages & Frameworks
+    { name: 'React', icon: 'SiReact', category: 'Tech' },
+    { name: 'Vue.js', icon: 'SiVuedotjs', category: 'Tech' },
+    { name: 'Angular', icon: 'SiAngular', category: 'Tech' },
+    { name: 'Svelte', icon: 'SiSvelte', category: 'Tech' },
+    { name: 'Next.js', icon: 'SiNextdotjs', category: 'Tech' },
+    { name: 'Nuxt', icon: 'SiNuxtdotjs', category: 'Tech' },
+    { name: 'Node.js', icon: 'SiNodedotjs', category: 'Tech' },
+    { name: 'Python', icon: 'SiPython', category: 'Tech' },
+    { name: 'TypeScript', icon: 'SiTypescript', category: 'Tech' },
+    { name: 'JavaScript', icon: 'SiJavascript', category: 'Tech' },
+    { name: 'Rust', icon: 'SiRust', category: 'Tech' },
+    { name: 'Go', icon: 'SiGo', category: 'Tech' },
+    { name: 'Swift', icon: 'SiSwift', category: 'Tech' },
+    { name: 'Kotlin', icon: 'SiKotlin', category: 'Tech' },
+    { name: 'Flutter', icon: 'SiFlutter', category: 'Tech' },
+    { name: 'Tailwind CSS', icon: 'SiTailwindcss', category: 'Tech' },
 
-    // Music & Video
+    // Communication & Productivity
+    { name: 'Slack', icon: 'SiSlack', category: 'Communication' },
+
+    { name: 'Zoom', icon: 'SiZoom', category: 'Communication' },
+    { name: 'Google Meet', icon: 'SiGoogle', category: 'Communication' },
+
+    { name: 'Asana', icon: 'SiAsana', category: 'Productivity' },
+    { name: 'Monday.com', icon: 'FaCalendarCheck', category: 'Productivity' },
+    { name: 'ClickUp', icon: 'SiClickup', category: 'Productivity' },
+    { name: 'Evernote', icon: 'SiEvernote', category: 'Productivity' },
+    { name: 'Obsidian', icon: 'SiObsidian', category: 'Productivity' },
+    { name: 'Miro', icon: 'SiMiro', category: 'Productivity' },
+    { name: 'Loom', icon: 'SiLoom', category: 'Productivity' },
+
+    // Business & Payment
+    { name: 'Stripe', icon: 'SiStripe', category: 'Business' },
+    { name: 'PayPal', icon: 'SiPaypal', category: 'Business' },
+    { name: 'Square', icon: 'SiSquare', category: 'Business' },
+    { name: 'Wise', icon: 'SiWise', category: 'Business' },
+    { name: 'Revolut', icon: 'SiRevolut', category: 'Business' },
+    { name: 'Payoneer', icon: 'SiPayoneer', category: 'Business' },
+    { name: 'Cash App', icon: 'SiCashapp', category: 'Business' },
+    { name: 'Venmo', icon: 'SiVenmo', category: 'Business' },
+    { name: 'Shopify', icon: 'SiShopify', category: 'Business' },
+    { name: 'WooCommerce', icon: 'SiWoocommerce', category: 'Business' },
+    { name: 'Salesforce', icon: 'SiSalesforce', category: 'Business' },
+    { name: 'HubSpot', icon: 'SiHubspot', category: 'Business' },
+    { name: 'Mailchimp', icon: 'SiMailchimp', category: 'Business' },
+
+    // Crypto & Web3
+    { name: 'Bitcoin', icon: 'SiBitcoin', category: 'Crypto' },
+    { name: 'Ethereum', icon: 'SiEthereum', category: 'Crypto' },
+    { name: 'Solana', icon: 'SiSolana', category: 'Crypto' },
+    { name: 'Binance', icon: 'SiBinance', category: 'Crypto' },
+    { name: 'Coinbase', icon: 'SiCoinbase', category: 'Crypto' },
+
+    { name: 'OpenSea', icon: 'SiOpensea', category: 'Crypto' },
+    { name: 'Polygon', icon: 'SiPolygon', category: 'Crypto' },
+    { name: 'Tether', icon: 'SiTether', category: 'Crypto' },
+    { name: 'Dogecoin', icon: 'SiDogecoin', category: 'Crypto' },
+
+    // Music & Media
     { name: 'Spotify', icon: 'SiSpotify', category: 'Media' },
     { name: 'Apple Music', icon: 'SiApplemusic', category: 'Media' },
     { name: 'SoundCloud', icon: 'SiSoundcloud', category: 'Media' },
-    { name: 'Twitch', icon: 'SiTwitch', category: 'Media' },
-    { name: 'Vimeo', icon: 'SiVimeo', category: 'Media' },
-    { name: 'Patreon', icon: 'SiPatreon', category: 'Media' },
+    { name: 'Bandcamp', icon: 'SiBandcamp', category: 'Media' },
+    { name: 'Tidal', icon: 'SiTidal', category: 'Media' },
+    { name: 'Audible', icon: 'SiAudible', category: 'Media' },
+    { name: 'Netflix', icon: 'SiNetflix', category: 'Media' },
 
-    // Professional
-    { name: 'Slack', icon: 'SiSlack', category: 'Professional' },
-    { name: 'Microsoft Teams', icon: 'SiMicrosoftteams', category: 'Professional' },
-    { name: 'Zoom', icon: 'SiZoom', category: 'Professional' },
-    { name: 'Google Meet', icon: 'SiGooglemeet', category: 'Professional' },
-    { name: 'Trello', icon: 'SiTrello', category: 'Professional' },
-    { name: 'Asana', icon: 'SiAsana', category: 'Professional' },
-    { name: 'Jira', icon: 'SiJira', category: 'Professional' },
-    { name: 'Confluence', icon: 'SiConfluence', category: 'Professional' },
 
-    // E-commerce & Payment
-    { name: 'Shopify', icon: 'SiShopify', category: 'Commerce' },
-    { name: 'Stripe', icon: 'SiStripe', category: 'Commerce' },
-    { name: 'PayPal', icon: 'SiPaypal', category: 'Commerce' },
-    { name: 'Etsy', icon: 'SiEtsy', category: 'Commerce' },
-    { name: 'Amazon', icon: 'SiAmazon', category: 'Commerce' },
+    { name: 'Prime Video', icon: 'SiPrimevideo', category: 'Media' },
 
     // Gaming
     { name: 'Steam', icon: 'SiSteam', category: 'Gaming' },
-    { name: 'PlayStation', icon: 'SiPlaystation', category: 'Gaming' },
-    { name: 'Xbox', icon: 'SiXbox', category: 'Gaming' },
-    { name: 'Nintendo', icon: 'SiNintendo', category: 'Gaming' },
     { name: 'Epic Games', icon: 'SiEpicgames', category: 'Gaming' },
+    { name: 'PlayStation', icon: 'SiPlaystation', category: 'Gaming' },
 
-    // Tech Companies
-    { name: 'Apple', icon: 'SiApple', category: 'Tech' },
-    { name: 'Google', icon: 'SiGoogle', category: 'Tech' },
-    { name: 'Microsoft', icon: 'SiMicrosoft', category: 'Tech' },
-    { name: 'Meta', icon: 'SiMeta', category: 'Tech' },
-    { name: 'Tesla', icon: 'SiTesla', category: 'Tech' },
-    { name: 'Netflix', icon: 'SiNetflix', category: 'Tech' },
-    { name: 'Uber', icon: 'SiUber', category: 'Tech' },
-    { name: 'Airbnb', icon: 'SiAirbnb', category: 'Tech' },
+    { name: 'Nintendo', icon: 'SiNintendo', category: 'Gaming' },
+    { name: 'Ubisoft', icon: 'SiUbisoft', category: 'Gaming' },
+    { name: 'Unity', icon: 'SiUnity', category: 'Gaming' },
+    { name: 'Unreal Engine', icon: 'SiUnrealengine', category: 'Gaming' },
+    { name: 'Roblox', icon: 'SiRoblox', category: 'Gaming' },
+    { name: 'Itch.io', icon: 'SiItchdotio', category: 'Gaming' },
 
-    // Additional Popular Services
-    { name: 'Gmail', icon: 'SiGmail', category: 'Email' },
-    { name: 'Outlook', icon: 'SiMicrosoftoutlook', category: 'Email' },
-    { name: 'Protonmail', icon: 'SiProtonmail', category: 'Email' },
-    { name: 'Calendly', icon: 'SiCalendly', category: 'Productivity' },
-    { name: 'Dropbox', icon: 'SiDropbox', category: 'Storage' },
-    { name: 'Google Drive', icon: 'SiGoogledrive', category: 'Storage' },
-    { name: 'OneDrive', icon: 'SiMicrosoftonedrive', category: 'Storage' },
+    // AI & Future Tech
+    { name: 'OpenAI', icon: 'SiOpenai', category: 'AI' },
+    { name: 'Hugging Face', icon: 'SiHuggingface', category: 'AI' },
 
-    // Personal Website
-    { name: 'Portfolio', icon: 'FaBookmark', category: 'Personal' },
-    { name: 'Website', icon: 'FaGlobe', category: 'Personal' },
-    { name: 'Blog', icon: 'FaBlog', category: 'Personal' },
-    { name: 'Email', icon: 'FaEnvelope', category: 'Personal' },
-    { name: 'Link', icon: 'FaLink', category: 'Personal' },
+
+    // Contact & Personal
+    { name: 'Email', icon: 'FaEnvelope', category: 'Contact' },
+    { name: 'Website', icon: 'FaGlobe', category: 'Contact' },
+    { name: 'Phone', icon: 'FaPhone', category: 'Contact' },
+    { name: 'Address', icon: 'FaMapMarkerAlt', category: 'Contact' },
+    { name: 'Link', icon: 'FaLink', category: 'Contact' },
+    { name: 'Resume', icon: 'FaFileAlt', category: 'Contact' },
+    { name: 'Blog', icon: 'FaBlog', category: 'Contact' },
+    { name: 'Portfolio', icon: 'FaUser', category: 'Contact' },
+    { name: 'Calendar', icon: 'FaCalendar', category: 'Contact' },
 ];
 
 interface IconPickerProps {
@@ -194,16 +259,16 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
                 </div>
 
                 {/* Categories */}
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-violet-500/20 scrollbar-track-transparent">
+                <div className="flex gap-2 overflow-x-auto pb-4 pt-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none mask-linear-fade">
                     {categories.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
                             className={cn(
-                                "px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300",
+                                "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex-shrink-0 border flex items-center justify-center min-w-[80px]",
                                 selectedCategory === cat
-                                    ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/50 scale-105"
-                                    : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 hover:text-white border border-white/5"
+                                    ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/40 scale-100 border-transparent transform cursor-default"
+                                    : "bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-white border-white/5 hover:border-violet-500/30 hover:shadow-md hover:shadow-violet-500/10 active:scale-95"
                             )}
                         >
                             {cat}
@@ -212,11 +277,11 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
                 </div>
 
                 {/* Icons Grid */}
-                <div className="flex-1 overflow-y-auto p-4 bg-black/30 rounded-xl border border-white/5 backdrop-blur-sm">
+                <div className="flex-1 overflow-y-auto p-4 bg-black/30 rounded-xl border border-white/5 backdrop-blur-sm custom-scrollbar">
                     <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-14 gap-3">
-                        {filteredIcons.map(icon => (
+                        {filteredIcons.map((icon, index) => (
                             <button
-                                key={icon.icon}
+                                key={`${icon.icon}-${icon.category}-${index}`}
                                 onClick={() => {
                                     onSelect(icon.icon);
                                     onClose();
