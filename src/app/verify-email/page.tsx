@@ -12,7 +12,7 @@ export default async function VerifyEmailPage({
     const emailStr = email as string || "your email";
 
     return (
-        <div className="min-h-screen w-full flex bg-obsidian text-white items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen w-full flex bg-transparent text-white items-center justify-center p-6 relative overflow-hidden">
             {/* Background ambient effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),transparent_70%)]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full opacity-20" />

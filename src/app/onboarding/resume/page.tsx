@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function OnboardingResumePage() {
     return (
-        <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md space-y-8">
                 <div>
                     <Button variant="ghost" asChild className="mb-4 text-zinc-500 hover:text-white pl-0">

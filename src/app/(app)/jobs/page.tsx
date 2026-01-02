@@ -15,7 +15,7 @@ export default async function JobsPage(props: { searchParams: Promise<{ [key: st
     const savedJobIds = await getSavedJobIds();
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 lg:p-12 font-sans">
+        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header */}

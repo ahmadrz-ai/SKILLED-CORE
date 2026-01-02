@@ -191,7 +191,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         : [];
 
     return (
-        <div className="min-h-screen bg-obsidian text-white pb-20 font-sans">
+        <div className="min-h-screen bg-transparent text-white pb-20 font-sans">
 
             {/* --- Modals Manager --- */}
             {isOwner && (
@@ -580,7 +580,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                     <div className="flex-1 space-y-8 pb-12">
 
                         {/* Tabs */}
-                        <div className="flex items-center gap-8 border-b border-white/10 px-2 sticky top-0 bg-obsidian/80 backdrop-blur-md z-40 pt-4">
+                        <div className="flex items-center gap-8 border-b border-white/10 px-2 sticky top-0 bg-black/20 backdrop-blur-md z-40 pt-4">
                             {(['overview', 'projects', 'interviews'] as const).map((tab) => {
                                 if (tab === 'projects' && user.role === 'RECRUITER') return null;
                                 return (

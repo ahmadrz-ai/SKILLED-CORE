@@ -74,7 +74,7 @@ export default function CompanyPage() {
     const isAdmin = true; // In real app: user.companyId === company.id && user.role === 'recruiter'
 
     return (
-        <div className="min-h-screen bg-obsidian text-white pb-20 relative">
+        <div className="min-h-screen bg-transparent text-white pb-20 relative">
 
             {/* HERO BANNER */}
             <div className={cn("relative h-64 md:h-80 w-full overflow-hidden", MOCK_COMPANY.banner)}>

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
     Search, Phone, Video, MoreVertical, Paperclip, Send,
     Check, CheckCircle2, Circle, MessageSquare, CheckCheck,
@@ -28,7 +28,18 @@ const EMOJI_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
 export default function MessagesPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const initialUserId = searchParams.get('userId');
+
+    const isSelectionInitialized = useRef(false);
+
+    const handleSelectContact = (contactId: string) => {
+        isSelectionInitialized.current = true;
+        setSelectedContactId(contactId);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('userId', contactId);
+        router.replace(`?${params.toString()}`);
+    };
 
     const [conversations, setConversations] = useState<any[]>([]);
     const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
@@ -60,15 +71,22 @@ export default function MessagesPage() {
     });
 
     // ... (Keep existing useEffects for loading/polling/scrolling)
+    const lastHandledUserId = useRef<string | null>(null);
+
+    // ... (Keep existing useEffects for loading/polling/scrolling)
     useEffect(() => { loadConversations(); }, []);
     useEffect(() => {
-        if (initialUserId) {
+        if (initialUserId && conversations.length > 0 && lastHandledUserId.current !== initialUserId) {
             const existing = conversations.find(c => c.contactId === initialUserId);
             if (existing) {
                 setSelectedContactId(existing.contactId);
                 setTempContact(null);
+                lastHandledUserId.current = initialUserId;
+                isSelectionInitialized.current = true;
             } else {
                 fetchUserDetails(initialUserId);
+                lastHandledUserId.current = initialUserId;
+                isSelectionInitialized.current = true;
             }
         }
     }, [initialUserId, conversations]);
@@ -100,9 +118,12 @@ export default function MessagesPage() {
                 const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
                 if (inList) setTempContact(null);
             }
-            if (!selectedContactId && res.conversations.length > 0 && !initialUserId) {
+            if (!selectedContactId && res.conversations.length > 0 && !initialUserId && !isSelectionInitialized.current) {
                 const firstContact = res.conversations[0];
-                if (firstContact) setSelectedContactId(firstContact.contactId);
+                if (firstContact) {
+                    setSelectedContactId(firstContact.contactId);
+                    isSelectionInitialized.current = true;
+                }
             }
         }
         if (!silent) setLoading(false);
@@ -235,7 +256,7 @@ export default function MessagesPage() {
                     ) : filteredConversations.map(contact => (
                         <div
                             key={contact.id}
-                            onClick={() => setSelectedContactId(contact.contactId)}
+                            onClick={() => handleSelectContact(contact.contactId)}
                             className={cn(
                                 "flex items-center gap-4 p-4 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 mx-2 rounded-xl my-1",
                                 selectedContactId === contact.contactId ? "bg-white/10" : "bg-transparent"

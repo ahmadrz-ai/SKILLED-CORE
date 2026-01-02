@@ -10,7 +10,7 @@ export default async function RecruiterDashboard() {
     const analytics = await getJobAnalytics();
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 lg:p-12">
+        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12">
             <div className="max-w-7xl mx-auto space-y-12">
 
                 {/* Header */}

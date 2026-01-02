@@ -6,7 +6,7 @@ import { AlertTriangle, Home } from 'lucide-react';
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
 
             {/* Background Noise */}
             <div className="absolute inset-0 opacity-20 pointer-events-none"

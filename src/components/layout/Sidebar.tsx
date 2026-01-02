@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logout } from "@/app/actions/authActions";
 
 import React from "react";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
@@ -80,7 +81,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
     };
 
     return (
-        <aside className="hidden lg:flex w-64 h-screen flex-col border-r border-white/5 bg-black/40 backdrop-blur-xl fixed left-0 top-0 z-50">
+        <aside className="hidden lg:flex w-64 h-screen flex-col border-r border-white/5 bg-black/20 backdrop-blur-md fixed left-0 top-0 z-50">
             {/* BRAND */}
             <div className="p-6 flex items-center gap-3">
                 <QodeeLogo className="w-10 h-10 object-contain" />
@@ -247,7 +248,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
                         <DropdownMenuSeparator className="bg-white/10" />
                         <DropdownMenuItem
                             className="text-red-500 hover:text-red-400 hover:bg-red-500/10 focus:bg-red-500/10 cursor-pointer"
-                            onClick={() => signOut({ callbackUrl: "/login" })}
+                            onClick={() => logout()}
                         >
                             <LogOut className="w-4 h-4 mr-2" /> Log out
                         </DropdownMenuItem>

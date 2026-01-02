@@ -59,7 +59,7 @@ export default function DojoPage() {
     };
 
     return (
-        <div className="min-h-screen bg-obsidian p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
+        <div className="min-h-screen bg-transparent p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
 
             {/* Header */}
             <header className="flex-none mb-4 flex items-center justify-between border-b border-white/5 pb-4">

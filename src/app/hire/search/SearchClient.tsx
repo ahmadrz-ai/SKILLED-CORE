@@ -22,7 +22,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     };
 
     return (
-        <div className="min-h-screen bg-obsidian flex flex-col">
+        <div className="min-h-screen bg-transparent flex flex-col">
 
             {/* Sticky Header */}
             <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 py-6 px-4 lg:px-8">

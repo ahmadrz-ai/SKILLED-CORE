@@ -43,7 +43,7 @@ function ErrorContent() {
 
 export default function AuthErrorPage() {
     return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen bg-transparent text-white flex items-center justify-center">
             <Suspense fallback={<div>Loading error details...</div>}>
                 <ErrorContent />
             </Suspense>

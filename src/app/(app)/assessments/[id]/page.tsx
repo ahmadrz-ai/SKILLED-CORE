@@ -12,7 +12,7 @@ export default async function QuizPage(props: { params: Promise<{ id: string }> 
 
     if (!assessment) {
         return (
-            <div className="min-h-screen bg-obsidian text-white flex items-center justify-center">
+            <div className="min-h-screen bg-transparent text-white flex items-center justify-center">
                 <div className="p-8 text-center">
                     <h1 className="text-2xl font-bold mb-4">Assessment Not Found</h1>
                     <p className="text-zinc-500">The neural data for this assessment is corrupted or missing.</p>
@@ -22,7 +22,7 @@ export default async function QuizPage(props: { params: Promise<{ id: string }> 
     }
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 lg:p-12 font-sans">
+        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-3 mb-12">

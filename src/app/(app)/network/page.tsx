@@ -108,7 +108,7 @@ export default function NetworkPage() {
     }
 
     return (
-        <div className="min-h-screen bg-obsidian text-white flex flex-col md:flex-row">
+        <div className="min-h-screen bg-transparent text-white flex flex-col md:flex-row">
 
             {/* MANAGER SIDEBAR (Left) */}
             <div className="w-full md:w-64 bg-zinc-950/50 border-r border-white/5 p-6 flex-shrink-0">

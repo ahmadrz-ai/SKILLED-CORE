@@ -31,6 +31,7 @@ import SessionWrapper from "@/components/auth/SessionWrapper";
 
 import { QodeeLogo } from "@/components/QodeeLogo";
 import { GlobalAiAssistant } from "@/components/GlobalAiAssistant";
+import { ParticleBackground } from "@/components/landing/ParticleBackground";
 
 import { auth } from "@/auth";
 
@@ -45,8 +46,9 @@ export default async function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${cinzel.variable} ${jetbrainsMono.variable} antialiased bg-obsidian text-foreground font-sans relative`}
+        className={`${inter.variable} ${cinzel.variable} ${jetbrainsMono.variable} antialiased bg-transparent text-foreground font-sans relative`}
       >
+        <ParticleBackground />
         <SessionWrapper session={session}>
           <div className="fixed inset-0 z-[-1]">
           </div>

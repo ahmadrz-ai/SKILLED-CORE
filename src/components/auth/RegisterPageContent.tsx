@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { QodeeLogo } from "@/components/QodeeLogo";
+import { ParticleBackground } from "@/components/landing/ParticleBackground";
+import { Button3D } from "@/components/ui/Button3D";
 
 // Custom Google Icon
 const GoogleIcon = () => (
@@ -31,7 +33,7 @@ export default function RegisterPageContent() {
 
     const [formData, setFormData] = useState({
         name: "",
-
+        username: "",
         email: "",
         password: "",
         confirmPassword: ""
@@ -60,7 +62,7 @@ export default function RegisterPageContent() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: formData.name,
-
+                    username: formData.username,
                     email: formData.email,
                     password: formData.password,
                     role: role
@@ -108,10 +110,11 @@ export default function RegisterPageContent() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-obsidian text-white">
+        <div className="min-h-screen w-full flex bg-transparent text-white relative">
+            {/* ParticleBackground removed (global) */}
 
             {/* LEFT SIDE - BRAND & QUOTE */}
-            <div className="hidden lg:flex w-1/2 bg-[#020204] relative overflow-hidden flex-col justify-between p-12 border-r border-white/5">
+            <div className="hidden lg:flex w-1/2 bg-transparent relative overflow-hidden flex-col justify-between p-12 border-r border-white/5">
                 {/* Background ambient effects */}
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),transparent_70%)]" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full opacity-20" />
@@ -171,7 +174,7 @@ export default function RegisterPageContent() {
                             <span className="w-full border-t border-zinc-800" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-obsidian px-2 text-zinc-500">Or register with email</span>
+                            <span className="bg-black/20 backdrop-blur-sm px-2 text-zinc-500">Or register with email</span>
                         </div>
                     </div>
 
@@ -216,6 +219,24 @@ export default function RegisterPageContent() {
                                 />
                                 <div className="absolute left-3 top-2.5">
                                     <Check className={cn("w-4 h-4", formData.name.length > 2 ? "text-green-500" : "text-zinc-600")} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="username">Username</Label>
+                            <div className="relative">
+                                <Input
+                                    id="username"
+                                    placeholder="johndoe"
+                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                    value={formData.username}
+                                    onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                                    required
+                                    minLength={3}
+                                />
+                                <div className="absolute left-3 top-2.5">
+                                    <Check className={cn("w-4 h-4", formData.username.length >= 3 ? "text-green-500" : "text-zinc-600")} />
                                 </div>
                             </div>
                         </div>
@@ -282,13 +303,13 @@ export default function RegisterPageContent() {
                             </div>
                         </div>
 
-                        <Button
+                        <Button3D
                             type="submit"
                             disabled={!!isLoading}
-                            className="w-full h-11 bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-wide transition-all"
+                            className="w-full"
                         >
                             {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Account"}
-                        </Button>
+                        </Button3D>
                     </form>
 
                     <div className="text-center text-sm mt-8">

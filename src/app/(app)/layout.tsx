@@ -93,7 +93,7 @@ export default async function AppLayout({
     }
 
     return (
-        <div className="min-h-screen bg-obsidian text-foreground font-sans">
+        <div className="min-h-screen bg-transparent text-foreground font-sans">
             {/* Desktop Sidebar - Fixed Left */}
             <Sidebar
                 counts={{

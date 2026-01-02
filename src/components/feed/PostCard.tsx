@@ -296,7 +296,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     };
 
     return (
-        <div className="group border-b border-white/5 py-4 hover:bg-white/2 transition-colors -mx-4 px-4 lg:mx-0 lg:px-4 lg:rounded-xl">
+        <div className="group relative bg-zinc-900/60 backdrop-blur-md border border-white/10 py-5 hover:bg-zinc-900/80 transition-all duration-300 -mx-4 px-4 lg:mx-0 lg:px-5 lg:rounded-xl lg:mb-4 shadow-lg">
             <div className="flex gap-4">
                 {/* Avatar */}
                 <Link href={`/profile/${post.author.handle.substring(1)}`}>

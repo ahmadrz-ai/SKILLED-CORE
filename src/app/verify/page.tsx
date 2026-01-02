@@ -90,7 +90,7 @@ function VerifyPageContent() {
 
     if (!email) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <div className="min-h-screen w-full flex bg-transparent text-white items-center justify-center p-6 relative overflow-hidden font-mono">
                 <p>Invalid Request. Missing email.</p>
             </div>
         );

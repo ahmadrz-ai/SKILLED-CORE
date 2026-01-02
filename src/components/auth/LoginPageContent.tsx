@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QodeeLogo } from "@/components/QodeeLogo";
+import { ParticleBackground } from "@/components/landing/ParticleBackground";
+import { Button3D } from "@/components/ui/Button3D";
 
 // Custom Google Icon
 const GoogleIcon = () => (
@@ -59,10 +61,11 @@ export default function LoginPageContent() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-obsidian text-white">
+        <div className="min-h-screen w-full flex bg-transparent text-white relative">
+            {/* ParticleBackground removed (global) */}
 
             {/* LEFT SIDE - BRAND & QUOTE */}
-            <div className="hidden lg:flex w-1/2 bg-[#020204] relative overflow-hidden flex-col justify-between p-12 border-r border-white/5">
+            <div className="hidden lg:flex w-1/2 bg-transparent relative overflow-hidden flex-col justify-between p-12 border-r border-white/5">
                 {/* Background ambient effects */}
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),transparent_70%)]" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full opacity-20" />
@@ -122,7 +125,7 @@ export default function LoginPageContent() {
                             <span className="w-full border-t border-zinc-800" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-obsidian px-2 text-zinc-500">Or sign in with email</span>
+                            <span className="bg-black/20 backdrop-blur-sm px-2 text-zinc-500">Or sign in with email</span>
                         </div>
                     </div>
 
@@ -144,7 +147,15 @@ export default function LoginPageContent() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs text-zinc-500 hover:text-violet-400 transition-colors duration-200"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
                                 <Input
@@ -172,13 +183,13 @@ export default function LoginPageContent() {
                             </div>
                         )}
 
-                        <Button
+                        <Button3D
                             type="submit"
                             disabled={!!isLoading}
-                            className="w-full h-11 bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-wide transition-all shadow-lg shadow-yellow-500/20"
+                            className="w-full"
                         >
                             {isLoading === 'credentials' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
-                        </Button>
+                        </Button3D>
                     </form>
 
                     <div className="text-center text-sm mt-8">

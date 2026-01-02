@@ -341,7 +341,7 @@ function OnboardingContent() {
     }
 
     return (
-        <div className="min-h-screen bg-obsidian flex flex-col relative overflow-hidden font-sans text-white">
+        <div className="min-h-screen bg-transparent flex flex-col relative overflow-hidden font-sans text-white">
             {/* Background Atmosphere */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.15),transparent_70%)]" />

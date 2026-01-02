@@ -342,7 +342,7 @@ export default function SettingsPage() {
     );
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 pb-20">
+        <div className="min-h-screen bg-transparent text-white p-6 pb-20">
             <div className="max-w-6xl mx-auto">
                 <h1 className="text-3xl font-bold font-cinzel text-white mb-8 tracking-wide">
                     GLOBAL SETTINGS

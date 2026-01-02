@@ -15,7 +15,7 @@ export default async function AssessmentsPage() {
     const assessments = await getAssessments();
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 lg:p-12 font-sans">
+        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
             <div className="max-w-7xl mx-auto space-y-12">
 
                 {/* Header */}

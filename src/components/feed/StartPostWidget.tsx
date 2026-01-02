@@ -64,7 +64,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     };
 
     return (
-        <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 mb-4">
+        <div className="bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-xl p-4 mb-4 shadow-lg">
             {/* Top Row: Avatar + Input Trigger */}
             <div className="flex gap-3 mb-3">
                 <Avatar className="w-12 h-12 cursor-pointer">

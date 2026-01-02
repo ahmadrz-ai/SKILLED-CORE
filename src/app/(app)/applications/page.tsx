@@ -144,7 +144,7 @@ export default function ApplicationsPage() {
     const offerCount = MOCK_APPLICATIONS.filter(a => a.status === 'Offer').length;
 
     return (
-        <div className="min-h-screen bg-obsidian text-white p-6 pb-20">
+        <div className="min-h-screen bg-transparent text-white p-6 pb-20">
             <div className="max-w-5xl mx-auto space-y-8">
 
                 {/* HEADER */}

@@ -41,7 +41,7 @@ export function Header({ credits = 0 }: HeaderProps) {
     });
 
     return (
-        <header className="sticky top-0 h-16 border-b border-white/5 bg-black/40 backdrop-blur-md z-40 flex items-center justify-between px-4 lg:px-8">
+        <header className="sticky top-0 z-40 h-16 border-b border-white/5 bg-transparent backdrop-blur-xl flex items-center justify-between px-4 lg:px-8">
 
             {/* Left: Mobile Menu Trigger & Breadcrumbs */}
             <div className="flex items-center gap-4">
