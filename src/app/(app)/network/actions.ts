@@ -116,7 +116,7 @@ export async function getNetworkData() {
         // 4. Get Mutual Recommendations (Friends of Friends)
         console.log("getNetworkData: Calculating mutuals");
         let mutualRecommendations: any[] = [];
-        let mutualFrequency: Record<string, number> = {};
+        const mutualFrequency: Record<string, number> = {};
 
         try {
             const myConnectionIds = connections.map(c => c.id);

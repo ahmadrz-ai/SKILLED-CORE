@@ -84,7 +84,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 // Ensure votes array exists
                 const currentVotes = c.votes || [];
                 const existingVote = currentVotes.find(v => v.userId === session?.user?.id);
-                let newVotes = currentVotes.filter(v => v.userId !== session?.user?.id);
+                const newVotes = currentVotes.filter(v => v.userId !== session?.user?.id);
 
                 if (!existingVote || existingVote.type !== type) {
                     newVotes.push({ userId: session?.user?.id!, type });

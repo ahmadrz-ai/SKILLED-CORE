@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         } = body;
 
         // Build update data based on role
-        let updateData: any = {
+        const updateData: any = {
             role,
             name,
             username: username ? username.toLowerCase().trim() : null, // Store sanitized username

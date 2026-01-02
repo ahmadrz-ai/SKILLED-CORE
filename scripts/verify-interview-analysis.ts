@@ -33,7 +33,7 @@ async function main() {
     try {
         console.log("Sending request...");
         const result = await model.generateContent(prompt);
-        let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
         console.log("Raw Response:", text);
 
