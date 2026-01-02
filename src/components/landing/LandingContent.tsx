@@ -25,7 +25,7 @@ export default function LandingContent() {
     const logoRotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
 
     return (
-        <div className="min-h-screen bg-black text-foreground selection:bg-violet-500/30 relative">
+        <div className="min-h-screen bg-transparent text-foreground selection:bg-violet-500/30 relative">
             {/* HERO SECTION */}
             <section
                 ref={heroRef}

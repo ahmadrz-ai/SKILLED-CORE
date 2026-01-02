@@ -273,6 +273,7 @@ export async function sendConnectionRequest(targetUserId: string) {
 
         revalidatePath('/network');
         revalidatePath(`/profile/${targetUserId}`);
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (e) {
         console.error(e);
@@ -294,6 +295,7 @@ export async function updateConnectionStatus(connectionId: string, status: 'ACCE
             });
         }
         revalidatePath('/network');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (e) {
         return { success: false, message: "Action failed" };

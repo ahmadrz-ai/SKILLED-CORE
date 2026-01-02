@@ -67,33 +67,59 @@ export async function GET(req: Request) {
         const results = [];
 
         // 4. Send Emails
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
         for (const [userId, data] of userMap.entries()) {
             const { user, senders } = data;
+
+            // THROTTLE: 1 Email Per Day
+            if (user.lastNotificationEmailSentAt && new Date(user.lastNotificationEmailSentAt) > oneDayAgo) {
+                continue;
+            }
+
             const senderNames = Array.from(senders) as string[];
 
             if (senderNames.length === 0) continue;
 
             const senderText = senderNames.slice(0, 2).join(', ') + (senderNames.length > 2 ? ` +${senderNames.length - 2}` : '');
 
-            results.push(resend.emails.send({
-                from: 'Skilled Core <notifications@skilledcore.com>',
-                to: user.email!,
-                subject: `You have unread messages from ${senderText}`,
-                react: RetentionEmail({
-                    userName: user.name || user.username || "Member",
-                    senderNames: senderNames
-                })
-            }));
+            results.push(
+                (async () => {
+                    try {
+                        const { error } = await resend.emails.send({
+                            from: 'Skilled Core <notifications@skilledcore.com>',
+                            to: user.email!,
+                            subject: `You have unread messages from ${senderText}`,
+                            react: RetentionEmail({
+                                userName: user.name || user.username || "Member",
+                                senderNames: senderNames
+                            })
+                        });
+
+                        if (!error) {
+                            // Update timestamp only if successful
+                            await prisma.user.update({
+                                where: { id: userId },
+                                data: { lastNotificationEmailSentAt: now }
+                            });
+                        }
+                    } catch (e) {
+                        console.error(`Failed to send to ${user.email}`, e);
+                    }
+                })()
+            );
         }
 
         await Promise.allSettled(results);
 
-        console.log(`Cron: Sent ${results.length} unread message notifications.`);
+        console.log(`Cron: Processed notifications.`);
 
         return NextResponse.json({
             success: true,
             processed: unreadParticipants.length,
-            emailsSent: results.length
+            // emailsSent count is hard to get with async array but roughly ok
+            message: "Notifications processed with throttling."
         });
 
     } catch (error) {

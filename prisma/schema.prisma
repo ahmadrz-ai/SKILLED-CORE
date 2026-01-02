@@ -34,57 +34,58 @@ model Session {
 }
 
 model User {
-  id                     String                @id @default(uuid())
-  name                   String?
-  email                  String?               @unique
-  emailVerified          DateTime?
-  image                  String?
-  role                   String                @default("CANDIDATE")
-  createdAt              DateTime              @default(now())
-  companyId              String?
-  bio                    String?
-  headline               String?
-  skills                 String?
-  github                 String?
-  linkedin               String?
-  location               String?
-  password               String?
-  portfolio              String?
-  username               String?               @unique
-  bannerUrl              String?
-  customLinks            String?
-  resumeUrl              String?
-  ghostMode              Boolean               @default(false)
-  nodeType               String                @default("OPEN") // OPEN, BROADCAST
-  emailNotifications     Boolean               @default(true)
-  marketingEmails        Boolean               @default(false)
-  lastLogin              DateTime?
-  credits                Int                   @default(10)
-  plan                   String                @default("BASIC") // BASIC, PRO, ULTRA
-  savedJobs              SavedJob[]
-  jobAlerts              JobAlert[]
-  accounts               Account[]
-  applications           Application[]
-  comments               Comment[]
-  commentVotes           CommentVote[]
-  education              Education[]
-  experience             Experience[]
-  jobs                   Job[]                 @relation("RecruiterJobs")
-  likes                  Like[]
-  notifications          Notification[]
-  triggeredNotifications Notification[]        @relation("NotificationActor")
-  pollVotes              PollVote[]
-  posts                  Post[]
-  profileViews           ProfileView[]         @relation("ProfileViews")
-  viewedProfiles         ProfileView[]         @relation("ViewedProfiles")
-  projects               Project[]
-  reportsReceived        Report[]              @relation("ReportedUser")
-  reportsFiled           Report[]              @relation("Reporter")
-  sessions               Session[]
-  company                Company?              @relation(fields: [companyId], references: [id])
-  verificationRequests   VerificationRequest[]
-  followers              Follow[]              @relation("following")
-  following              Follow[]              @relation("follower")
+  id                          String                @id @default(uuid())
+  name                        String?
+  email                       String?               @unique
+  emailVerified               DateTime?
+  image                       String?
+  role                        String                @default("CANDIDATE")
+  createdAt                   DateTime              @default(now())
+  companyId                   String?
+  bio                         String?
+  headline                    String?
+  skills                      String?
+  github                      String?
+  linkedin                    String?
+  location                    String?
+  password                    String?
+  portfolio                   String?
+  username                    String?               @unique
+  bannerUrl                   String?
+  customLinks                 String?
+  resumeUrl                   String?
+  ghostMode                   Boolean               @default(false)
+  nodeType                    String                @default("OPEN") // OPEN, BROADCAST
+  emailNotifications          Boolean               @default(true)
+  marketingEmails             Boolean               @default(false)
+  lastNotificationEmailSentAt DateTime?
+  lastLogin                   DateTime?
+  credits                     Int                   @default(10)
+  plan                        String                @default("BASIC") // BASIC, PRO, ULTRA
+  savedJobs                   SavedJob[]
+  jobAlerts                   JobAlert[]
+  accounts                    Account[]
+  applications                Application[]
+  comments                    Comment[]
+  commentVotes                CommentVote[]
+  education                   Education[]
+  experience                  Experience[]
+  jobs                        Job[]                 @relation("RecruiterJobs")
+  likes                       Like[]
+  notifications               Notification[]
+  triggeredNotifications      Notification[]        @relation("NotificationActor")
+  pollVotes                   PollVote[]
+  posts                       Post[]
+  profileViews                ProfileView[]         @relation("ProfileViews")
+  viewedProfiles              ProfileView[]         @relation("ViewedProfiles")
+  projects                    Project[]
+  reportsReceived             Report[]              @relation("ReportedUser")
+  reportsFiled                Report[]              @relation("Reporter")
+  sessions                    Session[]
+  company                     Company?              @relation(fields: [companyId], references: [id])
+  verificationRequests        VerificationRequest[]
+  followers                   Follow[]              @relation("following")
+  following                   Follow[]              @relation("follower")
 
   sentConnections     Connection[] @relation("SentConnections")
   receivedConnections Connection[] @relation("ReceivedConnections")
