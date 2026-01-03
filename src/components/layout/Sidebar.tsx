@@ -86,7 +86,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
             <div className="p-6 flex items-center gap-3">
                 <QodeeLogo className="w-10 h-10 object-contain" />
                 <div className="flex flex-col">
-                    <span className="font-heading font-black tracking-wider text-white text-sm">SKILLED CORE</span>
+                    <span className="font-heading font-black tracking-wider text-white text-sm">SKILLED CORE™</span>
                     <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Enterprise Node</span>
                 </div>
             </div>

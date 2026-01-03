@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const legalLinks = [
     { href: "/legal/user-agreement", label: "User Agreement" },
+    { href: "/terms", label: "Terms of Service" },
     { href: "/legal/privacy-policy", label: "Privacy Policy" },
     { href: "/legal/professional-community-policies", label: "Professional Community Policies" },
     { href: "/legal/cookie-policy", label: "Cookie Policy" },

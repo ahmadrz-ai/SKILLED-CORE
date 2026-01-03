@@ -311,7 +311,7 @@ export default function RegisterPageContent() {
                                 className="mt-1 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-violet-500 focus:ring-violet-500/20 accent-violet-500 cursor-pointer"
                             />
                             <Label htmlFor="agreement" className="text-xs text-zinc-400 font-normal leading-relaxed cursor-pointer">
-                                By clicking Agree & Join, you agree to the Skilled Core <Link href="/legal/user-agreement" className="text-violet-400 hover:underline" target="_blank">User Agreement</Link>, <Link href="/legal/privacy-policy" className="text-violet-400 hover:underline" target="_blank">Privacy Policy</Link>, and <Link href="/legal/cookie-policy" className="text-violet-400 hover:underline" target="_blank">Cookie Policy</Link>.
+                                By clicking Agree & Join, you agree to the Skilled Core <Link href="/legal/user-agreement" className="text-violet-400 hover:underline" target="_blank">User Agreement</Link>, <Link href="/terms" className="text-violet-400 hover:underline" target="_blank">Terms of Service</Link>, <Link href="/legal/privacy-policy" className="text-violet-400 hover:underline" target="_blank">Privacy Policy</Link>, and <Link href="/legal/cookie-policy" className="text-violet-400 hover:underline" target="_blank">Cookie Policy</Link>.
                             </Label>
                         </div>
 

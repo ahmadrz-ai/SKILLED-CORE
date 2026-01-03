@@ -1,4 +1,5 @@
 import { LegalSidebar } from "@/components/legal/LegalSidebar";
+import { ParticleBackground } from "@/components/landing/ParticleBackground";
 
 export default function LegalLayout({
     children,
@@ -8,6 +9,8 @@ export default function LegalLayout({
     return (
         <div className="min-h-screen bg-black text-white relative selection:bg-violet-500/30">
             {/* Background Ambient */}
+            {/* Background Ambient */}
+            <ParticleBackground />
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-violet-900/10 to-transparent" />
             </div>

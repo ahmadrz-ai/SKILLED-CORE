@@ -164,6 +164,21 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                     }}
                     stats={stats}
                 />
+
+                {/* Legal Footer */}
+                <div className="text-[11px] text-zinc-600 text-center px-2 py-2 leading-relaxed">
+                    <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                        <Link href="/legal/user-agreement" className="hover:text-zinc-400 hover:underline">User Agreement</Link>
+                        <Link href="/terms" className="hover:text-zinc-400 hover:underline">Terms of Service</Link>
+                        <Link href="/legal/privacy-policy" className="hover:text-zinc-400 hover:underline">Privacy Policy</Link>
+                        <Link href="/legal/cookie-policy" className="hover:text-zinc-400 hover:underline">Cookie Policy</Link>
+                        <Link href="/accessibility" className="hover:text-zinc-400 hover:underline">Accessibility</Link>
+                        <Link href="/legal/copyright-policy" className="hover:text-zinc-400 hover:underline">Copyright Policy</Link>
+                    </div>
+                    <div className="mt-2 text-zinc-700">
+                        Skilled Core Corporation © 2026
+                    </div>
+                </div>
             </div>
 
             {/* Center Column: Feed */}

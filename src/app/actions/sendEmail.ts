@@ -18,7 +18,7 @@ export async function sendContactEmail(formData: FormData) {
     try {
         const { data, error } = await resend.emails.send({
             from: 'Skilled Core <noreply@skilledcore.com>',
-            to: ['ahmad@skilledcore.com'],
+            to: ['support@skilledcore.com'],
             subject: `New Message from ${name}`,
             react: MessageNotification({
                 senderName: name,

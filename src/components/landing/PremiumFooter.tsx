@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { QodeeLogo } from "../QodeeLogo";
-import { Mail, Twitter, Linkedin, Github, ArrowUpRight } from "lucide-react";
+import { Mail, Twitter, Linkedin, ArrowUpRight, Instagram, Facebook } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function PremiumFooter() {
@@ -11,19 +11,19 @@ export function PremiumFooter() {
             { label: "AI Interview", href: "/interview" },
             { label: "Find Jobs", href: "/jobs" },
             { label: "Find Talent", href: "/hire/search" },
-            { label: "Pricing", href: "/credits" }
+            { label: "Pricing", href: "/#pricing" }
         ],
         company: [
             { label: "About", href: "/about" },
             { label: "Support", href: "/support" },
             { label: "Feedback", href: "/feedback" },
-            { label: "Contact", href: "mailto:ahmad@skilledcore.com" }
+            { label: "Contact", href: "mailto:support@skilledcore.com" }
         ],
         legal: [
-            { label: "Privacy", href: "/privacy" },
+            { label: "Privacy", href: "/legal/privacy-policy" },
             { label: "Terms", href: "/terms" },
-            { label: "Security", href: "/security" },
-            { label: "Cookies", href: "/cookies" }
+            { label: "Security", href: "/legal/security" },
+            { label: "Cookies", href: "/legal/cookie-policy" }
         ],
         resources: [
             { label: "Network", href: "/network" },
@@ -45,7 +45,7 @@ export function PremiumFooter() {
                         <div className="flex items-center gap-3 mb-4">
                             <QodeeLogo className="w-10 h-10 object-contain" />
                             <div className="flex flex-col">
-                                <span className="font-heading font-black tracking-wider text-white text-lg">SKILLED CORE</span>
+                                <span className="font-heading font-black tracking-wider text-white text-lg">SKILLED CORE™</span>
                                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Enterprise Node</span>
                             </div>
                         </div>
@@ -60,11 +60,11 @@ export function PremiumFooter() {
                         >
                             <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Get in Touch</p>
                             <a
-                                href="mailto:ahmad@skilledcore.com"
+                                href="mailto:support@skilledcore.com"
                                 className="flex items-center gap-2 text-white hover:text-violet-400 transition-colors group"
                             >
                                 <Mail className="w-4 h-4" />
-                                <span className="text-sm font-medium">ahmad@skilledcore.com</span>
+                                <span className="text-sm font-medium">support@skilledcore.com</span>
                                 <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </a>
                         </motion.div>
@@ -144,7 +144,7 @@ export function PremiumFooter() {
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-6">
                         <p className="text-xs text-zinc-600">
-                            © 2026 SkilledCore Industries. All rights reserved.
+                            © {new Date().getFullYear()} Skilled Core. All Rights Reserved.
                         </p>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -155,14 +155,6 @@ export function PremiumFooter() {
                     {/* Social links */}
                     <div className="flex items-center gap-4">
                         <a
-                            href="https://twitter.com/skilledcore"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 flex items-center justify-center transition-all group"
-                        >
-                            <Twitter className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
-                        </a>
-                        <a
                             href="https://linkedin.com/company/skilledcore"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -171,12 +163,28 @@ export function PremiumFooter() {
                             <Linkedin className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
                         </a>
                         <a
-                            href="https://github.com/skilledcore"
+                            href="https://instagram.com/skilledcore"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 flex items-center justify-center transition-all group"
                         >
-                            <Github className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+                            <Instagram className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+                        </a>
+                        <a
+                            href="https://www.facebook.com/profile.php?id=61586065347752"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 flex items-center justify-center transition-all group"
+                        >
+                            <Facebook className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+                        </a>
+                        <a
+                            href="https://www.x.com/SkilledCore"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 flex items-center justify-center transition-all group"
+                        >
+                            <Twitter className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
                         </a>
                     </div>
                 </div>
