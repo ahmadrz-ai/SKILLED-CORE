@@ -28,17 +28,22 @@ export async function sendVerificationCode(email: string) {
         });
 
         // Send email
-        await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: 'Skilled Core <noreply@skilledcore.com>',
             to: [email],
             subject: 'Secure Login Code',
             react: OtpEmail({ validationCode: code }),
         });
 
+        if (error) {
+            console.error('Failed to send verification code via Resend:', error);
+            return { error: `Failed to send verification code: ${error.message || 'Unknown Resend error'}` };
+        }
+
         return { success: true };
     } catch (error: any) {
         console.error('Failed to send verification code:', error);
-        return { error: 'Failed to send code. Please try again.' };
+        return { error: error.message || 'Failed to send code. Please try again.' };
     }
 }
 

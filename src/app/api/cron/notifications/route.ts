@@ -97,7 +97,9 @@ export async function GET(req: Request) {
                             })
                         });
 
-                        if (!error) {
+                        if (error) {
+                            console.error(`Resend error sending to ${user.email!}:`, error);
+                        } else {
                             // Update timestamp only if successful
                             await prisma.user.update({
                                 where: { id: userId },

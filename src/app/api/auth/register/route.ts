@@ -44,13 +44,10 @@ function checkRateLimit(ip: string): boolean {
 async function validateTurnstile(token: string, remoteIp: string): Promise<boolean> {
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
-    // If Turnstile is not configured (e.g., local dev without keys), skip validation
+    // If Turnstile is not configured (e.g., local dev or Vercel without keys), skip validation
     if (!secretKey || secretKey === 'YOUR_TURNSTILE_SECRET_KEY') {
-        if (process.env.NODE_ENV === 'development') {
-            console.warn('WARN: Turnstile secret not configured — skipping CAPTCHA validation in dev');
-            return true;
-        }
-        return false; // Block in production if not configured
+        console.warn('WARN: Turnstile secret key (TURNSTILE_SECRET_KEY) is not configured — skipping validation');
+        return true;
     }
 
     try {

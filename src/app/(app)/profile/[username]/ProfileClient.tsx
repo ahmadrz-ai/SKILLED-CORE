@@ -481,41 +481,6 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     )}
                                                 </>
                                             )}
-
-                                            {/* SECONDARY ACTION */}
-                                            {/* If we showed Connect as Primary, Show Follow as Secondary (if not already following) */}
-                                            {connStatus === 'NONE' && user.nodeType !== 'BROADCAST' && user.role !== 'RECRUITER' && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className={cn("border border-white/10", followingState ? "text-violet-400" : "text-zinc-400")}
-                                                    onClick={handleFollow}
-                                                >
-                                                    {followingState ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                                </Button>
-                                            )}
-
-                                            {/* If we showed Follow as Primary (Broadcast), Show Connect as Secondary */}
-                                            {connStatus === 'NONE' && (user.nodeType === 'BROADCAST' || user.role === 'RECRUITER') && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="border border-white/10 text-zinc-400 hover:bg-white/5">
-                                                            <MoreHorizontal className="w-4 h-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800">
-                                                        <DropdownMenuItem onClick={handleConnect}>
-                                                            <UserPlus className="w-4 h-4 mr-2" /> Connect
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => {
-                                                            navigator.clipboard.writeText(`${window.location.origin}/profile/${user.username}`);
-                                                            toast.success("Profile link copied");
-                                                        }}>
-                                                            <LinkIcon className="w-4 h-4 mr-2" /> Copy Link
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
                                         </div>
                                         {/* MORE MENU & VIEW RESUME */}
                                         <div className="flex gap-2">

@@ -43,10 +43,45 @@ export default async function SinglePostPage({ params }: { params: Promise<{ id:
         notFound();
     }
 
+    // Determine connection status and follow status of the author relative to current user
+    const isFollowing = await prisma.follow.findFirst({
+        where: {
+            followerId: session.user.id,
+            followingId: post.userId
+        }
+    });
+
+    const connection = await prisma.connection?.findFirst({
+        where: {
+            OR: [
+                { requesterId: session.user.id, addresseeId: post.userId },
+                { requesterId: post.userId, addresseeId: session.user.id }
+            ]
+        }
+    });
+
+    let connectionStatus: 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'CONNECTED' = 'NONE';
+    if (connection) {
+        if (connection.status === 'ACCEPTED') {
+            connectionStatus = 'CONNECTED';
+        } else if (connection.status === 'PENDING') {
+            connectionStatus = connection.requesterId === session.user.id ? 'PENDING_SENT' : 'PENDING_RECEIVED';
+        }
+    }
+
+    const postWithStatus = {
+        ...post,
+        author: {
+            ...post.author,
+            isFollowing: !!isFollowing,
+            connectionStatus
+        }
+    };
+
     return (
         <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl mx-auto space-y-6">
-                <SinglePostClient post={post} currentUserId={session.user.id} />
+                <SinglePostClient post={postWithStatus} currentUserId={session.user.id} />
             </div>
         </div>
     );

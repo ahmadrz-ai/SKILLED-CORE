@@ -375,7 +375,7 @@ export default function MessagesPage() {
                                             <div className={cn(
                                                 "max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
                                                 isMe
-                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#7C3AED] text-white rounded-l-2xl`
+                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#7C3AED] text-white force-white-text rounded-l-2xl`
                                                     : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-white border border-[#E5E7EB] text-[#111827] rounded-r-2xl`,
                                                 msg.isDeleted && "italic text-[#9CA3AF] bg-transparent border border-[#E5E7EB] shadow-none"
                                             )}>
@@ -390,7 +390,7 @@ export default function MessagesPage() {
                                                     </div>
                                                 )}
 
-                                                <RenderMessageContent msg={msg} isMe={isMe} />
+                                                <RenderMessageContent msg={msg} isMe={isMe} onAccept={() => router.push('/interview')} />
 
                                                 {/* Reactions */}
                                                 {msg.reactions && msg.reactions.length > 0 && !msg.isDeleted && (
@@ -512,7 +512,7 @@ export default function MessagesPage() {
     );
 }
 
-function RenderMessageContent({ msg, isMe }: { msg: any; isMe: boolean }) {
+function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean; onAccept: () => void }) {
     if (msg.isDeleted) return <p className="italic text-sm">Message unsent</p>;
 
     if (msg.attachmentType === 'INTERVIEW_INVITE') {
@@ -526,6 +526,7 @@ function RenderMessageContent({ msg, isMe }: { msg: any; isMe: boolean }) {
                     companyName={data.companyName || "Skilled Core"}
                     interviewDate={data.interviewDate || "TBD"}
                     interviewTime={data.interviewTime || "TBD"}
+                    onAccept={onAccept}
                 />
             </div>
         );

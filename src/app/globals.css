@@ -594,3 +594,9 @@ button, a, input[type="submit"], [role="button"] { min-height: 44px; min-width: 
   backdrop-filter: blur(4px) !important;
   -webkit-backdrop-filter: blur(4px) !important;
 }
+
+/* Force white text overrides for sent chat bubbles and invitation cards */
+.force-white-text,
+.force-white-text * {
+  color: #FFFFFF !important;
+}

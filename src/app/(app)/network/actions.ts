@@ -136,7 +136,7 @@ export async function getNetworkData() {
 
                 potentialMutuals.forEach(c => {
                     const candidateId = myConnectionIds.includes(c.requesterId) ? c.addresseeId : c.requesterId;
-                    if (candidateId !== userId) {
+                    if (candidateId !== userId && !excludedIds.has(candidateId)) {
                         mutualFrequency[candidateId] = (mutualFrequency[candidateId] || 0) + 1;
                     }
                 });
@@ -293,15 +293,45 @@ export async function updateConnectionStatus(connectionId: string, status: 'ACCE
         if (status === 'DECLINED') {
             await prisma.connection.delete({ where: { id: connectionId } });
         } else {
-            await prisma.connection.update({
+            const conn = await prisma.connection.update({
                 where: { id: connectionId },
                 data: { status: 'ACCEPTED' }
+            });
+
+            // Ensure mutual auto-follow in both directions
+            await prisma.follow.upsert({
+                where: {
+                    followerId_followingId: {
+                        followerId: conn.requesterId,
+                        followingId: conn.addresseeId
+                    }
+                },
+                update: {},
+                create: {
+                    followerId: conn.requesterId,
+                    followingId: conn.addresseeId
+                }
+            });
+
+            await prisma.follow.upsert({
+                where: {
+                    followerId_followingId: {
+                        followerId: conn.addresseeId,
+                        followingId: conn.requesterId
+                    }
+                },
+                update: {},
+                create: {
+                    followerId: conn.addresseeId,
+                    followingId: conn.requesterId
+                }
             });
         }
         revalidatePath('/network');
         revalidatePath('/', 'layout');
         return { success: true };
     } catch (e) {
+        console.error("updateConnectionStatus failed:", e);
         return { success: false, message: "Action failed" };
     }
 }

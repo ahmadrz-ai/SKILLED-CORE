@@ -71,10 +71,10 @@
   position: relative;
   background-blend-mode: color-dodge, normal, normal, normal;
   animation: glow-bg 12s linear infinite;
-  box-shadow: rgba(0, 0, 0, 0.8) calc((var(--pointer-from-left) * 10px) - 3px) calc((var(--pointer-from-top) * 20px) - 6px) 20px -5px;
-  transition: transform 1s ease;
-  transform: translateZ(0) rotateX(0deg) rotateY(0deg);
-  background: rgba(0, 0, 0, 0.9);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(124, 58, 237, 0.15) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important; /* Neon purple border */
+  transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.6s ease, border-color 0.6s ease;
+  background: rgba(10, 8, 24, 0.92) !important; /* Dark glass background */
   backface-visibility: hidden;
   overflow: hidden;
 }
@@ -83,6 +83,8 @@
 .pc-card.active {
   transition: none;
   transform: translateZ(0) rotateX(var(--rotate-y)) rotateY(var(--rotate-x));
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 45px rgba(124, 58, 237, 0.4) !important;
+  border-color: rgba(124, 58, 237, 0.6) !important;
 }
 
 .pc-card-shell.entering .pc-card {
@@ -104,8 +106,7 @@
 .pc-inside {
   inset: 0;
   position: absolute;
-  background-image: var(--inner-gradient);
-  background-color: rgba(0, 0, 0, 0.9);
+  background-image: linear-gradient(145deg, rgba(15, 12, 35, 0.95) 0%, rgba(26, 20, 50, 0.95) 100%) !important;
   transform: none;
 }
 
@@ -177,7 +178,7 @@
 }
 
 .pc-avatar-content {
-  mix-blend-mode: luminosity;
+  mix-blend-mode: normal !important; /* Premium color avatar */
   overflow: visible;
   transform: translateZ(2);
   backface-visibility: hidden;
@@ -197,8 +198,8 @@
   transition: transform 120ms ease-out;
   border-radius: 50%;
   /* Circle */
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  border: 3.5px solid rgba(167, 139, 250, 0.5) !important; /* Glowing violet border */
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.5) !important;
 }
 
 .pc-avatar-content::before {
@@ -222,14 +223,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(30px);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-  /* Purple border */
+  background: rgba(13, 10, 28, 0.82) !important; /* Premium dark background */
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(124, 58, 237, 0.35) !important; /* Glowing border */
   border-radius: calc(max(0px, var(--card-radius) - var(--ui-inset) + var(--ui-radius-bias)));
   padding: 16px;
   pointer-events: auto;
   text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .pc-user-details {
@@ -241,6 +243,25 @@
   margin-bottom: 10px;
 }
 
+/* Force details text inside card to bypass global light overrides */
+.pc-user-details .text-white {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+  letter-spacing: 0.5px;
+}
+
+.pc-user-details .text-zinc-400 {
+  background: rgba(124, 58, 237, 0.15) !important;
+  border: 1px solid rgba(124, 58, 237, 0.4) !important;
+  color: #C084FC !important;
+  padding: 4px 14px !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+  font-size: 0.8125rem !important;
+}
+
 .pc-user-text {
   display: flex;
   align-items: center;
@@ -250,42 +271,47 @@
 
 .pc-handle {
   font-size: 14px;
-  font-weight: 500;
-  color: #A78BFA;
-  /* Light Purple */
+  font-weight: 600 !important;
+  color: #C084FC !important; /* Glowing Light Purple */
   line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
 }
 
 .pc-status {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #E2E8F0 !important; /* Crisp contrast slate */
   line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .pc-contact-btn {
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  border-radius: 8px;
-  padding: 10px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 11px 20px !important;
   font-size: 12px;
-  font-weight: 700;
-  color: #FFF;
-  background: #7C3AED;
-  /* Purple */
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%) !important; /* Brand gradient button */
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   width: 100%;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4) !important;
 }
 
 .pc-contact-btn:hover {
-  background: #6D28D9;
-  transform: translateY(-1px);
-  transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+  background: linear-gradient(135deg, #6D28D9 0%, #4338CA 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.pc-contact-btn:active {
+  transform: translateY(0px) !important;
 }
 
 .pc-content:not(.pc-avatar-content) {
@@ -297,7 +323,7 @@
       calc(var(--pointer-from-top) * -6px + 3px),
       0.1px);
   z-index: 5;
-  mix-blend-mode: luminosity;
+  mix-blend-mode: normal !important; /* Show premium brand colors */
 }
 
 .pc-details {
@@ -309,28 +335,29 @@
 }
 
 .pc-details h3 {
-  font-weight: 700;
+  font-weight: 800 !important;
   margin: 0;
   font-size: 1.5em;
-  margin: 0;
-  background-image: linear-gradient(to bottom, #A78BFA, #7C3AED);
-  background-size: 1em 1.5em;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
+  background-image: linear-gradient(135deg, #C084FC 0%, #7C3AED 50%, #06B6D4 100%) !important; /* Beautiful premium gradient */
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px !important;
+  filter: drop-shadow(0 2px 8px rgba(124, 58, 237, 0.3));
 }
 
 .pc-details p {
-  font-weight: 600;
+  font-weight: 700 !important;
   position: relative;
   top: 5px;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 11px !important;
   margin: 0 auto;
   width: min-content;
-  color: white;
+  color: #E2E8F0 !important; /* High contrast slate color */
+  text-transform: uppercase;
+  letter-spacing: 1.5px !important;
 }
 
 @keyframes glow-bg {
