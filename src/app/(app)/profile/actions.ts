@@ -3,9 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { UTApi } from "uploadthing/server";
-
-const utapi = new UTApi();
+import { deleteFileFromStorage } from "@/lib/storage";
 
 
 // --- Profile Updates ---
@@ -42,23 +40,38 @@ export async function updateUserProfile(data: any) {
 
         // Execute Basic Info Update
         if (Object.keys(userUpdateData).length > 0) {
-            // Check for file deletion (Resume)
-            if (userUpdateData.resumeUrl) {
-                const currentUser = await prisma.user.findUnique({
-                    where: { id: session.user.id },
-                    select: { resumeUrl: true }
-                });
+            const currentUser = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                select: { resumeUrl: true, image: true, bannerUrl: true }
+            });
 
-                if (currentUser?.resumeUrl) {
-                    const oldKey = currentUser.resumeUrl.split('/').pop();
-                    if (oldKey) {
-                        try {
-                            await utapi.deleteFiles(oldKey);
-                            console.log(`Deleted old resume: ${oldKey}`);
-                        } catch (error) {
-                            console.error("Failed to delete old resume:", error);
-                        }
-                    }
+            // 1. Delete old resume if changing
+            if (userUpdateData.resumeUrl && currentUser?.resumeUrl) {
+                try {
+                    await deleteFileFromStorage(currentUser.resumeUrl);
+                    console.log(`Deleted old resume: ${currentUser.resumeUrl}`);
+                } catch (error) {
+                    console.error("Failed to delete old resume:", error);
+                }
+            }
+
+            // 2. Delete old avatar if changing
+            if (userUpdateData.image && currentUser?.image) {
+                try {
+                    await deleteFileFromStorage(currentUser.image);
+                    console.log(`Deleted old avatar: ${currentUser.image}`);
+                } catch (error) {
+                    console.error("Failed to delete old avatar:", error);
+                }
+            }
+
+            // 3. Delete old banner if changing
+            if (userUpdateData.bannerUrl && currentUser?.bannerUrl) {
+                try {
+                    await deleteFileFromStorage(currentUser.bannerUrl);
+                    console.log(`Deleted old banner: ${currentUser.bannerUrl}`);
+                } catch (error) {
+                    console.error("Failed to delete old banner:", error);
                 }
             }
 
@@ -155,6 +168,16 @@ export async function updateProject(projectId: string, data: any) {
             return { success: false, message: "Unauthorized" };
         }
 
+        // Clean up old image if changing it
+        if (data.imageUrl && project.imageUrl && data.imageUrl !== project.imageUrl) {
+            try {
+                await deleteFileFromStorage(project.imageUrl);
+                console.log(`[Project Action] Deleted old image: ${project.imageUrl}`);
+            } catch (error) {
+                console.error("Failed to delete old project image:", error);
+            }
+        }
+
         await prisma.project.update({
             where: { id: projectId },
             data: {
@@ -181,6 +204,16 @@ export async function deleteProject(projectId: string) {
         const project = await prisma.project.findUnique({ where: { id: projectId } });
         if (!project || project.userId !== session.user.id) {
             return { success: false, message: "Unauthorized" };
+        }
+
+        // Clean up project media from storage if it exists
+        if (project.imageUrl) {
+            try {
+                await deleteFileFromStorage(project.imageUrl);
+                console.log(`[Project Action] Deleted project image: ${project.imageUrl}`);
+            } catch (error) {
+                console.error("Failed to delete project image:", error);
+            }
         }
 
         await prisma.project.delete({ where: { id: projectId } });

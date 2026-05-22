@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
             { protocol: "https", hostname: "utfs.io" },
             { protocol: "https", hostname: "lh3.googleusercontent.com" },
             { protocol: "https", hostname: "avatars.githubusercontent.com" },
+            { protocol: "https", hostname: "res.cloudinary.com" },
         ],
     },
 
@@ -60,7 +61,7 @@ const nextConfig: NextConfig = {
                             "font-src 'self' https://fonts.gstatic.com",
                             "img-src 'self' data: blob: https: http:",
                             "media-src 'self' blob:",
-                            "connect-src 'self' https://*.uploadthing.com https://utfs.io https://challenges.cloudflare.com",
+                            "connect-src 'self' https://*.uploadthing.com https://utfs.io https://challenges.cloudflare.com https://*.cloudinary.com",
                             "frame-src https://challenges.cloudflare.com",
                             "worker-src 'self' blob:",
                         ].join("; "),

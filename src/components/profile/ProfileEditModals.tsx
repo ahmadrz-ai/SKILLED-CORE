@@ -61,6 +61,7 @@ const customLinksSchema = z.object({
 // Helper for File Upload
 import { useUploadThing } from "@/lib/uploadthing";
 import ImageCropper from "@/components/ui/image-cropper";
+import { getCloudinarySignature } from '@/app/actions/cloudinary';
 
 export const FileUploadArea = ({
     label,
@@ -79,6 +80,8 @@ export const FileUploadArea = ({
 }) => {
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [isCloudinaryUploading, setIsCloudinaryUploading] = useState(false);
+    const [cloudinaryProgress, setCloudinaryProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isResume = endpoint === "resumeUploader";
@@ -97,6 +100,70 @@ export const FileUploadArea = ({
             toast.error(`Upload failed: ${error.message}`);
         }
     });
+
+    const uploadToCloudinary = async (file: File): Promise<string> => {
+        setIsCloudinaryUploading(true);
+        setCloudinaryProgress(0);
+        try {
+            const folder = endpoint === "avatarUploader" ? "avatar" : "banner";
+            const sigRes = await getCloudinarySignature(folder);
+            if (!sigRes.success || !sigRes.signature || !sigRes.timestamp || !sigRes.apiKey || !sigRes.cloudName || !sigRes.folder) {
+                throw new Error(sigRes.message || "Failed to retrieve secure signature from server.");
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("api_key", sigRes.apiKey);
+            formData.append("timestamp", sigRes.timestamp.toString());
+            formData.append("signature", sigRes.signature);
+            formData.append("folder", sigRes.folder);
+
+            return new Promise<string>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const uploadUrl = `https://api.cloudinary.com/v1_1/${sigRes.cloudName}/image/upload`;
+
+                xhr.open("POST", uploadUrl, true);
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        setCloudinaryProgress(percentComplete);
+                    }
+                };
+
+                xhr.onload = () => {
+                    setIsCloudinaryUploading(false);
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            resolve(response.secure_url);
+                        } catch (err) {
+                            reject(new Error("Failed to parse Cloudinary response"));
+                        }
+                    } else {
+                        let errMsg = "Upload to Cloudinary failed.";
+                        try {
+                            const errResponse = JSON.parse(xhr.responseText);
+                            if (errResponse.error?.message) {
+                                errMsg = errResponse.error.message;
+                            }
+                        } catch (e) {}
+                        reject(new Error(errMsg));
+                    }
+                };
+
+                xhr.onerror = () => {
+                    setIsCloudinaryUploading(false);
+                    reject(new Error("Network error occurred during image upload."));
+                };
+
+                xhr.send(formData);
+            });
+        } catch (error: any) {
+            setIsCloudinaryUploading(false);
+            throw error;
+        }
+    };
 
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -127,11 +194,23 @@ export const FileUploadArea = ({
     const handleCropComplete = async (croppedBlob: Blob) => {
         setIsCropperOpen(false);
         const file = new File([croppedBlob], "cropped-image.jpg", { type: "image/jpeg" });
-        await startUpload([file]);
+        if (isResume) {
+            await startUpload([file]);
+        } else {
+            try {
+                const secureUrl = await uploadToCloudinary(file);
+                onUploadComplete(secureUrl);
+                toast.success("Image uploaded successfully");
+                setImageSrc(null); // Cleanup
+            } catch (error: any) {
+                toast.error(`Upload failed: ${error.message || error}`);
+            }
+        }
     };
 
     const isCircular = endpoint === "avatarUploader";
     const cropRatio = aspectRatio || (isCircular ? 1 : 4 / 1);
+    const anyUploading = isUploading || isCloudinaryUploading;
 
     return (
         <div className="space-y-4">
@@ -161,7 +240,7 @@ export const FileUploadArea = ({
             <div
                 className={cn(
                     "border-2 border-dashed border-zinc-700 rounded-xl p-6 bg-zinc-900/30 relative group hover:border-violet-500/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 min-h-[200px]",
-                    isUploading && "pointer-events-none opacity-50"
+                    anyUploading && "pointer-events-none opacity-50"
                 )}
                 onClick={() => fileInputRef.current?.click()}
             >
@@ -194,7 +273,7 @@ export const FileUploadArea = ({
                         <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center mb-2 group-hover:bg-zinc-800 transition-colors">
                             {isResume ? <FileText className="w-8 h-8 opacity-50" /> : <CloudUpload className="w-8 h-8 opacity-50" />}
                         </div>
-                        <p className="text-sm font-medium">{isUploading ? "Uploading..." : "Click to Upload"}</p>
+                        <p className="text-sm font-medium">{anyUploading ? "Uploading..." : "Click to Upload"}</p>
                         <p className="text-xs opacity-50">{helperText}</p>
                     </div>
                 )}
@@ -208,10 +287,12 @@ export const FileUploadArea = ({
                     </Button>
                 )}
 
-                {isUploading && (
+                {anyUploading && (
                     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10 rounded-xl">
                         <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-2" />
-                        <span className="text-xs text-zinc-400 animate-pulse">Uploading...</span>
+                        <span className="text-xs text-zinc-400 animate-pulse">
+                            {isCloudinaryUploading ? `Uploading ${cloudinaryProgress}%...` : "Uploading..."}
+                        </span>
                     </div>
                 )}
             </div>
