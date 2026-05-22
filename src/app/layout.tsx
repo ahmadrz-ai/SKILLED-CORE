@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -63,6 +64,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground font-sans relative`}
       >
         <SessionWrapper session={session}>
+          <Script src="https://pl29525465.effectivecpmnetwork.com/ef/98/25/ef98254b199dcd319964f5315bb46e8c.js" strategy="lazyOnload" />
           <CommandPalette />
           <GlobalAiAssistant />
           {children}

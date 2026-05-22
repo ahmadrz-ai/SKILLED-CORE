@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { PostCard, type PostProps } from '@/components/feed/PostCard';
 import { SponsoredPostCard } from '@/components/feed/SponsoredPostCard';
+import { AdsterraNativeAdCard } from '@/components/feed/AdsterraNativeAdCard';
 import { StartPostWidget } from '@/components/feed/StartPostWidget';
 import { TrendingWidget } from '@/components/feed/TrendingWidget';
 import { ProfileSideWidget } from '@/components/feed/ProfileSideWidget';
@@ -252,8 +253,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                     <AnimatePresence initial={false} mode="popLayout">
                         {posts.map((post, index) => {
                             const showAd = (index + 1) % 3 === 0;
-                            const adIndex = Math.floor(index / 3) % sponsoredPosts.length;
-                            const ad = sponsoredPosts[adIndex];
+                            const adIndex = Math.floor(index / 3);
 
                             return (
                                 <Fragment key={post.id}>
@@ -272,26 +272,35 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                                         />
                                     </motion.div>
 
-                                    {showAd && ad && (
+                                    {showAd && (
                                         <motion.div
-                                            key={`ad-${ad.id}-${index}`}
+                                            key={`ad-${index}`}
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3 }}
                                             layout
                                         >
-                                            <SponsoredPostCard
-                                                id={ad.id}
-                                                sponsorName={ad.sponsorName}
-                                                sponsorCategory={ad.sponsorCategory}
-                                                title={ad.title}
-                                                content={ad.content}
-                                                imageUrl={ad.imageUrl}
-                                                ctaText={ad.ctaText}
-                                                ctaUrl={ad.ctaUrl}
-                                                initialLikes={ad.initialLikes}
-                                                initialViews={ad.initialViews}
-                                            />
+                                            {adIndex % 2 === 1 ? (
+                                                <AdsterraNativeAdCard />
+                                            ) : (
+                                                (() => {
+                                                    const staticAd = sponsoredPosts[Math.floor(adIndex / 2) % sponsoredPosts.length];
+                                                    return (
+                                                        <SponsoredPostCard
+                                                            id={staticAd.id}
+                                                            sponsorName={staticAd.sponsorName}
+                                                            sponsorCategory={staticAd.sponsorCategory}
+                                                            title={staticAd.title}
+                                                            content={staticAd.content}
+                                                            imageUrl={staticAd.imageUrl}
+                                                            ctaText={staticAd.ctaText}
+                                                            ctaUrl={staticAd.ctaUrl}
+                                                            initialLikes={staticAd.initialLikes}
+                                                            initialViews={staticAd.initialViews}
+                                                        />
+                                                    );
+                                                })()
+                                            )}
                                         </motion.div>
                                     )}
                                 </Fragment>
