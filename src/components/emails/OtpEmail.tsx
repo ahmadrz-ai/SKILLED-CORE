@@ -23,22 +23,23 @@ export const OtpEmail = ({ validationCode = '123456' }: OtpEmailProps) => {
             <Head />
             <Preview>{previewText}</Preview>
             <Body style={main}>
-                {/* Outer wrapper to force dark background in all email clients */}
+                {/* Clean, professional outer background wrapper */}
                 <Section style={outerWrapper}>
                     <Container style={container}>
-                        {/* Header */}
+                        {/* Header Branding */}
                         <Section style={header}>
                             <Heading style={logo}>SKILLED CORE</Heading>
                         </Section>
 
-                        {/* Content Card */}
+                        {/* White Content Card with Slate Borders */}
                         <Section style={content}>
                             <Heading style={h1}>Authentication Required</Heading>
+                            
                             <Text style={paragraph}>
-                                Enter the following code to verify your identity.
+                                Enter the following code to verify your identity and complete your login.
                             </Text>
 
-                            {/* Verification Code Box */}
+                            {/* Elegant Verification Code Box */}
                             <Section style={codeContainer}>
                                 <Text style={code}>{validationCode}</Text>
                             </Section>
@@ -62,16 +63,16 @@ export const OtpEmail = ({ validationCode = '123456' }: OtpEmailProps) => {
 
 export default OtpEmail;
 
-// Premium Obsidian / Tech Noir Styles
+// SaaS Professional Light Styles
 const main = {
-    backgroundColor: '#000000',
-    fontFamily: 'monospace', // Dedicated tech-noir feel
+    backgroundColor: '#f8fafc', // Soft slate-50 background frame
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     margin: '0',
     padding: '0',
 };
 
 const outerWrapper = {
-    backgroundColor: '#000000',
+    backgroundColor: '#f8fafc',
     width: '100%',
     padding: '40px 0',
 };
@@ -83,48 +84,49 @@ const container = {
 };
 
 const header = {
-    marginBottom: '32px',
+    marginBottom: '24px',
     textAlign: 'center' as const,
 };
 
 const logo = {
-    color: '#FCD34D', // SkilledCore Premium Gold
-    fontSize: '24px',
+    color: '#0f172a', // Sleek dark slate branding
+    fontSize: '22px',
     fontWeight: '800',
-    letterSpacing: '0.2em',
+    letterSpacing: '0.15em',
     textTransform: 'uppercase' as const,
     margin: '0',
 };
 
 const content = {
-    backgroundColor: '#09090b', // Deep Obsidian card background
-    border: '1px solid #27272a', // Sleek Zinc-800 border
-    borderRadius: '16px',
+    backgroundColor: '#ffffff', // Clean pure white card
+    border: '1px solid #e2e8f0', // Crisp slate border
+    borderRadius: '12px',
     padding: '40px',
-    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.8)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025)',
 };
 
 const h1 = {
-    color: '#ffffff', // High-contrast white
-    fontSize: '22px',
+    color: '#0f172a', // Clear Slate-900 title
+    fontSize: '20px',
     fontWeight: '700',
-    letterSpacing: '0.05em',
-    margin: '0 0 20px',
-    textTransform: 'uppercase' as const,
+    lineHeight: '28px',
+    margin: '0 0 16px',
+    textAlign: 'center' as const,
 };
 
 const paragraph = {
     fontSize: '15px',
     lineHeight: '24px',
-    color: '#d4d4d8', // High-contrast light grey
-    marginBottom: '20px',
-    margin: '0 0 20px',
+    color: '#334155', // Slate-700 body text for ultimate readability
+    marginBottom: '24px',
+    marginTop: '0',
+    textAlign: 'center' as const,
 };
 
 const codeContainer = {
-    padding: '24px',
-    backgroundColor: '#18181b', // Zinc-900 background for OTP
-    border: '1px dashed #FCD34D', // Gold dashed outline
+    padding: '24px 0',
+    backgroundColor: '#f8fafc', // Light slate-50 background for OTP
+    border: '1px solid #e2e8f0', // Soft border
     borderRadius: '8px',
     textAlign: 'center' as const,
     marginTop: '24px',
@@ -132,33 +134,31 @@ const codeContainer = {
 };
 
 const code = {
-    color: '#FCD34D', // SkilledCore Premium Gold
+    color: '#0f172a', // Sleek Slate-900 code
     fontSize: '36px',
-    fontFamily: 'monospace',
+    fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace',
     fontWeight: '700',
-    letterSpacing: '10px',
+    letterSpacing: '8px',
     margin: '0',
 };
 
 const warning = {
-    fontSize: '12px',
-    color: '#ef4444', // Red-500 for important security alerts
+    fontSize: '13px',
+    color: '#b91c1c', // Soft, high-contrast professional red-700
     textAlign: 'center' as const,
-    fontWeight: '700',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
+    fontWeight: '600',
     margin: '0',
 };
 
 const hr = {
-    borderColor: '#27272a',
-    margin: '30px 0',
+    borderColor: '#e2e8f0',
+    margin: '32px 0',
 };
 
 const footerText = {
-    fontSize: '11px',
-    color: '#71717a', // Zinc-500 secondary text
+    fontSize: '12px',
+    color: '#64748b', // Slate-500 secondary text
     textAlign: 'center' as const,
-    lineHeight: '16px',
+    lineHeight: '18px',
     margin: '0',
 };

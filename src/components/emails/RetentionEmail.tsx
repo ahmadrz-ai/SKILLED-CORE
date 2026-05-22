@@ -32,15 +32,15 @@ export const RetentionEmail = ({
             <Head />
             <Preview>{previewText}</Preview>
             <Body style={main}>
-                {/* Outer wrapper to force dark background in all email clients */}
+                {/* Clean, professional outer background wrapper */}
                 <Section style={outerWrapper}>
                     <Container style={container}>
-                        {/* Header */}
+                        {/* Header Branding */}
                         <Section style={header}>
                             <Heading style={logo}>SKILLED CORE</Heading>
                         </Section>
 
-                        {/* Content Card */}
+                        {/* White Content Card with Slate Borders */}
                         <Section style={content}>
                             <Text style={greeting}>Hi {userName},</Text>
 
@@ -48,7 +48,7 @@ export const RetentionEmail = ({
                                 You have unread messages waiting for you from <span style={highlight}>{senderText}</span>.
                             </Text>
 
-                            {/* Message Preview Box */}
+                            {/* Elegant Message Preview Box */}
                             <div style={messageBox}>
                                 <Text style={messageText}>
                                     "Hey, are you available for a quick chat?"
@@ -57,13 +57,13 @@ export const RetentionEmail = ({
 
                             <Hr style={hr} />
 
-                            {/* Solid high-contrast action button */}
+                            {/* Solid high-contrast indigo action button */}
                             <Button style={button} href="https://skilledcore.com/messages">
                                 View Messages
                             </Button>
                         </Section>
 
-                        {/* Footer */}
+                        {/* Minimalist Corporate Footer */}
                         <Section style={footer}>
                             <Text style={footerText}>
                                 © {new Date().getFullYear()} Skilled Core. All rights reserved.
@@ -78,16 +78,16 @@ export const RetentionEmail = ({
 
 export default RetentionEmail;
 
-// Premium Obsidian / Tech Noir Styles
+// SaaS Professional Light Styles
 const main = {
-    backgroundColor: '#000000',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+    backgroundColor: '#f8fafc', // Soft slate-50 background frame
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     margin: '0',
     padding: '0',
 };
 
 const outerWrapper = {
-    backgroundColor: '#000000',
+    backgroundColor: '#f8fafc',
     width: '100%',
     padding: '40px 0',
 };
@@ -99,51 +99,51 @@ const container = {
 };
 
 const header = {
-    marginBottom: '32px',
+    marginBottom: '24px',
     textAlign: 'center' as const,
 };
 
 const logo = {
-    color: '#FCD34D', // SkilledCore Premium Gold
-    fontSize: '24px',
+    color: '#0f172a', // Sleek dark slate branding
+    fontSize: '22px',
     fontWeight: '800',
-    letterSpacing: '0.2em',
+    letterSpacing: '0.15em',
     textTransform: 'uppercase' as const,
     margin: '0',
 };
 
 const content = {
-    backgroundColor: '#09090b', // Deep Obsidian card background
-    border: '1px solid #27272a', // Sleek Zinc-800 border
-    borderRadius: '16px',
+    backgroundColor: '#ffffff', // Clean pure white card
+    border: '1px solid #e2e8f0', // Crisp slate border
+    borderRadius: '12px',
     padding: '40px',
-    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.8)',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025)',
 };
 
 const greeting = {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '700',
-    color: '#ffffff', // Explicitly pure white for high contrast
+    color: '#0f172a', // Clear Slate-900 greeting
     marginBottom: '16px',
     margin: '0 0 16px',
 };
 
 const paragraph = {
-    fontSize: '16px',
-    lineHeight: '26px',
-    color: '#d4d4d8', // Light zinc gray (zinc-300) for excellent contrast
+    fontSize: '15px',
+    lineHeight: '24px',
+    color: '#334155', // Slate-700 body text for ultimate readability
     marginBottom: '24px',
     margin: '0 0 24px',
 };
 
 const highlight = {
-    color: '#FCD34D', // SkilledCore Premium Gold for emphasis
+    color: '#4f46e5', // Corporate Indigo-600 highlight
     fontWeight: '700',
 };
 
 const messageBox = {
-    backgroundColor: '#18181b', // Dark zinc-900 background
-    borderLeft: '4px solid #8B5CF6', // Purple-500 indicator
+    backgroundColor: '#f8fafc', // Light slate-50 message background
+    borderLeft: '4px solid #4f46e5', // Indigo indicator bar
     padding: '16px 20px',
     borderRadius: '0 8px 8px 0',
     marginBottom: '24px',
@@ -152,37 +152,37 @@ const messageBox = {
 
 const messageText = {
     margin: '0',
-    color: '#e4e4e7', // Very light zinc-200
-    fontSize: '15px',
+    color: '#475569', // Medium slate-600 message text
+    fontSize: '14px',
     lineHeight: '22px',
     fontStyle: 'italic',
 };
 
 const hr = {
-    borderColor: '#27272a',
+    borderColor: '#e2e8f0',
     margin: '32px 0',
 };
 
 const button = {
-    backgroundColor: '#8B5CF6', // Solid premium purple
-    borderRadius: '12px',
-    color: '#ffffff', // Explicit pure white text for perfect legibility
-    fontSize: '16px',
+    backgroundColor: '#4f46e5', // Professional Indigo background
+    borderRadius: '8px',
+    color: '#ffffff', // Pure white text
+    fontSize: '15px',
     fontWeight: '700',
     textDecoration: 'none',
     textAlign: 'center' as const,
     display: 'block',
-    padding: '14px 24px',
-    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
+    padding: '12px 24px',
+    boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.2)',
 };
 
 const footer = {
     textAlign: 'center' as const,
-    paddingTop: '32px',
+    paddingTop: '24px',
 };
 
 const footerText = {
     fontSize: '12px',
-    color: '#52525B', // Darker zinc for secondary footer
+    color: '#94a3b8', // Subtle slate-400 footer text
     margin: '0',
 };

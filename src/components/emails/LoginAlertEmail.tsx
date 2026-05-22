@@ -32,23 +32,23 @@ export const LoginAlertEmail = ({
             <Head />
             <Preview>{previewText}</Preview>
             <Body style={main}>
-                {/* Outer wrapper to force dark background in all email clients */}
+                {/* Clean, professional outer background wrapper */}
                 <Section style={outerWrapper}>
                     <Container style={container}>
-                        {/* Header */}
+                        {/* Header Branding */}
                         <Section style={header}>
                             <Heading style={logo}>SKILLED CORE</Heading>
                         </Section>
 
-                        {/* Main Content Card */}
+                        {/* White Content Card with Slate Borders */}
                         <Section style={content}>
                             <Heading style={h1}>
                                 We noticed a login to your account @{username} from a new device. Was this you?
                             </Heading>
 
-                            {/* Metadata Details Table */}
+                            {/* Metadata Details Table Section */}
                             <Section style={detailsContainer}>
-                                <Heading style={detailsHeader}>New login</Heading>
+                                <Heading style={detailsHeader}>New login details</Heading>
                                 <table style={table}>
                                     <tbody>
                                         <tr>
@@ -74,31 +74,32 @@ export const LoginAlertEmail = ({
                             <Section style={actionSection}>
                                 <Text style={actionTitle}>If this was you</Text>
                                 <Text style={actionBody}>
-                                    You can ignore this message. There's no need to take any action.
+                                    You can safely ignore this message. There's no need to take any action.
                                 </Text>
                             </Section>
 
                             <Section style={actionSection}>
                                 <Text style={actionTitle}>If this wasn't you</Text>
                                 <Text style={actionBody}>
-                                    Complete these steps now to protect your account.
+                                    Please complete these steps immediately to protect your account:
                                 </Text>
                                 
                                 <ul style={bulletList}>
                                     <li style={bulletItem}>
-                                        <Link href="https://skilledcore.com/settings" style={blueLink}>
-                                            Change your password.
-                                        </Link>{' '}
-                                        You'll be logged out of all your active SkilledCore sessions except the one you're using at this time.
+                                        <Link href="https://skilledcore.com/settings" style={indigoLink}>
+                                            Change your password
+                                        </Link>
+                                        {' '}to log out of all active SkilledCore sessions except the current one.
                                     </li>
                                     <li style={bulletItem}>
-                                        <Link href="https://skilledcore.com/settings" style={blueLink}>
-                                            Review the apps
-                                        </Link>{' '}
-                                        that have access to your account and revoke access to any unfamiliar apps.{' '}
-                                        <Link href="https://skilledcore.com/settings" style={blueLink}>
-                                            Learn more.
+                                        <Link href="https://skilledcore.com/settings" style={indigoLink}>
+                                            Review authorized apps
                                         </Link>
+                                        {' '}that have access to your account and revoke access to any unfamiliar devices or services.{' '}
+                                        <Link href="https://skilledcore.com/settings" style={indigoLink}>
+                                            Learn more
+                                        </Link>
+                                        .
                                     </li>
                                 </ul>
                             </Section>
@@ -108,18 +109,18 @@ export const LoginAlertEmail = ({
                             {/* Footer Links */}
                             <Section style={footerLinksContainer}>
                                 <Link href="https://skilledcore.com/support" style={footerLink}>
-                                    Help
+                                    Help Center
                                 </Link>
                                 <span style={footerSeparator}> | </span>
                                 <Link href="https://skilledcore.com/legal/security" style={footerLink}>
-                                    Email security tips
+                                    Email Security Tips
                                 </Link>
                             </Section>
 
                             {/* Legal Disclaimers */}
                             <Section style={legalContainer}>
                                 <Text style={legalText}>
-                                    We sent this email to @{username}
+                                    We sent this notification to protect your account @{username}
                                 </Text>
                                 <Text style={legalAddress}>
                                     SkilledCore Inc., 1355 Market Street, Suite 900, San Francisco, CA 94103
@@ -135,16 +136,16 @@ export const LoginAlertEmail = ({
 
 export default LoginAlertEmail;
 
-// Premium Tech Noir / Obsidian Theme Styles
+// SaaS Professional Light Styles
 const main = {
-    backgroundColor: '#000000',
+    backgroundColor: '#f8fafc', // Soft slate-50 background frame
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     margin: '0',
     padding: '0',
 };
 
 const outerWrapper = {
-    backgroundColor: '#000000',
+    backgroundColor: '#f8fafc',
     width: '100%',
     padding: '40px 0',
 };
@@ -156,50 +157,50 @@ const container = {
 };
 
 const header = {
-    padding: '20px 0',
+    marginBottom: '24px',
     textAlign: 'center' as const,
 };
 
 const logo = {
-    color: '#FCD34D', // Premium SkilledCore Gold
-    fontSize: '20px',
-    fontWeight: 'bold',
-    letterSpacing: '0.2em',
+    color: '#0f172a', // Sleek dark slate branding
+    fontSize: '22px',
+    fontWeight: '800',
+    letterSpacing: '0.15em',
     textTransform: 'uppercase' as const,
     margin: '0',
 };
 
 const content = {
-    backgroundColor: '#09090b', // Deep Dark Obsidian Grey
-    border: '1px solid #27272a', // Subtle zinc border
-    borderRadius: '8px',
-    padding: '40px 30px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8)',
+    backgroundColor: '#ffffff', // Clean pure white card
+    border: '1px solid #e2e8f0', // Crisp slate border
+    borderRadius: '12px',
+    padding: '40px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025)',
 };
 
 const h1 = {
-    color: '#ffffff',
-    fontSize: '20px',
+    color: '#0f172a', // Slate-900 header
+    fontSize: '18px',
     fontWeight: '700',
-    lineHeight: '28px',
+    lineHeight: '26px',
     margin: '0 0 24px',
 };
 
 const detailsContainer = {
-    backgroundColor: '#18181b', // Zinc-900 background for details
-    border: '1px solid #27272a',
-    borderRadius: '6px',
+    backgroundColor: '#f8fafc', // Light slate-50 box
+    border: '1px solid #e2e8f0', // Soft border
+    borderRadius: '8px',
     padding: '20px',
     marginBottom: '24px',
 };
 
 const detailsHeader = {
-    color: '#ffffff',
-    fontSize: '14px',
+    color: '#0f172a', // Slate-900 details heading
+    fontSize: '13px',
     fontWeight: '700',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
-    margin: '0 0 16px',
+    margin: '0 0 12px',
 };
 
 const table = {
@@ -208,7 +209,7 @@ const table = {
 };
 
 const labelCell = {
-    color: '#a1a1aa', // Zinc-400
+    color: '#64748b', // Slate-500 labels
     fontSize: '14px',
     padding: '6px 0',
     width: '120px',
@@ -216,14 +217,15 @@ const labelCell = {
 };
 
 const valueCell = {
-    color: '#ffffff',
+    color: '#0f172a', // Slate-900 values
     fontSize: '14px',
     padding: '6px 0',
+    fontWeight: '500',
     verticalAlign: 'top' as const,
 };
 
 const legendText = {
-    color: '#71717a', // Zinc-500
+    color: '#94a3b8', // Slate-400 legend
     fontSize: '11px',
     margin: '12px 0 0',
     lineHeight: '16px',
@@ -234,14 +236,14 @@ const actionSection = {
 };
 
 const actionTitle = {
-    color: '#ffffff',
+    color: '#0f172a', // Slate-900 title
     fontSize: '15px',
     fontWeight: '700',
     margin: '0 0 8px',
 };
 
 const actionBody = {
-    color: '#a1a1aa',
+    color: '#334155', // Slate-700 description
     fontSize: '14px',
     lineHeight: '22px',
     margin: '0 0 8px',
@@ -250,7 +252,7 @@ const actionBody = {
 const bulletList = {
     margin: '0',
     paddingLeft: '20px',
-    color: '#a1a1aa',
+    color: '#334155',
 };
 
 const bulletItem = {
@@ -259,14 +261,15 @@ const bulletItem = {
     marginBottom: '10px',
 };
 
-const blueLink = {
-    color: '#3b82f6', // Premium blue for hyperlinks
+const indigoLink = {
+    color: '#4f46e5', // Sleek Indigo accent
+    fontWeight: '600',
     textDecoration: 'underline',
 };
 
 const hr = {
-    borderColor: '#27272a',
-    margin: '30px 0',
+    borderColor: '#e2e8f0',
+    margin: '32px 0',
 };
 
 const footerLinksContainer = {
@@ -275,13 +278,14 @@ const footerLinksContainer = {
 };
 
 const footerLink = {
-    color: '#3b82f6',
+    color: '#4f46e5', // Corporate Indigo-600 link
     fontSize: '13px',
     textDecoration: 'none',
+    fontWeight: '600',
 };
 
 const footerSeparator = {
-    color: '#27272a',
+    color: '#e2e8f0',
     fontSize: '13px',
 };
 
@@ -290,13 +294,13 @@ const legalContainer = {
 };
 
 const legalText = {
-    color: '#71717a',
+    color: '#94a3b8', // Slate-400 legal disclaimer
     fontSize: '12px',
     margin: '0 0 8px',
 };
 
 const legalAddress = {
-    color: '#52525b', // Zinc-600
+    color: '#64748b', // Slate-500 address
     fontSize: '11px',
     lineHeight: '16px',
     margin: '0',
