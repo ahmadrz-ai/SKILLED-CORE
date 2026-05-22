@@ -99,7 +99,13 @@ export default function RegisterPageContent() {
 
     const handleSocialLogin = (provider: "google" | "github") => {
         setIsLoading(provider);
-        signIn(provider, { callbackUrl: redirectTo });
+        if (typeof window !== "undefined") {
+            if (formData.name) sessionStorage.setItem("skilledcore_pending_name", formData.name.trim());
+            if (formData.username) sessionStorage.setItem("skilledcore_pending_username", formData.username.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+            sessionStorage.setItem("skilledcore_pending_role", role);
+        }
+        const callbackUrl = `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}role=${role.toLowerCase()}`;
+        signIn(provider, { callbackUrl });
     };
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -318,12 +324,14 @@ export default function RegisterPageContent() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="email" style={{ color: "#475569", fontSize: "13px" }}>Work Email</Label>
+                            <Label htmlFor="email" style={{ color: "#475569", fontSize: "13px" }}>
+                                {role === 'RECRUITER' ? 'Work Email' : 'Email'}
+                            </Label>
                             <div className="relative">
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="name@company.com"
+                                    placeholder={role === 'RECRUITER' ? 'name@company.com' : 'you@example.com'}
                                     className="pl-9 h-10"
                                     style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                     value={formData.email}

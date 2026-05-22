@@ -14,17 +14,24 @@ export default async function OnboardingPage() {
     try {
         user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { headline: true, role: true }
+            select: { headline: true, role: true, name: true, username: true, companyId: true, email: true }
         });
     } catch (dbError) {
         console.error("OnboardingPage: DB Error fetching user", dbError);
     }
 
-    // If user has a headline, they are onboarded. 
-    // You might want to check other fields too depending on your "complete" definition.
-    if (user?.headline) {
+    // Determine onboarding status dynamically based on role
+    const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
+    if (isOnboarded) {
         redirect("/feed");
     }
 
-    return <OnboardingClient />;
+    return (
+        <OnboardingClient 
+            dbRole={user?.role || undefined} 
+            dbName={user?.name || undefined} 
+            dbUsername={user?.username || undefined} 
+            dbEmail={user?.email || undefined} 
+        />
+    );
 }

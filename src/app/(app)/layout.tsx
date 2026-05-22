@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 export default async function AppLayout({
     children,
@@ -17,14 +18,20 @@ export default async function AppLayout({
     let learningCount = 0;
     let hasAnalytics = false;
 
-    let user: { plan: string; credits: number } | null = null;
+    let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null } | null = null;
 
     try {
         if (session?.user?.id) {
             user = await prisma.user.findUnique({
                 where: { id: session.user.id },
-                select: { plan: true, credits: true }
+                select: { plan: true, credits: true, headline: true, role: true, companyId: true }
             });
+
+            // Redirect un-onboarded users to the onboarding page
+            const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
+            if (!isOnboarded) {
+                redirect("/onboarding");
+            }
 
             networkCount = await prisma.connection.count({
                 where: { addresseeId: session.user.id, status: "PENDING" }

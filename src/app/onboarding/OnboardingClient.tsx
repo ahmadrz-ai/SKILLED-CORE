@@ -31,10 +31,15 @@ const RECRUITER_STEPS = [
 const SUGGESTED_SKILLS = ["React", "TypeScript", "Node.js", "Python", "Design Systems", "AWS", "GraphQL"];
 
 // Move main logic to inner component
-function OnboardingContent() {
+function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingClientProps) {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const role = searchParams.get('role') === 'recruiter' ? 'recruiter' : 'candidate';
+    
+    // Stateful role, resolvedName, and pendingUsername
+    const [role, setRole] = useState<'recruiter' | 'candidate'>('candidate');
+    const [resolvedName, setResolvedName] = useState<string>(dbName || '');
+    const [pendingUsername, setPendingUsername] = useState<string | null>(null);
+
     const STEPS = role === 'recruiter' ? RECRUITER_STEPS : CANDIDATE_STEPS;
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -43,7 +48,7 @@ function OnboardingContent() {
 
     // --- FORM STATE ---
     const [formData, setFormData] = useState({
-        username: '',
+        username: dbUsername || '',
         headline: '',
         bio: '',
         location: '',
@@ -56,6 +61,42 @@ function OnboardingContent() {
         education: [] as any[],
         // resumeUrl removed
     });
+
+    // Sync from props and sessionStorage on mount
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const cachedRole = sessionStorage.getItem("skilledcore_pending_role");
+            const cachedName = sessionStorage.getItem("skilledcore_pending_name");
+            const cachedUsername = sessionStorage.getItem("skilledcore_pending_username");
+
+            const urlRole = searchParams.get('role');
+            const isRec = (dbRole?.toUpperCase() === 'RECRUITER') || (urlRole === 'recruiter') || (cachedRole?.toUpperCase() === 'RECRUITER');
+            setRole(isRec ? 'recruiter' : 'candidate');
+
+            if (cachedName) {
+                setResolvedName(cachedName);
+                sessionStorage.removeItem("skilledcore_pending_name");
+            } else if (dbName) {
+                setResolvedName(dbName);
+            }
+
+            if (cachedUsername) {
+                setPendingUsername(cachedUsername);
+                setFormData(prev => ({ ...prev, username: cachedUsername }));
+                sessionStorage.removeItem("skilledcore_pending_username");
+            } else if (dbUsername) {
+                setFormData(prev => ({ ...prev, username: dbUsername }));
+            }
+
+            if (dbEmail) {
+                setFormData(prev => ({ ...prev, workEmail: dbEmail }));
+            }
+
+            if (cachedRole) {
+                sessionStorage.removeItem("skilledcore_pending_role");
+            }
+        }
+    }, [dbRole, dbName, dbUsername, dbEmail, searchParams]);
 
     // --- UPLOAD SIMULATION ---
     const [uploadStatus, setUploadStatus] = useState('idle');
@@ -72,6 +113,10 @@ function OnboardingContent() {
                 setUsernameStatus('idle');
                 return;
             }
+            if (formData.username === dbUsername || formData.username === pendingUsername) {
+                setUsernameStatus('available');
+                return;
+            }
             setUsernameStatus('checking');
             const result = await checkUsername(formData.username);
             if (result.available) {
@@ -82,7 +127,7 @@ function OnboardingContent() {
         };
         const timeoutId = setTimeout(check, 500);
         return () => clearTimeout(timeoutId);
-    }, [formData.username]);
+    }, [formData.username, dbUsername, pendingUsername]);
     const validateStep = (step: number) => {
         setPageError(null);
         if (role === 'candidate') {
@@ -144,6 +189,7 @@ function OnboardingContent() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         role: role.toUpperCase(),
+                        name: resolvedName, // Sync resolved name (from DB or cached from register page)
                         ...formData
                     }),
                 });
@@ -611,10 +657,17 @@ function OnboardingContent() {
     );
 }
 
-export default function OnboardingClient() {
+interface OnboardingClientProps {
+    dbRole?: string;
+    dbName?: string;
+    dbUsername?: string;
+    dbEmail?: string;
+}
+
+export default function OnboardingClient({ dbRole, dbName, dbUsername, dbEmail }: OnboardingClientProps) {
     return (
         <Suspense fallback={<div className="min-h-screen bg-obsidian flex items-center justify-center text-violet-500 font-mono">INITIALIZING IDENTITY MATRIX...</div>}>
-            <OnboardingContent />
+            <OnboardingContent dbRole={dbRole} dbName={dbName} dbUsername={dbUsername} dbEmail={dbEmail} />
         </Suspense>
     );
 }

@@ -23,9 +23,10 @@ export default async function LandingPage() {
       try {
         const user = await prisma.user.findUnique({
           where: { id: session.user.id },
-          select: { headline: true }
+          select: { headline: true, role: true, companyId: true }
         });
-        if (user?.headline) {
+        const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
+        if (isOnboarded) {
           redirect("/feed");
         }
       } catch (dbError) {
