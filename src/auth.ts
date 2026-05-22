@@ -256,10 +256,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ...(hasGoogle ? [Google({
             clientId: googleId,
             clientSecret: googleSecret,
+            allowDangerousEmailAccountLinking: true,
         })] : []),
         ...(process.env.AUTH_GITHUB_ID && !process.env.AUTH_GITHUB_ID.includes("placeholder") ? [GitHub({
             clientId: process.env.AUTH_GITHUB_ID,
             clientSecret: process.env.AUTH_GITHUB_SECRET,
+            allowDangerousEmailAccountLinking: true,
         })] : []),
     ],
 })
