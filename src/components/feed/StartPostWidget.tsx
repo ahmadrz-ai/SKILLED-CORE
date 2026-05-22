@@ -5,15 +5,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send } from "lucide-react";
+import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadB2File } from "@/app/admin/actions";
 
 import EmojiPicker from 'emoji-picker-react';
 
 interface StartPostWidgetProps {
-    onPostCreated?: (content: string, pollOptions?: string[]) => void;
+    onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
 }
 
 export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
@@ -25,7 +26,21 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pollOptions, setPollOptions] = useState(["", ""]);
 
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Cleanup preview URL on unmount or URL change
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     // Force focus when dialog opens
     useEffect(() => {
@@ -36,12 +51,41 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
         }
     }, [isOpen]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const MAX_SIZE = 4 * 1024 * 1024;
+        if (file.size >= MAX_SIZE) {
+            toast.error("Images must be strictly under 4MB.");
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
+        setSelectedFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedFile(null);
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     const handleFeatureDisabled = (feature: string) => {
         toast.info(`${feature} is currently disabled.`);
     };
 
-    const handleSubmit = () => {
-        if (!content.trim()) return;
+    const handleSubmit = async () => {
+        if (!content.trim() && !selectedFile) return;
 
         // Validation logic
         let validOptions: string[] | undefined;
@@ -53,12 +97,40 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             }
         }
 
-        onPostCreated?.(content, validOptions);
+        let imageUrl: string | undefined;
+
+        if (selectedFile) {
+            setIsUploading(true);
+            try {
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+                const uploadRes = await uploadB2File(formData);
+                if (!uploadRes.success || !uploadRes.url) {
+                    toast.error(uploadRes.message || "Failed to upload image to Backblaze B2");
+                    setIsUploading(false);
+                    return;
+                }
+                imageUrl = uploadRes.url;
+            } catch (err) {
+                console.error("Upload error:", err);
+                toast.error("Failed to upload image to Backblaze B2");
+                setIsUploading(false);
+                return;
+            }
+        }
+
+        onPostCreated?.(content, validOptions, imageUrl);
 
         // Reset and close
         setContent("");
         setPollOptions(["", ""]);
         setIsPollMode(false);
+        setSelectedFile(null);
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+        setIsUploading(false);
         setIsOpen(false);
         toast.success("Post sent.");
     };
@@ -104,14 +176,50 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 </div>
                             </div>
  
+                            {/* Hidden File Input */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept="image/*"
+                                className="hidden"
+                                disabled={isUploading}
+                            />
+
                             {/* Text Area */}
                             <Textarea
                                 ref={textareaRef}
                                 value={content}
                                 onChange={(e: any) => setContent(e.target.value)}
                                 placeholder="What do you want to talk about?"
-                                className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[300px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
+                                disabled={isUploading}
+                                className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[150px] md:min-h-[200px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
                             />
+
+                            {/* Image Preview */}
+                            {previewUrl && (
+                                <div className="relative mt-4 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] group">
+                                    <img
+                                        src={previewUrl}
+                                        alt="Upload preview"
+                                        className="w-full h-auto max-h-[350px] object-contain mx-auto"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveImage}
+                                        disabled={isUploading}
+                                        className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-colors shadow-md z-10"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                    {isUploading && (
+                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2">
+                                            <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+                                            <span className="text-xs font-semibold tracking-wide">Uploading image to Backblaze B2...</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
  
                             {/* Poll Editor */}
                             {isPollMode && (
@@ -149,6 +257,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     <Button
                                         variant="ghost"
                                         size="sm"
+                                        disabled={isUploading}
                                         onClick={() => setContent(prev => prev + " #")}
                                         className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
@@ -157,6 +266,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     <Button
                                         variant="ghost"
                                         size="sm"
+                                        disabled={isUploading}
                                         onClick={() => setContent(prev => prev + " @")}
                                         className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
@@ -169,6 +279,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        disabled={isUploading}
                                         onClick={() => setIsPollMode(!isPollMode)}
                                         className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", isPollMode ? "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#EEF2FF]" : "text-[#6B7280]")}
                                     >
@@ -179,6 +290,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
+                                            disabled={isUploading}
                                             className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", showEmojiPicker ? "text-[#D97706] bg-[#FFFBEB] hover:bg-[#FFFBEB]" : "text-[#6B7280]")}
                                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                         >
@@ -200,7 +312,13 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         )}
                                     </div>
  
-                                    <Button variant="ghost" size="icon" className="text-[#6B7280] hover:bg-[#F3F4F6] rounded-full w-9 h-9 animate-none" onClick={() => handleFeatureDisabled("Image Upload")}>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={isUploading}
+                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", selectedFile ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
                                         <ImageIcon className="w-5 h-5" />
                                     </Button>
                                 </div>
@@ -214,10 +332,17 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     </span>
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={!content.trim() || content.length > 3000}
-                                        className="rounded-full px-6 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold h-9 transition-colors shadow-sm animate-none"
+                                        disabled={isUploading || (!content.trim() && !selectedFile) || content.length > 3000}
+                                        className="rounded-full px-6 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold h-9 transition-colors shadow-sm animate-none flex items-center gap-2"
                                     >
-                                        Post
+                                        {isUploading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Posting...
+                                            </>
+                                        ) : (
+                                            "Post"
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -226,16 +351,19 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 </Dialog>
             </div>
  
-            {/* Bottom Row: Media Buttons (Disabled) */}
+            {/* Bottom Row: Media Buttons */}
             <div className="flex justify-between px-2 pt-2 border-t border-[#F3F4F6]">
                 <button
-                    onClick={() => handleFeatureDisabled("Media Gallery")}
+                    onClick={() => {
+                        setIsOpen(true);
+                        setTimeout(() => fileInputRef.current?.click(), 250);
+                    }}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#EFF6FF] transition-all duration-200 text-[#6B7280] hover:text-[#2563EB] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
                 >
                     <ImageIcon className="w-5 h-5 text-[#2563EB] group-hover:scale-110 transition-transform duration-200" />
                     <span>Media</span>
                 </button>
- 
+
                 <button
                     onClick={() => handleFeatureDisabled("Events")}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FFFBEB] transition-all duration-200 text-[#6B7280] hover:text-[#D97706] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
@@ -243,7 +371,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     <Calendar className="w-5 h-5 text-[#D97706] group-hover:scale-110 transition-transform duration-200" />
                     <span>Event</span>
                 </button>
- 
+
                 <button
                     onClick={() => handleFeatureDisabled("Articles")}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FEF2F2] transition-all duration-200 text-[#6B7280] hover:text-[#EF4444] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"

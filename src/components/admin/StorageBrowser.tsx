@@ -2,21 +2,104 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, HardDrive, FileText, Download, Trash2, ExternalLink, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { 
+    Database, HardDrive, Cloud, FileText, Download, Trash2, 
+    ExternalLink, CheckSquare, Square, Loader2, Search, Copy, Check, Image
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { deleteFiles } from '@/app/admin/actions';
 
 interface StorageBrowserProps {
-    files: any[];
+    uploadthingFiles: any[];
+    cloudinaryFiles: any[];
+    b2Files: any[];
     dbStats: any;
 }
 
-export default function StorageBrowser({ files: initialFiles, dbStats }: StorageBrowserProps) {
-    const [activeTab, setActiveTab] = useState<'neon' | 'uploadthing'>('neon');
-    const [files, setFiles] = useState(initialFiles);
+export default function StorageBrowser({ 
+    uploadthingFiles: initialUtFiles, 
+    cloudinaryFiles: initialClFiles, 
+    b2Files: initialB2Files,
+    dbStats 
+}: StorageBrowserProps) {
+    const [activeTab, setActiveTab] = useState<'neon' | 'uploadthing' | 'cloudinary' | 'b2'>('neon');
+    const [utFiles, setUtFiles] = useState(initialUtFiles);
+    const [clFiles, setClFiles] = useState(initialClFiles);
+    const [b2Files, setB2Files] = useState(initialB2Files || []);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+    // Plan capacities in bytes
+    const NEON_CAPACITY = 512 * 1024 * 1024;       // 512 MB
+    const UT_CAPACITY = 2 * 1024 * 1024 * 1024;     // 2 GB
+    const CLOUDINARY_CAPACITY = 10 * 1024 * 1024 * 1024; // 10 GB
+    const B2_CAPACITY = 10 * 1024 * 1024 * 1024; // 10 GB
+
+    const getStorageStats = () => {
+        switch (activeTab) {
+            case 'neon':
+                return {
+                    name: 'Neon DB',
+                    used: dbStats?.dbSize || 0,
+                    total: NEON_CAPACITY,
+                    colorClass: 'bg-violet-500',
+                    gradientClass: 'from-violet-500 to-purple-600',
+                    textClass: 'text-violet-400',
+                };
+            case 'uploadthing':
+                return {
+                    name: 'UploadThing',
+                    used: utFiles.reduce((acc, f) => acc + (f.size || 0), 0),
+                    total: UT_CAPACITY,
+                    colorClass: 'bg-blue-500',
+                    gradientClass: 'from-blue-500 to-indigo-600',
+                    textClass: 'text-blue-400',
+                };
+            case 'cloudinary':
+                return {
+                    name: 'Cloudinary',
+                    used: clFiles.reduce((acc, f) => acc + (f.size || 0), 0),
+                    total: CLOUDINARY_CAPACITY,
+                    colorClass: 'bg-cyan-500',
+                    gradientClass: 'from-cyan-500 to-sky-600',
+                    textClass: 'text-cyan-400',
+                };
+            case 'b2':
+                return {
+                    name: 'Backblaze B2',
+                    used: b2Files.reduce((acc, f) => acc + (f.size || 0), 0),
+                    total: B2_CAPACITY,
+                    colorClass: 'bg-amber-500',
+                    gradientClass: 'from-amber-500 to-orange-600',
+                    textClass: 'text-amber-400',
+                };
+        }
+    };
+
+    const stats = getStorageStats();
+    const percent = Math.min(100, Math.max(0, (stats.used / stats.total) * 100));
+
+    // Get files based on active tab
+    const getActiveFilesList = () => {
+        if (activeTab === 'uploadthing') return utFiles;
+        if (activeTab === 'cloudinary') return clFiles;
+        if (activeTab === 'b2') return b2Files;
+        return [];
+    };
+
+    const activeFiles = getActiveFilesList();
+
+    // Filter files based on search query
+    const filteredFiles = activeFiles.filter(file => {
+        const query = searchQuery.toLowerCase();
+        return (
+            file.name?.toLowerCase().includes(query) ||
+            file.key?.toLowerCase().includes(query)
+        );
+    });
 
     const toggleSelect = (key: string) => {
         const next = new Set(selectedKeys);
@@ -26,70 +109,318 @@ export default function StorageBrowser({ files: initialFiles, dbStats }: Storage
     };
 
     const toggleSelectAll = () => {
-        if (selectedKeys.size === files.length) {
+        if (selectedKeys.size === filteredFiles.length) {
             setSelectedKeys(new Set());
         } else {
-            setSelectedKeys(new Set(files.map(f => f.key)));
+            setSelectedKeys(new Set(filteredFiles.map(f => f.key)));
         }
     };
 
     const handleDelete = async () => {
         if (selectedKeys.size === 0) return;
-        if (!confirm(`Permanently delete ${selectedKeys.size} files?`)) return;
+        if (!confirm(`Permanently delete ${selectedKeys.size} selected files?`)) return;
 
         setIsDeleting(true);
         const keysArray = Array.from(selectedKeys);
-        const res = await deleteFiles(keysArray);
+        const res = await deleteFiles(keysArray, activeTab === 'neon' ? undefined : activeTab);
         setIsDeleting(false);
 
         if (res.success) {
-            toast.success(`Deleted ${selectedKeys.size} files`);
-            setFiles(files.filter(f => !selectedKeys.has(f.key)));
+            toast.success(res.message);
+            if (activeTab === 'uploadthing') {
+                setUtFiles(prev => prev.filter(f => !selectedKeys.has(f.key)));
+            } else if (activeTab === 'cloudinary') {
+                setClFiles(prev => prev.filter(f => !selectedKeys.has(f.key)));
+            } else if (activeTab === 'b2') {
+                setB2Files(prev => prev.filter(f => !selectedKeys.has(f.key)));
+            }
             setSelectedKeys(new Set());
         } else {
             toast.error(res.message || "Deletion failed");
         }
     };
 
+    const handleTabChange = (tab: 'neon' | 'uploadthing' | 'cloudinary' | 'b2') => {
+        setActiveTab(tab);
+        setSelectedKeys(new Set());
+        setSearchQuery('');
+    };
+
+    const copyToClipboard = (url: string, key: string) => {
+        navigator.clipboard.writeText(url);
+        setCopiedKey(key);
+        toast.success("Direct link copied");
+        setTimeout(() => setCopiedKey(null), 2000);
+    };
+
+    const formatBytes = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = 1;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    };
+
+    const isImage = (fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        return ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext || '');
+    };
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Tab Switcher */}
-                <div className="flex p-1 bg-zinc-900/50 border border-white/5 rounded-lg w-fit">
+                <div className="flex p-1 bg-zinc-900/60 border border-zinc-800/80 rounded-xl w-fit relative overflow-hidden">
                     <button
-                        onClick={() => setActiveTab('neon')}
+                        onClick={() => handleTabChange('neon')}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
-                            activeTab === 'neon' ? "bg-violet-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
+                            activeTab === 'neon' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
                         )}
                     >
+                        {activeTab === 'neon' && (
+                            <motion.div 
+                                layoutId="active-tab-indicator" 
+                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25" 
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            />
+                        )}
                         <Database className="w-4 h-4" /> Neon DB
                     </button>
                     <button
-                        onClick={() => setActiveTab('uploadthing')}
+                        onClick={() => handleTabChange('uploadthing')}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
-                            activeTab === 'uploadthing' ? "bg-red-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
+                            activeTab === 'uploadthing' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
                         )}
                     >
+                        {activeTab === 'uploadthing' && (
+                            <motion.div 
+                                layoutId="active-tab-indicator" 
+                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            />
+                        )}
                         <HardDrive className="w-4 h-4" /> UploadThing
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('cloudinary')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
+                            activeTab === 'cloudinary' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                    >
+                        {activeTab === 'cloudinary' && (
+                            <motion.div 
+                                layoutId="active-tab-indicator" 
+                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            />
+                        )}
+                        <Cloud className="w-4 h-4" /> Cloudinary
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('b2')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
+                            activeTab === 'b2' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                    >
+                        {activeTab === 'b2' && (
+                            <motion.div 
+                                layoutId="active-tab-indicator" 
+                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            />
+                        )}
+                        <HardDrive className="w-4 h-4 text-amber-500" /> Backblaze B2
                     </button>
                 </div>
 
-                {/* Bulk Actions */}
-                {activeTab === 'uploadthing' && selectedKeys.size > 0 && (
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-red-900/20"
-                    >
-                        {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                        DELETE SELECTION ({selectedKeys.size})
-                    </motion.button>
+                {/* Search & Actions Area */}
+                {activeTab !== 'neon' && (
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:flex-initial sm:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <input
+                                type="text"
+                                placeholder={`Search ${activeTab === 'uploadthing' ? 'documents' : 'media'}...`}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-zinc-900/50 border border-zinc-800/80 rounded-xl py-2 pl-9 pr-4 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 transition-all font-sans"
+                            />
+                        </div>
+
+                        {selectedKeys.size > 0 && (
+                            <motion.button
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-lg shadow-red-900/25 border border-red-400/10 cursor-pointer h-[38px] transition-colors"
+                            >
+                                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                <span className="hidden md:inline">Delete Selected</span> ({selectedKeys.size})
+                            </motion.button>
+                        )}
+                    </div>
                 )}
             </div>
+
+            {/* Storage Intelligence Meter & Pie Chart Section */}
+            <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden"
+            >
+                {/* Visual Accent/Glow behind */}
+                <div className={cn(
+                    "absolute -right-24 -top-24 w-48 h-48 rounded-full filter blur-[80px] opacity-20 pointer-events-none transition-all duration-500",
+                    activeTab === 'neon' ? "bg-violet-500" : activeTab === 'uploadthing' ? "bg-blue-500" : activeTab === 'cloudinary' ? "bg-cyan-500" : "bg-amber-500"
+                )} />
+
+                {/* Storage Meter Column */}
+                <div className="lg:col-span-2 flex flex-col justify-between space-y-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className={cn(
+                                "text-xs font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-zinc-950 font-sans",
+                                activeTab === 'neon' ? "text-violet-400 border-violet-500/25" :
+                                activeTab === 'uploadthing' ? "text-blue-400 border-blue-500/25" :
+                                activeTab === 'cloudinary' ? "text-cyan-400 border-cyan-500/25" :
+                                "text-amber-400 border-amber-500/25"
+                            )}>
+                                Active Allocation
+                            </span>
+                            <span className="text-zinc-500 text-xs font-mono">• {stats.name} Capacity</span>
+                        </div>
+                        <h2 className="text-2xl font-black text-white tracking-tight font-sans">
+                            Storage Overview
+                        </h2>
+                        <p className="text-sm text-zinc-400 mt-1 max-w-md font-sans">
+                            {activeTab === 'neon' && "Real-time database footprints tracking operational records and tables."}
+                            {activeTab === 'uploadthing' && "Active file upload bandwidth representing onboarding documents and recruiter attachments."}
+                            {activeTab === 'cloudinary' && "Visual media storage showing branding elements, profile banners, and recruiters images."}
+                            {activeTab === 'b2' && "Secure S3-compatible cloud storage dedicated for feed media, community posts and content attachments."}
+                        </p>
+                    </div>
+
+                    {/* Progress Meter */}
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-baseline">
+                            <div className="flex items-baseline gap-1.5 font-sans">
+                                <span className="text-3xl font-extrabold text-white">{formatBytes(stats.used)}</span>
+                                <span className="text-zinc-500 text-xs font-medium">used out of {formatBytes(stats.total)}</span>
+                            </div>
+                            <span className={cn("text-lg font-black font-mono", stats.textClass)}>
+                                {percent.toFixed(2)}%
+                            </span>
+                        </div>
+
+                        {/* Linear Progress Bar */}
+                        <div className="h-3 w-full bg-zinc-900 border border-zinc-800/80 rounded-full overflow-hidden p-0.5">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percent}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className={cn("h-full rounded-full bg-gradient-to-r shadow-lg shadow-violet-500/10", stats.gradientClass)}
+                            />
+                        </div>
+
+                        <div className="flex justify-between text-xs font-mono text-zinc-500">
+                            <span>0% (Empty)</span>
+                            <span>Remaining: {formatBytes(Math.max(0, stats.total - stats.used))}</span>
+                            <span>100% (Limit)</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SVG Pie Chart Column */}
+                <div className="flex flex-col items-center justify-center p-4 border-t lg:border-t-0 lg:border-l border-zinc-800/60 min-h-[220px]">
+                    <div className="relative w-36 h-36 flex items-center justify-center">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            {/* SVG Gradients definitions */}
+                            <defs>
+                                <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#8b5cf6" />
+                                    <stop offset="100%" stopColor="#c084fc" />
+                                </linearGradient>
+                                <linearGradient id="utGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#3b82f6" />
+                                    <stop offset="100%" stopColor="#60a5fa" />
+                                </linearGradient>
+                                <linearGradient id="clGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#06b6d4" />
+                                    <stop offset="100%" stopColor="#22d3ee" />
+                                </linearGradient>
+                                <linearGradient id="b2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#f59e0b" />
+                                    <stop offset="100%" stopColor="#ea580c" />
+                                </linearGradient>
+                            </defs>
+
+                            {/* Background Circle representing Total */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="38"
+                                className="stroke-zinc-900 fill-none"
+                                strokeWidth="8"
+                            />
+                            
+                            {/* Background border circle to add luxury edge */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="38"
+                                className="stroke-zinc-800/40 fill-none"
+                                strokeWidth="8.5"
+                            />
+
+                            {/* Active Used Segment */}
+                            <motion.circle
+                                cx="50"
+                                cy="50"
+                                r="38"
+                                className="fill-none"
+                                strokeWidth="8"
+                                strokeDasharray={238.76} // 2 * Math.PI * 38
+                                initial={{ strokeDashoffset: 238.76 }}
+                                animate={{ strokeDashoffset: 238.76 - (238.76 * percent) / 100 }}
+                                transition={{ duration: 1, ease: "easeInOut" }}
+                                stroke={
+                                    activeTab === 'neon' ? "url(#neonGrad)" :
+                                    activeTab === 'uploadthing' ? "url(#utGrad)" :
+                                    activeTab === 'cloudinary' ? "url(#clGrad)" :
+                                    "url(#b2Grad)"
+                                }
+                                strokeLinecap="round"
+                            />
+                        </svg>
+
+                        {/* Center text of Doughnut Pie Chart */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest font-sans">Used</span>
+                            <span className="text-lg font-black text-white font-mono">{percent.toFixed(1)}%</span>
+                            <span className="text-zinc-400 text-[9px] font-medium font-sans mt-0.5">{formatBytes(stats.used)}</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-4 text-xs font-mono">
+                        <div className="flex items-center gap-1.5">
+                            <span className={cn("w-2.5 h-2.5 rounded-full", stats.colorClass)} />
+                            <span className="text-zinc-300">Used ({percent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800" />
+                            <span className="text-zinc-500">Free ({(100 - percent).toFixed(1)}%)</span>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
 
             {/* Content Area */}
             <div className="min-h-[400px]">
@@ -100,102 +431,143 @@ export default function StorageBrowser({ files: initialFiles, dbStats }: Storage
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
                         >
                             <StatCard label="Total Users" value={dbStats.users} icon={Database} color="violet" />
                             <StatCard label="Active Jobs" value={dbStats.jobs} icon={FileText} color="blue" />
                             <StatCard label="Applications" value={dbStats.applications} icon={FileText} color="emerald" />
                             <StatCard label="Total Posts" value={dbStats.posts} icon={FileText} color="amber" />
 
-                            <div className="col-span-full mt-8 p-6 bg-zinc-900/30 border border-white/5 rounded-xl">
-                                <h3 className="text-lg font-bold text-white mb-4">Database Health</h3>
+                            <div className="col-span-full mt-4 p-6 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl backdrop-blur-md">
+                                <h3 className="text-base font-bold text-white mb-4 tracking-tight">Database Connectivity</h3>
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                                    <div className="flex justify-between items-center text-sm border-b border-zinc-800/40 pb-2.5">
                                         <span className="text-zinc-400">Connection Pool</span>
-                                        <span className="text-green-400 font-mono">OPTIMAL</span>
+                                        <span className="text-emerald-400 font-sans font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded text-xs">OPTIMAL</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                                    <div className="flex justify-between items-center text-sm border-b border-zinc-800/40 pb-2.5">
                                         <span className="text-zinc-400">Query Latency</span>
-                                        <span className="text-green-400 font-mono">12ms (avg)</span>
+                                        <span className="text-emerald-400 font-sans font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded text-xs">12ms (avg)</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-zinc-400">Region</span>
-                                        <span className="text-white font-mono">us-east-1</span>
+                                        <span className="text-white font-mono font-medium">us-east-1 (AWS)</span>
                                     </div>
                                 </div>
                             </div>
                         </motion.div>
                     ) : (
                         <motion.div
-                            key="uploadthing"
+                            key={activeTab}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             className="space-y-4"
                         >
-                            <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden">
-                                <div className="p-4 border-b border-white/5 flex justify-between items-center bg-zinc-900/50">
+                            <div className="bg-zinc-900/10 border border-zinc-800/60 rounded-xl overflow-hidden backdrop-blur-md">
+                                <div className="p-4 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/30">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={toggleSelectAll}
-                                            className="text-zinc-400 hover:text-white transition-colors"
+                                            className="text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                                             title="Select All"
                                         >
-                                            {selectedKeys.size > 0 && selectedKeys.size === files.length ? (
-                                                <CheckSquare className="w-5 h-5 text-red-500" />
+                                            {selectedKeys.size > 0 && selectedKeys.size === filteredFiles.length ? (
+                                                <CheckSquare className="w-5 h-5 text-violet-500" />
                                             ) : (
                                                 <Square className="w-5 h-5" />
                                             )}
                                         </button>
-                                        <h3 className="font-bold text-white text-sm">Recent Uploads</h3>
+                                        <h3 className="font-bold text-white text-sm font-sans tracking-tight">
+                                            {activeTab === 'uploadthing' ? 'Documents Repository' : activeTab === 'cloudinary' ? 'Cloudinary Assets' : 'Backblaze B2 Assets'}
+                                        </h3>
                                     </div>
-                                    <span className="text-xs font-mono text-zinc-500">{files.length} ITEMS FETCHED</span>
+                                    <span className="text-xs font-mono text-zinc-500">{filteredFiles.length} OF {activeFiles.length} FILES</span>
                                 </div>
-                                <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
-                                    {files.length === 0 ? (
-                                        <div className="p-8 text-center text-zinc-500 italic">No files found.</div>
-                                    ) : files.map((file) => {
-                                        const isSelected = selectedKeys.has(file.key);
+                                <div className="divide-y divide-zinc-800/60 max-h-[500px] overflow-y-auto">
+                                    {filteredFiles.length === 0 ? (
+                                        <div className="p-12 text-center text-zinc-500 italic text-sm">No files found matching search.</div>
+                                    ) : filteredFiles.map((file) => {
+                                         const isSelected = selectedKeys.has(file.key);
+                                         const fileUrl = activeTab === 'uploadthing' ? `https://utfs.io/f/${file.key}` : file.url;
+                                         const fileIsImage = activeTab === 'cloudinary' || activeTab === 'b2' || isImage(file.name);
+
                                         return (
                                             <div
                                                 key={file.key}
                                                 className={cn(
-                                                    "p-4 flex items-center justify-between hover:bg-white/5 transition-colors group cursor-pointer",
-                                                    isSelected && "bg-red-500/5 border-l-2 border-red-500"
+                                                    "p-4 flex items-center justify-between hover:bg-zinc-900/30 transition-colors group cursor-pointer border-l-2 border-transparent",
+                                                    isSelected && "bg-violet-500/5 border-violet-500"
                                                 )}
                                                 onClick={() => toggleSelect(file.key)}
                                             >
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-4 flex-1 min-w-0">
                                                     <div onClick={(e) => { e.stopPropagation(); toggleSelect(file.key); }}>
                                                         {isSelected ? (
-                                                            <CheckSquare className="w-5 h-5 text-red-500" />
+                                                            <CheckSquare className="w-5 h-5 text-violet-500" />
                                                         ) : (
                                                             <Square className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400" />
                                                         )}
                                                     </div>
-                                                    <div className="w-10 h-10 rounded bg-zinc-800 flex items-center justify-center text-zinc-400">
-                                                        <FileText className="w-5 h-5" />
+                                                    
+                                                    {/* Dynamic Preview Thumbnail */}
+                                                    <div className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-800/80 flex items-center justify-center text-zinc-400 overflow-hidden relative flex-shrink-0">
+                                                        {fileIsImage ? (
+                                                            <img 
+                                                                src={fileUrl} 
+                                                                alt={file.name} 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    // Fallback if image fails to load
+                                                                    (e.target as HTMLElement).style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <FileText className="w-5 h-5 text-zinc-500" />
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <p className={cn("text-sm font-medium transition-colors truncate max-w-[200px] md:max-w-[400px]", isSelected ? "text-red-200" : "text-white")}>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className={cn("text-sm font-medium transition-colors truncate max-w-[200px] md:max-w-[400px]", isSelected ? "text-violet-300 font-semibold" : "text-white")}>
                                                             {file.name}
                                                         </p>
-                                                        <p className="text-xs text-zinc-500 font-mono">{file.key}</p>
+                                                        <p className="text-[10px] text-zinc-500 font-mono truncate max-w-[250px] md:max-w-[500px]" title={file.key}>{file.key}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3">
+
+                                                <div className="flex items-center gap-4 ml-4">
                                                     <span className="text-xs text-zinc-500 font-mono hidden md:block">
-                                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                        {formatBytes(file.size)}
                                                     </span>
-                                                    <a
-                                                        href={`https://utfs.io/f/${file.key}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <ExternalLink className="w-4 h-4" />
-                                                    </a>
+                                                    <span className="text-xs text-zinc-600 font-mono hidden lg:block">
+                                                        {new Date(file.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyToClipboard(fileUrl, file.key);
+                                                            }}
+                                                            className="p-2 hover:bg-zinc-850 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                                                            title="Copy direct link"
+                                                        >
+                                                            {copiedKey === file.key ? (
+                                                                <Check className="w-4 h-4 text-emerald-400" />
+                                                            ) : (
+                                                                <Copy className="w-4 h-4" />
+                                                            )}
+                                                        </button>
+                                                        <a
+                                                            href={fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 hover:bg-zinc-850 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            title="View file"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -212,22 +584,22 @@ export default function StorageBrowser({ files: initialFiles, dbStats }: Storage
 
 function StatCard({ label, value, icon: Icon, color }: any) {
     const colors = {
-        violet: "text-violet-500 bg-violet-500/10 border-violet-500/20",
-        blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-        emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-        amber: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-        red: "text-red-500 bg-red-500/10 border-red-500/20",
+        violet: "text-violet-400 bg-violet-500/5 border-violet-500/20",
+        blue: "text-blue-400 bg-blue-500/5 border-blue-500/20",
+        emerald: "text-emerald-400 bg-emerald-500/5 border-emerald-500/20",
+        amber: "text-amber-400 bg-amber-500/5 border-amber-500/20",
     };
 
     // @ts-ignore
     const theme = colors[color] || colors.violet;
 
     return (
-        <div className={cn("p-6 rounded-xl border flex flex-col items-center justify-center gap-2 text-center transition-all hover:scale-105", theme)}>
-            <Icon className="w-8 h-8 mb-2 opacity-80" />
-            <h3 className="text-3xl font-black">{value}</h3>
-            <p className="text-xs uppercase tracking-widest opacity-70 font-mono">{label}</p>
+        <div className={cn("p-6 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all hover:bg-zinc-900/30 hover:scale-[1.02] bg-zinc-900/10 backdrop-blur-md", theme)}>
+            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 mb-2">
+                <Icon className="w-6 h-6 opacity-90" />
+            </div>
+            <h3 className="text-3xl font-black text-white font-sans tracking-tight">{value}</h3>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-sans font-semibold">{label}</p>
         </div>
     );
 }
-

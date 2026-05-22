@@ -31,7 +31,7 @@ export async function updatePost(postId: string, content: string) {
     }
 }
 
-export async function createPost(content: string, codeSnippet?: string, pollOptions?: string[]) {
+export async function createPost(content: string, codeSnippet?: string, pollOptions?: string[], imageUrl?: string) {
     const session = await auth();
     if (!session?.user?.id) {
         return { success: false, message: 'Unauthorized' };
@@ -56,7 +56,8 @@ export async function createPost(content: string, codeSnippet?: string, pollOpti
             codeSnippet,
             userId: session.user.id,
             tags: uniqueTags,
-            type: pollOptions && pollOptions.length > 0 ? "POLL" : "TEXT"
+            image: imageUrl || null,
+            type: pollOptions && pollOptions.length > 0 ? "POLL" : (imageUrl ? "IMAGE" : "TEXT")
         };
 
         if (pollOptions && pollOptions.length >= 2) {

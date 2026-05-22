@@ -68,6 +68,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             plan: p.author?.plan
         },
         content: p.content,
+        image: p.image,
         timestamp: new Date(p.createdAt).toLocaleString(),
         likes: p.likes?.length || 0,
         comments: p._count?.comments || 0,
@@ -132,14 +133,13 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
     }, [searchParams]);
 
 
-    const handleAddPost = async (content: string, pollOptions?: string[]) => {
-        const result = await createPost(content, undefined, pollOptions);
+    const handleAddPost = async (content: string, pollOptions?: string[], imageUrl?: string) => {
+        const result = await createPost(content, undefined, pollOptions, imageUrl);
         if (result.success) {
             toast.success(result.message);
             if (result.post) {
                 setPosts([mapPost(result.post), ...posts]);
             }
-            router.refresh();
         } else {
             toast.error(result.message);
         }
