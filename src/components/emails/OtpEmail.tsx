@@ -16,37 +16,45 @@ interface OtpEmailProps {
 }
 
 export const OtpEmail = ({ validationCode = '123456' }: OtpEmailProps) => {
+    const previewText = `Your verification code: ${validationCode}`;
+
     return (
         <Html>
             <Head />
-            <Preview>Your verification code: {validationCode}</Preview>
+            <Preview>{previewText}</Preview>
             <Body style={main}>
-                <Container style={container}>
-                    <Section style={header}>
-                        <Heading style={logo}>SKILLED CORE</Heading>
-                    </Section>
-
-                    <Section style={content}>
-                        <Heading style={h1}>Authentication Required</Heading>
-                        <Text style={paragraph}>
-                            Enter the following code to verify your identity.
-                        </Text>
-
-                        <Section style={codeContainer}>
-                            <Text style={code}>{validationCode}</Text>
+                {/* Outer wrapper to force dark background in all email clients */}
+                <Section style={outerWrapper}>
+                    <Container style={container}>
+                        {/* Header */}
+                        <Section style={header}>
+                            <Heading style={logo}>SKILLED CORE</Heading>
                         </Section>
 
-                        <Text style={warning}>
-                            This code expires in 10 minutes.
-                        </Text>
+                        {/* Content Card */}
+                        <Section style={content}>
+                            <Heading style={h1}>Authentication Required</Heading>
+                            <Text style={paragraph}>
+                                Enter the following code to verify your identity.
+                            </Text>
 
-                        <Hr style={hr} />
+                            {/* Verification Code Box */}
+                            <Section style={codeContainer}>
+                                <Text style={code}>{validationCode}</Text>
+                            </Section>
 
-                        <Text style={footerText}>
-                            If you did not request this code, secure your account immediately.
-                        </Text>
-                    </Section>
-                </Container>
+                            <Text style={warning}>
+                                This code expires in 10 minutes.
+                            </Text>
+
+                            <Hr style={hr} />
+
+                            <Text style={footerText}>
+                                If you did not request this code, secure your account immediately.
+                            </Text>
+                        </Section>
+                    </Container>
+                </Section>
             </Body>
         </Html>
     );
@@ -54,91 +62,103 @@ export const OtpEmail = ({ validationCode = '123456' }: OtpEmailProps) => {
 
 export default OtpEmail;
 
-// Styles - Tech Noir / Obsidian
+// Premium Obsidian / Tech Noir Styles
 const main = {
     backgroundColor: '#000000',
-    fontFamily: 'monospace', // Tech feel
+    fontFamily: 'monospace', // Dedicated tech-noir feel
+    margin: '0',
+    padding: '0',
+};
+
+const outerWrapper = {
+    backgroundColor: '#000000',
+    width: '100%',
+    padding: '40px 0',
 };
 
 const container = {
     margin: '0 auto',
-    padding: '20px 0 48px',
+    padding: '0 20px',
     maxWidth: '560px',
 };
 
 const header = {
-    padding: '20px 0',
+    marginBottom: '32px',
     textAlign: 'center' as const,
 };
 
 const logo = {
-    color: '#FCD34D', // Gold
-    fontSize: '20px',
-    fontWeight: 'bold',
+    color: '#FCD34D', // SkilledCore Premium Gold
+    fontSize: '24px',
+    fontWeight: '800',
     letterSpacing: '0.2em',
     textTransform: 'uppercase' as const,
     margin: '0',
 };
 
 const content = {
-    backgroundColor: '#111111',
-    border: '1px solid #333333',
-    borderRadius: '4px',
+    backgroundColor: '#09090b', // Deep Obsidian card background
+    border: '1px solid #27272a', // Sleek Zinc-800 border
+    borderRadius: '16px',
     padding: '40px',
-    boxShadow: '0 0 20px rgba(252, 211, 77, 0.1)', // Subtle gold glow
+    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.8)',
 };
 
 const h1 = {
-    color: '#FFFFFF',
-    fontSize: '24px',
-    fontWeight: 'normal',
+    color: '#ffffff', // High-contrast white
+    fontSize: '22px',
+    fontWeight: '700',
     letterSpacing: '0.05em',
     margin: '0 0 20px',
     textTransform: 'uppercase' as const,
 };
 
 const paragraph = {
-    fontSize: '14px',
+    fontSize: '15px',
     lineHeight: '24px',
-    color: '#9CA3AF', // Gray-400
+    color: '#d4d4d8', // High-contrast light grey
     marginBottom: '20px',
+    margin: '0 0 20px',
 };
 
 const codeContainer = {
-    padding: '20px',
-    backgroundColor: '#000000',
-    border: '1px dashed #FCD34D',
+    padding: '24px',
+    backgroundColor: '#18181b', // Zinc-900 background for OTP
+    border: '1px dashed #FCD34D', // Gold dashed outline
+    borderRadius: '8px',
     textAlign: 'center' as const,
-    marginTop: '20px',
-    marginBottom: '20px',
+    marginTop: '24px',
+    marginBottom: '24px',
 };
 
 const code = {
-    color: '#FCD34D', // Gold
-    fontSize: '32px',
+    color: '#FCD34D', // SkilledCore Premium Gold
+    fontSize: '36px',
     fontFamily: 'monospace',
-    fontWeight: 'bold',
+    fontWeight: '700',
     letterSpacing: '10px',
     margin: '0',
 };
 
 const warning = {
     fontSize: '12px',
-    color: '#EF4444', // Red-500
+    color: '#ef4444', // Red-500 for important security alerts
     textAlign: 'center' as const,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
+    margin: '0',
 };
 
 const hr = {
-    borderColor: '#333333',
+    borderColor: '#27272a',
     margin: '30px 0',
 };
 
 const footerText = {
-    fontSize: '10px',
-    color: '#4B5563', // Gray-600
+    fontSize: '11px',
+    color: '#71717a', // Zinc-500 secondary text
     textAlign: 'center' as const,
-    textTransform: 'uppercase' as const,
+    lineHeight: '16px',
+    margin: '0',
 };

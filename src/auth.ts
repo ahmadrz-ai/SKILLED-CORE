@@ -58,6 +58,63 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
     },
     events: {
+        async signIn({ user }) {
+            try {
+                // Safely extract request headers to parse device and location details
+                const { headers } = await import("next/headers");
+                const headersList = await headers();
+                const userAgent = headersList.get("user-agent") || "";
+                const xForwardedFor = headersList.get("x-forwarded-for");
+                const xRealIp = headersList.get("x-real-ip");
+                const ip = xForwardedFor?.split(",")[0]?.trim() || xRealIp || "127.0.0.1";
+
+                // Vercel Geolocation headers
+                const city = headersList.get("x-vercel-ip-city");
+                const region = headersList.get("x-vercel-ip-country-region");
+                const country = headersList.get("x-vercel-ip-country");
+
+                // Parse Device details
+                const { parseUserAgent } = await import("@/app/actions/sendLoginAlertEmail");
+                const { device } = await parseUserAgent(userAgent);
+
+                // Format location
+                let location = "Unknown Location";
+                if (city || country) {
+                    const parts = [];
+                    if (city) parts.push(city);
+                    if (region) parts.push(region);
+                    if (country) parts.push(country);
+                    location = parts.join(", ");
+                } else if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("127.") || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+                    location = "Localhost (Development)";
+                }
+
+                const email = user.email;
+                if (email) {
+                    // Fetch full user details from DB to ensure we have the correct username
+                    const dbUser = await prisma.user.findUnique({
+                        where: { id: user.id },
+                        select: { username: true }
+                    });
+                    const username = dbUser?.username || email.split("@")[0];
+
+                    const { sendLoginAlertEmail } = await import("@/app/actions/sendLoginAlertEmail");
+                    
+                    // Dispatch asynchronously in background to ensure it is non-blocking
+                    sendLoginAlertEmail({
+                        email,
+                        username,
+                        device,
+                        location,
+                        ipAddress: ip
+                    }).catch(err => {
+                        console.error("Background Login Alert Email dispatch failed:", err);
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to parse headers or dispatch Login Alert Email:", err);
+            }
+        },
         async createUser({ user }) {
             // Type assertion for user that may have username
             const dbUser = user as typeof user & { username?: string | null };
