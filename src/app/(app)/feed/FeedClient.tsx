@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { PostCard, type PostProps } from '@/components/feed/PostCard';
+import { SponsoredPostCard } from '@/components/feed/SponsoredPostCard';
 import { StartPostWidget } from '@/components/feed/StartPostWidget';
 import { TrendingWidget } from '@/components/feed/TrendingWidget';
 import { ProfileSideWidget } from '@/components/feed/ProfileSideWidget';
@@ -50,6 +51,45 @@ interface FeedClientProps {
     };
     trendingTopics: { tag: string; posts: string }[];
 }
+
+const sponsoredPosts = [
+  {
+    id: "sp-1",
+    sponsorName: "Neon",
+    sponsorCategory: "Database Cloud",
+    title: "Serverless Postgres with Instant Branching",
+    content: "Stop provisioning servers. Neon scales your database to zero when inactive and gives you instant database branch copies for your preview deployments on Vercel.",
+    imageUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=800&q=80",
+    ctaText: "Start Free",
+    ctaUrl: "https://neon.tech",
+    initialLikes: 142,
+    initialViews: 1980
+  },
+  {
+    id: "sp-2",
+    sponsorName: "Cloudinary",
+    sponsorCategory: "Media Management",
+    title: "Image & Video Optimization Made Effortless",
+    content: "Deliver rich media fast. Automatically optimize, transform, and deliver images and videos customized for any device or screen size using Cloudinary's global content delivery network.",
+    imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    ctaText: "Optimize Media",
+    ctaUrl: "https://cloudinary.com",
+    initialLikes: 89,
+    initialViews: 1240
+  },
+  {
+    id: "sp-3",
+    sponsorName: "SkilledCore Premium",
+    sponsorCategory: "Social & Recruitment SaaS",
+    title: "Boost Your Recruitment Strategy",
+    content: "Unlock deep-search filters, direct developer inbox credits, and verified Recruiter Badges to accelerate your hire rates. Get started with SkilledCore Premium today.",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+    ctaText: "Upgrade Plan",
+    ctaUrl: "/pricing",
+    initialLikes: 256,
+    initialViews: 3210
+  }
+];
 
 export default function FeedClient({ user, latestJobs, initialPosts, stats, trendingTopics, promotedUser }: FeedClientProps) {
     // Map initial Prisma posts to UI PostProps
@@ -210,23 +250,53 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
 
                 <div className="space-y-4">
                     <AnimatePresence initial={false} mode="popLayout">
-                        {posts.map((post) => (
-                            <motion.div
-                                key={post.id}
-                                id={`post-${post.id}`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ duration: 0.3 }}
-                                layout
-                            >
-                                <PostCard
-                                    post={post}
-                                    onLike={() => toggleLike(post.id)}
-                                    onDelete={handleDeletePost}
-                                />
-                            </motion.div>
-                        ))}
+                        {posts.map((post, index) => {
+                            const showAd = (index + 1) % 3 === 0;
+                            const adIndex = Math.floor(index / 3) % sponsoredPosts.length;
+                            const ad = sponsoredPosts[adIndex];
+
+                            return (
+                                <Fragment key={post.id}>
+                                    <motion.div
+                                        id={`post-${post.id}`}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.3 }}
+                                        layout
+                                    >
+                                        <PostCard
+                                            post={post}
+                                            onLike={() => toggleLike(post.id)}
+                                            onDelete={handleDeletePost}
+                                        />
+                                    </motion.div>
+
+                                    {showAd && ad && (
+                                        <motion.div
+                                            key={`ad-${ad.id}-${index}`}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            layout
+                                        >
+                                            <SponsoredPostCard
+                                                id={ad.id}
+                                                sponsorName={ad.sponsorName}
+                                                sponsorCategory={ad.sponsorCategory}
+                                                title={ad.title}
+                                                content={ad.content}
+                                                imageUrl={ad.imageUrl}
+                                                ctaText={ad.ctaText}
+                                                ctaUrl={ad.ctaUrl}
+                                                initialLikes={ad.initialLikes}
+                                                initialViews={ad.initialViews}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </Fragment>
+                            );
+                        })}
                         {posts.length === 0 && (
                             <div className="text-center py-20 text-zinc-500">
                                 <p>No posts yet. Be the first.</p>
