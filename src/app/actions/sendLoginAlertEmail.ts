@@ -3,6 +3,7 @@
 import { Resend } from 'resend';
 import LoginAlertEmail from '@/components/emails/LoginAlertEmail';
 import * as React from 'react';
+import { prisma } from '@/lib/prisma';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -74,6 +75,16 @@ export async function sendLoginAlertEmail({
     }
 
     try {
+        // Query database to check user's email notification preferences
+        const user = await prisma.user.findFirst({
+            where: { email: { equals: email, mode: 'insensitive' } },
+            select: { emailNotifications: true }
+        });
+
+        if (user && user.emailNotifications === false) {
+            console.log(`[Login Alert] Bypassed security alert email to ${email} as user has disabled Security Alerts.`);
+            return { success: true, message: 'Bypassed due to user preferences' };
+        }
         console.log(`[Login Alert] Dispatching security email to ${email} (User: @${username})`);
         console.log(`[Login Alert] Parameters: Device = ${device}, Location = ${location}, IP = ${ipAddress}`);
 
