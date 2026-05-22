@@ -190,7 +190,7 @@ function OnboardingContent() {
                     className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-zinc-900/50 border border-white/5 rounded-xl focus-within:border-violet-500/50 transition-all cursor-text"
                 >
                     {formData.skills.map(s => (
-                        <span key={s} className="px-2 py-1 bg-amber-500/10 text-amber-300 rounded-md text-sm flex items-center gap-1 border border-amber-500/20 animate-in fade-in zoom-in duration-200">
+                        <span key={s} className="px-2 py-1 bg-violet-500/10 text-violet-300 rounded-md text-sm flex items-center gap-1 border border-violet-500/20 animate-in fade-in zoom-in duration-200">
                             {s}
                             <button onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, skills: prev.skills.filter(i => i !== s) })); }} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
                         </span>
@@ -311,13 +311,13 @@ function OnboardingContent() {
 
                 {uploadStatus === 'uploading' && (
                     <div className="w-full max-w-xs mx-auto space-y-4 text-center">
-                        <div className="flex items-center justify-center gap-2 text-amber-300 font-mono text-sm animate-pulse">
+                        <div className="flex items-center justify-center gap-2 text-violet-300 font-mono text-sm animate-pulse">
                             <FileText className="w-4 h-4" />
                             ANALYZING DATA...
                         </div>
                         <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
                             <motion.div
-                                className="h-full bg-amber-500"
+                                className="h-full bg-violet-500"
                                 initial={{ width: "0%" }}
                                 animate={{ width: "100%" }}
                                 transition={{ duration: 2, repeat: Infinity }}
@@ -351,7 +351,7 @@ function OnboardingContent() {
             {/* PROGRESS BAR */}
             <div className="w-full h-1 bg-zinc-900 fixed top-0 left-0 z-50">
                 <motion.div
-                    className="h-full shadow-[0_0_10px_rgba(245,158,11,0.5)] bg-gradient-to-r from-amber-600 to-yellow-400"
+                    className="h-full shadow-[0_0_10px_rgba(139,92,246,0.5)] bg-gradient-to-r from-violet-600 to-indigo-600"
                     initial={{ width: 0 }}
                     animate={{ width: `${(currentStep / STEPS.length) * 100}%` }}
                     transition={{ duration: 0.5 }}
@@ -425,7 +425,7 @@ function OnboardingContent() {
                                                                         "pl-10 bg-zinc-900/50 border-white/5 transition-colors h-11 text-white",
                                                                         usernameStatus === 'available' ? "focus:border-green-500/50 border-green-500/20" :
                                                                             usernameStatus === 'taken' ? "focus:border-red-500/50 border-red-500/20" :
-                                                                                "focus:border-amber-500/50"
+                                                                                "focus:border-violet-500/50"
                                                                     )}
                                                                     value={formData.username}
                                                                     onChange={(e) => {
@@ -449,7 +449,7 @@ function OnboardingContent() {
                                                                 <Briefcase className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
                                                                 <Input
                                                                     placeholder="e.g. Senior Frontend Architect"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-amber-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
                                                                     value={formData.headline}
                                                                     onChange={e => setFormData({ ...formData, headline: e.target.value })}
                                                                     autoFocus
@@ -462,7 +462,7 @@ function OnboardingContent() {
                                                                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
                                                                 <Input
                                                                     placeholder="City, Country"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-amber-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
                                                                     value={formData.location}
                                                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
                                                                 />
@@ -492,7 +492,7 @@ function OnboardingContent() {
                                                                         "pl-10 bg-zinc-900/50 border-white/5 transition-colors h-11 text-white",
                                                                         usernameStatus === 'available' ? "focus:border-green-500/50 border-green-500/20" :
                                                                             usernameStatus === 'taken' ? "focus:border-red-500/50 border-red-500/20" :
-                                                                                "focus:border-amber-500/50"
+                                                                                "focus:border-violet-500/50"
                                                                     )}
                                                                     value={formData.username}
                                                                     onChange={(e) => {
@@ -515,7 +515,7 @@ function OnboardingContent() {
                                                                 <Building2 className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
                                                                 <Input
                                                                     placeholder="e.g. Acme Corp"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-amber-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
                                                                     value={formData.companyName}
                                                                     onChange={e => setFormData({ ...formData, companyName: e.target.value })}
                                                                     autoFocus
@@ -528,7 +528,7 @@ function OnboardingContent() {
                                                                 <Globe className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
                                                                 <Input
                                                                     placeholder="e.g. Fintech, AI, Healthcare"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-amber-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
                                                                     value={formData.industry}
                                                                     onChange={e => setFormData({ ...formData, industry: e.target.value })}
                                                                 />
@@ -539,10 +539,10 @@ function OnboardingContent() {
 
                                                 {currentStep === 2 && (
                                                     <div className="space-y-6">
-                                                        <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
-                                                            <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5" />
+                                                        <div className="bg-violet-500/10 border border-violet-500/20 p-4 rounded-xl flex items-start gap-3">
+                                                            <CheckCircle2 className="w-5 h-5 text-violet-500 mt-0.5" />
                                                             <div>
-                                                                <h4 className="text-amber-400 font-bold text-sm">Verification Required</h4>
+                                                                <h4 className="text-violet-400 font-bold text-sm">Verification Required</h4>
                                                                 <p className="text-zinc-400 text-xs leading-relaxed mt-1">To prevent fraud, we require a work email address matching your organization's domain.</p>
                                                             </div>
                                                         </div>
@@ -553,7 +553,7 @@ function OnboardingContent() {
                                                                 <Input
                                                                     placeholder="you@company.com"
                                                                     type="email"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-amber-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
                                                                     value={formData.workEmail}
                                                                     onChange={e => setFormData({ ...formData, workEmail: e.target.value })}
                                                                     autoFocus
@@ -565,8 +565,8 @@ function OnboardingContent() {
 
                                                 {currentStep === 3 && (
                                                     <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-8">
-                                                        <div className="w-24 h-24 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-[0_0_30px_-5px_rgba(245,158,11,0.2)] animate-pulse">
-                                                            <Rocket className="w-12 h-12 text-amber-400" />
+                                                        <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20 shadow-[0_0_30px_-5px_rgba(139,92,246,0.2)] animate-pulse">
+                                                            <Rocket className="w-12 h-12 text-violet-400" />
                                                         </div>
                                                         <div>
                                                             <h3 className="text-2xl font-heading font-black text-white mb-2">Systems Online</h3>
@@ -596,7 +596,7 @@ function OnboardingContent() {
 
                             <Button
                                 onClick={nextStep}
-                                className="min-w-[140px] font-bold tracking-wide transition-all shadow-lg h-11 bg-amber-600 hover:bg-amber-500 shadow-amber-500/20 text-black"
+                                className="min-w-[140px] font-bold tracking-wide transition-all shadow-lg h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-indigo-600/25"
                             >
                                 {currentStep === STEPS.length ? "LAUNCH" : "CONTINUE"}
                                 {currentStep !== STEPS.length && <ChevronRight className="w-4 h-4 ml-1" />}

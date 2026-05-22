@@ -441,7 +441,7 @@ export default function ResumeEditorClient({ user }: EditorProps) {
                     <div className="sticky top-8 space-y-6">
                         <div className="p-6 rounded-2xl bg-zinc-950/50 border border-white/5 backdrop-blur-xl shadow-xl">
                             <h3 className="text-white font-bold mb-6 flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-amber-400" />
+                                <Sparkles className="w-5 h-5 text-violet-400" />
                                 Profile Strength
                             </h3>
 

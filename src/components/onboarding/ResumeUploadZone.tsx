@@ -57,7 +57,7 @@ export function ResumeUploadZone({ onUploadSuccess, className }: ResumeUploadZon
             {...getRootProps()}
             className={cn(
                 "w-full border-2 border-dashed border-zinc-700 bg-zinc-900/50 rounded-xl p-8 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center group outline-none",
-                isDragActive && "border-amber-500 bg-amber-500/10",
+                isDragActive && "border-violet-500 bg-violet-500/10",
                 isUploading && "opacity-50 cursor-not-allowed pointer-events-none",
                 !isUploading && "hover:bg-zinc-800/50 hover:border-zinc-500",
                 className
@@ -67,18 +67,18 @@ export function ResumeUploadZone({ onUploadSuccess, className }: ResumeUploadZon
 
             {isUploading ? (
                 <div className="flex flex-col items-center animate-pulse">
-                    <Loader2 className="w-10 h-10 text-amber-500 mb-4 animate-spin" />
+                    <Loader2 className="w-10 h-10 text-violet-500 mb-4 animate-spin" />
                     <p className="text-zinc-400 text-sm font-medium">Uploading firmware...</p>
                 </div>
             ) : (
                 <>
                     <div className={cn(
                         "p-4 rounded-full bg-zinc-800/50 mb-4 group-hover:bg-zinc-800 transition-colors",
-                        isDragActive && "bg-amber-500/20"
+                        isDragActive && "bg-violet-500/20"
                     )}>
                         <UploadCloud className={cn(
                             "w-8 h-8 text-zinc-400 transition-colors",
-                            isDragActive ? "text-amber-500" : "group-hover:text-amber-400"
+                            isDragActive ? "text-violet-500" : "group-hover:text-violet-450"
                         )} />
                     </div>
                     <p className="text-zinc-200 font-medium mb-1">
