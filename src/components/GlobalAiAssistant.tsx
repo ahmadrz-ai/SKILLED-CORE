@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, ChevronDown, Sparkles, User, Globe, Code, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { QodeeLogo } from "@/components/QodeeLogo";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
 import { useChat } from "@ai-sdk/react";
@@ -117,7 +117,7 @@ export function GlobalAiAssistant() {
                         <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500/20 to-teal-500/20 p-1.5 border border-white/10 flex items-center justify-center">
-                                    <QodeeLogo className="w-full h-full" />
+                                    <Image src="/logo.png" alt="AI Assistant" width={24} height={24} className="w-full h-full object-contain" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white text-sm bg-gradient-to-r from-violet-400 to-teal-400 bg-clip-text text-transparent">Qodee</h3>
@@ -153,7 +153,7 @@ export function GlobalAiAssistant() {
                                 >
                                     {msg.role === 'assistant' && (
                                         <div className="w-8 h-8 rounded-full bg-zinc-900 border border-white/10 flex-shrink-0 flex items-center justify-center mt-1">
-                                            <QodeeLogo className="w-5 h-5" />
+                                            <Image src="/logo.png" alt="AI" width={20} height={20} className="w-5 h-5 object-contain" />
                                         </div>
                                     )}
                                     {msg.role === 'user' && (
@@ -193,7 +193,7 @@ export function GlobalAiAssistant() {
                                     className="flex gap-3 max-w-[85%]"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-zinc-900 border border-white/10 flex-shrink-0 flex items-center justify-center mt-1">
-                                        <QodeeLogo className="w-5 h-5" />
+                                        <Image src="/logo.png" alt="AI" width={20} height={20} className="w-5 h-5 object-contain" />
                                     </div>
                                     <div className="bg-zinc-900/80 border border-white/5 rounded-2xl rounded-tl-sm p-4 flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -285,9 +285,9 @@ export function GlobalAiAssistant() {
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.5, opacity: 0 }}
-                            className="p-3"
+                            className="p-3 w-full h-full flex items-center justify-center"
                         >
-                            <QodeeLogo className="w-full h-full" />
+                            <Image src="/logo.png" alt="AI Assistant" width={32} height={32} className="w-full h-full object-contain drop-shadow-md" />
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -101,11 +101,41 @@ export default function NetworkPage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-obsidian text-zinc-500">
-                <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="min-h-screen p-6 md:p-10" style={{ backgroundColor: '#F3F4F6' }}>
+                <div className="max-w-6xl mx-auto space-y-6">
+                    <div className="h-8 w-64 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                    <div className="h-4 w-48 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 space-y-4">
+                            {[...Array(3)].map((_, i) => (
+                                <div key={i} className="rounded-xl border p-5" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                                        <div className="space-y-2 flex-1">
+                                            <div className="h-4 w-36 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                                            <div className="h-3 w-24 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="rounded-xl border p-4" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 rounded-full animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3 w-24 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                                        <div className="h-2 w-16 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
+
 
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col md:flex-row">
@@ -200,7 +230,7 @@ export default function NetworkPage() {
                                                 exit={{ scale: 0.9, opacity: 0 }}
                                                 className="bg-black/40 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-violet-500/30 transition-all"
                                             >
-                                                <Link href={`/profile/${inv.requesterId}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                                                <Link href={`/profile/${inv.requesterUsername || inv.requesterId}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
                                                     <div className={cn("w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-lg bg-zinc-800 overflow-hidden")}>
                                                         {inv.avatar ? (
                                                             <img src={inv.avatar} alt={inv.name} className="w-full h-full object-cover" />
@@ -264,7 +294,7 @@ export default function NetworkPage() {
                                             animate={{ opacity: 1, x: 0 }}
                                             className="bg-zinc-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-violet-500/30 transition-all"
                                         >
-                                            <Link href={`/profile/${conn.id}`} className="flex items-center gap-4 flex-1">
+                                            <Link href={`/profile/${conn.username || conn.id}`} className="flex items-center gap-4 flex-1">
                                                 <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-lg bg-zinc-800 overflow-hidden border border-white/5 group-hover:border-violet-500/50 transition-colors">
                                                     {conn.image ? (
                                                         <img src={conn.image} alt={conn.name} className="w-full h-full object-cover" />
@@ -340,7 +370,7 @@ export default function NetworkPage() {
                                 {(data.mutuals.length > 0 ? data.mutuals : data.recommendations.slice(0, 3)).map((user) => (
                                     <div key={user.id} className="flex flex-col gap-2 pb-4 border-b border-white/5 last:border-0">
                                         <div className="flex items-start gap-3">
-                                            <Link href={`/profile/${user.id}`} className="flex-shrink-0">
+                                            <Link href={`/profile/${user.username || user.id}`} className="flex-shrink-0">
                                                 <div className="w-10 h-10 rounded-full bg-zinc-800 overflow-hidden">
                                                     {user.image ? (
                                                         <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
@@ -350,7 +380,7 @@ export default function NetworkPage() {
                                                 </div>
                                             </Link>
                                             <div className="min-w-0">
-                                                <Link href={`/profile/${user.id}`} className="hover:underline decoration-white/20">
+                                                <Link href={`/profile/${user.username || user.id}`} className="hover:underline decoration-white/20">
                                                     <h4 className="text-sm font-bold text-white truncate">{user.name}</h4>
                                                 </Link>
                                                 <p className="text-xs text-zinc-500 truncate">{user.headline}</p>

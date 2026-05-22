@@ -1,0 +1,304 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-obsidian: #09090b;
+  --color-charcoal: #18181b;
+  --color-violet-neon: #7c3aed;
+  --color-teal-data: #14b8a6;
+
+  --font-heading: var(--font-cinzel), serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-gradient: gradient 3s ease infinite;
+
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px #7c3aed, 0 0 10px #7c3aed;
+    }
+
+    100% {
+      box-shadow: 0 0 10px #7c3aed, 0 0 20px #7c3aed;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  @keyframes gradient {
+
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+}
+
+:root {
+  --background: #09090b;
+  --foreground: #ededed;
+}
+
+/* FIX-009 + FIX-010: Global mobile reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* Remove iOS tap flash */
+}
+
+html {
+  background-color: #09090b;
+  overflow-x: hidden; /* FIX-009: Prevent horizontal scroll */
+  -webkit-overflow-scrolling: touch; /* FIX-010: Momentum scrolling on iOS */
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background-color: transparent;
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+  position: relative;
+  /* FIX-010: iOS safe area insets (home bar / notch) */
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100dvh; /* FIX-010: Dynamic viewport — avoids iOS Safari toolbar overlap */
+}
+
+/* FIX-009: Hero section responsive font sizes using clamp() */
+.hero-headline {
+  font-size: clamp(1.75rem, 5vw, 3.5rem);
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.hero-subtext {
+  font-size: clamp(0.9rem, 2.5vw, 1.25rem);
+}
+
+/* FIX-009: Talent/Candidate card grid — single column on mobile */
+.talent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .talent-grid {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+}
+
+/* FIX-009: Pricing cards — stack vertically on mobile */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* FIX-009: Disable 3D transforms on mobile — prevents jank and glitching */
+@media (max-width: 768px) {
+  .profile-3d-wrapper {
+    transform: none !important;
+    perspective: none !important;
+    animation: none !important;
+  }
+
+  .profile-card {
+    transform: translateZ(0); /* Force GPU compositing layer — prevents jank */
+  }
+}
+
+/* FIX-009: Marquee/ticker — faster on small screens */
+.marquee-track {
+  animation: marquee 25s linear infinite;
+}
+
+@media (max-width: 640px) {
+  .marquee-track {
+    animation-duration: 15s;
+  }
+
+  .marquee-item {
+    font-size: 0.75rem;
+    padding: 0 1rem;
+  }
+}
+
+/* FIX-009: Touch targets — all interactive elements minimum 44×44px (Apple HIG) */
+button, a, input[type="submit"], [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Override for intentionally small UI elements (icons inside larger containers) */
+.compact-btn {
+  min-height: unset;
+  min-width: unset;
+}
+
+/* FIX-009 + FIX-010: Interview page — full dynamic viewport height on mobile */
+.interview-container {
+  height: 100dvh; /* FIX-010: dvh prevents iOS Safari toolbar overlap */
+}
+
+@media (max-width: 768px) {
+  .interview-container {
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .interview-transcript {
+    height: calc(100dvh - 160px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* FIX-009: Search filters — slide-in bottom drawer on mobile */
+@media (max-width: 768px) {
+  .search-filters {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 75vh;
+    border-radius: 16px 16px 0 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    background: var(--background);
+    padding: 1.5rem;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); /* FIX-010: Safe area */
+  }
+
+  .search-filters.open {
+    transform: translateY(0);
+  }
+
+  .filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(9, 9, 11, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(24, 24, 27, 0.8);
+  border-color: rgba(124, 58, 237, 0.4);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2), inset 0 0 20px rgba(124, 58, 237, 0.05);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+
+::selection {
+  background: #7c3aed;
+  color: #fff;
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Gradient animation utility */
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+/* FIX-010: Fix position:fixed elements on iOS Safari — use transform instead */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific: ensure modals don't get trapped by scroll containers */
+  .modal-fixed {
+    position: fixed;
+    -webkit-overflow-scrolling: auto; /* Disable momentum within fixed modals */
+  }
+}

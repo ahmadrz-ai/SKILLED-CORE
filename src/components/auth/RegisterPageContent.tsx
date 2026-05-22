@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Github, Loader2, Eye, EyeOff, Check, Hexagon } from "lucide-react";
+import { Github, Loader2, Eye, EyeOff, Check, Shield } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { QodeeLogo } from "@/components/QodeeLogo";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
-import { Button3D } from "@/components/ui/Button3D";
+
+// FIX-003: Turnstile sitekey (public key is safe to expose client-side)
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'; // test key fallback
 
 // Custom Google Icon
 const GoogleIcon = () => (
@@ -25,11 +25,62 @@ const GoogleIcon = () => (
     </svg>
 );
 
+// FIX-003: Cloudflare Turnstile widget component
+function TurnstileWidget({ onVerify }: { onVerify: (token: string) => void }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const widgetIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        // Load Turnstile script if not already loaded
+        if (!document.querySelector('script[src*="turnstile"]')) {
+            const script = document.createElement('script');
+            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+
+        const renderWidget = () => {
+            if (containerRef.current && (window as any).turnstile && !widgetIdRef.current) {
+                widgetIdRef.current = (window as any).turnstile.render(containerRef.current, {
+                    sitekey: TURNSTILE_SITE_KEY,
+                    callback: (token: string) => onVerify(token),
+                    'expired-callback': () => onVerify(''),
+                    theme: 'light',
+                    size: 'flexible',
+                });
+            }
+        };
+
+        // Poll for Turnstile to be available
+        const interval = setInterval(() => {
+            if ((window as any).turnstile) {
+                clearInterval(interval);
+                renderWidget();
+            }
+        }, 200);
+
+        return () => {
+            clearInterval(interval);
+            if (widgetIdRef.current && (window as any).turnstile) {
+                try { (window as any).turnstile.remove(widgetIdRef.current); } catch {}
+                widgetIdRef.current = null;
+            }
+        };
+    }, [onVerify]);
+
+    return <div ref={containerRef} className="mt-2" />;
+}
+
 export default function RegisterPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('redirect') || '/onboarding';
+
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [role, setRole] = useState<'CANDIDATE' | 'RECRUITER'>('CANDIDATE');
     const [showPassword, setShowPassword] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string>('');
 
     const [formData, setFormData] = useState({
         name: "",
@@ -39,18 +90,34 @@ export default function RegisterPageContent() {
         confirmPassword: ""
     });
 
-
+    // Pre-select role from URL param
+    useEffect(() => {
+        const roleParam = searchParams.get('role');
+        if (roleParam === 'recruiter') setRole('RECRUITER');
+        if (roleParam === 'candidate') setRole('CANDIDATE');
+    }, [searchParams]);
 
     const handleSocialLogin = (provider: "google" | "github") => {
         setIsLoading(provider);
-        signIn(provider, { callbackUrl: "/onboarding" });
+        signIn(provider, { callbackUrl: redirectTo });
     };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            toast.error("Passwords do not match");
+            toast.error("Passwords do not match.");
+            return;
+        }
+
+        if (formData.password.length < 8) {
+            toast.error("Password must be at least 8 characters.");
+            return;
+        }
+
+        // FIX-003: Require Turnstile token before submission
+        if (!turnstileToken) {
+            toast.error("Please complete the security check.");
             return;
         }
 
@@ -61,272 +128,307 @@ export default function RegisterPageContent() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: formData.name,
+                    name: formData.name.trim(),
                     username: formData.username,
                     email: formData.email,
                     password: formData.password,
-                    role: role
+                    role: role,
+                    turnstileToken: turnstileToken, // FIX-003: Pass CAPTCHA token
                 })
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                // Call server action to send OTP
-                // We need to import it dynamically or use a separate function call if Server Actions used directly in Client Component
-                // But since `sendVerificationCode` is "use server", we can import it at the top.
-                // However, importing server action in client component works in Next.js.
-
-                // For now, let's assume we imported it. I will add the import in a separate tool call if needed, 
-                // but replace_file allows me to add it if I include the whole file or just the section.
-                // I'll just change the logic here and assume I'll fix imports.
-
-                // Actually, I can't easily add import with this tool if I don't see the top.
-                // I will use `router.push` and rely on the `VerifyPage` to send the code if it's not sent here?
-                // The prompt said "Action 1 ... Send ... Return success".
-                // I should call it here.
-
-                // Let's assume I will add `import { sendVerificationCode } from "@/app/actions/auth";` later.
-
-                // Temp fix: Redirect to /verify?email=...&new=true 
-                // and let the Verify page trigger the code sending? 
-                // No, better to do it here for "Registration -> Email Sent" feedback.
-
-                // Since I cannot modify top of file here easily, I will just do the redirect 
-                // and rely on `VerifyPage` (`useEffect`) or let the user click "Resend" if needed.
-                // OR, I can use `write_to_file` to rewrite `RegisterPageContent`.
-                // I'll rewrite `RegisterPageContent` completely to be safe and clean.
-
                 toast.success("Account created! Sending verification code...");
                 router.push(`/verify?email=${encodeURIComponent(formData.email)}&trigger=true`);
             } else {
-                toast.error(data.error || "Registration failed");
+                toast.error(data.error || "Registration failed. Please try again.");
+                // Reset Turnstile on failure so user can retry
+                setTurnstileToken('');
             }
         } catch (error) {
-            toast.error("Something went wrong");
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setIsLoading(null);
         }
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-transparent text-white relative">
-            {/* ParticleBackground removed (global) */}
+        <div className="h-screen w-full flex overflow-hidden" style={{ background: "#FAFAFE" }}>
+            {/* LEFT SIDE - BRAND */}
+            <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col justify-between p-12"
+                style={{ background: 'linear-gradient(165deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%)' }}>
+                {/* Subtle high-fidelity grid pattern */}
+                <div className="absolute inset-0 opacity-[0.05]"
+                    style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(to right, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+                {/* Decorative glowing lines and spheres */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
+                
+                {/* Ambient violet/indigo glows */}
+                <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+                <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
-            {/* LEFT SIDE - BRAND & QUOTE */}
-            <div className="hidden lg:flex w-1/2 bg-transparent relative overflow-hidden flex-col justify-between p-12 border-r border-white/5">
-                {/* Background ambient effects */}
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),transparent_70%)]" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full opacity-20" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-white/5 rounded-full opacity-20" />
-
-                {/* Logo */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <QodeeLogo className="w-12 h-12 object-contain" />
+                    <Image src="/logo.png" alt="SkilledCore" width={44} height={44} className="drop-shadow-lg" />
                     <div>
-                        <h3 className="font-heading font-black tracking-widest text-lg">SKILLED CORE</h3>
-                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Enterprise Node</p>
+                        <h3 style={{ color: "#F8FAFC", fontWeight: 800, fontSize: "18px", letterSpacing: "-0.01em" }}>SkilledCore</h3>
+                        <p style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 500 }}>Talent Intelligence Platform</p>
                     </div>
                 </div>
 
-                {/* Quote */}
                 <div className="relative z-10 max-w-lg">
-                    <h1 className="text-5xl font-heading font-bold leading-tight tracking-tight mb-6">
-                        "The future belongs to the <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">builders</span>."
+                    <h1 className="text-5xl font-bold leading-tight tracking-tight mb-6" style={{ color: "#F8FAFC", letterSpacing: "-0.03em" }}>
+                        &quot;The future belongs to the{" "}
+                        <span style={{ background: "linear-gradient(135deg, #C4B5FD, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                            builders
+                        </span>.&quot;
                     </h1>
+                    <div className="flex items-center gap-2 text-xs" style={{ color: "#94A3B8" }}>
+                        <Shield className="w-3 h-3" style={{ color: "#10B981" }} />
+                        <span>CAPTCHA-protected • AES-256 Encrypted • GDPR Compliant</span>
+                    </div>
                 </div>
 
-                {/* Footer */}
-                <div className="relative z-10 text-xs text-zinc-600 font-mono uppercase tracking-widest">
+                <div className="relative z-10 text-xs uppercase tracking-widest" style={{ color: "#64748B" }}>
                     Secure Connection • AES-256 Encryption
                 </div>
             </div>
 
             {/* RIGHT SIDE - FORM */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
-                <div className="max-w-md w-full bg-zinc-950/80 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
+                <div className="max-w-md w-full rounded-2xl p-8" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 4px 24px rgba(0,0,0,0.04)" }}>
+                    {/* Mobile Logo */}
+                    <div className="flex items-center gap-2.5 mb-6 lg:hidden justify-center">
+                        <Image src="/logo.png" alt="SkilledCore" width={32} height={32} className="drop-shadow-lg" />
+                        <span className="font-bold text-sm" style={{ color: '#1E1B4B' }}>SkilledCore</span>
+                    </div>
 
-                    <div className="text-center space-y-2 mb-8">
-                        <h2 className="text-2xl font-bold tracking-tight text-white">Create Account</h2>
-                        <p className="text-sm text-zinc-400">Join the elite network of Skilled Core.</p>
+                    <div className="text-center space-y-2 mb-6">
+                        <h2 className="text-2xl font-bold tracking-tight" style={{ color: "#1E1B4B" }}>Create Account</h2>
+                        <p className="text-sm" style={{ color: "#64748B" }}>Join the professional network of SkilledCore.</p>
                     </div>
 
                     {/* Social Login */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <Button
+                            id="register-google-btn"
                             variant="outline"
-                            className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-white h-11"
+                            className="h-11"
+                            style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#475569" }}
                             onClick={() => handleSocialLogin('google')}
+                            disabled={!!isLoading}
                         >
-                            <span className="mr-2"><GoogleIcon /></span> Google
+                            {isLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <span className="mr-2"><GoogleIcon /></span>}
+                            Google
                         </Button>
                         <Button
+                            id="register-github-btn"
                             variant="outline"
-                            className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-white h-11"
+                            className="h-11"
+                            style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#475569" }}
                             onClick={() => handleSocialLogin('github')}
+                            disabled={!!isLoading}
                         >
-                            <Github className="w-4 h-4 mr-2" /> GitHub
+                            {isLoading === 'github' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Github className="w-4 h-4 mr-2" />}
+                            GitHub
                         </Button>
                     </div>
 
-                    <div className="relative my-8">
+                    <div className="relative my-5">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-zinc-800" />
+                            <span className="w-full" style={{ borderTop: "1px solid #E2E8F0" }} />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-black/20 backdrop-blur-sm px-2 text-zinc-500">Or register with email</span>
+                            <span className="px-2 text-xs" style={{ background: "#FFFFFF", color: "#94A3B8" }}>Or register with email</span>
                         </div>
                     </div>
 
                     {/* Role Selector */}
-                    <div className="grid grid-cols-2 p-1 bg-zinc-900/50 rounded-lg border border-zinc-800 mb-8">
+                    <div className="grid grid-cols-2 p-1 rounded-lg mb-5" style={{ background: "#F1F5F9", border: "1px solid #E2E8F0" }}>
                         <button
+                            id="role-candidate-btn"
+                            type="button"
                             onClick={() => setRole('CANDIDATE')}
                             className={cn(
                                 "py-2 text-sm font-medium rounded-md transition-all",
                                 role === 'CANDIDATE'
-                                    ? "bg-zinc-800 text-white shadow-lg"
-                                    : "text-zinc-500 hover:text-zinc-300"
+                                    ? "shadow-sm"
+                                    : ""
                             )}
+                            style={role === 'CANDIDATE' ? { background: "#FFFFFF", color: "#1E1B4B", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" } : { color: "#94A3B8" }}
                         >
                             Candidate
                         </button>
                         <button
+                            id="role-recruiter-btn"
+                            type="button"
                             onClick={() => setRole('RECRUITER')}
                             className={cn(
                                 "py-2 text-sm font-medium rounded-md transition-all",
                                 role === 'RECRUITER'
-                                    ? "bg-zinc-800 text-white shadow-lg"
-                                    : "text-zinc-500 hover:text-zinc-300"
+                                    ? "shadow-sm"
+                                    : ""
                             )}
+                            style={role === 'RECRUITER' ? { background: "#FFFFFF", color: "#1E1B4B", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" } : { color: "#94A3B8" }}
                         >
                             Recruiter
                         </button>
                     </div>
 
                     {/* Registration Form */}
-                    <form onSubmit={handleRegister} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
+                    <form id="register-form" onSubmit={handleRegister} className="space-y-3">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="name" style={{ color: "#475569", fontSize: "13px" }}>Full Name</Label>
                             <div className="relative">
                                 <Input
                                     id="name"
                                     placeholder="John Doe"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                    className="pl-9 h-10"
+                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
+                                    minLength={2}
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.name.length > 2 ? "text-green-500" : "text-zinc-600")} />
+                                    <Check className={cn("w-4 h-4", formData.name.length > 2 ? "text-emerald-500" : "text-slate-300")} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="username" style={{ color: "#475569", fontSize: "13px" }}>Username</Label>
                             <div className="relative">
                                 <Input
                                     id="username"
                                     placeholder="johndoe"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                    className="pl-9 h-10"
+                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                     value={formData.username}
                                     onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                                     required
                                     minLength={3}
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.username.length >= 3 ? "text-green-500" : "text-zinc-600")} />
+                                    <Check className={cn("w-4 h-4", formData.username.length >= 3 ? "text-emerald-500" : "text-slate-300")} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="email" style={{ color: "#475569", fontSize: "13px" }}>Work Email</Label>
                             <div className="relative">
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="name@example.com"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                    placeholder="name@company.com"
+                                    className="pl-9 h-10"
+                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     required
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.email.includes('@') ? "text-green-500" : "text-zinc-600")} />
+                                    <Check className={cn("w-4 h-4", formData.email.includes('@') ? "text-emerald-500" : "text-slate-300")} />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="password" style={{ color: "#475569", fontSize: "13px" }}>Password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
-                                        className="pl-10 pr-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                        placeholder="Min. 8 chars"
+                                        className="pl-9 pr-9 h-10"
+                                        style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required
-                                        minLength={6}
+                                        minLength={8}
                                     />
                                     <div className="absolute left-3 top-2.5">
-                                        <Check className={cn("w-4 h-4", formData.password.length >= 6 ? "text-green-500" : "text-zinc-600")} />
+                                        <Check className={cn("w-4 h-4", formData.password.length >= 8 ? "text-emerald-500" : "text-slate-300")} />
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-2.5 text-zinc-500 hover:text-white"
+                                        className="absolute right-3 top-2.5 min-h-0 min-w-0"
+                                        style={{ color: "#94A3B8" }}
+                                        aria-label="Toggle password visibility"
                                     >
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="confirmPassword" style={{ color: "#475569", fontSize: "13px" }}>Confirm</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
                                         type="password"
-                                        className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                        placeholder="Repeat password"
+                                        className="pl-9 h-10"
+                                        style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                         required
                                     />
                                     <div className="absolute left-3 top-2.5">
-                                        <Check className={cn("w-4 h-4", formData.confirmPassword && formData.password === formData.confirmPassword ? "text-green-500" : "text-zinc-600")} />
+                                        <Check className={cn("w-4 h-4", formData.confirmPassword && formData.password === formData.confirmPassword ? "text-emerald-500" : "text-slate-300")} />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 my-4">
+                        {/* FIX-003: Cloudflare Turnstile CAPTCHA */}
+                        <div className="space-y-1">
+                            <TurnstileWidget onVerify={setTurnstileToken} />
+                            {turnstileToken ? (
+                                <p className="text-xs flex items-center gap-1" style={{ color: "#059669" }}>
+                                    <Check className="w-3 h-3" /> Security check passed
+                                </p>
+                            ) : (
+                                <p className="text-xs" style={{ color: "#94A3B8" }}>Complete the security check above to continue</p>
+                            )}
+                        </div>
+
+                        <div className="flex items-start gap-3 my-1">
                             <input
                                 type="checkbox"
                                 id="agreement"
                                 required
-                                className="mt-1 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-violet-500 focus:ring-violet-500/20 accent-violet-500 cursor-pointer"
+                                className="mt-1 w-4 h-4 rounded cursor-pointer accent-indigo-600"
+                                style={{ borderColor: "#D1D5DB" }}
                             />
-                            <Label htmlFor="agreement" className="text-xs text-zinc-400 font-normal leading-relaxed cursor-pointer">
-                                By clicking Agree & Join, you agree to the Skilled Core <Link href="/legal/user-agreement" className="text-violet-400 hover:underline" target="_blank">User Agreement</Link>, <Link href="/terms" className="text-violet-400 hover:underline" target="_blank">Terms of Service</Link>, <Link href="/legal/privacy-policy" className="text-violet-400 hover:underline" target="_blank">Privacy Policy</Link>, and <Link href="/legal/cookie-policy" className="text-violet-400 hover:underline" target="_blank">Cookie Policy</Link>.
+                            <Label htmlFor="agreement" className="text-xs font-normal leading-relaxed cursor-pointer" style={{ color: "#64748B" }}>
+                                By creating an account, you agree to the Skilled Core{" "}
+                                <Link href="/legal/user-agreement" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">User Agreement</Link>,{" "}
+                                <Link href="/terms" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Terms of Service</Link>,{" "}
+                                <Link href="/legal/privacy-policy" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Privacy Policy</Link>, and{" "}
+                                <Link href="/legal/cookie-policy" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Cookie Policy</Link>.
                             </Label>
                         </div>
 
-                        <Button3D
+                        <button
+                            id="register-submit-btn"
                             type="submit"
-                            disabled={!!isLoading}
-                            className="w-full"
+                            disabled={!!isLoading || !turnstileToken}
+                            className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(99,102,241,0.25)" }}
                         >
-                            {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Account"}
-                        </Button3D>
+                            {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Create Account"}
+                        </button>
                     </form>
 
-                    <div className="text-center text-sm mt-8">
-                        <span className="text-zinc-500">Already have an account? </span>
-                        <Link href="/login" className="text-violet-400 hover:text-violet-300 font-bold transition-colors">
+                    <div className="text-center text-sm mt-5">
+                        <span style={{ color: "#94A3B8" }}>Already have an account? </span>
+                        <Link href="/login" className="font-bold transition-colors" style={{ color: "#6366F1" }}>
                             Sign In
                         </Link>
                     </div>

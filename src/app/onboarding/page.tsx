@@ -10,10 +10,15 @@ export default async function OnboardingPage() {
         redirect("/login");
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { headline: true, role: true }
-    });
+    let user = null;
+    try {
+        user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { headline: true, role: true }
+        });
+    } catch (dbError) {
+        console.error("OnboardingPage: DB Error fetching user", dbError);
+    }
 
     // If user has a headline, they are onboarded. 
     // You might want to check other fields too depending on your "complete" definition.

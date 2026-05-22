@@ -24,11 +24,11 @@ export default function LearningPage() {
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-white mb-2">Restricted Access</h1>
                         <p className="text-zinc-400">
-                            The Learning Academy is exclusive to <span className="text-amber-500 font-bold">ULTRA</span> operatives. Upgrade to access premium recruitment courses and certifications.
+                            The Learning Academy is exclusive to <span className="text-violet-500 font-bold">ULTRA</span> operatives. Upgrade to access premium recruitment courses and certifications.
                         </p>
                     </div>
                     <Link href="/credits" className="block">
-                        <button className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-black font-bold rounded-xl transition-all">
+                        <button className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl transition-all">
                             UPGRADE TO ULTRA
                         </button>
                     </Link>
@@ -46,8 +46,8 @@ export default function LearningPage() {
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in">
             <div className="flex items-center gap-4 mb-12">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                    <GraduationCap className="w-6 h-6 text-amber-500" />
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
+                    <GraduationCap className="w-6 h-6 text-violet-500" />
                 </div>
                 <div>
                     <h1 className="text-4xl font-heading font-bold text-white">Academy</h1>
@@ -57,12 +57,12 @@ export default function LearningPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {COURSES.map((c, i) => (
-                    <div key={i} className="group relative rounded-2xl border border-white/5 bg-zinc-900 overflow-hidden hover:border-amber-500/50 transition-all cursor-pointer">
+                    <div key={i} className="group relative rounded-2xl border border-white/5 bg-zinc-900 overflow-hidden hover:border-violet-500/50 transition-all cursor-pointer">
                         <div className="aspect-video bg-zinc-800 flex items-center justify-center relative">
-                            <PlayCircle className="w-12 h-12 text-white/50 group-hover:text-amber-500 transition-colors" />
+                            <PlayCircle className="w-12 h-12 text-white/50 group-hover:text-violet-500 transition-colors" />
                         </div>
                         <div className="p-6">
-                            <h3 className="font-bold text-white mb-1 group-hover:text-amber-400 transition-colors">{c.title}</h3>
+                            <h3 className="font-bold text-white mb-1 group-hover:text-violet-400 transition-colors">{c.title}</h3>
                             <div className="flex justify-between text-xs text-zinc-500 font-mono uppercase tracking-wider mt-4">
                                 <span>{c.author}</span>
                                 <span>{c.duration}</span>

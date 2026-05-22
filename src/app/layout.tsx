@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Cinzel, JetBrains_Mono } from "next/font/google"; // Import Cinzel
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -8,31 +8,40 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const cinzel = Cinzel({
-  subsets: ["latin"],
-  variable: "--font-cinzel",
-  weight: ["400", "700"],
-});
-
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
 });
 
+/* ── V1 DARK DESIGN (Hibernated) ─────────────────────────────────
+   To restore: see src/components/landing-v1-dark/README.md
+   Fonts removed: Cinzel (import + variable "--font-cinzel")
+   ThemeColor was: "#09090b"
+   Html class was: "dark"
+   ParticleBackground was rendered here from landing-v1-dark/
+──────────────────────────────────────────────────────────────── */
+
 export const metadata: Metadata = {
-  title: "SkilledCore | Enterprise Recruitment Node",
-  description: "The AI-native infrastructure for hiring.",
+  title: "SkilledCore | Talent Intelligence Platform",
+  description: "AI-powered talent intelligence, hiring, and skill analytics. Combines ATS, LMS, and AI-driven skill profiling for modern teams.",
+  openGraph: {
+    title: "SkilledCore — Talent Intelligence Platform",
+    description: "AI-powered hiring, skill analytics, and talent management for modern enterprises.",
+    type: "website",
+    url: "https://skilledcore.com",
+  },
 };
 
-
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
 
 import { CommandPalette } from "@/components/CommandPalette";
 import SessionWrapper from "@/components/auth/SessionWrapper";
-
-import { QodeeLogo } from "@/components/QodeeLogo";
 import { GlobalAiAssistant } from "@/components/GlobalAiAssistant";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
-
 import { auth } from "@/auth";
 
 export default async function RootLayout({
@@ -40,18 +49,20 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch (err: any) {
+    console.warn("[layout] auth() failed (stale cookie?):", err?.message ?? err);
+  }
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${cinzel.variable} ${jetbrainsMono.variable} antialiased bg-transparent text-foreground font-sans relative`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground font-sans relative`}
       >
-        <ParticleBackground />
         <SessionWrapper session={session}>
-          <div className="fixed inset-0 z-[-1]">
-          </div>
           <CommandPalette />
           <GlobalAiAssistant />
           {children}

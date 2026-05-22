@@ -316,7 +316,7 @@ const InvitationCardComponent = ({
             '--icon': iconUrl ? `url(${iconUrl})` : 'none',
             '--grain': grainUrl ? `url(${grainUrl})` : 'none',
             '--inner-gradient': innerGradient ?? DEFAULT_INNER_GRADIENT,
-            '--behind-glow-color': behindGlowColor ?? 'rgba(255, 215, 0, 0.67)',
+            '--behind-glow-color': behindGlowColor ?? 'rgba(124, 58, 237, 0.5)',
             '--behind-glow-size': behindGlowSize ?? '50%'
         } as React.CSSProperties),
         [iconUrl, grainUrl, innerGradient, behindGlowColor, behindGlowSize]
@@ -374,10 +374,10 @@ const InvitationCardComponent = ({
                             </div>
                         </div>
 
-                        {/* Top Text (Winner / Golden Chance) */}
+                        {/* Top Text */}
                         <div className="pc-content">
                             <div className="pc-details">
-                                <h3>GOLDEN CHANCE</h3>
+                                <h3>SKILLED CORE</h3>
                                 <p>INTERVIEW INVITATION</p>
                             </div>
                         </div>

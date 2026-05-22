@@ -168,24 +168,26 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                             </div>
                         </div>
 
-                        {/* Context Injection - HIDDEN FOR RECRUITERS */}
-                        {isCandidate && (
-                            <div className="space-y-3 pt-4 border-t border-white/5">
-                                <Label>Context Data Source</Label>
-                                <div className="flex items-center space-x-2 bg-zinc-900/50 p-3 rounded-lg border border-white/5">
-                                    <Switch
-                                        id="resume-mode"
-                                        checked={useResume}
-                                        onCheckedChange={setUseResume}
-                                        className="data-[state=checked]:bg-cyan-500"
-                                    />
-                                    <div className="flex-1">
-                                        <Label htmlFor="resume-mode" className="text-sm font-bold text-white cursor-pointer">Inject My Resume</Label>
-                                        <p className="text-xs text-zinc-500">AI will challenge you on specific bullet points ("Grill Mode").</p>
-                                    </div>
+                        {/* Context Injection - Add Resume */}
+                        <div className="space-y-3 pt-4 border-t border-zinc-800">
+                            <Label className="text-xs font-mono tracking-wider text-zinc-550 uppercase">Context Injection</Label>
+                            <div className="flex items-start space-x-3 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800 hover:border-cyan-500/30 transition-all duration-300">
+                                <Switch
+                                    id="resume-mode"
+                                    checked={useResume}
+                                    onCheckedChange={setUseResume}
+                                    className="data-[state=checked]:bg-cyan-600 mt-0.5"
+                                />
+                                <div className="flex-1 space-y-1">
+                                    <Label htmlFor="resume-mode" className="text-sm font-bold text-white cursor-pointer hover:text-cyan-455 transition-colors">
+                                        Add Resume
+                                    </Label>
+                                    <p className="text-xs text-zinc-400 leading-normal">
+                                        Enable Grill Mode: The AI will fetch your profile resume and challenge you on your skills, demanding you open the integrated **Sandbox** to write live code for real-time assessment.
+                                    </p>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     <Button

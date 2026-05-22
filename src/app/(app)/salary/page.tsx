@@ -24,11 +24,11 @@ export default function SalaryPage() {
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-white mb-2">Restricted Access</h1>
                         <p className="text-zinc-400">
-                            Salary Insights are exclusive to <span className="text-amber-500 font-bold">ULTRA</span> operatives. Upgrade to view global compensation data and market trends.
+                            Salary Insights are exclusive to <span className="text-violet-500 font-bold">ULTRA</span> operatives. Upgrade to view global compensation data and market trends.
                         </p>
                     </div>
                     <Link href="/credits" className="block">
-                        <button className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-black font-bold rounded-xl transition-all">
+                        <button className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl transition-all">
                             UPGRADE TO ULTRA
                         </button>
                     </Link>
@@ -40,8 +40,8 @@ export default function SalaryPage() {
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in">
             <div className="flex items-center gap-4 mb-12">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                    <DollarSign className="w-6 h-6 text-amber-500" />
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
+                    <DollarSign className="w-6 h-6 text-violet-500" />
                 </div>
                 <div>
                     <h1 className="text-4xl font-heading font-bold text-white">Global Compensation Intelligence</h1>

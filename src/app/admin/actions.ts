@@ -53,6 +53,25 @@ export async function deleteUser(userId: string) {
     }
 }
 
+export async function toggleUserGhostMode(userId: string, currentGhostMode: boolean) {
+    try {
+        await ensureAdmin();
+
+        const newGhostMode = !currentGhostMode;
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { ghostMode: newGhostMode }
+        });
+
+        revalidatePath('/admin/users');
+        return { success: true, message: `Ghost Protocol set to ${newGhostMode ? 'Stealth (Invisible)' : 'Live (Visible)'}` };
+    } catch (error) {
+        console.error("Failed to toggle ghost mode:", error);
+        return { success: false, message: "Failed to update Ghost Protocol status" };
+    }
+}
+
 export async function updateVerificationStatus(requestId: string, status: 'APPROVED' | 'REJECTED', feedback?: string) {
     try {
         const session = await ensureAdmin();

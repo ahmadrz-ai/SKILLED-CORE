@@ -148,7 +148,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 {children ? children : (
-                    <Button variant="ghost" size="sm" className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20">
+                    <Button variant="ghost" size="sm" className="bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 border border-violet-500/20">
                         <Sparkles className="w-3 h-3 mr-2" />
                         Add Credits
                     </Button>

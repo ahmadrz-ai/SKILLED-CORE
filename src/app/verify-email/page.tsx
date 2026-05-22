@@ -1,7 +1,8 @@
-import { QodeeLogo } from "@/components/QodeeLogo";
 import { Button } from "@/components/ui/button";
-import { Mail, ArrowRight } from "lucide-react";
+import { Mail } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { QodeeLogo } from "@/components/QodeeLogo";
 
 export default async function VerifyEmailPage({
     searchParams,

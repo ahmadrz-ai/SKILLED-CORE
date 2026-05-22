@@ -17,64 +17,49 @@ export default async function ProfilePage({ params }: PageProps) {
         const { username } = await params;
         console.log("ProfilePage: Username", username);
 
-        let user;
-        let isOwner = false;
-
-        // Resolve 'me' to current user
-        if (username === 'me') {
-            if (!session?.user?.id) {
-                console.log("ProfilePage: No session, redirecting");
-                redirect('/login');
-            }
-            console.log("ProfilePage: Fetching user", session.user.id);
-            user = await prisma.user.findUnique({
+        let isAdmin = false;
+        if (session?.user?.id) {
+            const caller = await prisma.user.findUnique({
                 where: { id: session.user.id },
-                include: {
-                    experience: true,
-                    education: true,
-                    projects: true,
-                    interviews: { orderBy: { createdAt: 'desc' } }, // Fetch all for owner
-                    posts: {
-                        orderBy: { createdAt: 'desc' },
-                        include: {
-                            author: {
-                                select: {
-                                    name: true,
-                                    image: true,
-                                    username: true,
-                                    headline: true,
-                                    nodeType: true,
-                                    role: true
-                                }
-                            },
-                            likes: true,
-                            _count: {
-                                select: { comments: true }
-                            },
-                            poll: {
-                                include: {
-                                    options: true,
-                                }
-                            }
-                        }
-                    }
-                }
+                select: { role: true }
             });
-            isOwner = true;
+            isAdmin = caller?.role === "ADMIN" || caller?.role === "Admin";
+        }
+
+        let targetUserId: string | null = null;
+        if (username === 'me') {
+            targetUserId = session?.user?.id || null;
         } else {
-            console.log("ProfilePage: Fetching public profile", username);
-            user = await prisma.user.findFirst({
+            const resolvedUserByUsername = await prisma.user.findFirst({
                 where: { username },
+                select: { id: true }
+            });
+            if (resolvedUserByUsername) {
+                targetUserId = resolvedUserByUsername.id;
+            } else {
+                const resolvedUserById = await prisma.user.findUnique({
+                    where: { id: username },
+                    select: { id: true }
+                }).catch(() => null);
+                if (resolvedUserById) {
+                    targetUserId = resolvedUserById.id;
+                }
+            }
+        }
+
+        const isOwner = !!(session?.user?.id && targetUserId && session.user.id === targetUserId);
+
+        let user = null;
+        if (targetUserId) {
+            user = await prisma.user.findUnique({
+                where: { id: targetUserId },
                 include: {
                     experience: true,
                     education: true,
                     projects: true,
                     interviews: {
-                        where: { isPublic: true },
+                        where: (isOwner || isAdmin) ? undefined : { isPublic: true },
                         orderBy: { createdAt: 'desc' }
-                    },
-                    _count: {
-                        select: { followers: true, following: true }
                     },
                     posts: {
                         orderBy: { createdAt: 'desc' },
@@ -99,21 +84,27 @@ export default async function ProfilePage({ params }: PageProps) {
                                 }
                             }
                         }
+                    },
+                    _count: {
+                        select: { followers: true, following: true }
                     }
                 }
             });
+        }
 
-            if (user && session?.user?.id && user.id !== session.user.id) {
-                // Log view if searching for someone else
-                const { logProfileView } = await import("../../feed/actions");
-                await logProfileView(user.id);
-            } else if (user && session?.user?.id && user.id === session.user.id) {
-                isOwner = true;
-            }
+        if (!user) {
+            console.log("ProfilePage: User not found");
+            redirect('/feed');
+        }
+
+        if (session?.user?.id && user.id !== session.user.id) {
+            // Log view if searching for someone else
+            const { logProfileView } = await import("../../feed/actions");
+            await logProfileView(user.id);
         }
 
         let isFollowing = false;
-        if (session?.user?.id && user && user.id !== session.user.id) {
+        if (session?.user?.id && user.id !== session.user.id) {
             const followCheck = await prisma.follow.findUnique({
                 where: {
                     followerId_followingId: {
@@ -123,21 +114,6 @@ export default async function ProfilePage({ params }: PageProps) {
                 }
             });
             isFollowing = !!followCheck;
-        }
-
-        if (username === 'me' && user) {
-            // Fetch counts for self too if not fetched above
-            // The logic above for 'me' didn't include _count. Let's fix that.
-            const counts = await prisma.user.findUnique({
-                where: { id: session!.user!.id },
-                select: { _count: { select: { followers: true, following: true } } }
-            });
-            (user as any)._count = counts?._count;
-        }
-
-        if (!user) {
-            console.log("ProfilePage: User not found");
-            redirect('/feed');
         }
 
         // Fetch connection status
@@ -155,7 +131,8 @@ export default async function ProfilePage({ params }: PageProps) {
                 isFollowing={isFollowing}
                 connectionStatus={connectionStatus}
                 posts={user.posts || []}
-                counts={(user as any)._count || { followers: 0, following: 0 }}
+                counts={user._count || { followers: 0, following: 0 }}
+                isAdmin={isAdmin}
             />
         );
     } catch (e: any) {
@@ -166,3 +143,4 @@ export default async function ProfilePage({ params }: PageProps) {
         throw e;
     }
 }
+

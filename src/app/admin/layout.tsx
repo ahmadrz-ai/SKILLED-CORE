@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
     LayoutDashboard, Users, Shield, AlertTriangle, Activity, CreditCard,
-    LogOut, Lock, Search
+    LogOut, Lock, Search, Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
@@ -17,6 +17,7 @@ import { getPendingReportsCount } from "./actions";
 const ADMIN_MENU = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin" },
     { icon: Users, label: "User Base", href: "/admin/users" },
+    { icon: Brain, label: "AI Interviews", href: "/admin/interviews" },
     { icon: Shield, label: "Verifications", href: "/admin/verifications" },
     { icon: AlertTriangle, label: "Reports", href: "/admin/reports" },
     { icon: Activity, label: "System Health", href: "/admin/health" },

@@ -21,8 +21,8 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
             whileHover={{ y: -5 }}
             className={cn(
                 "relative p-8 rounded-2xl border flex flex-col h-full transition-all duration-300 group overflow-hidden",
-                isUltra ? "bg-zinc-900/80 border-amber-500/50 shadow-[0_0_30px_rgba(245,158,11,0.15)] z-10" :
-                    isPro ? "bg-zinc-900/60 border-violet-500/50 shadow-[0_0_20px_rgba(139,92,246,0.1)]" :
+                isUltra ? "bg-zinc-900/80 border-violet-500/50 shadow-[0_0_30px_rgba(139,92,246,0.15)] z-10" :
+                    isPro ? "bg-zinc-900/60 border-violet-400/50 shadow-[0_0_20px_rgba(167,139,250,0.1)]" :
                         "bg-zinc-900/40 border-white/10",
                 isCurrent && !isUltra && !isPro && "border-green-500/20 bg-green-900/5", // Only apply green border to Basic if active
                 isCurrent && (isUltra || isPro) && "bg-opacity-100" // Just ensure high visibility for active premium 
@@ -30,13 +30,13 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
         >
 
             {isUltra && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-600 shadow-[0_0_20px_#fbbf24]" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-400 to-violet-600 shadow-[0_0_20px_#8b5cf6]" />
             )}
 
             <div className="mb-6 relative z-10">
                 <div className="flex justify-between items-start mb-2">
                     <h3 className={cn("text-lg font-bold font-heading tracking-widest",
-                        isUltra ? "text-amber-400" : isPro ? "text-violet-400" : "text-white"
+                        isUltra ? "text-violet-400" : isPro ? "text-violet-300" : "text-white"
                     )}>
                         {plan.name}
                     </h3>
@@ -49,7 +49,7 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
                         )}
                         {plan.credits && (
                             <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-white/10 text-zinc-300 flex items-center gap-1">
-                                <Coins className="w-3 h-3 text-yellow-400" />
+                                <Coins className="w-3 h-3 text-violet-400" />
                                 {plan.credits}
                             </span>
                         )}
@@ -65,7 +65,7 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
             <ul className="space-y-4 mb-8 flex-1 relative z-10">
                 {plan.features.map((feat: string, i: number) => (
                     <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
-                        <Check className={cn("w-4 h-4 shrink-0 mt-0.5", isUltra ? "text-amber-400" : isPro ? "text-violet-400" : "text-zinc-600")} />
+                        <Check className={cn("w-4 h-4 shrink-0 mt-0.5", isUltra ? "text-violet-400" : isPro ? "text-violet-300" : "text-zinc-600")} />
                         {feat}
                     </li>
                 ))}
@@ -84,7 +84,7 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
                         className={cn(
                             "w-full py-3 rounded-lg font-heading font-bold text-sm tracking-wider transition-all flex items-center justify-center gap-2 relative z-10",
                             isUltra
-                                ? "bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-black shadow-lg shadow-amber-500/20"
+                                ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-violet-500/20"
                                 : isPro
                                     ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
                                     : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
@@ -97,8 +97,8 @@ const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
             )}
 
             {/* Background Effects */}
-            {isUltra && <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-amber-500/20 blur-[80px] rounded-full pointer-events-none" />}
-            {isPro && <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-violet-500/20 blur-[80px] rounded-full pointer-events-none" />}
+            {isUltra && <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-violet-500/20 blur-[80px] rounded-full pointer-events-none" />}
+            {isPro && <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-fuchsia-500/20 blur-[80px] rounded-full pointer-events-none" />}
         </motion.div>
     );
 };
@@ -172,7 +172,7 @@ export default function CreditsPage() {
             <div className="flex items-end justify-between">
                 <div>
                     <h1 className="text-4xl font-heading font-bold text-white mb-2 tracking-tight">
-                        CREDIT <span className="text-amber-500">RESERVES</span>
+                        CREDIT <span className="text-violet-500">RESERVES</span>
                     </h1>
                     <p className="text-zinc-400 font-mono text-sm">
                         Manage your recruitment currency and subscription tier.
@@ -181,7 +181,7 @@ export default function CreditsPage() {
                 <div className="text-right">
                     <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">Current Balance</p>
                     <div className="text-5xl font-bold font-heading text-white flex items-center gap-3">
-                        {credits} <Coins className="w-8 h-8 text-amber-500" />
+                        {credits} <Coins className="w-8 h-8 text-violet-500" />
                     </div>
                 </div>
             </div>

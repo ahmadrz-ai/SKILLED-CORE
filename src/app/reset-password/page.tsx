@@ -2,13 +2,14 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Loader2, KeyRound, Check } from "lucide-react";
+import { Lock, Loader2, KeyRound, Check, Shield, Eye, EyeOff } from "lucide-react";
 import { Button3D } from "@/components/ui/Button3D";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resetPassword } from "@/app/actions/reset-password";
 import { toast } from "sonner";
-import { QodeeLogo } from "@/components/QodeeLogo";
+import Link from "next/link";
+import Image from "next/image";
 import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ function ResetPasswordContent() {
         return (
             <div className="flex flex-col items-center justify-center h-full text-zinc-400">
                 <p>Missing email parameter.</p>
-                <button onClick={() => router.push('/forgot-password')} className="text-violet-400 hover:underline mt-4">
+                <button onClick={() => router.push('/forgot-password')} className="text-indigo-400 hover:underline mt-4">
                     Request new code
                 </button>
             </div>
@@ -64,8 +65,12 @@ function ResetPasswordContent() {
 
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="flex justify-center mb-4">
-                        <QodeeLogo className="w-12 h-12" />
+                    <div className="relative z-10 flex items-center justify-center gap-3 mb-4">
+                        <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-lg" />
+                        <div>
+                            <h3 className="font-heading font-black tracking-widest text-lg">SKILLED CORE</h3>
+                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Enterprise Node</p>
+                        </div>
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Secure Reset</h1>
                     <p className="text-sm text-zinc-500">

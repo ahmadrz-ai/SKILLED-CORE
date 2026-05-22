@@ -12,18 +12,18 @@
   --grain: none;
   --icon: none;
   --behind-gradient: none;
-  --behind-glow-color: rgba(255, 215, 0, 0.67);
-  /* Golden Glow */
+  --behind-glow-color: rgba(124, 58, 237, 0.5);
+  /* Purple Glow */
   --behind-glow-size: 25%;
   --inner-gradient: none;
 
-  /* Adjusted for Golden/Premium Vibe */
-  --sunpillar-1: hsl(45, 100%, 73%);
-  --sunpillar-2: hsl(50, 100%, 69%);
-  --sunpillar-3: hsl(40, 100%, 69%);
-  --sunpillar-4: hsl(35, 100%, 76%);
-  --sunpillar-5: hsl(55, 100%, 74%);
-  --sunpillar-6: hsl(60, 100%, 73%);
+  /* Adjusted for Premium Purple Vibe */
+  --sunpillar-1: hsl(262, 80%, 73%);
+  --sunpillar-2: hsl(262, 80%, 69%);
+  --sunpillar-3: hsl(262, 80%, 69%);
+  --sunpillar-4: hsl(262, 80%, 76%);
+  --sunpillar-5: hsl(262, 80%, 74%);
+  --sunpillar-6: hsl(262, 80%, 73%);
 
   --sunpillar-clr-1: var(--sunpillar-1);
   --sunpillar-clr-2: var(--sunpillar-2);
@@ -125,8 +125,8 @@
   background: linear-gradient(115deg,
       transparent 20%,
       rgba(255, 255, 255, 0.4) 40%,
-      rgba(255, 215, 0, 0.8) 50%,
-      /* Sharp Gold Glint */
+      rgba(124, 58, 237, 0.8) 50%,
+      /* Sharp Purple Glint */
       rgba(255, 255, 255, 0.4) 60%,
       transparent 80%);
   background-size: 300% 300%;
@@ -224,8 +224,8 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  /* Gold border */
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  /* Purple border */
   border-radius: calc(max(0px, var(--card-radius) - var(--ui-inset) + var(--ui-radius-bias)));
   padding: 16px;
   pointer-events: auto;
@@ -251,8 +251,8 @@
 .pc-handle {
   font-size: 14px;
   font-weight: 500;
-  color: #FFD700;
-  /* Gold */
+  color: #A78BFA;
+  /* Light Purple */
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -265,14 +265,14 @@
 }
 
 .pc-contact-btn {
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.2);
   border-radius: 8px;
   padding: 10px 20px;
   font-size: 12px;
   font-weight: 700;
-  color: #000;
-  background: #FFD700;
-  /* Gold */
+  color: #FFF;
+  background: #7C3AED;
+  /* Purple */
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
@@ -282,10 +282,10 @@
 }
 
 .pc-contact-btn:hover {
-  background: #FFED4B;
+  background: #6D28D9;
   transform: translateY(-1px);
   transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
 }
 
 .pc-content:not(.pc-avatar-content) {
@@ -313,7 +313,7 @@
   margin: 0;
   font-size: 1.5em;
   margin: 0;
-  background-image: linear-gradient(to bottom, #FFD700, #FDB931);
+  background-image: linear-gradient(to bottom, #A78BFA, #7C3AED);
   background-size: 1em 1.5em;
   -webkit-text-fill-color: transparent;
   background-clip: text;

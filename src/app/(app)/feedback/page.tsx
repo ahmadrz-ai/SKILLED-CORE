@@ -76,13 +76,13 @@ export default function FeedbackPage() {
         setIsSubmitting(false);
 
         if (res.success) {
-            toast.success("Feedback Recieved", { description: "Transmission logged in central mainframe." });
+            toast.success("Feedback Received", { description: "Feedback logged in central mainframe." });
             setTitle('');
             setDescription('');
             setFiles([]);
             setUploadedFile(null);
         } else {
-            toast.error("Transmission Error", { description: res.message });
+            toast.error("Feedback Error", { description: res.message });
         }
     };
 
@@ -136,22 +136,22 @@ export default function FeedbackPage() {
                         <div className="space-y-3">
                             <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Severity Level</label>
                             <div className="grid grid-cols-4 gap-2">
-                                {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((level) => (
-                                    <button
-                                        key={level}
-                                        type="button"
-                                        onClick={() => setSeverity(level)}
-                                        className={cn(
-                                            "py-2 text-xs font-bold rounded border transition-all",
-                                            severity === level
-                                                ? level === 'CRITICAL' ? "bg-red-600 text-white border-red-600"
-                                                    : "bg-zinc-800 text-white border-white/20"
-                                                : "bg-transparent text-zinc-600 border-zinc-800 hover:border-zinc-700"
-                                        )}
-                                    >
-                                        {level}
-                                    </button>
-                                ))}
+                                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((level) => (
+                                        <button
+                                            key={level}
+                                            type="button"
+                                            onClick={() => setSeverity(level)}
+                                            className={cn(
+                                                "py-2 text-xs font-bold rounded border transition-all",
+                                                severity === level
+                                                    ? level === 'CRITICAL' ? "bg-red-600 text-white border-red-600"
+                                                        : "bg-zinc-800 text-white border-white/20"
+                                                    : "bg-transparent text-zinc-600 border-zinc-800 hover:border-zinc-700"
+                                            )}
+                                        >
+                                            {level}
+                                        </button>
+                                    ))}
                             </div>
                         </div>
                     )}
@@ -224,7 +224,7 @@ export default function FeedbackPage() {
                         disabled={isSubmitting}
                         className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {isSubmitting ? "TRANSMITTING..." : (
+                        {isSubmitting ? "SUBMITTING..." : (
                             <>
                                 SUBMIT FEEDBACK <Send className="w-4 h-4" />
                             </>

@@ -21,9 +21,9 @@ export function PlanBadge({ plan: initialPlan }: { plan?: string }) {
     return (
         <div className={cn(
             "px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider flex items-center gap-1 border",
-            plan === "ULTRA" ? "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.2)]" :
-                plan === "PRO" ? "bg-violet-500/10 text-violet-400 border-violet-500/20 shadow-[0_0_8px_rgba(139,92,246,0.2)]" :
-                    "bg-zinc-800 text-zinc-500 border-zinc-700"
+            plan === "ULTRA" ? "bg-violet-500/10 text-violet-500 border-violet-500/20 shadow-[0_0_8px_rgba(124,58,237,0.15)]" :
+                plan === "PRO" ? "bg-violet-500/10 text-violet-400 border-violet-500/20 shadow-[0_0_8px_rgba(139,92,246,0.15)]" :
+                    "bg-slate-100 text-slate-500 border-slate-200"
         )}>
             {plan === "ULTRA" && <Crown className="w-3 h-3 fill-current" />}
             {plan === "PRO" && <Star className="w-3 h-3 fill-current" />}

@@ -1,47 +1,77 @@
 "use client";
 
 import { TrendingUp, Hash } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-export function TrendingWidget({ topics = [] }: { topics: { tag: string; posts: string }[] }) {
+export function TrendingWidget({ topics = [], isFolded = false }: { topics: { tag: string; posts: string }[]; isFolded?: boolean }) {
     return (
         <motion.div
-            className="bg-zinc-900/40 rounded-xl border border-white/5 backdrop-blur-md overflow-hidden"
+            className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
         >
-            <div className="p-4 border-b border-white/5 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-violet-500" />
-                <h3 className="font-bold text-white text-sm">Trending Intelligence</h3>
+            <div className="p-4 border-b border-[#E5E7EB] flex items-center gap-2.5">
+                <TrendingUp className="w-4 h-4 text-[#6366F1]" />
+                <h3 className="font-bold text-[#111827] text-sm">Trending Intelligence</h3>
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[#E5E7EB]">
                 {topics.length === 0 ? (
-                    <div className="p-4 text-center text-zinc-500 text-xs italic">
+                    <div className="p-4 text-center text-[#9CA3AF] text-xs italic">
                         No trending data available.
                     </div>
                 ) : (
-                    topics.map((topic, i) => (
+                    <>
+                        {/* First item is always visible */}
                         <div
-                            key={i}
-                            className="p-4 hover:bg-white/5 transition-colors cursor-pointer group"
+                            className="p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
                         >
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="font-bold text-sm text-zinc-300 group-hover:text-blue-400 transition-colors flex items-center gap-1">
-                                    <Hash className="w-3 h-3 text-zinc-600 group-hover:text-blue-500/50" />
-                                    {topic.tag}
+                            <div className="flex items-center justify-between">
+                                <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
+                                    <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]/70 transition-colors" />
+                                    {topics[0].tag}
                                 </span>
                             </div>
-                            <p className="text-xs text-zinc-500 font-mono">
-                                {topic.posts} posts
+                            <p className="text-xs text-[#6B7280] font-mono mt-1">
+                                {topics[0].posts} posts
                             </p>
                         </div>
-                    ))
+
+                        {/* Extra items fold with animation */}
+                        <AnimatePresence initial={false}>
+                            {!isFolded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="overflow-hidden divide-y divide-[#E5E7EB]"
+                                >
+                                    {topics.slice(1).map((topic, i) => (
+                                        <div
+                                            key={i + 1}
+                                            className="p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
+                                                    <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]/70 transition-colors" />
+                                                    {topic.tag}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-[#6B7280] font-mono mt-1">
+                                                {topic.posts} posts
+                                            </p>
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </>
                 )}
             </div>
             {topics.length > 0 && (
-                <div className="p-3 text-center bg-zinc-950/30">
-                    <button className="text-xs text-violet-400 hover:text-violet-300 font-medium">
+                <div className="p-3 text-center bg-white hover:bg-[#F9FAFB] border-t border-[#E5E7EB] transition-colors">
+                    <button className="text-xs text-[#6366F1] hover:text-[#4F46E5] font-bold tracking-wide cursor-pointer">
                         Show more
                     </button>
                 </div>

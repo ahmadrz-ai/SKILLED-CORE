@@ -2,105 +2,79 @@
 
 import React from 'react';
 
+// Light-theme page skeleton loader — replaces the dark CoreLoader
 const CoreLoader = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-transparent">
-      <div className="loader-wrapper">
-        <svg viewBox="0 0 100 100" className="loader-svg">
-          <defs>
-            <linearGradient id="coreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#1e1b4b', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#000000', stopOpacity: 1 }} />
-            </linearGradient>
-          </defs>
+    <div className="min-h-screen w-full" style={{ backgroundColor: '#F3F4F6' }}>
+      {/* Top bar skeleton */}
+      <div className="h-14 border-b flex items-center px-6 gap-4" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="h-7 w-32 rounded-md animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+        <div className="flex-1" />
+        <div className="h-7 w-48 rounded-full animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+        <div className="h-7 w-7 rounded-full animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+      </div>
 
-          <g className="points">
-            {/* Central Core */}
-            <circle fill="url(#coreGradient)" r="50" cy="50" cx="50" className="ciw" />
+      <div className="flex">
+        {/* Sidebar skeleton */}
+        <div className="hidden md:flex flex-col w-56 min-h-screen border-r p-4 gap-3 flex-shrink-0"
+          style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div className="h-10 w-10 rounded-full mx-auto animate-pulse mb-2" style={{ backgroundColor: '#E5E7EB' }} />
+          <div className="h-4 w-28 rounded animate-pulse mx-auto" style={{ backgroundColor: '#E5E7EB' }} />
+          <div className="h-3 w-20 rounded animate-pulse mx-auto mb-4" style={{ backgroundColor: '#F3F4F6' }} />
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2 rounded-lg">
+              <div className="h-4 w-4 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+              <div className="h-4 rounded animate-pulse flex-1" style={{ backgroundColor: '#E5E7EB' }} />
+            </div>
+          ))}
+        </div>
 
-            {/* Orbiting Node 1 (Purple - Talent) */}
-            <circle r="4" cy="50" cx="5" className="ci2" />
+        {/* Main content skeleton */}
+        <div className="flex-1 p-6 max-w-2xl mx-auto">
+          {/* Post creator */}
+          <div className="rounded-xl border p-4 mb-4 flex items-center gap-3" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            <div className="h-10 w-10 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+            <div className="flex-1 h-10 rounded-full animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+          </div>
 
-            {/* Orbiting Node 2 (Cyan - Job) */}
-            <circle r="4" cy="50" cx="95" className="ci1" />
-          </g>
-        </svg>
+          {/* Post cards */}
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-xl border p-5 mb-3" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-36 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+                  <div className="h-3 w-24 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                </div>
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="h-4 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                <div className="h-4 rounded animate-pulse w-4/5" style={{ backgroundColor: '#F3F4F6' }} />
+                <div className="h-4 rounded animate-pulse w-3/5" style={{ backgroundColor: '#F3F4F6' }} />
+              </div>
+              <div className="flex gap-2 pt-3 border-t" style={{ borderColor: '#F3F4F6' }}>
+                {[...Array(4)].map((_, j) => (
+                  <div key={j} className="h-7 w-16 rounded-full animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
 
-        {/* Embedded Scoped CSS for Animation */}
-        <style jsx>{`
-          .loader-wrapper {
-            width: 150px;
-            max-height: 900px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          }
-          
-          .loader-svg {
-            overflow: visible;
-            filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
-            width: 100%;
-          }
-
-          .ci1 {
-            fill: #8b5cf6; /* Electric Purple */
-            animation: toBig 3s infinite -1.5s;
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-          }
-
-          .ciw {
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-            animation: breath 3s infinite;
-            stroke: rgba(255, 255, 255, 0.1);
-            stroke-width: 1px;
-          }
-
-          .ci2 {
-            fill: #8b5cf6; /* Violet-500 (Hashtag Color) */
-            animation: toBig2 3s infinite;
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-          }
-
-          .points {
-            animation: rot 3s infinite;
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-          }
-
-          @keyframes rot {
-            0% { transform: rotate(0deg); }
-            30% { transform: rotate(360deg); }
-            50% { transform: rotate(360deg); }
-            80% { transform: rotate(0deg); }
-            100% { transform: rotate(0deg); }
-          }
-
-          @keyframes toBig {
-            0% { transform: scale(1) translateX(0px); }
-            30% { transform: scale(1) translateX(0px); }
-            50% { transform: scale(10) translateX(-4.5px); }
-            80% { transform: scale(10) translateX(-4.5px); }
-            100% { transform: scale(1) translateX(0px); }
-          }
-
-          @keyframes toBig2 {
-            0% { transform: scale(1) translateX(0px); }
-            30% { transform: scale(1) translateX(0px); }
-            50% { transform: scale(10) translateX(4.5px); }
-            80% { transform: scale(10) translateX(4.5px); }
-            100% { transform: scale(1) translateX(0px); }
-          }
-
-          @keyframes breath {
-            15% { transform: scale(1); }
-            40% { transform: scale(1.1); }
-            65% { transform: scale(1); }
-            90% { transform: scale(1.1); }
-          }
-        `}</style>
+        {/* Right sidebar skeleton */}
+        <div className="hidden lg:flex flex-col w-64 p-4 gap-3 flex-shrink-0">
+          <div className="rounded-xl border p-4" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            <div className="h-16 rounded-lg mb-8 animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+            <div className="h-4 w-28 rounded animate-pulse mb-1.5" style={{ backgroundColor: '#E5E7EB' }} />
+            <div className="h-3 w-20 rounded animate-pulse mb-4" style={{ backgroundColor: '#F3F4F6' }} />
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex justify-between py-2">
+                <div className="h-3 w-24 rounded animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                <div className="h-3 w-8 rounded animate-pulse" style={{ backgroundColor: '#E5E7EB' }} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

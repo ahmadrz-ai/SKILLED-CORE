@@ -31,6 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { InstagramPoll } from "./InstagramPoll";
 import { ReportPostModal } from "./ReportPostModal";
+import { SharePostModal } from "./SharePostModal";
 
 export interface PostProps {
     id: string;
@@ -66,6 +67,10 @@ export interface PostProps {
 }
 
 export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?: () => void; onDelete?: (id: string) => void }) {
+    console.log("[PostCard DEBUG] Received post:", {
+        id: post?.id,
+        author: post?.author
+    });
     const router = useRouter();
     const { data: session } = useSession();
     const [isLiked, setIsLiked] = useState(post.isLiked);
@@ -73,6 +78,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const [showComments, setShowComments] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     // Follow State
     const [isFollowing, setIsFollowing] = useState(post.author.isFollowing || false);
@@ -197,13 +203,11 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         let match;
         while ((match = quotedBadgeRegex.exec(content)) !== null) {
             const quotedText = match[1];
-            const lastWordMatch = quotedText.match(/\s*([:\/~+])(\w+)$/);
+            const symbolMatch = quotedText.match(/([:\/~+])/);
 
-            if (lastWordMatch) {
-                const trigger = lastWordMatch[1];
-                const lastWord = lastWordMatch[2];
-                const textBeforeTrigger = quotedText.substring(0, quotedText.length - lastWordMatch[0].length);
-                const badgeText = (textBeforeTrigger + ' ' + lastWord).trim();
+            if (symbolMatch) {
+                const trigger = symbolMatch[1];
+                const badgeText = quotedText.replace(/[:\/~+]/g, '').replace(/\s+/g, ' ').trim();
 
                 quotedBadges.push({
                     start: match.index,
@@ -294,151 +298,89 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
             return <span key={key}>{word}</span>;
         });
     };
+    const authorHandle = post.author?.handle || "@user";
+    const authorUsername = authorHandle.startsWith("@") ? authorHandle.substring(1) : authorHandle;
 
     return (
-        <div className="group relative bg-zinc-900/60 backdrop-blur-md border border-white/10 py-5 hover:bg-zinc-900/80 transition-all duration-300 -mx-4 px-4 lg:mx-0 lg:px-5 lg:rounded-xl lg:mb-4 shadow-lg">
-            <div className="flex gap-4">
-                {/* Avatar */}
-                <Link href={`/profile/${post.author.handle.substring(1)}`}>
-                    <Avatar className="w-10 h-10 border border-white/10 cursor-pointer hover:border-violet-500/50 transition-colors">
+        <div className="group relative bg-white border border-[#E5E7EB] py-5 hover:shadow-sm transition-all duration-200 -mx-4 px-4 lg:mx-0 lg:px-5 lg:rounded-xl lg:mb-3">
+            <div className="flex gap-3">
+                <Link href={`/profile/${authorUsername}`}>
+                    <Avatar className="w-10 h-10 border border-[#E5E7EB] cursor-pointer hover:border-[#6366F1] transition-colors flex-shrink-0">
                         <AvatarImage src={post.author.avatar || undefined} />
-                        <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </Link>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
-                    {/* Header */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                            <Link href={`/profile/${post.author.handle.substring(1)}`} className="hover:underline flex items-end gap-2 group/author">
-                                <span className="font-bold text-white text-sm group-hover/author:text-violet-400 transition-colors">
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <Link href={`/profile/${authorUsername}`} className="hover:underline group/author flex items-center">
+                                <span className="font-semibold text-[#111827] text-sm group-hover/author:text-[#6366F1] transition-colors leading-none">
                                     {post.author.name}
                                 </span>
                             </Link>
-
-                            {/* Verified Badge (Paid Users) */}
                             {(post.author.plan === 'PRO' || post.author.plan === 'ULTRA') && (
                                 <TooltipProvider>
                                     <Tooltip>
-                                        <TooltipTrigger>
-                                            <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-500/10" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
-                                        </TooltipContent>
+                                        <TooltipTrigger className="flex items-center justify-center"><BadgeCheck className="w-4 h-4 text-[#7C3AED]" /></TooltipTrigger>
+                                        <TooltipContent><p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p></TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
-
-                            {/* Role Badges */}
                             {post.author.role === 'ADMIN' && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase tracking-wide border border-amber-500/20">
-                                    ADMIN
-                                </span>
+                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] text-[10px] font-bold uppercase border border-[#DDD6FE] leading-none">ADMIN</span>
                             )}
                             {post.author.role === 'RECRUITER' && (
-                                <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wide border border-blue-500/20">
-                                    RECRUITER
-                                </span>
+                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase border border-[#BFDBFE] leading-none">RECRUITER</span>
                             )}
-                            <span className="text-zinc-600 text-xs">· {post.timestamp}</span>
-
+                            <span suppressHydrationWarning className="flex items-center text-[#9CA3AF] text-xs leading-none">· {post.timestamp}</span>
                             {post.author.isHiring && (
-                                <span className="ml-2 px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 text-[10px] font-bold uppercase tracking-wide border border-violet-500/20">
-                                    Hiring
-                                </span>
+                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EEF2FF] text-[#6366F1] text-[10px] font-bold uppercase border border-[#C7D2FE] leading-none">Hiring</span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
-                            {/* Action Buttons Logic */}
+
+                        <div className="flex items-center gap-1 flex-shrink-0">
                             {session?.user?.id && session.user.id !== post.author.id && (
                                 <>
-                                    {/* PRIMARY CONNECT: Open Node & Not Recruiter & Not Connected */}
                                     {connStatus === 'NONE' && post.author.nodeType !== 'BROADCAST' && post.author.role !== 'RECRUITER' && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleConnect}
-                                            disabled={loadingConnect}
-                                            className="h-6 px-2 text-xs font-bold text-violet-400 hover:text-white hover:bg-violet-500/20 transition-all"
-                                        >
+                                        <Button variant="ghost" size="sm" onClick={handleConnect} disabled={loadingConnect}
+                                            className="h-7 px-2.5 text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5] hover:bg-[#EEF2FF] border border-[#C7D2FE] rounded-full">
                                             <UserPlus className="w-3 h-3 mr-1" /> Connect
                                         </Button>
                                     )}
-
-                                    {/* PENDING STATUS */}
                                     {connStatus === 'PENDING_SENT' && (
-                                        <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider px-2">
-                                            Pending
-                                        </span>
+                                        <span className="text-[#9CA3AF] text-[10px] font-semibold uppercase px-2">Pending</span>
                                     )}
-
-                                    {/* FOLLOW BUTTON (Prominent for Broadcast/Recruiter) */}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleFollow}
-                                        disabled={loadingFollow}
-                                        className={cn(
-                                            "h-6 px-2 text-xs font-bold transition-all",
+                                    <Button variant="ghost" size="sm" onClick={handleFollow} disabled={loadingFollow}
+                                        className={cn("h-7 px-2.5 text-xs font-semibold rounded-full border transition-all",
                                             isFollowing
-                                                ? "text-zinc-500 hover:text-red-400"
+                                                ? "text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEF2F2] border-[#E5E7EB]"
                                                 : (post.author.nodeType === 'BROADCAST' || post.author.role === 'RECRUITER')
-                                                    ? "text-teal-400 hover:text-teal-300 bg-teal-500/10 hover:bg-teal-500/20"
-                                                    : "text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20"
-                                        )}
-                                    >
-                                        {isFollowing ? (
-                                            <span className="flex items-center">Following</span>
-                                        ) : (
-                                            <span className="flex items-center"><Plus className="w-3 h-3 mr-1" /> Follow</span>
-                                        )}
+                                                    ? "text-[#0891B2] bg-[#ECFEFF] hover:bg-[#CFFAFE] border-[#A5F3FC]"
+                                                    : "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] border-[#C7D2FE]")}>
+                                        {isFollowing ? "Following" : <><Plus className="w-3 h-3 mr-1" />Follow</>}
                                     </Button>
-
-                                    {/* SECONDARY CONNECT: Broadcast/Recruiter & Not Connected */}
-                                    {connStatus === 'NONE' && (post.author.nodeType === 'BROADCAST' || post.author.role === 'RECRUITER') && (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={handleConnect}
-                                                        disabled={loadingConnect}
-                                                        className="h-6 w-6 text-zinc-500 hover:text-violet-400 transition-all"
-                                                    >
-                                                        <UserPlus className="w-4 h-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Connect</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
                                 </>
                             )}
-
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="text-zinc-500 hover:text-white transition-colors">
+                                    <button className="text-[#9CA3AF] hover:text-[#6B7280] p-1 rounded hover:bg-[#F3F4F6] transition-colors">
                                         <MoreHorizontal className="w-4 h-4" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-zinc-400">
-                                    <DropdownMenuItem onClick={() => toast.success("Noted. We will adjust your feed.")} className="cursor-pointer hover:bg-white/5 hover:text-white gap-2">
-                                        <XCircle className="w-4 h-4" /> Not Interested
+                                <DropdownMenuContent align="end" className="bg-white border-[#E5E7EB] text-[#374151] shadow-lg">
+                                    <DropdownMenuItem onClick={() => toast.success("Noted. We will adjust your feed.")} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
+                                        <XCircle className="w-4 h-4 text-[#9CA3AF]" /> Not Interested
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer hover:bg-white/5 hover:text-red-400 text-red-500 gap-2">
+                                    <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
                                         <Flag className="w-4 h-4" /> Report Post
                                     </DropdownMenuItem>
                                     {session?.user?.id === post.author.id && (
                                         <>
-                                            <DropdownMenuItem onClick={() => setIsEditModalOpen(true)} className="cursor-pointer hover:bg-white/5 hover:text-white gap-2">
-                                                <Edit className="w-4 h-4" /> Edit Post
+                                            <DropdownMenuItem onClick={() => setIsEditModalOpen(true)} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
+                                                <Edit className="w-4 h-4 text-[#9CA3AF]" /> Edit Post
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="cursor-pointer hover:bg-white/5 hover:text-red-400 text-red-500 gap-2">
+                                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
                                                 <Trash2 className="w-4 h-4" /> Delete Post
                                             </DropdownMenuItem>
                                         </>
@@ -447,29 +389,21 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                             </DropdownMenu>
                         </div>
                     </div>
-                    {/* End Header */}
 
                     {/* Edit Dialog */}
                     <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                        <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-[500px]">
+                        <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[500px]">
                             <DialogHeader>
-                                <DialogTitle>Edit Transmission</DialogTitle>
-                                <DialogDescription className="text-zinc-400">
-                                    Make changes to your post content here.
-                                </DialogDescription>
+                                <DialogTitle className="text-[#111827]">Edit Post</DialogTitle>
+                                <DialogDescription className="text-[#6B7280]">Make changes to your post content here.</DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
-                                <Textarea
-                                    value={editContent}
-                                    onChange={(e) => setEditContent(e.target.value)}
-                                    className="bg-zinc-900 border-white/10 min-h-[150px] text-zinc-200 resize-none focus:ring-violet-500/50"
-                                />
+                                <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)}
+                                    className="bg-[#F9FAFB] border-[#E5E7EB] min-h-[150px] text-[#111827] resize-none focus:ring-[#6366F1]/20 focus:border-[#6366F1]" />
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-white/10 hover:bg-white/5 text-zinc-300">
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleUpdate} disabled={isSaving} className="bg-violet-600 hover:bg-violet-500 text-white">
+                                <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
+                                <Button onClick={handleUpdate} disabled={isSaving} className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
                                     {isSaving ? "Saving..." : "Save Changes"}
                                 </Button>
                             </DialogFooter>
@@ -477,64 +411,40 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     </Dialog>
 
                     <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                        <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-[425px]">
+                        <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[425px]">
                             <DialogHeader>
-                                <DialogTitle>Delete Transmission</DialogTitle>
-                                <DialogDescription className="text-zinc-400">
-                                    Are you sure you want to delete this post? This action cannot be undone.
-                                </DialogDescription>
+                                <DialogTitle className="text-[#111827]">Delete Post</DialogTitle>
+                                <DialogDescription className="text-[#6B7280]">Are you sure? This action cannot be undone.</DialogDescription>
                             </DialogHeader>
                             <DialogFooter className="gap-2 sm:gap-0">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setIsDeleteDialogOpen(false)}
-                                    className="bg-transparent border-white/10 text-zinc-300 hover:bg-white/5 hover:text-white"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleDelete}
-                                    className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
-                                >
-                                    Delete
-                                </Button>
+                                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
+                                <Button onClick={handleDelete} className="bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2] border border-[#FECACA]">Delete</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
 
-                    {/* Text Body with Badges */}
-                    <div className="mt-1 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                    {/* Text Body */}
+                    <div className="mt-2 text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">
                         {parseContent(content)}
                     </div>
 
-                    {/* Poll Rendering */}
+                    {/* Poll */}
                     {post.poll && (
                         <div className="mt-4 mb-2">
-                            <InstagramPoll
-                                poll={post.poll}
-                                onVote={async (pollId, optionId) => {
-                                    const result = await votePoll(pollId, optionId);
-                                    if (result.success && result.poll) {
-                                        router.refresh();
-                                    }
-                                    return {
-                                        ...result,
-                                        poll: (result.poll as any) || undefined
-                                    };
-                                }}
-                            />
+                            <InstagramPoll poll={post.poll} onVote={async (pollId, optionId) => {
+                                const result = await votePoll(pollId, optionId);
+                                if (result.success && result.poll) router.refresh();
+                                return { ...result, poll: (result.poll as any) || undefined };
+                            }} />
                         </div>
                     )}
 
-                    {/* Tags Section */}
+                    {/* Tags */}
                     {post.tags && post.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3 mb-2">
                             {post.tags.map((tag, i) => (
-                                <Link
-                                    key={i}
-                                    href={`/search?q=%23${tag.replace('#', '')}`}
-                                    className="text-blue-400 hover:text-blue-300 hover:underline text-sm font-medium transition-colors"
-                                >
+                                <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}
+                                    className="text-[#6366F1] hover:text-[#4F46E5] hover:underline text-sm font-medium transition-colors">
                                     #{tag.replace('#', '')}
                                 </Link>
                             ))}
@@ -543,92 +453,52 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                     {/* Code Snippet */}
                     {post.codeSnippet && (
-                        <div className="mt-3 bg-zinc-950 rounded-lg p-3 border border-white/10 font-mono text-xs overflow-x-auto">
-                            <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
-                                <span className="text-zinc-500 flex items-center gap-1">
-                                    <Code className="w-3 h-3" /> Snippet
-                                </span>
-                                <span className="text-zinc-600">TypeScript</span>
+                        <div className="mt-3 bg-[#1E1E2E] rounded-lg p-3 border border-[#E5E7EB] font-mono text-xs overflow-x-auto">
+                            <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+                                <span className="text-[#9CA3AF] flex items-center gap-1"><Code className="w-3 h-3" /> Snippet</span>
+                                <span className="text-[#6B7280]">TypeScript</span>
                             </div>
-                            <pre className="text-emerald-400">
-                                {post.codeSnippet}
-                            </pre>
+                            <pre className="text-emerald-400">{post.codeSnippet}</pre>
                         </div>
                     )}
 
-                    {/* Image Attachment */}
+                    {/* Image */}
                     {post.image && (
-                        <div className="mt-3 rounded-lg overflow-hidden border border-white/10">
-                            <img
-                                src={post.image}
-                                alt="Post attachment"
-                                className="w-full h-auto object-cover max-h-[400px]"
-                            />
+                        <div className="mt-3 rounded-xl overflow-hidden border border-[#E5E7EB]">
+                            <img src={post.image} alt="Post attachment" className="w-full h-auto object-cover max-h-[400px]" />
                         </div>
                     )}
 
                     {/* Action Bar */}
-                    <div className="flex justify-between items-center mt-4 max-w-md">
-                        <button
-                            onClick={handleLike}
-                            className={cn(
-                                "flex items-center gap-2 text-xs group transition-colors",
-                                isLiked ? "text-blue-400" : "text-zinc-500 hover:text-blue-400"
-                            )}
-                        >
-                            <div className={cn("p-1.5 rounded-full group-hover:bg-blue-500/10 transition-colors", isLiked && "bg-blue-500/10")}>
-                                <ThumbsUp className={cn("w-4 h-4", isLiked && "fill-current")} />
-                            </div>
+                    <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">
+                        <button onClick={handleLike}
+                            className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
+                                isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF]")}>
+                            <ThumbsUp className={cn("w-3.5 h-3.5", isLiked && "fill-current")} />
                             <span>{likesCount}</span>
                         </button>
-
-                        <button
-                            onClick={() => setShowComments(!showComments)}
-                            className={cn(
-                                "flex items-center gap-2 text-xs group transition-colors",
-                                showComments ? "text-emerald-400" : "text-zinc-500 hover:text-emerald-400"
-                            )}
-                        >
-                            <div className={cn("p-1.5 rounded-full group-hover:bg-emerald-500/10 transition-colors", showComments && "bg-emerald-500/10")}>
-                                <MessageCircle className={cn("w-4 h-4", showComments && "fill-current")} />
-                            </div>
+                        <button onClick={() => setShowComments(!showComments)}
+                            className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
+                                showComments ? "text-[#059669] bg-[#ECFDF5]" : "text-[#6B7280] hover:text-[#059669] hover:bg-[#ECFDF5]")}>
+                            <MessageCircle className={cn("w-3.5 h-3.5", showComments && "fill-current")} />
                             <span>{post.comments}</span>
                         </button>
-
-                        <button
-                            onClick={() => toast.success("Post rebroadcasted to your network.")}
-                            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-violet-400 group transition-colors"
-                        >
-                            <div className="p-1.5 rounded-full group-hover:bg-violet-500/10 transition-colors">
-                                <Repeat className="w-4 h-4" />
-                            </div>
-                            <span>Repost</span>
+                        <button onClick={() => toast.success("Reposted to your network.")}
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium">
+                            <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
                         </button>
-
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
-                                toast.success("Uplink copied to clipboard.");
-                            }}
-                            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-blue-400 group transition-colors"
-                        >
-                            <div className="p-1.5 rounded-full group-hover:bg-blue-500/10 transition-colors">
-                                <Send className="w-4 h-4" />
-                            </div>
-                            <span>Send</span>
+                        <button onClick={() => setIsShareModalOpen(true)}
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF] transition-all font-medium">
+                            <Send className="w-3.5 h-3.5" /><span>Send</span>
                         </button>
                     </div>
 
-                    {/* Comment Section */}
                     {showComments && <CommentSection postId={post.id} />}
                 </div>
             </div>
 
-            <ReportPostModal
-                postId={post.id}
-                isOpen={isReportModalOpen}
-                onClose={() => setIsReportModalOpen(false)}
-            />
+            <ReportPostModal postId={post.id} isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} />
+            <SharePostModal post={post} isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
         </div>
     );
 }

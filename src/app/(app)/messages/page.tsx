@@ -23,6 +23,7 @@ import { Loader2 } from "lucide-react";
 import InvitationCard from "@/components/chat/InvitationCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import ReactMarkdown from 'react-markdown';
 
 const EMOJI_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
@@ -50,7 +51,15 @@ export default function MessagesPage() {
     const [chatLoading, setChatLoading] = useState(false);
     const [currentUserRole, setCurrentUserRole] = useState<string>('User');
     const scrollRef = useRef<HTMLDivElement>(null);
+    const isNearBottomRef = useRef(true);
     const [replyingTo, setReplyingTo] = useState<any | null>(null);
+
+    const handleScroll = () => {
+        if (scrollRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+            isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+        }
+    };
 
     // UploadThing
     const [isUploading, setIsUploading] = useState(false);
@@ -129,22 +138,37 @@ export default function MessagesPage() {
         if (!silent) setLoading(false);
     }
 
+    const activeContactIdRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (!selectedContactId) return;
+        
         const load = async () => {
+            // If we are switching to a new contact, clear the old messages immediately
+            if (activeContactIdRef.current !== selectedContactId) {
+                setMessages([]);
+                activeContactIdRef.current = selectedContactId;
+            }
+
             if (tempContact && tempContact.contactId === selectedContactId) {
                 setMessages([]);
                 return;
             }
+            
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
-                setChatLoading(true);
+                if (messages.length === 0) setChatLoading(true);
                 const res = await getMessages(conversation.id);
-                if (res.success) setMessages(res.messages);
+                if (res.success) {
+                    setMessages(res.messages);
+                } else {
+                    toast.error("Failed to load chat. Database might be sleeping, retrying...");
+                }
                 setChatLoading(false);
             }
         };
         load();
+        
         const interval = setInterval(async () => {
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
@@ -156,7 +180,9 @@ export default function MessagesPage() {
     }, [selectedContactId, conversations, tempContact]);
 
     useEffect(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        if (scrollRef.current && isNearBottomRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
     }, [messages, selectedContactId, replyingTo]);
 
 
@@ -183,6 +209,7 @@ export default function MessagesPage() {
 
         const res = await sendMessage(selectedContactId, currentInput, attachmentUrl, attachmentType, currentReply?.id);
         if (res.success) {
+            isNearBottomRef.current = true; // Force scroll to bottom when sending
             loadConversations(true);
         } else {
             toast.error("Failed to send");
@@ -232,54 +259,57 @@ export default function MessagesPage() {
     );
 
     return (
-        <div className="absolute inset-0 bg-black flex text-white overflow-hidden font-sans">
+        <div className="h-[calc(100vh-64px)] w-full flex bg-white text-[#111827] overflow-hidden font-sans">
             {/* Sidebar */}
-            <div className="w-96 border-r border-white/10 bg-black flex flex-col">
-                <div className="p-6 border-b border-white/10 flex flex-col gap-4 bg-black/50 backdrop-blur-xl">
-                    <h2 className="text-2xl font-black text-white tracking-wide uppercase">
-                        MESSAGES
+            <div className="w-80 lg:w-96 border-r border-[#E5E7EB] bg-white flex flex-col flex-shrink-0 z-10">
+                <div className="p-4 lg:p-6 border-b border-[#E5E7EB] flex flex-col gap-4 bg-white relative z-20">
+                    <h2 className="text-xl font-bold text-[#111827] tracking-tight">
+                        Messages
                     </h2>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-[#1A1A1A] border border-white/5 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/10 transition-colors"
+                            className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg pl-10 pr-4 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 transition-all shadow-sm"
                         />
                     </div>
                 </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
                     {loading ? (
-                        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-500" /></div>
+                        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#9CA3AF]" /></div>
                     ) : filteredConversations.map(contact => (
                         <div
                             key={contact.id}
                             onClick={() => handleSelectContact(contact.contactId)}
                             className={cn(
-                                "flex items-center gap-4 p-4 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 mx-2 rounded-xl my-1",
-                                selectedContactId === contact.contactId ? "bg-white/10" : "bg-transparent"
+                                "flex items-center gap-4 p-4 cursor-pointer hover:bg-[#F9FAFB] transition-colors border-b border-[#F3F4F6] relative",
+                                selectedContactId === contact.contactId ? "bg-[#EEF2FF]" : "bg-transparent"
                             )}
                         >
-                            <div className="relative">
-                                <Avatar className="w-12 h-12 border border-white/10">
+                            {selectedContactId === contact.contactId && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#7C3AED]" />
+                            )}
+                            <div className="relative ml-1">
+                                <Avatar className="w-12 h-12 border border-[#E5E7EB]">
                                     <AvatarImage src={contact.avatar} />
-                                    <AvatarFallback className="bg-zinc-800 text-zinc-400">{contact.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback className="bg-[#EEF2FF] text-[#7C3AED] font-semibold">{contact.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                {contact.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full" />}
+                                {contact.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline mb-1">
-                                    <h3 className="font-semibold text-sm truncate text-white/90">{contact.name}</h3>
-                                    <span className="text-[11px] text-zinc-500 font-medium">{contact.time}</span>
+                            <div className="flex-1 min-w-0 pr-2">
+                                <div className="flex justify-between items-baseline mb-0.5">
+                                    <h3 className="font-semibold text-sm truncate text-[#111827]">{contact.name}</h3>
+                                    <span className="text-[11px] text-[#9CA3AF] font-medium">{contact.time}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className={cn("text-xs truncate w-40", contact.unread > 0 ? "text-white font-medium" : "text-zinc-500")}>
+                                    <p className={cn("text-xs truncate w-40", contact.unread > 0 ? "text-[#111827] font-semibold" : "text-[#6B7280]")}>
                                         {contact.lastMessage}
                                     </p>
                                     {contact.unread > 0 && (
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                        <div className="w-2.5 h-2.5 bg-[#7C3AED] rounded-full shadow-sm" />
                                     )}
                                 </div>
                             </div>
@@ -290,27 +320,27 @@ export default function MessagesPage() {
 
             {/* Chat Area */}
             {selectedContact ? (
-                <div className="flex-1 flex flex-col bg-black relative">
+                <div className="flex-1 flex flex-col bg-[#F9FAFB] relative">
                     {/* Header */}
-                    <div className="h-20 px-6 border-b border-white/10 flex items-center justify-between bg-black/80 backdrop-blur-xl z-20">
+                    <div className="h-[73px] px-6 border-b border-[#E5E7EB] flex items-center justify-between bg-white z-20 shadow-sm">
                         <div className="flex items-center gap-4">
-                            <Avatar className="w-10 h-10 border border-white/10">
+                            <Avatar className="w-10 h-10 border border-[#E5E7EB]">
                                 <AvatarImage src={selectedContact.avatar} />
-                                <AvatarFallback className="bg-zinc-800 text-zinc-400">{selectedContact.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="bg-[#EEF2FF] text-[#7C3AED] font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <h3 className="font-semibold text-base">{selectedContact.name}</h3>
-                                <p className="text-xs text-zinc-500">{selectedContact.role || 'Active now'}</p>
+                                <h3 className="font-semibold text-base text-[#111827]">{selectedContact.name}</h3>
+                                <p className="text-xs text-[#6B7280]">{selectedContact.role || 'Active now'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
-                            {canCall && <Video className="w-7 h-7 stroke-[1.5] text-white cursor-pointer" />}
-                            <AlertCircle className="w-7 h-7 stroke-[1.5] text-white cursor-pointer" />
+                            {canCall && <Video className="w-6 h-6 text-[#6B7280] hover:text-[#7C3AED] transition-colors cursor-pointer" />}
+                            <AlertCircle className="w-6 h-6 text-[#6B7280] hover:text-[#7C3AED] transition-colors cursor-pointer" />
                         </div>
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar scroll-smooth" ref={scrollRef}>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar scroll-smooth" ref={scrollRef} onScroll={handleScroll}>
                         {messages.map((msg, i) => {
                             const isMe = msg.sender === 'me';
                             const prev = messages[i - 1];
@@ -343,29 +373,29 @@ export default function MessagesPage() {
                                     <ContextMenu>
                                         <ContextMenuTrigger>
                                             <div className={cn(
-                                                "max-w-[500px] relative px-4 py-2.5 text-[15px]",
+                                                "max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
                                                 isMe
-                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#3797F0] text-white rounded-l-2xl`
-                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-[#262626] text-white rounded-r-2xl`,
-                                                msg.isDeleted && "italic text-zinc-400 bg-transparent border border-white/10"
+                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#7C3AED] text-white rounded-l-2xl`
+                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-white border border-[#E5E7EB] text-[#111827] rounded-r-2xl`,
+                                                msg.isDeleted && "italic text-[#9CA3AF] bg-transparent border border-[#E5E7EB] shadow-none"
                                             )}>
                                                 {/* Reply Context */}
                                                 {msg.replyTo && (
                                                     <div className={cn(
-                                                        "mb-2 pl-3 border-l-2 text-xs opacity-80 py-1 rounded bg-black/10",
-                                                        isMe ? "border-white/50" : "border-zinc-500"
+                                                        "mb-2 pl-3 border-l-2 text-xs opacity-90 py-1 rounded",
+                                                        isMe ? "border-white/50 bg-black/10" : "border-[#7C3AED] bg-[#F9FAFB] text-[#4B5563]"
                                                     )}>
-                                                        <p className="font-semibold mb-0.5">{msg.replyTo.senderName}</p>
+                                                        <p className={cn("font-semibold mb-0.5", isMe ? "text-white" : "text-[#7C3AED]")}>{msg.replyTo.senderName}</p>
                                                         <p className="truncate">{msg.replyTo.content}</p>
                                                     </div>
                                                 )}
 
-                                                <RenderMessageContent msg={msg} />
+                                                <RenderMessageContent msg={msg} isMe={isMe} />
 
                                                 {/* Reactions */}
                                                 {msg.reactions && msg.reactions.length > 0 && !msg.isDeleted && (
                                                     <div className={cn(
-                                                        "absolute -bottom-2 h-5 px-1 bg-[#262626] border border-black rounded-full flex items-center justify-center text-[10px] shadow-sm whitespace-nowrap z-10",
+                                                        "absolute -bottom-2 h-5 px-1 bg-white border border-[#E5E7EB] rounded-full flex items-center justify-center text-[10px] shadow-sm whitespace-nowrap z-10",
                                                         isMe ? "right-0" : "left-0"
                                                     )}>
                                                         {msg.reactions.map((r: any, idx: number) => <span key={idx}>{r.emoji}</span>)}
@@ -373,11 +403,11 @@ export default function MessagesPage() {
                                                 )}
                                             </div>
                                         </ContextMenuTrigger>
-                                        <ContextMenuContent className="w-48 bg-[#262626] border-white/10 text-white">
-                                            <ContextMenuItem onSelect={() => setReplyingTo(msg)} className="focus:bg-white/10 cursor-pointer">Reply</ContextMenuItem>
-                                            <ContextMenuItem onSelect={() => handleCopy(msg.text)} className="focus:bg-white/10 cursor-pointer">Copy</ContextMenuItem>
+                                        <ContextMenuContent className="w-48 bg-white border-[#E5E7EB] text-[#111827] shadow-lg">
+                                            <ContextMenuItem onSelect={() => setReplyingTo(msg)} className="focus:bg-[#F3F4F6] cursor-pointer text-sm">Reply</ContextMenuItem>
+                                            <ContextMenuItem onSelect={() => handleCopy(msg.text)} className="focus:bg-[#F3F4F6] cursor-pointer text-sm">Copy</ContextMenuItem>
                                             {isMe && !msg.isDeleted && (
-                                                <ContextMenuItem onSelect={() => handleUnsend(msg.id)} className="focus:bg-red-500/20 text-red-500 focus:text-red-400 cursor-pointer">
+                                                <ContextMenuItem onSelect={() => handleUnsend(msg.id)} className="focus:bg-[#FEF2F2] text-[#EF4444] focus:text-[#DC2626] cursor-pointer text-sm font-medium">
                                                     Unsend
                                                 </ContextMenuItem>
                                             )}
@@ -393,23 +423,23 @@ export default function MessagesPage() {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-black/80 backdrop-blur-md border-t border-white/5 pr-4">
+                    <div className="p-4 bg-white border-t border-[#E5E7EB] z-20">
                         {replyingTo && (
-                            <div className="flex justify-between items-center ml-4 mr-16 mb-2 p-3 bg-[#262626] rounded-t-xl border-b border-white/5">
+                            <div className="flex justify-between items-center mb-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
                                 <div>
-                                    <p className="text-xs text-zinc-400">Replying to <span className="text-white font-medium">{replyingTo.sender === 'me' ? 'Yourself' : selectedContact.name}</span></p>
-                                    <p className="text-sm text-zinc-300 truncate max-w-xs">{replyingTo.text}</p>
+                                    <p className="text-xs text-[#6B7280]">Replying to <span className="text-[#111827] font-semibold">{replyingTo.sender === 'me' ? 'Yourself' : selectedContact.name}</span></p>
+                                    <p className="text-sm text-[#4B5563] truncate max-w-xs">{replyingTo.text}</p>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 rounded-full p-0">X</Button>
+                                <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 rounded-full p-0 text-[#6B7280] hover:text-[#111827] hover:bg-[#E5E7EB]">X</Button>
                             </div>
                         )}
 
                         <div className="flex items-center gap-4">
                             {/* Main Input Bar */}
-                            <div className="flex-1 flex items-center gap-3 bg-[#111111] rounded-full px-4 py-3 border border-white/5 focus-within:border-white/10 focus-within:bg-[#151515] transition-all shadow-lg inner-shadow">
+                            <div className="flex-1 flex items-center gap-3 bg-white rounded-full px-4 py-2 border border-[#E5E7EB] focus-within:border-[#7C3AED] focus-within:ring-1 focus-within:ring-[#7C3AED]/20 transition-all shadow-sm">
 
                                 {/* File Upload */}
-                                <label htmlFor="file-upload" className="cursor-pointer text-zinc-500 hover:text-zinc-300 transition-colors shrink-0">
+                                <label htmlFor="file-upload" className="cursor-pointer text-[#9CA3AF] hover:text-[#7C3AED] transition-colors shrink-0">
                                     {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
                                 </label>
                                 <input
@@ -428,9 +458,9 @@ export default function MessagesPage() {
                                     onChange={e => setMessageInput(e.target.value)}
                                     onKeyDown={handleKeyPress}
                                     placeholder="Type your message..."
-                                    className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-white resize-none max-h-32 min-h-[24px] py-0 placeholder:text-zinc-600 custom-scrollbar"
+                                    className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#111827] resize-none max-h-32 min-h-[24px] py-1 placeholder:text-[#9CA3AF] custom-scrollbar leading-relaxed"
                                     rows={1}
-                                    style={{ height: '24px' }} // Fix initial height
+                                    style={{ height: '30px' }} // Fix initial height
                                 />
 
                                 {/* Right Actions inside Input */}
@@ -438,15 +468,17 @@ export default function MessagesPage() {
                                     {/* Emoji Trigger */}
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <button className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                                            <button className="text-[#9CA3AF] hover:text-[#7C3AED] transition-colors p-1">
                                                 <Smile className="w-5 h-5" />
                                             </button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 border-none bg-transparent" side="top" align="end">
-                                            <EmojiPicker
-                                                theme={Theme.DARK}
-                                                onEmojiClick={(e: any) => setMessageInput(prev => prev + e.emoji)}
-                                            />
+                                        <PopoverContent className="w-auto p-0 border-none bg-transparent" side="top" align="end" sideOffset={10}>
+                                            <div style={{ zIndex: 50, pointerEvents: 'auto' }}>
+                                                <EmojiPicker
+                                                    theme={Theme.LIGHT}
+                                                    onEmojiClick={(e: any) => setMessageInput(prev => prev + e.emoji)}
+                                                />
+                                            </div>
                                         </PopoverContent>
                                     </Popover>
 
@@ -454,8 +486,8 @@ export default function MessagesPage() {
                                         onClick={() => handleSend()}
                                         disabled={!messageInput.trim()}
                                         className={cn(
-                                            "p-2 rounded-lg transition-all",
-                                            messageInput.trim() ? "bg-[#3797F0] text-white hover:bg-[#2a85d5]" : "bg-[#262626] text-zinc-600 cursor-not-allowed"
+                                            "w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                                            messageInput.trim() ? "bg-[#7C3AED] text-white hover:bg-[#6D28D9] shadow-sm" : "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
                                         )}
                                     >
                                         <Send className="w-4 h-4 ml-0.5" />
@@ -467,20 +499,20 @@ export default function MessagesPage() {
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center bg-black">
-                    <div className="w-24 h-24 rounded-full border-2 border-white flex items-center justify-center mb-4">
-                        <Send className="-rotate-45 w-10 h-10 text-white ml-2 mt-1" />
+                <div className="flex-1 flex flex-col items-center justify-center bg-[#F9FAFB]">
+                    <div className="w-24 h-24 rounded-full border-2 border-[#E5E7EB] bg-white flex items-center justify-center mb-6 shadow-sm">
+                        <Send className="-rotate-45 w-10 h-10 text-[#7C3AED] ml-2 mt-1" />
                     </div>
-                    <h2 className="text-xl font-light">Your Messages</h2>
-                    <p className="text-zinc-500 mt-2">Send private photos and messages to a friend.</p>
-                    <Button className="mt-6 bg-[#3797F0] hover:bg-[#2c7abe]">Send Message</Button>
+                    <h2 className="text-2xl font-bold text-[#111827]">Your Messages</h2>
+                    <p className="text-[#6B7280] mt-2">Send private messages and connect with talent.</p>
+                    <Button className="mt-6 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-full px-6 shadow-sm">Send Message</Button>
                 </div>
             )}
         </div>
     );
 }
 
-function RenderMessageContent({ msg }: { msg: any }) {
+function RenderMessageContent({ msg, isMe }: { msg: any; isMe: boolean }) {
     if (msg.isDeleted) return <p className="italic text-sm">Message unsent</p>;
 
     if (msg.attachmentType === 'INTERVIEW_INVITE') {
@@ -499,6 +531,29 @@ function RenderMessageContent({ msg }: { msg: any }) {
         );
     }
 
+    const renderText = (text: string) => {
+        return (
+            <ReactMarkdown
+                components={{
+                    a: ({ node, ...props }) => (
+                        <a
+                            className={cn(
+                                "underline font-bold transition-colors",
+                                isMe ? "text-white hover:text-white/80" : "text-[#7C3AED] hover:text-[#6D28D9]"
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            {...props}
+                        />
+                    ),
+                    p: ({ node, ...props }) => <span className="whitespace-pre-wrap break-words" {...props} />
+                }}
+            >
+                {text}
+            </ReactMarkdown>
+        );
+    };
+
     if (msg.attachmentUrl) {
         if (msg.attachmentType === 'image') {
             return (
@@ -506,7 +561,7 @@ function RenderMessageContent({ msg }: { msg: any }) {
                     <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
                         <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[240px] rounded-lg mb-1" />
                     </a>
-                    {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
+                    {msg.text && renderText(msg.text)}
                 </div>
             );
         }
@@ -516,11 +571,11 @@ function RenderMessageContent({ msg }: { msg: any }) {
                     <Paperclip className="w-4 h-4" />
                     <span>Attachment</span>
                 </a>
-                {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
+                {msg.text && renderText(msg.text)}
             </div>
         )
     }
-    return <p className="whitespace-pre-wrap break-words">{msg.text}</p>;
+    return renderText(msg.text || '');
 }
 
 function MessageActions({ msg, onReply, onReact, onUnsend, onCopy }: any) {

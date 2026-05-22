@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { sendVerificationCode } from "@/app/actions/auth";
 import { toast } from "sonner";
-import { QodeeLogo } from "@/components/QodeeLogo";
+import Image from "next/image";
 import { ParticleBackground } from "@/components/landing/ParticleBackground";
 
 export default function ForgotPasswordPage() {
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-4">
-                            <QodeeLogo className="w-12 h-12" />
+                            <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-lg" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Reset Password</h1>
                         <p className="text-sm text-zinc-400">
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                                     id="email"
                                     type="email"
                                     placeholder="name@example.com"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-violet-500/50 transition-colors"
+                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-indigo-500/50 transition-colors"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required

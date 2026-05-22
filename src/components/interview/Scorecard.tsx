@@ -2,208 +2,354 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Radar } from "react-chartjs-2";
-import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from "chart.js";
-import { Loader2, Save, X, Share2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Loader2, Star, StarHalf, X, FileText, ArrowRight, Brain, MessageSquare, BookOpen, UserCheck, Sparkles, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { generateAnalysis, saveInterview } from "@/app/actions/interview";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ScorecardProps {
     isOpen: boolean;
     onClose: () => void;
     messages?: any[]; // Pass chat history
     config?: any;     // Pass role/difficulty
+    sessionSaved: boolean;
+    setSessionSaved: (val: boolean) => void;
+    analysisData: any;
+    setAnalysisData: (val: any) => void;
+    savedId: string | null;
+    setSavedId: (val: string | null) => void;
+    durationSeconds?: number;
 }
 
-// Mock Data for Instant Feedback
-const MOCK_DATA = {
-    score: 72,
-    feedback: "Preliminary analysis allows us to estimate performance. Finalizing neural validation...",
-    radarData: { technical: 65, communication: 70, problemSolving: 60, confidence: 75, culturalFit: 80 },
-    strengths: ["Communication", "Cultural Fit"],
-    weaknesses: ["Technical Depth (Analyzing...)", "Problem Solving (Analyzing...)"]
-};
+// Utility: Title Case formatting for Role
+function formatRoleName(role: string) {
+    if (!role) return "AI Interview";
+    
+    // Exact mapping for common developer roles
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === "frontend") return "FrontEnd Interview";
+    if (lowerRole === "backend") return "BackEnd Interview";
+    if (lowerRole === "fullstack") return "FullStack Interview";
+    
+    return role
+        .split(/[-_\s]+/)
+        .map(word => {
+            if (word.toLowerCase() === "frontend") return "FrontEnd";
+            if (word.toLowerCase() === "backend") return "BackEnd";
+            if (word.toLowerCase() === "fullstack") return "FullStack";
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(" ") + " Interview";
+}
 
-export function Scorecard({ isOpen, onClose, messages = [], config = { role: "General", difficulty: 3 } }: ScorecardProps) {
-    const [isLoading, setIsLoading] = useState(false); // No blocking load
-    const [isRefining, setIsRefining] = useState(true); // Background loading state
+// Component: Beautiful Star Rating Component
+function StarRating({ rating, size = 18 }: { rating: number; size?: number }) {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalf = rating % 1 >= 0.25 && rating % 1 < 0.75;
+    const roundedFull = rating % 1 >= 0.75 ? fullStars + 1 : fullStars;
+
+    for (let i = 1; i <= 5; i++) {
+        if (i <= roundedFull) {
+            stars.push(
+                <Star key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+            );
+        } else if (i === roundedFull + 1 && hasHalf) {
+            stars.push(
+                <StarHalf key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+            );
+        } else {
+            stars.push(
+                <Star key={i} size={size} className="text-zinc-700 fill-zinc-800/40 stroke-zinc-700" />
+            );
+        }
+    }
+    return <div className="flex items-center gap-1">{stars}</div>;
+}
+
+export function Scorecard({
+    isOpen,
+    onClose,
+    messages = [],
+    config = { role: "General", difficulty: 3 },
+    sessionSaved,
+    setSessionSaved,
+    analysisData,
+    setAnalysisData,
+    savedId,
+    setSavedId,
+    durationSeconds
+}: ScorecardProps) {
+    const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
+    const [scanStep, setScanStep] = useState(0);
+    const hasTriggeredRef = useRef(false);
 
-    const [data, setData] = useState<any>(MOCK_DATA); // Start with Mock
+    const roleName = formatRoleName(config?.role || "General");
+
+    // Dynamic scanning message text for luxury loading experience
+    const scanMessages = [
+        "Analyzing verbal communication dynamics...",
+        "Evaluating sentence structures and grammar syntax...",
+        "Scanning semantic context for technical depth...",
+        "Validating problem-solving methodologies...",
+        "Synthesizing alignment metrics and finalizing truth-profile..."
+    ];
 
     useEffect(() => {
-        if (isOpen && messages.length > 0) {
-            console.log("Generating analysis for", messages.length, "messages");
-            setIsRefining(true);
-
-            // Generate Real Analysis with Autosave
-            generateAnalysis(messages, config.role, config.difficulty)
-                .then(async (result) => {
-                    if (result.success) {
-                        setData(result.data);
-                        // Trigger Autosave
-                        setIsSaving(true);
-                        const saveResult = await saveInterview(config.role, config.difficulty, result.data, messages);
-                        if (saveResult.success) {
-                            setSaved(true);
-                            toast.success("Interview report saved to profile.");
-                        } else {
-                            toast.error("Failed to autosave report.");
-                        }
-                        setIsSaving(false);
-                    } else {
-                        toast.error("Analysis refined (using fallback).");
-                    }
-                })
-                .finally(() => setIsRefining(false));
+        let interval: NodeJS.Timeout;
+        if (isOpen && isSaving && !sessionSaved) {
+            interval = setInterval(() => {
+                setScanStep(prev => (prev < scanMessages.length - 1 ? prev + 1 : prev));
+            }, 1800);
         }
-    }, [isOpen]); // Runs when opened
+        return () => clearInterval(interval);
+    }, [isOpen, isSaving, sessionSaved]);
 
-    // Manual save handler removed as autosave is now default
-    // Keeping function structure if needed for manual verification later
-    const handleSave = async () => { };
+    useEffect(() => {
+        if (!isOpen) {
+            // Reset the guard ONLY when the scorecard is fully closed so a
+            // brand-new session can trigger analysis when it opens next time.
+            hasTriggeredRef.current = false;
+            return;
+        }
 
-    const chartData = {
-        labels: ['Technical', 'Communication', 'Problem Solving', 'Confidence', 'Cultural Fit'],
-        datasets: [
-            {
-                label: 'Candidate Score',
-                data: data ? [data.radarData.technical, data.radarData.communication, data.radarData.problemSolving, data.radarData.confidence, data.radarData.culturalFit] : [0, 0, 0, 0, 0],
-                backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                borderColor: '#06b6d4',
-                borderWidth: 2,
-            },
-        ],
-    };
+        // Guard: only run once per open — hasTriggeredRef prevents any
+        // re-entry regardless of re-renders caused by state changes below.
+        if (sessionSaved || hasTriggeredRef.current) return;
 
-    const chartOptions = {
-        scales: {
-            r: {
-                angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                pointLabels: { color: '#94a3b8', font: { size: 10 } },
-                suggestedMin: 0,
-                suggestedMax: 100,
-                ticks: { display: false }
-            },
-        },
-        plugins: { legend: { display: false } }
-    };
+        const actualMessages = Array.isArray(messages) ? messages : [];
+        if (actualMessages.length === 0) {
+            console.warn("Scorecard: No transcript messages provided to generate analysis.");
+            toast.error("Cannot grade an empty session. Please complete the interview.");
+            onClose();
+            return;
+        }
+
+        console.log("Scorecard: Triggering auto-analysis & save sequence with", actualMessages.length, "messages.");
+        hasTriggeredRef.current = true; // Lock immediately so no concurrent run can start
+        setIsSaving(true);
+        setScanStep(0);
+
+        // Generate analysis from transcript
+        generateAnalysis(actualMessages, config?.role || "General", config?.difficulty || 3)
+            .then(async (result) => {
+                if (result.success) {
+                    setAnalysisData(result.data);
+
+                    // Auto-save generated report to profile DB
+                    const saveResult = await saveInterview(
+                        config?.role || "General",
+                        config?.difficulty || 3,
+                        result.data,
+                        actualMessages,
+                        durationSeconds
+                    );
+                    if (saveResult.success && saveResult.id) {
+                        setSavedId(saveResult.id);
+                        setSessionSaved(true);
+                        toast.success("Interview report archived to profile.");
+                    } else {
+                        toast.error("Evaluation completed, but profile sync failed.");
+                    }
+                } else {
+                    toast.error("Failed to generate interview metrics.");
+                }
+            })
+            .catch((err) => {
+                console.error("Scorecard generation error:", err);
+                toast.error("An unexpected error occurred during grading.");
+                // Allow retry on error by releasing the lock
+                hasTriggeredRef.current = false;
+            })
+            .finally(() => {
+                setIsSaving(false);
+            });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, sessionSaved]); // Only re-run when the dialog opens or session save status changes
 
     if (!isOpen) return null;
 
-    const getGrade = (score: number) => {
-        if (score >= 97) return "S";
-        if (score >= 90) return "A";
-        if (score >= 80) return "B";
-        if (score >= 70) return "C";
-        return "F";
-    };
+    // Convert 0-100 score to 0-5 stars
+    const overallStars = analysisData ? (analysisData.score / 20) : 0;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-2xl overflow-hidden p-0">
-                <DialogTitle className="sr-only">Interview Analysis</DialogTitle>
+            <DialogContent showCloseButton={false} className="bg-zinc-950/95 border border-white/10 text-white sm:max-w-2xl overflow-hidden p-0 rounded-2xl shadow-[0_0_50px_rgba(139,92,246,0.15)] backdrop-blur-2xl [&_[data-slot=dialog-close]]:hidden">
+                <DialogTitle className="sr-only">{roleName} Assessment Report</DialogTitle>
 
-                <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
-                    {/* Left: Graphic Report */}
-                    <div className="w-full md:w-2/5  bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 flex flex-col items-center justify-center border-r border-white/5 relative">
-
-                        {/* Grade Badge */}
-                        <motion.div
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="w-24 h-24 rounded-2xl bg-cyan-500 shadow-[0_0_40px_rgba(8,178,212,0.4)] flex items-center justify-center mb-6"
-                        >
-                            <span className="text-5xl font-black text-white">{getGrade(data?.score || 0)}</span>
-                        </motion.div>
-
-                        <h2 className="text-2xl font-bold tracking-wide text-white mb-2">SESSION COMPLETE</h2>
-                        <p className="text-zinc-400 text-center text-sm mb-6">Performance analysis finalized.</p>
-
-                        <div className="w-full aspect-square relative max-w-[200px]">
-                            <Radar data={chartData} options={chartOptions} />
+                <div className="flex flex-col h-full max-h-[90vh]">
+                    {/* Header Banner Block */}
+                    <div className="p-6 border-b border-white/5 bg-gradient-to-r from-purple-950/20 via-zinc-950 to-cyan-950/20 relative overflow-hidden flex justify-between items-start">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+                        
+                        <div className="space-y-1 z-10">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-violet-400 animate-pulse" />
+                                <span className="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold bg-violet-500/10 px-2 py-0.5 rounded">
+                                    Assessments
+                                </span>
+                            </div>
+                            <h2 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                                {roleName}
+                            </h2>
+                            
+                            {analysisData && (
+                                <div className="flex items-center gap-2 mt-1">
+                                    <StarRating rating={overallStars} size={16} />
+                                    <span className="text-sm font-bold text-violet-400 font-mono">
+                                        {(analysisData.score / 20).toFixed(1)} / 5.0
+                                    </span>
+                                </div>
+                            )}
                         </div>
+
+                        <button
+                            onClick={onClose}
+                            className="z-10 p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-all duration-200 compact-btn self-start"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
 
-                    {/* Right: Details & Actions */}
-                    <div className="w-full md:w-3/5 p-6 flex flex-col">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 className="font-heading font-bold text-lg text-white">AI Analysis Report</h3>
-                                <div className="text-xs font-mono text-cyan-500">
-                                    ROLE: {config.role.toUpperCase()} // LVL {config.difficulty}
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="icon" onClick={onClose} className="text-zinc-500 hover:text-white">
-                                <X className="w-5 h-5" />
-                            </Button>
-                        </div>
+                    {/* Content Section */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <AnimatePresence mode="wait">
+                            {isSaving && !analysisData ? (
+                                /* Elite Scanning Loading Interface */
+                                <motion.div 
+                                    key="scanning"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex flex-col items-center justify-center py-12 space-y-6"
+                                >
+                                    <div className="relative">
+                                        <div className="w-20 h-20 rounded-full border-2 border-violet-500/10 border-t-violet-400 animate-spin flex items-center justify-center" />
+                                        <div className="absolute inset-0 w-20 h-20 rounded-full border border-dashed border-cyan-500/20 animate-reverse-spin" />
+                                        <Brain className="w-8 h-8 text-violet-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                                    </div>
+                                    
+                                    <div className="text-center space-y-2">
+                                        <h3 className="font-bold text-base text-zinc-200">Evaluating Transcript & Archiving Report</h3>
+                                        <div className="flex items-center justify-center gap-2 text-xs font-mono text-zinc-500 min-h-[1.5rem]">
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                                            <span>{scanMessages[scanStep]}</span>
+                                        </div>
+                                    </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-                            {/* Feedback */}
-                            <div className="p-4 bg-zinc-900/50 rounded-lg border border-white/5">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-yellow-500 mb-2">
-                                    ⚡ Executive Summary
-                                </h4>
-                                <p className="text-sm text-zinc-300 italic">
-                                    "{data?.feedback}"
-                                </p>
-                            </div>
+                                    {/* Simulated Pulse Line */}
+                                    <div className="w-full max-w-xs h-[1px] bg-gradient-to-r from-transparent via-violet-500/30 to-transparent relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400 to-transparent w-1/3 animate-scan-pulse" />
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                /* Assessment Data Presentation */
+                                <motion.div 
+                                    key="result"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-6"
+                                >
+                                    {/* Executive Summary Quote Panel */}
+                                    {analysisData?.feedback && (
+                                        <div className="p-4 rounded-xl bg-zinc-900/40 border border-white/5 relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-violet-500" />
+                                            <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-violet-400 mb-1 flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-yellow-500" /> Truth-Based Executive Summary
+                                            </h4>
+                                            <p className="text-zinc-300 text-sm italic leading-relaxed pl-1">
+                                                "{analysisData.feedback}"
+                                            </p>
+                                        </div>
+                                    )}
 
-                            {/* Strengths */}
-                            <div>
-                                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Strengths Detected</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {data?.strengths.map((s: string, i: number) => (
-                                        <span key={i} className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-xs">
-                                            {s}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
+                                    {/* 5 key parameters Rating System breakdown */}
+                                    <div className="space-y-3.5">
+                                        <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-zinc-500 mb-3">
+                                            Detailed Parameters Breakdown
+                                        </h4>
+                                        
+                                        {[
+                                            { label: "Technical Depth", key: "technical", icon: Brain },
+                                            { label: "Communication Flow", key: "communication", icon: MessageSquare },
+                                            { label: "Grammar & Language", key: "grammar", icon: BookOpen },
+                                            { label: "Problem Solving", key: "problemSolving", icon: Sparkles },
+                                            { label: "Cultural Alignment", key: "culturalFit", icon: UserCheck }
+                                        ].map((param, index) => {
+                                            const scoreVal = analysisData?.radarData?.[param.key] || 0;
+                                            const starVal = scoreVal / 20;
+                                            const ParamIcon = param.icon;
+                                            
+                                            return (
+                                                <div 
+                                                    key={index} 
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-zinc-900/20 border border-white/[0.03] gap-2 hover:border-violet-500/10 transition-all hover:bg-zinc-900/30"
+                                                >
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/25">
+                                                            <ParamIcon className="w-4 h-4 text-violet-400" />
+                                                        </div>
+                                                        <span className="text-sm font-semibold text-zinc-200">{param.label}</span>
+                                                    </div>
 
-                            {/* Weaknesses */}
-                            <div>
-                                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Areas for Improvement</h4>
-                                <ul className="space-y-1">
-                                    {data?.weaknesses.map((w: string, i: number) => (
-                                        <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
-                                            <span className="text-red-500 mt-1">•</span>
-                                            {w}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <StarRating rating={starVal} size={15} />
+                                                        <span className="text-xs font-mono font-bold text-violet-400 min-w-[3.5rem] text-right">
+                                                            {starVal.toFixed(1)} / 5.0
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                        <div className="pt-6 mt-4 border-t border-white/5 flex gap-3">
-                            <Button variant="outline" onClick={onClose} className="flex-1 border-white/10 text-zinc-400 hover:bg-white/5 hover:text-white">
-                                Close
-                            </Button>
+                    {/* Bottom Sticky Action Footer */}
+                    <div className="p-6 border-t border-white/5 bg-zinc-950 flex flex-col sm:flex-row gap-3 z-10">
+                        {sessionSaved && savedId && (
                             <Button
                                 onClick={() => {
-                                    if (saved) {
-                                        window.location.href = "/feed";
-                                    } else {
-                                        toast.info("Saving in progress...");
-                                    }
+                                    onClose();
+                                    router.push(`/interview/${savedId}`);
                                 }}
-                                disabled={isSaving}
-                                className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white"
+                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl"
                             >
-                                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                                {saved ? "Saved - Return to Feed" : "Saving Report..."}
+                                <FileText className="w-4 h-4" />
+                                Open Interview Details
+                                <ArrowRight className="w-4 h-4" />
                             </Button>
-                        </div>
+                        )}
+                        
+                        <Button
+                            onClick={() => {
+                                if (sessionSaved) {
+                                    onClose();
+                                }
+                            }}
+                            disabled={isSaving}
+                            className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl shadow-lg shadow-violet-500/15"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Saving Report...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Start New Interview
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
-
             </DialogContent>
         </Dialog>
     );

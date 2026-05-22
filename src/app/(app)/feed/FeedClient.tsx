@@ -87,6 +87,16 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
     const router = useRouter();
     const searchParams = useSearchParams();
     const [posts, setPosts] = useState<PostProps[]>(initialPosts.map(mapPost));
+    const [isFolded, setIsFolded] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsFolded(window.scrollY > 120);
+        };
+        handleScroll(); // Evaluate synchronously on mount to capture browser scroll restoration!
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Scroll to post if query param exists
     useEffect(() => {
@@ -152,7 +162,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
             {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block space-y-4 sticky top-6 self-start">
+            <div className="hidden lg:block space-y-4 sticky top-20 self-start">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -233,7 +243,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
 
             {/* Right Column: Trending & Jobs */}
             <motion.div
-                className="hidden lg:block space-y-4 sticky top-6 self-start"
+                className="hidden lg:block space-y-4 sticky top-20 self-start"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -244,9 +254,9 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                     }
                 }}
             >
-                <TrendingWidget topics={trendingTopics} />
-                <RecommendationsWidget />
-                <RecommendedJobsWidget jobs={latestJobs} />
+                <TrendingWidget topics={trendingTopics} isFolded={isFolded} />
+                <RecommendationsWidget isFolded={isFolded} />
+                <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} />
             </motion.div>
 
 

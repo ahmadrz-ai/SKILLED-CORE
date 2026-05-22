@@ -6,6 +6,8 @@ import { Mic, Send, StopCircle, Clock, Zap, User, Bot, Sparkles } from "lucide-r
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { getUserProfile } from "@/app/actions/interview";
 
 interface Message {
     id: string;
@@ -17,7 +19,7 @@ interface Message {
 interface ChatInterfaceProps {
     sessionActive: boolean;
     config: any;
-    onEndSession: () => void;
+    onEndSession: (messages: Message[], durationSeconds: number) => void;
     isVoiceMode?: boolean;
     compactMode?: boolean;
     onCodeTrigger?: () => void;
@@ -33,6 +35,8 @@ export function ChatInterface({
     onCodeTrigger,
     onTelemetryUpdate
 }: ChatInterfaceProps) {
+    const { data: session } = useSession();
+    const [dbUser, setDbUser] = useState<any>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +46,15 @@ export function ChatInterface({
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
+
+    // Fetch user profile from DB to ensure PFP is always live and correct
+    useEffect(() => {
+        getUserProfile().then(user => {
+            if (user) {
+                setDbUser(user);
+            }
+        });
+    }, []);
 
     // Initial Greeting - FETCH DYNAMICALLY
     useEffect(() => {
@@ -169,12 +182,14 @@ export function ChatInterface({
         setMessages(prev => [...prev, { id: startMsgId, role: 'assistant', content: '', persona: 'suggester' }]);
 
         try {
+            let chunkCount = 0;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
                 fullStreamContent += chunk;
+                chunkCount++;
 
                 // TELEMETRY PARSING - Updated regex to handle spaces around braces
                 const telemetryMatch = fullStreamContent.match(/%%%\s*(\{[\s\S]*?\})\s*%%%/);
@@ -251,9 +266,17 @@ export function ChatInterface({
             const lastPart = parts.length > 1 ? parts[1] : parts[0];
             if (lastPart.trim()) speak(lastPart);
 
+            // If we successfully finished but read absolutely nothing (or just the split separator without content)
+            if (chunkCount === 0 || !fullStreamContent.replace("|||", "").trim()) {
+                throw new Error("Empty or incomplete stream response");
+            }
+
         } catch (err) {
             console.error("Stream reading error:", err);
-            toast.error("Stream interrupted.");
+            // Clean up the placeholder message if it was empty/incomplete
+            setMessages(prev => prev.filter(msg => msg.id !== startMsgId && msg.id !== (startMsgId + "_int")));
+            toast.error("Stream interrupted or failed to connect.");
+            throw err; // Bubble up the error so the caller knows it failed!
         }
     };
 
@@ -335,67 +358,116 @@ export function ChatInterface({
     };
 
     return (
-        <div className={cn("flex flex-col bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md relative mx-auto w-full transition-all duration-500", compactMode ? "h-full" : "h-[calc(100vh-140px)]")}>
+        <div className={cn("flex flex-col bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl shadow-zinc-100/40 dark:shadow-none overflow-hidden relative mx-auto w-full transition-all duration-500", compactMode ? "h-full" : "h-[calc(100vh-140px)]")}>
 
             {/* Header */}
-            <div className="p-3 border-b border-white/5 flex justify-between items-center bg-zinc-950/50">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-950">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">LIVE // {config.role}</span>
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                            LIVE SESSION // {config.role}
+                        </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-zinc-400 font-mono text-xs">
-                        <Clock className="w-3 h-3" />
-                        {formatTime(timer)}
+                    <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-mono text-xs bg-zinc-100 dark:bg-zinc-900 px-3 py-1 rounded-full border border-zinc-200/50 dark:border-zinc-800/50">
+                        <Clock className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-550" />
+                        <span>{formatTime(timer)}</span>
                     </div>
                     {!compactMode && (
-                        <Button variant="destructive" size="sm" onClick={onEndSession} className="h-7 text-xs">
-                            End
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onEndSession(messages, timer)} 
+                            className="h-8 text-xs font-bold text-red-650 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-all px-4 border border-red-200 dark:border-red-900/30"
+                        >
+                            End Session
                         </Button>
                     )}
                 </div>
             </div>
 
             {/* Chat Area */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 scroll-smooth bg-zinc-50/30 dark:bg-zinc-900/10">
                 {messages.map((msg) => {
                     // Hide empty messages (Silent Suggester)
                     if (!msg.content.trim()) return null;
 
-                    const style = getPersonaConfig(msg.persona, msg.role);
-                    const Icon = style.icon;
+                    const isUser = msg.role === 'user';
+                    const isMentor = msg.persona === 'suggester';
+                    
+                    if (isUser) {
+                        return (
+                            <motion.div
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex gap-3.5 max-w-full lg:max-w-[85%] ml-auto flex-row-reverse"
+                            >
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden shadow-[0_0_12px_rgba(99,102,241,0.25)] bg-zinc-950">
+                                    {dbUser?.image || session?.user?.image ? (
+                                        <img src={dbUser?.image || session?.user?.image} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xs font-bold font-sans" style={{ color: '#ffffff' }}>
+                                            {(dbUser?.name || session?.user?.name || "ME").substring(0, 2).toUpperCase()}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-1 items-end">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1.5">
+                                        {dbUser?.name?.split(' ')[0] || session?.user?.name?.split(' ')[0] || "Me"}
+                                    </span>
+                                    <div 
+                                        className="p-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl rounded-tr-none text-sm leading-relaxed shadow-lg shadow-indigo-600/10 border border-indigo-500/30"
+                                        style={{ color: '#ffffff' }}
+                                    >
+                                        {renderStyledText(msg.content)}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    }
 
+                    if (isMentor) {
+                        return (
+                            <motion.div
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex gap-3.5 max-w-full lg:max-w-[85%] items-start"
+                            >
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-cyan-400/50 shadow-[0_0_15px_rgba(6,182,212,0.35)] bg-gradient-to-br from-cyan-500 to-blue-600 overflow-hidden">
+                                    <Sparkles className="w-5 h-5 fill-white/10 animate-pulse" style={{ color: '#ffffff' }} />
+                                </div>
+                                <div className="flex flex-col gap-1 items-start">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 ml-1.5">
+                                        Mentor
+                                    </span>
+                                    <div className="p-4 bg-cyan-50/70 dark:bg-cyan-950/20 border border-cyan-200/50 dark:border-cyan-500/20 text-zinc-800 dark:text-zinc-100 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
+                                        {renderStyledText(msg.content)}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    }
+
+                    // Default to Interviewer for any assistant message not explicitly mapped to suggester
                     return (
                         <motion.div
                             key={msg.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={cn(
-                                "flex gap-3 max-w-full lg:max-w-[90%]",
-                                msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
-                            )}
+                            className="flex gap-3.5 max-w-full lg:max-w-[85%] items-start"
                         >
-                            <div className={cn(
-                                "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border",
-                                style.bg, style.border, style.color
-                            )}>
-                                <Icon className="w-4 h-4" />
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.35)] bg-gradient-to-br from-amber-500 to-rose-600 overflow-hidden">
+                                <Bot className="w-5 h-5" style={{ color: '#ffffff' }} />
                             </div>
-                            <div className={cn(
-                                "flex flex-col gap-1",
-                                msg.role === 'user' ? "items-end" : "items-start"
-                            )}>
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">
-                                    {style.name}
+                            <div className="flex flex-col gap-1 items-start">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-450 ml-1.5">
+                                    Interviewer
                                 </span>
-                                <div className={cn(
-                                    "p-3 rounded-2xl text-sm leading-relaxed",
-                                    msg.role === 'assistant'
-                                        ? "bg-zinc-800/50 border border-white/5 text-zinc-300 rounded-tl-none"
-                                        : "bg-violet-600/10 border border-violet-500/20 text-indigo-100 rounded-tr-none"
-                                )}>
+                                <div className="p-4 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-500/20 text-zinc-800 dark:text-zinc-100 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
                                     {renderStyledText(msg.content)}
                                 </div>
                             </div>
@@ -406,27 +478,27 @@ export function ChatInterface({
                 {/* Loading Indicator */}
                 {isLoading && (
                     <div className="flex gap-4">
-                        <div className="w-8 h-8 rounded-full bg-cyan-900/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center shrink-0">
-                            <Sparkles className="w-4 h-4 animate-pulse" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-cyan-500/30 text-white flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                            <Sparkles className="w-5 h-5 animate-pulse" style={{ color: '#ffffff' }} />
                         </div>
-                        <div className="bg-zinc-800/50 border border-white/5 rounded-2xl rounded-tl-none p-4 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl rounded-tl-none p-4 flex items-center gap-1.5 shadow-sm">
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                     </div>
                 )}
             </div>
 
             {/* Input Area */}
-            <div className="p-3 bg-zinc-950/80 border-t border-white/5 backdrop-blur-xl">
+            <div className="p-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
                 {isVoiceMode && (
-                    <div className="flex justify-center items-center h-12 mb-2 gap-1 px-4 py-2 bg-gradient-to-r from-transparent via-cyan-900/10 to-transparent rounded-lg">
+                    <div className="flex justify-center items-center h-12 mb-3 gap-1.5 px-4 py-2 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent rounded-lg">
                         {isListening ? (
                             [...Array(20)].map((_, i) => (
                                 <div
                                     key={i}
-                                    className="w-1 bg-cyan-400 rounded-full animate-pulse"
+                                    className="w-1 bg-cyan-500 rounded-full animate-pulse"
                                     style={{
                                         height: Math.random() * 24 + 8 + 'px',
                                         animationDuration: Math.random() * 0.2 + 0.1 + 's'
@@ -435,30 +507,30 @@ export function ChatInterface({
                             ))
                         ) : (
                             <div className="flex items-center gap-2 text-xs text-zinc-500 animate-pulse">
-                                <Mic className="w-3 h-3" /> Waiting for voice...
+                                <Mic className="w-3.5 h-3.5" /> Waiting for voice...
                             </div>
                         )}
                     </div>
                 )}
 
-                <div className="relative flex gap-2 items-center">
+                <div className="relative flex gap-3.5 items-center">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleFormSubmit(e)}
                         placeholder={isListening ? "Listening..." : "Type your answer..."}
-                        className="flex-1 bg-zinc-900 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 shadow-inner"
+                        className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3.5 pl-4 pr-12 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner"
                     />
 
                     {isVoiceMode && (
-                        <div className="absolute right-14 top-1.5">
+                        <div className="absolute right-16 top-2">
                             <Button
                                 size="icon"
                                 variant="ghost"
                                 onClick={toggleListening}
                                 className={cn(
-                                    "h-8 w-8 transition-all",
+                                    "h-9 w-9 transition-all rounded-lg",
                                     isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-zinc-400 hover:text-white"
                                 )}
                             >
@@ -467,7 +539,12 @@ export function ChatInterface({
                         </div>
                     )}
 
-                    <Button size="icon" onClick={(e) => handleFormSubmit(e)} disabled={isLoading || !input.trim()} className="h-10 w-10 bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(8,145,178,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button 
+                        size="icon" 
+                        onClick={(e) => handleFormSubmit(e)} 
+                        disabled={isLoading || !input.trim()} 
+                        className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
                         <Send className="w-4 h-4" />
                     </Button>
                 </div>

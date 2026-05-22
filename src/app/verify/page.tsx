@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
-import { QodeeLogo } from "@/components/QodeeLogo";
+import Image from "next/image";
 import { toast } from "sonner";
 import { sendVerificationCode } from "@/app/actions/auth"; // Keep for resend
 import { signIn } from "next-auth/react";
+import { QodeeLogo } from "@/components/QodeeLogo";
 
 function VerifyPageContent() {
     const router = useRouter();

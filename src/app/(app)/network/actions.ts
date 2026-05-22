@@ -36,6 +36,7 @@ export async function getNetworkData() {
                         name: true,
                         headline: true,
                         image: true,
+                        username: true,
                     }
                 }
             },
@@ -52,8 +53,8 @@ export async function getNetworkData() {
                 ]
             },
             include: {
-                requester: { select: { id: true, name: true, headline: true, image: true } },
-                addressee: { select: { id: true, name: true, headline: true, image: true } }
+                requester: { select: { id: true, name: true, headline: true, image: true, username: true } },
+                addressee: { select: { id: true, name: true, headline: true, image: true, username: true } }
             },
             orderBy: { updatedAt: 'desc' }
         });
@@ -65,6 +66,7 @@ export async function getNetworkData() {
             const other = isRequester ? c.addressee : c.requester;
             return {
                 id: other.id,
+                username: other.username,
                 name: other.name || 'Unknown User',
                 headline: other.headline || 'No headline',
                 image: other.image,
@@ -107,6 +109,7 @@ export async function getNetworkData() {
                 name: true,
                 headline: true,
                 image: true,
+                username: true,
                 bannerUrl: true,
             }
         });
@@ -143,7 +146,7 @@ export async function getNetworkData() {
                 if (sortedMutualIds.length > 0) {
                     mutualRecommendations = await prisma.user.findMany({
                         where: { id: { in: sortedMutualIds.slice(0, 5) } },
-                        select: { id: true, name: true, headline: true, image: true }
+                        select: { id: true, name: true, headline: true, image: true, username: true }
                     });
                 }
             }
@@ -192,6 +195,7 @@ export async function getNetworkData() {
         const formattedInvites = invitations.map(inv => ({
             id: inv.id,
             requesterId: inv.requester.id,
+            requesterUsername: inv.requester.username,
             name: inv.requester.name || 'Unknown User',
             headline: inv.requester.headline || 'No headline',
             avatar: inv.requester.image,

@@ -24,10 +24,10 @@ export async function updatePost(postId: string, content: string) {
         });
 
         revalidatePath("/feed");
-        return { success: true, message: "Transmission updated." };
+        return { success: true, message: "Post updated." };
     } catch (error) {
         console.error("Failed to update post:", error);
-        return { success: false, message: "Failed to update transmission." };
+        return { success: false, message: "Failed to update post." };
     }
 }
 
@@ -878,3 +878,43 @@ export async function removeFollower(followerId: string) {
         return { success: false, message: "Failed to remove follower." };
     }
 }
+
+export async function getShareConnections() {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, connections: [] };
+
+    try {
+        const userId = session.user.id;
+        const connectionsRaw = await prisma.connection.findMany({
+            where: {
+                OR: [
+                    { requesterId: userId, status: "ACCEPTED" },
+                    { addresseeId: userId, status: "ACCEPTED" }
+                ]
+            },
+            include: {
+                requester: { select: { id: true, name: true, headline: true, image: true, username: true } },
+                addressee: { select: { id: true, name: true, headline: true, image: true, username: true } }
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        const connections = connectionsRaw.map(c => {
+            const isRequester = c.requesterId === userId;
+            const other = isRequester ? c.addressee : c.requester;
+            return {
+                id: other.id,
+                username: other.username,
+                name: other.name || 'Unknown User',
+                headline: other.headline || 'No headline',
+                avatar: other.image,
+            };
+        });
+
+        return { success: true, connections };
+    } catch (error) {
+        console.error("Get Share Connections Error:", error);
+        return { success: false, connections: [] };
+    }
+}
+

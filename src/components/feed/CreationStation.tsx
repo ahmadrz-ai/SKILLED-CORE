@@ -241,7 +241,7 @@ export function CreationStation({ onPostCreated }: CreationStationProps) {
                     {content.trim().split(/\s+/).filter(w => w.length > 0).length}/500 Words
                 </span>
                 <span className="text-xs text-zinc-600 italic">
-                    {isPollMode ? "Poll Active" : "Text transmissions only. Media disabled."}
+                    {isPollMode ? "Poll Active" : "Text posts only. Media disabled."}
                 </span>
             </div>
         </div >

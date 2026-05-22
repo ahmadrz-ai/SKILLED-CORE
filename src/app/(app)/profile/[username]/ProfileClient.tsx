@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen } from "lucide-react";
+import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FollowListDialog } from '@/components/profile/FollowListDialog';
+import { deleteInterview } from '@/app/actions/interview';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 
 // --- Types ---
@@ -58,11 +59,13 @@ interface ProfileClientProps {
         followers: number;
         following: number;
     };
+    isAdmin?: boolean;
 }
 
-export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 } }: ProfileClientProps) {
+export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false }: ProfileClientProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'interviews'>('overview');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Social State
     const [followingState, setFollowingState] = useState(isFollowing);
@@ -109,6 +112,31 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     const openModal = (section: any, project: any = null) => {
         setProjectToEdit(project);
         setEditSection(section);
+    };
+
+    const handleDeleteInterview = async (interviewId: string, event: React.MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (!window.confirm("Are you sure you want to permanently delete this AI Interview Report? This action cannot be undone.")) {
+            return;
+        }
+
+        setDeletingId(interviewId);
+        try {
+            const res = await deleteInterview(interviewId);
+            if (res.success) {
+                toast.success("AI Interview Report successfully deleted.");
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed to delete interview report.");
+            }
+        } catch (err) {
+            console.error("Delete interview error:", err);
+            toast.error("An unexpected error occurred.");
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     const handleFollow = async () => {
@@ -773,49 +801,124 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-6"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {(user as any).interviews?.map((interview: any) => {
-                                            // Grade Helper
-                                            const getGrade = (score: number) => {
-                                                if (score >= 97) return "S";
-                                                if (score >= 90) return "A";
-                                                if (score >= 80) return "B";
-                                                if (score >= 70) return "C";
-                                                return "F";
+                                            // Title case formatting helper inline
+                                            const roleTitle = (() => {
+                                                const r = interview.role || "General";
+                                                const lower = r.toLowerCase();
+                                                if (lower === "frontend") return "FrontEnd Interview";
+                                                if (lower === "backend") return "BackEnd Interview";
+                                                if (lower === "fullstack") return "FullStack Interview";
+                                                return r
+                                                    .split(/[-_\s]+/)
+                                                    .map((word: string) => {
+                                                        if (word.toLowerCase() === "frontend") return "FrontEnd";
+                                                        if (word.toLowerCase() === "backend") return "BackEnd";
+                                                        if (word.toLowerCase() === "fullstack") return "FullStack";
+                                                        return word.charAt(0).toUpperCase() + word.slice(1);
+                                                    })
+                                                    .join(" ") + " Interview";
+                                            })();
+
+                                            // Rating calculator out of 5 stars
+                                            const starRating = interview.score / 20;
+
+                                            // Render Stars helper
+                                            const renderStars = () => {
+                                                const stars = [];
+                                                const fullStars = Math.floor(starRating);
+                                                const hasHalf = starRating % 1 >= 0.25 && starRating % 1 < 0.75;
+                                                const roundedFull = starRating % 1 >= 0.75 ? fullStars + 1 : fullStars;
+
+                                                for (let i = 1; i <= 5; i++) {
+                                                    if (i <= roundedFull) {
+                                                        stars.push(<Star key={i} size={15} className="fill-violet-400 text-violet-400 stroke-violet-500" />);
+                                                    } else if (i === roundedFull + 1 && hasHalf) {
+                                                        stars.push(<StarHalf key={i} size={15} className="fill-violet-400 text-violet-400 stroke-violet-500" />);
+                                                    } else {
+                                                        stars.push(<Star key={i} size={15} className="text-zinc-700 fill-zinc-800/40 stroke-zinc-700" />);
+                                                    }
+                                                }
+                                                return <div className="flex items-center gap-0.5">{stars}</div>;
                                             };
-                                            const grade = getGrade(interview.score);
 
                                             return (
-                                                <div key={interview.id} className="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden group relative hover:border-cyan-500/30 transition-all p-4">
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div>
-                                                            <h3 className="font-bold text-lg text-white uppercase tracking-wider">{interview.role}</h3>
-                                                            <span className="text-xs font-mono text-zinc-500">LVL {interview.difficulty} • {new Date(interview.createdAt).toLocaleDateString()}</span>
+                                                <div key={interview.id} className="bg-zinc-900/60 border border-white/5 rounded-2xl overflow-hidden group hover:border-violet-500/25 hover:shadow-[0_0_30px_rgba(139,92,246,0.05)] transition-all flex flex-col h-full backdrop-blur-xl">
+                                                    {/* Top banner graphic, matching Image 3 style */}
+                                                    <div className="w-full h-24 bg-gradient-to-br from-purple-950/30 via-zinc-950 to-cyan-950/30 relative flex flex-col justify-end p-4 border-b border-white/5 overflow-hidden">
+                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-500/10 via-transparent to-transparent pointer-events-none" />
+                                                        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/5 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
+                                                            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-bold">
+                                                                AI EVALUATED
+                                                            </span>
                                                         </div>
-                                                        <div className={cn(
-                                                            "w-10 h-10 rounded-lg flex items-center justify-center font-black text-xl",
-                                                            grade === 'S' || grade === 'A' ? "bg-cyan-500/20 text-cyan-400" :
-                                                                grade === 'B' ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"
-                                                        )}>
-                                                            {grade}
+                                                        <div className="text-[10px] font-mono text-violet-400 uppercase tracking-widest font-bold mb-1">
+                                                            SkilledCore Talent AI
                                                         </div>
                                                     </div>
 
-                                                    <p className="text-zinc-400 text-sm italic mb-4 line-clamp-2">"{interview.feedback}"</p>
+                                                    {/* Card Content */}
+                                                    <div className="p-5 flex-1 flex flex-col justify-between">
+                                                        <div>
+                                                            <h3 className="font-bold text-lg text-white font-heading tracking-tight leading-snug group-hover:text-violet-300 transition-colors">
+                                                                {roleTitle}
+                                                            </h3>
+                                                            
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                {renderStars()}
+                                                                <span className="text-xs font-mono font-bold text-violet-400 pl-1">
+                                                                    {starRating.toFixed(1)} / 5.0
+                                                                </span>
+                                                            </div>
 
-                                                    <div className="flex justify-between items-center text-xs font-mono text-zinc-500 border-t border-white/5 pt-3">
-                                                        <span>SCORE: {interview.score}/100</span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Globe className="w-3 h-3" /> Public
-                                                        </span>
+                                                            <p className="text-xs font-mono text-zinc-500 mt-2">
+                                                                Difficulty: Level {interview.difficulty} • {new Date(interview.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                            <p className="text-zinc-400 text-sm italic mt-3.5 leading-relaxed line-clamp-3 pl-1">
+                                                                &ldquo;{interview.feedback}&rdquo;
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="border-t border-white/5 mt-5 pt-4 flex items-center justify-between">
+                                                            <Link 
+                                                                href={`/interview/${interview.id}`}
+                                                                className="text-sm font-bold text-violet-400 hover:text-violet-300 flex items-center gap-1.5 transition-colors group/btn"
+                                                            >
+                                                                <FileText className="w-4 h-4 text-violet-400" />
+                                                                Open Interview Details
+                                                                <ArrowRight className="w-4 h-4 text-violet-400 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                            </Link>
+
+                                                            <div className="flex items-center gap-2">
+                                                                {isAdmin && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        disabled={deletingId === interview.id}
+                                                                        onClick={(e) => handleDeleteInterview(interview.id, e)}
+                                                                        className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-md border border-red-500/20 hover:border-red-500/30 transition-all compact-btn shrink-0"
+                                                                    >
+                                                                        {deletingId === interview.id ? (
+                                                                            <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                                                        ) : (
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        )}
+                                                                    </Button>
+                                                                )}
+                                                                <span className="text-xs font-mono font-bold text-zinc-500 bg-white/[0.02] border border-white/5 px-2.5 py-1 rounded-md">
+                                                                    SCORE: {interview.score}/100
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                         {(!(user as any).interviews || (user as any).interviews.length === 0) && (
-                                            <div className="col-span-full text-center py-20 text-zinc-600">
-                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                                <p>No interview simulations recorded.</p>
+                                            <div className="col-span-full text-center py-20 text-zinc-600 bg-zinc-900/10 border border-white/5 border-dashed rounded-2xl">
+                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20 text-violet-400" />
+                                                <p className="font-mono text-sm tracking-widest uppercase">No interview simulations recorded.</p>
                                             </div>
                                         )}
                                     </div>

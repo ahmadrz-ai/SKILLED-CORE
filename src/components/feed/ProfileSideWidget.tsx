@@ -21,60 +21,63 @@ interface ProfileSideWidgetProps {
 
 export function ProfileSideWidget({ user, stats }: ProfileSideWidgetProps) {
     return (
-        <div className="bg-zinc-900/50 border border-white/10 rounded-xl overflow-hidden shadow-sm">
-            {/* Cover Image */}
-            <div className="h-24 bg-gradient-to-r from-violet-600 to-indigo-600 relative bg-cover bg-center" style={{ backgroundImage: user.bannerUrl ? `url(${user.bannerUrl})` : undefined }}>
-                {/* Fallback overlay if banner exists to ensure text contrast if we had text, but here mostly for style */}
-                {user.bannerUrl && <div className="absolute inset-0 bg-black/20" />}
-
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm">
+            {/* Cover Banner */}
+            <div
+                className="h-24 bg-gradient-to-br from-[#6366F1] via-[#5F3CF8] to-[#4F46E5] relative bg-cover bg-center"
+                style={{ backgroundImage: user.bannerUrl ? `url(${user.bannerUrl})` : undefined }}
+            >
+                {user.bannerUrl && <div className="absolute inset-0 bg-[#000000]/25" />}
                 {/* Avatar */}
-                <div className="absolute -bottom-8 left-4">
-                    <Avatar className="w-16 h-16 border-2 border-zinc-950 cursor-pointer">
+                <div className="absolute -bottom-10 left-5">
+                    <Avatar className="w-20 h-20 border-4 border-white shadow-lg cursor-pointer transition-transform hover:scale-105 duration-200">
                         <AvatarImage src={user.image || ""} />
-                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-bold text-2xl">
+                            {user.name?.charAt(0)}
+                        </AvatarFallback>
                     </Avatar>
                 </div>
             </div>
 
             {/* Identity */}
-            <div className="pt-10 px-4 pb-4">
-                <Link href={`/profile/${user.username || 'me'}`} className="block">
-                    <h3 className="font-bold text-white hover:underline cursor-pointer text-lg leading-tight">
+            <div className="pt-12 px-5 pb-5">
+                <Link href={`/profile/${user.username || 'me'}`} className="block group">
+                    <h3 className="font-bold text-[#111827] group-hover:text-[#6366F1] group-hover:underline transition-all cursor-pointer text-lg leading-tight tracking-tight">
                         {user.name}
                     </h3>
                 </Link>
                 {user.username && (
-                    <p className="text-zinc-500 text-xs mt-0.5">@{user.username}</p>
+                    <p className="text-[#9CA3AF] text-xs font-mono mt-0.5">@{user.username}</p>
                 )}
-                <p className="text-zinc-400 text-xs mt-1 line-clamp-2">
-                    {user.headline || "Digital Operative at SkilledCore"}
+                <p className="text-[#4B5563] text-sm mt-2 font-medium leading-normal line-clamp-2">
+                    {user.headline || "Member at SkilledCore"}
                 </p>
             </div>
 
-            <Separator className="bg-white/10" />
+            <Separator className="bg-[#E5E7EB]" />
 
             {/* Stats */}
-            <div className="py-2">
-                <div className="px-4 py-1 hover:bg-white/5 cursor-pointer transition-colors flex justify-between items-center text-xs">
-                    <span className="text-zinc-400 font-medium">Profile viewers</span>
-                    <span className="text-violet-400 font-bold">{stats.profileViews}</span>
+            <div className="py-2.5">
+                <div className="px-5 py-2 hover:bg-[#F9FAFB] cursor-pointer transition-colors flex justify-between items-center group">
+                    <span className="text-[#6B7280] text-xs font-semibold group-hover:text-[#4F46E5] transition-colors">Profile viewers</span>
+                    <span className="text-[#6366F1] text-xs font-extrabold bg-[#EEF2FF] px-2 py-0.5 rounded-full">{stats.profileViews}</span>
                 </div>
-                <div className="px-4 py-1 hover:bg-white/5 cursor-pointer transition-colors flex justify-between items-center text-xs">
-                    <span className="text-zinc-400 font-medium">Post impressions</span>
-                    <span className="text-violet-400 font-bold">{stats.impressions}</span>
+                <div className="px-5 py-2 hover:bg-[#F9FAFB] cursor-pointer transition-colors flex justify-between items-center group">
+                    <span className="text-[#6B7280] text-xs font-semibold group-hover:text-[#4F46E5] transition-colors">Post impressions</span>
+                    <span className="text-[#6366F1] text-xs font-extrabold bg-[#EEF2FF] px-2 py-0.5 rounded-full">{stats.impressions}</span>
                 </div>
             </div>
 
-            <Separator className="bg-white/10" />
+            <Separator className="bg-[#E5E7EB]" />
 
-            {/* My Items */}
+            {/* Quick Links */}
             <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-2 py-2 text-xs text-zinc-300 hover:bg-white/5 rounded-lg transition-colors text-left font-medium group">
-                    <Bookmark className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-xs text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors text-left font-semibold group">
+                    <Bookmark className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#6366F1] group-hover:scale-110 transition-all duration-200" />
                     <span>Saved Items</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-2 py-2 text-xs text-zinc-300 hover:bg-white/5 rounded-lg transition-colors text-left font-medium group">
-                    <SquareActivity className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-xs text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors text-left font-semibold group">
+                    <SquareActivity className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#6366F1] group-hover:scale-110 transition-all duration-200" />
                     <span>My Activity</span>
                 </button>
             </div>
