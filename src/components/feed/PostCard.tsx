@@ -20,7 +20,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { deletePost, reportPost, votePoll, updatePost, toggleFollow } from "@/app/(app)/feed/actions";
 import { CommentSection } from "@/components/feed/CommentSection";
-import { getLayoutById } from "@/lib/collage-layouts";
 import {
     Dialog,
     DialogContent,
@@ -490,10 +489,61 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 </Dialog>
 
                 {/* Text Body */}
-                <div className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">
+                <div className="text-sm text-[#374151] leading-relaxed">
                     {(() => {
+                        const isHtml = content.trimStart().startsWith("<");
                         const TEXT_LIMIT = 240;
                         const LINE_LIMIT = 4;
+
+                        if (isHtml) {
+                            // WYSIWYG HTML content path
+                            // Extract plain text from HTML to determine fold threshold
+                            const tempDiv = typeof document !== "undefined" ? document.createElement("div") : null;
+                            let plainText = content;
+                            if (tempDiv) {
+                                tempDiv.innerHTML = content;
+                                plainText = tempDiv.innerText || tempDiv.textContent || "";
+                            }
+                            const lines = plainText.split("\n");
+                            const isLineExceeded = lines.length > LINE_LIMIT;
+                            const isCharExceeded = plainText.length > TEXT_LIMIT;
+                            const shouldFold = isCharExceeded || isLineExceeded;
+
+                            return (
+                                <>
+                                    <div
+                                        className={cn(
+                                            "post-html-content",
+                                            "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
+                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer hover:[&_a]:text-[#4F46E5]",
+                                            "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_li]:my-0.5",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&_code]:bg-[#F3F4F6] [&_code]:border [&_code]:border-[#E5E7EB] [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-red-600",
+                                            !isExpanded && shouldFold && "line-clamp-4"
+                                        )}
+                                        dangerouslySetInnerHTML={{ __html: content }}
+                                        onClick={(e) => {
+                                            // Make links clickable without propagating to post click
+                                            const target = e.target as HTMLElement;
+                                            if (target.tagName === "A") e.stopPropagation();
+                                        }}
+                                    />
+                                    {!isExpanded && shouldFold && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsExpanded(true);
+                                            }}
+                                            className="text-[#6366F1] hover:text-[#4F46E5] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
+                                        >
+                                            more
+                                        </button>
+                                    )}
+                                </>
+                            );
+                        }
+
+                        // Legacy plain-text / markdown path (backward compat)
                         const lines = content.split('\n');
                         const isLineExceeded = lines.length > LINE_LIMIT;
                         const isCharExceeded = content.length > TEXT_LIMIT;
@@ -513,7 +563,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                         return (
                             <>
-                                {parseContent(displayContent)}
+                                <span className="whitespace-pre-wrap">{parseContent(displayContent)}</span>
                                 {!isExpanded && shouldFold && (
                                     <button 
                                         onClick={(e) => {
@@ -564,18 +614,16 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     </div>
                 )}
 
-                {/* Instagram-Style Swipable Image Carousel or Native Aspect Ratio Single Image */}
+                {/* Single Image Fit Natural Aspect Ratio Container */}
                 {(() => {
                     if (!post.image) return null;
 
                     let parsedImages: Array<{ url: string; alt?: string; tags?: any[] }> = [];
-                    let layoutId = "default";
 
                     try {
                         if (post.image.startsWith("{")) {
                             const parsedObj = JSON.parse(post.image);
                             parsedImages = parsedObj.images || [];
-                            layoutId = parsedObj.layoutId || "default";
                         } else if (post.image.startsWith("[")) {
                             parsedImages = JSON.parse(post.image);
                         } else {
@@ -587,109 +635,59 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                     if (parsedImages.length === 0) return null;
 
-                    const imgCount = parsedImages.length;
+                    // Strictly grab the first image under the new single-image guidelines
+                    const img = parsedImages[0];
+                    return (
+                        <div className="relative mt-3 w-full bg-white rounded-xl overflow-hidden border border-[#E5E7EB] flex items-center justify-center max-h-[600px]">
+                            <img 
+                                src={img.url} 
+                                alt={img.alt || "Attachment"} 
+                                className="w-full h-auto max-h-[600px] object-contain cursor-pointer"
+                                onClick={() => setLightboxIndex(0)}
+                                onMouseEnter={() => setHoveredImageIdx(0)}
+                                onMouseLeave={() => setHoveredImageIdx(null)}
+                            />
 
-                    // If single image, render in original aspect ratio with custom max-height
-                    if (imgCount === 1) {
-                        const img = parsedImages[0];
-                        return (
-                            <div className="relative mt-3 w-full bg-white rounded-xl overflow-hidden border border-[#E5E7EB] flex items-center justify-center max-h-[600px]">
-                                <img 
-                                    src={img.url} 
-                                    alt={img.alt || "Attachment"} 
-                                    className="w-full h-auto max-h-[600px] object-contain cursor-pointer"
-                                    onClick={() => setLightboxIndex(0)}
-                                    onMouseEnter={() => setHoveredImageIdx(0)}
-                                    onMouseLeave={() => setHoveredImageIdx(null)}
-                                />
-
-                                {/* Tags on hover */}
-                                {img.tags && img.tags.map((t: any, idx: number) => (
+                            {/* Tags on hover */}
+                            {img.tags && img.tags.map((t: any, idx: number) => (
+                                <div 
+                                    key={idx}
+                                    className={cn(
+                                        "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                        hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                    )}
+                                    style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                >
                                     <div 
-                                        key={idx}
-                                        className={cn(
-                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                            hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                        )}
-                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            router.push(`/profile/${t.username}`);
+                                        }}
+                                        className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
                                     >
-                                        <div 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                router.push(`/profile/${t.username}`);
-                                            }}
-                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                        >
-                                            <Tag className="w-3 h-3 text-[#10B981]" />
-                                            <span>{t.name}</span>
-                                        </div>
+                                        <Tag className="w-3 h-3 text-[#10B981]" />
+                                        <span>{t.name}</span>
                                     </div>
-                                ))}
+                                </div>
+                            ))}
 
-                                {/* ALT Box */}
-                                {img.alt && (
-                                    <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                        ALT
-                                    </div>
-                                )}
+                            {/* ALT Box */}
+                            {img.alt && (
+                                <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                    ALT
+                                </div>
+                            )}
 
-                                {/* Tag count */}
-                                {img.tags && img.tags.length > 0 && (
-                                    <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                        <span>{img.tags.length} tagged</span>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    }
-
-                    // If multiple images: render dynamically using selected layout with object-cover (no white spaces!)
-                    if (imgCount > 1) {
-                        const layout = getLayoutById(layoutId, imgCount);
-                        const displayedImages = parsedImages.slice(0, Math.min(imgCount, layout.itemClasses.length));
-                        
-                        return (
-                            <div className={cn("relative mt-3 select-none overflow-hidden rounded-xl border border-[#E5E7EB] bg-gray-50", layout.gridClass)}>
-                                {displayedImages.map((img, idx) => {
-                                    const isLastItem = idx === displayedImages.length - 1;
-                                    const extraCount = imgCount - displayedImages.length;
-                                    
-                                    return (
-                                        <div 
-                                            key={idx}
-                                            className={cn("relative overflow-hidden cursor-pointer group w-full h-full", layout.itemClasses[idx])}
-                                            onClick={() => setLightboxIndex(idx)}
-                                        >
-                                            <img 
-                                                src={img.url} 
-                                                alt={img.alt || `Attachment ${idx + 1}`} 
-                                                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                            />
-                                            {img.alt && (
-                                                <div className="absolute bottom-2 left-2 z-10 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                    ALT
-                                                </div>
-                                            )}
-                                            {isLastItem && extraCount > 0 && (
-                                                <div 
-                                                    className="absolute inset-0 z-20 bg-black/60 hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-white text-base sm:text-lg font-bold select-none cursor-pointer"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setLightboxIndex(idx);
-                                                    }}
-                                                >
-                                                    <span>+{extraCount}</span>
-                                                    <span className="text-[10px] tracking-wider uppercase font-medium mt-0.5">more</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        );
-                    }
+                            {/* Tag count */}
+                            {img.tags && img.tags.length > 0 && (
+                                <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                    <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                    <span>{img.tags.length} tagged</span>
+                                </div>
+                            )}
+                        </div>
+                    );
                 })()}
 
                 {/* Premium Image Lightbox Viewer Modal */}
@@ -781,7 +779,9 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         <div className="space-y-5">
                                             <div className="border-b border-white/10 pb-3">
                                                 <h4 className="font-bold text-sm text-zinc-400 uppercase tracking-wider">Image Details</h4>
-                                                <span className="text-[10px] text-zinc-500 font-mono">Image {lightboxIndex + 1} of {parsedImages.length}</span>
+                                                {parsedImages.length > 1 && (
+                                                    <span className="text-[10px] text-zinc-500 font-mono">Image {lightboxIndex + 1} of {parsedImages.length}</span>
+                                                )}
                                             </div>
 
                                             {img.alt && (

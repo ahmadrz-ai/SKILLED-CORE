@@ -305,77 +305,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
         setSidebarTab("sequence");
     };
 
-    // Delete current image
-    const handleDeleteImage = () => {
-        if (images.length === 1) {
-            toast.error("You must have at least one image.");
-            return;
-        }
-        const updated = images.filter((_, i) => i !== activeIdx);
-        setImages(updated);
-        setActiveIdx(0);
-        toast.info("Image removed from sequencer.");
-    };
 
-    // Duplicate current image
-    const handleDuplicateImage = () => {
-        if (images.length >= 4) {
-            toast.error("Maximum limit is 4 images.");
-            return;
-        }
-
-        const current = activeImg;
-        const copy: ImageState = {
-            ...current,
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            tags: [...current.tags]
-        };
-
-        const updated = [...images];
-        updated.splice(activeIdx + 1, 0, copy);
-        setImages(updated);
-        setActiveIdx(activeIdx + 1);
-        toast.success("Image duplicated.");
-    };
-
-    // Sequence Add File
-    const handleAddFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
-
-        const spaceLeft = 4 - images.length;
-        if (spaceLeft <= 0) {
-            toast.error("Maximum upload limit is 4 images.");
-            return;
-        }
-
-        const validFiles = files.slice(0, spaceLeft);
-        if (files.length > spaceLeft) {
-            toast.info(`Only adding ${spaceLeft} images to respect the 4 image limit.`);
-        }
-
-        const newStates = validFiles.map((file, i) => {
-            const url = URL.createObjectURL(file);
-            return {
-                id: `${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
-                file,
-                previewUrl: url,
-                croppedUrl: url,
-                crop: { x: 0, y: 0 },
-                zoom: 1,
-                rotation: 0,
-                straighten: 0,
-                flip: { horizontal: false, vertical: false },
-                aspectRatio: undefined,
-                aspectRatioName: "Original",
-                alt: "",
-                tags: [],
-            };
-        });
-
-        setImages(prev => [...prev, ...newStates]);
-        toast.success(`Added ${newStates.length} image(s).`);
-    };
 
     // Final Post Draft Approval
     const handleFinishEditing = () => {
@@ -404,7 +334,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                 <div className="flex-1 bg-[#111827] relative flex flex-col items-center justify-center p-4">
                     {/* Stage Header */}
                     <div className="absolute top-4 left-4 z-20 text-white font-semibold text-sm drop-shadow-md">
-                        Image {activeIdx + 1} of {images.length}
+                        Single Image Editor
                     </div>
                     
                     {/* Stage Exit */}
@@ -533,90 +463,31 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                     {sidebarTab === "sequence" && (
                         <div className="flex flex-col flex-1 p-4">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold text-sm text-[#4B5563] uppercase tracking-wider">Sequencer</h3>
-                                <span className="text-xs bg-[#EEF2FF] text-[#6366F1] font-bold px-2 py-0.5 rounded-full">
-                                    {images.length}/4 Images
-                                </span>
+                                <h3 className="font-bold text-sm text-[#4B5563] uppercase tracking-wider">Image Options</h3>
                             </div>
 
-                            {/* Image Grid Selector */}
-                            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                                {images.map((img, idx) => (
-                                    <div 
-                                        key={img.id}
-                                        onClick={() => setActiveIdx(idx)}
-                                        className={cn(
-                                            "flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition-all group",
-                                            activeIdx === idx 
-                                                ? "border-[#10B981] bg-[#ECFDF5] shadow-sm" 
-                                                : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB] hover:bg-[#F3F4F6]"
-                                        )}
-                                    >
-                                        <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-[#E5E7EB] flex-shrink-0">
-                                            <img 
-                                                src={img.croppedUrl || img.previewUrl} 
-                                                alt="Sequence preview" 
-                                                className="w-full h-full object-cover"
-                                            />
-                                            {img.tags.length > 0 && (
-                                                <span className="absolute bottom-1 right-1 bg-violet-600 text-white text-[9px] font-bold px-1 rounded-sm">
-                                                    {img.tags.length} Tag{img.tags.length > 1 ? "s" : ""}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-bold text-[#374151]">Image {idx + 1}</div>
-                                            <div className="text-[10px] text-[#6B7280] font-medium truncate">
-                                                {img.alt ? `Alt: "${img.alt}"` : "No alt text added"}
-                                            </div>
-                                        </div>
-
-                                        {/* Actions per item in active slot */}
-                                        {activeIdx === idx && (
-                                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity">
-                                                <button 
-                                                    title="Duplicate Image"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDuplicateImage();
-                                                    }}
-                                                    className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                >
-                                                    <Copy className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button 
-                                                    title="Delete Image"
-                                                    disabled={images.length <= 1}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteImage();
-                                                    }}
-                                                    className="p-1 text-red-500 hover:bg-red-50 disabled:opacity-30 rounded-md transition-colors"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-
-                                {/* Add (+) Image Box */}
-                                {images.length < 4 && (
-                                    <label 
-                                        className="flex items-center justify-center gap-2 p-4 rounded-xl border border-dashed border-[#D1D5DB] bg-white hover:bg-zinc-50 cursor-pointer transition-all text-[#6B7280] hover:text-[#4F46E5] hover:border-[#6366F1]"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        <span className="text-xs font-bold">Add Image</span>
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            multiple
-                                            onChange={handleAddFile} 
-                                            className="hidden"
+                            {/* Single Image Details Panel */}
+                            <div className="flex-1 flex flex-col justify-center items-center py-4">
+                                <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-sm text-center w-full max-w-[240px] flex flex-col items-center">
+                                    <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-[#E5E7EB] mb-4 bg-zinc-50 flex items-center justify-center flex-shrink-0">
+                                        <img 
+                                            src={activeImg.croppedUrl || activeImg.previewUrl} 
+                                            alt="Edit preview" 
+                                            className="max-w-full max-h-full object-contain"
                                         />
-                                    </label>
-                                )}
+                                    </div>
+                                    <div className="space-y-2 w-full">
+                                        <div className="text-[10px] bg-[#EEF2FF] text-[#6366F1] font-bold px-2.5 py-0.5 rounded-full inline-block">
+                                            Single Image Mode
+                                        </div>
+                                        <div className="text-xs text-[#374151] font-bold">
+                                            {activeImg.tags.length > 0 ? `${activeImg.tags.length} member(s) tagged` : "No members tagged"}
+                                        </div>
+                                        <div className="text-[10px] text-[#6B7280] font-medium leading-relaxed truncate px-1 max-w-full">
+                                            {activeImg.alt ? `Alt: "${activeImg.alt}"` : "No alt text added"}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Sidebar Footer */}
@@ -632,7 +503,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     onClick={handleFinishEditing}
                                     className="flex-1 rounded-full font-bold bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-sm"
                                 >
-                                    Next
+                                    Done
                                 </Button>
                             </div>
                         </div>

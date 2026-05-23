@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2, Edit, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Link2, Code2 } from "lucide-react";
+import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Loader2, Edit, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Link2, Code2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import ImageEditorModal from "@/components/feed/ImageEditorModal";
 import EmojiPicker from "emoji-picker-react";
-import { COLLAGE_LAYOUTS, getLayoutById, CollageLayout } from "@/lib/collage-layouts";
 
 interface StartPostWidgetProps {
     onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
@@ -30,13 +29,18 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const user = session?.user;
     
     const [isOpen, setIsOpen] = useState(false);
-    const [content, setContent] = useState("");
+    // contenteditable ref – source of truth for post HTML
+    const editorRef = useRef<HTMLDivElement>(null);
+    const [htmlContent, setHtmlContent] = useState("");
+    const [textLength, setTextLength] = useState(0);
     const [isPollMode, setIsPollMode] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pollOptions, setPollOptions] = useState(["", ""]);
+    // saved selection range so link dialog doesn't lose cursor
+    const savedRangeRef = useRef<Range | null>(null);
 
     // Multi-Image & Editor State
-    const [draftImages, setDraftImages] = useState<DraftImage[]>([]);
+    const [draftImage, setDraftImage] = useState<DraftImage | null>(null);
     const [editorInitialFiles, setEditorInitialFiles] = useState<File[]>([]);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -62,228 +66,183 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     
     // Text Formatting State
     const [showFormatting, setShowFormatting] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [linkText, setLinkText] = useState("");
     const [linkUrl, setLinkUrl] = useState("");
-    const [linkSelectionStart, setLinkSelectionStart] = useState(0);
-    const [linkSelectionEnd, setLinkSelectionEnd] = useState(0);
 
-    // Collage Layout Picker State
-    const [selectedLayoutId, setSelectedLayoutId] = useState("default");
-    const [isLayoutPickerOpen, setIsLayoutPickerOpen] = useState(false);
+    // Sync html/text length from editor changes
+    const syncEditorState = useCallback(() => {
+        const el = editorRef.current;
+        if (!el) return;
+        setHtmlContent(el.innerHTML);
+        setTextLength(el.innerText.replace(/\n/g, "").length);
+    }, []);
 
-    // Reset to default layout when image count changes
-    useEffect(() => {
-        if (draftImages.length >= 2) {
-            setSelectedLayoutId(`${draftImages.length}-default`);
-        } else {
-            setSelectedLayoutId("default");
-        }
-    }, [draftImages.length]);
 
-    // Keyboard Shortcuts and List Conversions
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        // Bold: Ctrl+B / Cmd+B
+
+    // ── WYSIWYG execCommand helpers ──────────────────────────────────────────
+    const execFormat = useCallback((command: string, value?: string) => {
+        editorRef.current?.focus();
+        document.execCommand(command, false, value);
+        syncEditorState();
+    }, [syncEditorState]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        // Bold: Ctrl+B
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
             e.preventDefault();
-            formatText("bold");
+            execFormat("bold");
             return;
         }
-
-        // Italic: Ctrl+I / Cmd+I
+        // Italic: Ctrl+I
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
             e.preventDefault();
-            formatText("italic");
+            execFormat("italic");
             return;
         }
-
-        // Underline: Ctrl+U / Cmd+U
+        // Underline: Ctrl+U
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
             e.preventDefault();
-            formatText("underline");
+            execFormat("underline");
             return;
         }
-
-        // Key interception: Space key pressed for list auto-formatting
+        // Strikethrough: Ctrl+Shift+S
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            execFormat("strikeThrough");
+            return;
+        }
+        // Bullet list: * Space at line start
         if (e.key === " ") {
-            const textarea = textareaRef.current;
-            if (!textarea) return;
-
-            const start = textarea.selectionStart;
-            const text = textarea.value;
-
-            // Find start of the current line
-            const lastNewLine = text.lastIndexOf("\n", start - 1);
-            const lineStart = lastNewLine === -1 ? 0 : lastNewLine + 1;
-            const currentLineText = text.substring(lineStart, start);
-
-            // Match if line starts with exactly "*" or "-" followed by space
-            if (currentLineText === "*" || currentLineText === "-") {
-                e.preventDefault();
-                // Replace with bullet "• "
-                const newContent = text.substring(0, lineStart) + "• " + text.substring(start);
-                setContent(newContent);
-
-                // Place cursor after bullet
-                setTimeout(() => {
-                    textarea.focus();
-                    const newPos = lineStart + 2;
-                    textarea.setSelectionRange(newPos, newPos);
-                }, 0);
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                const container = range.startContainer;
+                const textBefore = container.textContent?.slice(0, range.startOffset) ?? "";
+                if (textBefore === "*" || textBefore === "-") {
+                    e.preventDefault();
+                    // Delete the trigger character
+                    document.execCommand("selectAll", false);
+                    const newRange = document.createRange();
+                    newRange.setStart(container, 0);
+                    newRange.setEnd(container, range.startOffset);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    document.execCommand("delete", false);
+                    document.execCommand("insertUnorderedList", false);
+                    syncEditorState();
+                    return;
+                }
             }
         }
     };
 
-    const openLinkDialog = () => {
-        const textarea = textareaRef.current;
-        if (!textarea) {
+    // Save selection before opening link dialog (focus shifts to input)
+    const openLinkDialog = useCallback(() => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+            const selected = sel.toString();
+            setLinkText(selected);
+        } else {
+            savedRangeRef.current = null;
             setLinkText("");
-            setLinkUrl("");
-            setLinkSelectionStart(0);
-            setLinkSelectionEnd(0);
-            setIsLinkDialogOpen(true);
-            return;
         }
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = textarea.value;
-        const selectedText = text.substring(start, end);
-
-        setLinkText(selectedText);
         setLinkUrl("");
-        setLinkSelectionStart(start);
-        setLinkSelectionEnd(end);
         setIsLinkDialogOpen(true);
-    };
+    }, []);
 
-    const handleInsertLink = () => {
-        const textarea = textareaRef.current;
-        if (!textarea) {
-            setIsLinkDialogOpen(false);
-            return;
+    const handleInsertLink = useCallback(() => {
+        const displayName = linkText.trim() || "link";
+        const url = linkUrl.trim();
+        if (!url) { setIsLinkDialogOpen(false); return; }
+        const href = url.startsWith("http") ? url : `https://${url}`;
+
+        editorRef.current?.focus();
+
+        // Restore selection
+        const sel = window.getSelection();
+        if (sel && savedRangeRef.current) {
+            sel.removeAllRanges();
+            sel.addRange(savedRangeRef.current);
         }
 
-        const start = linkSelectionStart;
-        const end = linkSelectionEnd;
-        const text = textarea.value;
-
-        const displayName = linkText.trim() || "link text";
-        const url = linkUrl.trim() || "https://skilledcore.com";
-
-        // Format as [displayName](url)
-        const replacement = `[${displayName}](${url})`;
-
-        const newContent = text.substring(0, start) + replacement + text.substring(end);
-        setContent(newContent);
-
+        // Insert anchor
+        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#6366F1;text-decoration:underline;">${displayName}</a>`;
+        document.execCommand("insertHTML", false, html);
+        syncEditorState();
         setIsLinkDialogOpen(false);
+    }, [linkText, linkUrl, syncEditorState]);
 
-        // Refocus textarea and place cursor after the link
-        setTimeout(() => {
-            textarea.focus();
-            const newCursorPos = start + replacement.length;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-        }, 50);
-    };
+    // ── Toolbar format dispatcher (non-link actions) ─────────────────────────
+    const formatText = useCallback((style: string) => {
+        switch (style) {
+            case "bold":          execFormat("bold"); break;
+            case "italic":        execFormat("italic"); break;
+            case "underline":     execFormat("underline"); break;
+            case "strikethrough": execFormat("strikeThrough"); break;
+            case "bullet":        execFormat("insertUnorderedList"); break;
+            case "number":        execFormat("insertOrderedList"); break;
+            case "quote":
+                // Wrap selection in a blockquote via insertHTML
+                editorRef.current?.focus();
+                document.execCommand("formatBlock", false, "blockquote");
+                syncEditorState();
+                break;
+            case "code": {
+                const sel = window.getSelection();
+                const selected = sel?.toString() || "code";
+                document.execCommand("insertHTML", false,
+                    `<code style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:0.85em;color:#DC2626;">${selected}</code>`);
+                syncEditorState();
+                break;
+            }
+            case "link": openLinkDialog(); break;
+            default: break;
+        }
+    }, [execFormat, openLinkDialog, syncEditorState]);
+
+    // Insert emoji at cursor position inside contenteditable
+    const insertEmoji = useCallback((emoji: string) => {
+        editorRef.current?.focus();
+        document.execCommand("insertText", false, emoji);
+        syncEditorState();
+    }, [syncEditorState]);
 
     // Cleanup object URLs on unmount
     useEffect(() => {
         return () => {
-            draftImages.forEach(img => {
-                if (img.previewUrl) {
-                    URL.revokeObjectURL(img.previewUrl);
-                }
-            });
-            if (articleCoverPreview) {
-                URL.revokeObjectURL(articleCoverPreview);
-            }
+            if (draftImage?.previewUrl) URL.revokeObjectURL(draftImage.previewUrl);
+            if (articleCoverPreview) URL.revokeObjectURL(articleCoverPreview);
         };
-    }, [draftImages, articleCoverPreview]);
+    }, [draftImage, articleCoverPreview]);
 
-    // Force focus when dialog opens
+    // Focus editor when dialog opens & set default block element to div
     useEffect(() => {
         if (isOpen) {
             setTimeout(() => {
-                textareaRef.current?.focus();
+                editorRef.current?.focus();
+                // Ensure paragraphs use <div> not <p> for simpler serialization
+                document.execCommand("defaultParagraphSeparator", false, "div");
             }, 100);
+        }
+        // Clear editor state when dialog closes
+        if (!isOpen && editorRef.current) {
+            editorRef.current.innerHTML = "";
+            setHtmlContent("");
+            setTextLength(0);
         }
     }, [isOpen]);
 
-    // Format Selected Text with Markdown-like tags
-    const formatText = (style: string) => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = textarea.value;
-        const selectedText = text.substring(start, end);
-
-        let replacement = "";
-
-        switch (style) {
-            case "bold":
-                replacement = `**${selectedText || "bold text"}**`;
-                break;
-            case "italic":
-                replacement = `*${selectedText || "italic text"}*`;
-                break;
-            case "underline":
-                replacement = `__${selectedText || "underlined text"}__`;
-                break;
-            case "strikethrough":
-                replacement = `~~${selectedText || "strikethrough text"}~~`;
-                break;
-            case "bullet":
-                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}• ${selectedText || "list item"}`;
-                break;
-            case "number":
-                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}1. ${selectedText || "list item"}`;
-                break;
-            case "quote":
-                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}> ${selectedText || "quote text"}`;
-                break;
-            case "code":
-                replacement = selectedText.includes("\n")
-                    ? `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}\`\`\`typescript\n${selectedText}\n\`\`\`\n`
-                    : `\`${selectedText || "code"}\``;
-                break;
-            case "link":
-                openLinkDialog();
-                return;
-            default:
-                return;
-        }
-
-        const newContent = text.substring(0, start) + replacement + text.substring(end);
-        setContent(newContent);
-
-        // Refocus and place cursor in the middle if no text was selected
-        setTimeout(() => {
-            textarea.focus();
-            if (!selectedText) {
-                const backOffset = style === "bold" || style === "underline" || style === "strikethrough" ? 2 : style === "italic" ? 1 : 0;
-                const newCursorPos = start + replacement.length - backOffset;
-                textarea.setSelectionRange(newCursorPos, newCursorPos);
-            } else {
-                const newCursorPos = start + replacement.length;
-                textarea.setSelectionRange(newCursorPos, newCursorPos);
-            }
-        }, 50);
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
 
         const MAX_SIZE = 4 * 1024 * 1024;
-        const oversized = files.some(f => f.size >= MAX_SIZE);
-        if (oversized) {
+        if (file.size >= MAX_SIZE) {
             toast.error("Images must be strictly under 4MB.");
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
@@ -291,38 +250,30 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             return;
         }
 
-        const totalImages = draftImages.length + files.length;
-        if (totalImages > 4) {
-            toast.error("You can upload up to 4 images maximum.");
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-            return;
-        }
-
-        setEditorInitialFiles(files);
+        setEditorInitialFiles([file]);
         setIsEditorOpen(true);
     };
 
     const handleApplyEditorChanges = (editedImages: DraftImage[]) => {
-        // Append or replace
-        setDraftImages(prev => {
-            // revoke old urls
-            prev.forEach(p => URL.revokeObjectURL(p.previewUrl));
-            return editedImages;
-        });
+        if (editedImages.length > 0) {
+            setDraftImage(prev => {
+                if (prev?.previewUrl) {
+                    URL.revokeObjectURL(prev.previewUrl);
+                }
+                return editedImages[0];
+            });
+        }
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
     };
 
-    const handleRemoveDraftImage = (indexToRemove: number) => {
-        setDraftImages(prev => {
-            const img = prev[indexToRemove];
-            if (img && img.previewUrl) {
-                URL.revokeObjectURL(img.previewUrl);
+    const handleRemoveDraftImage = () => {
+        setDraftImage(prev => {
+            if (prev?.previewUrl) {
+                URL.revokeObjectURL(prev.previewUrl);
             }
-            return prev.filter((_, idx) => idx !== indexToRemove);
+            return null;
         });
     };
 
@@ -475,7 +426,9 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     };
 
     const handleSubmit = async () => {
-        if (!content.trim() && draftImages.length === 0) return;
+        const rawHtml = editorRef.current?.innerHTML ?? "";
+        const textOnly = editorRef.current?.innerText?.trim() ?? "";
+        if (!textOnly && !draftImage) return;
 
         // Validation logic
         let validOptions: string[] | undefined;
@@ -489,29 +442,15 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
         let imageUrl: string | undefined;
 
-        if (draftImages.length > 0) {
+        if (draftImage) {
             setIsUploading(true);
             try {
-                // Upload all images concurrently to Cloudinary
-                const uploadedAssets = await Promise.all(
-                    draftImages.map(async (img) => {
-                        const secureUrl = await uploadSingleToCloudinary(img.file);
-                        return {
-                            url: secureUrl,
-                            alt: img.alt || "",
-                            tags: img.tags || []
-                        };
-                    })
-                );
-                // Serialize as JSON string to support multi-images and metadata with layoutId in single column
-                if (draftImages.length > 1) {
-                    imageUrl = JSON.stringify({
-                        images: uploadedAssets,
-                        layoutId: selectedLayoutId
-                    });
-                } else {
-                    imageUrl = JSON.stringify(uploadedAssets);
-                }
+                const secureUrl = await uploadSingleToCloudinary(draftImage.file);
+                imageUrl = JSON.stringify([{
+                    url: secureUrl,
+                    alt: draftImage.alt || "",
+                    tags: draftImage.tags || []
+                }]);
             } catch (err: any) {
                 console.error("Cloudinary upload failed:", err);
                 toast.error("Failed to upload image. Please try again.");
@@ -520,13 +459,15 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             }
         }
 
-        onPostCreated?.(content, validOptions, imageUrl);
+        onPostCreated?.(rawHtml, validOptions, imageUrl);
 
         // Reset and close
-        setContent("");
+        if (editorRef.current) editorRef.current.innerHTML = "";
+        setHtmlContent("");
+        setTextLength(0);
         setPollOptions(["", ""]);
         setIsPollMode(false);
-        setDraftImages([]);
+        setDraftImage(null);
         setIsUploading(false);
         setIsOpen(false);
         toast.success("Post sent.");
@@ -553,39 +494,41 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                         className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-4xl p-0 overflow-visible shadow-xl"
                         onOpenAutoFocus={(e) => {
                             e.preventDefault();
-                            textareaRef.current?.focus();
+                            editorRef.current?.focus();
                         }}
                     >
-                        <DialogHeader className="p-4 border-b border-[#E5E7EB] flex flex-row items-center justify-between">
+                        <DialogHeader className="p-4 border-b border-[#E5E7EB] flex flex-row items-center justify-between shrink-0">
                             <DialogTitle className="text-lg font-bold text-[#111827]">Create a post</DialogTitle>
                         </DialogHeader>
  
-                        <div className="p-4">
-                            {/* User Info in Dialog */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <Avatar className="w-10 h-10 border border-[#E5E7EB]">
-                                    <AvatarImage src={user?.image || ""} />
-                                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="font-bold text-sm text-[#111827]">{user?.name}</div>
-                                    <div className="text-xs text-[#6B7280] font-medium">Post to Anyone</div>
-                                </div>
-                            </div>
- 
+                        {/* Scrollable body – max-height keeps toolbar+footer always visible */}
+                        <div className="flex flex-col overflow-hidden" style={{ maxHeight: "calc(90vh - 60px)" }}>
                             {/* Hidden File Input */}
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 accept="image/*"
-                                multiple
                                 className="hidden"
                                 disabled={isUploading}
                             />
 
-                            {/* Text Formatting Toolbar */}
-                            {showFormatting && (
+                            {/* Text Formatting Toolbar – always visible at top */}
+                            <div className="px-4 pt-3 shrink-0">
+                                {/* User Info */}
+                                <div className="flex items-center gap-3 mb-3">
+                                    <Avatar className="w-10 h-10 border border-[#E5E7EB]">
+                                        <AvatarImage src={user?.image || ""} />
+                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <div className="font-bold text-sm text-[#111827]">{user?.name}</div>
+                                        <div className="text-xs text-[#6B7280] font-medium">Post to Anyone</div>
+                                    </div>
+                                </div>
+
+                                {/* Text Formatting Toolbar */}
+                                {showFormatting && (
                                 <div className="flex flex-wrap items-center gap-1 p-1 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl mb-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <Button
                                         type="button"
@@ -684,34 +627,84 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         <Code2 className="w-4 h-4" />
                                     </Button>
                                 </div>
-                            )}
+                                )}
+                            </div>
 
-                            {/* Text Area */}
-                            <Textarea
-                                ref={textareaRef}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="What do you want to talk about?"
-                                disabled={isUploading}
-                                className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[150px] md:min-h-[200px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
-                            />
+                            {/* SPLIT PANE: text left, image right (or full-width if no image) */}
+                            <div className={cn(
+                                "flex overflow-y-auto flex-1",
+                                draftImage ? "divide-x divide-[#F3F4F6]" : ""
+                            )}>
+                                {/* Left: WYSIWYG editor – scrolls independently */}
+                                <div className={cn(
+                                    "flex flex-col overflow-y-auto",
+                                    draftImage ? "w-1/2 px-4 pb-3" : "w-full px-4 pb-3"
+                                )}>
+                                    {/* WYSIWYG Content Editable */}
+                                    <div
+                                        ref={editorRef}
+                                        contentEditable={!isUploading}
+                                        suppressContentEditableWarning
+                                        onInput={syncEditorState}
+                                        onKeyDown={handleKeyDown}
+                                        data-placeholder="What do you want to talk about?"
+                                        className={cn(
+                                            "w-full bg-transparent text-[#111827] text-base min-h-[120px] outline-none caret-[#6366F1] cursor-text mt-2",
+                                            "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
+                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer",
+                                            "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[#9CA3AF] [&:empty]:before:pointer-events-none"
+                                        )}
+                                        style={{ whiteSpace: "pre-wrap" }}
+                                    />
 
-                            {/* Multiple Draft Images Collage Previews */}
-                            {draftImages.length > 0 && (
-                                <div className="mt-4 relative group">
-                                    {draftImages.length === 1 ? (
-                                        <div className="relative aspect-video bg-black/5 rounded-xl overflow-hidden border border-[#E5E7EB] group">
+                                    {/* Poll Editor (inside left pane) */}
+                                    {isPollMode && (
+                                        <div className="mt-3 p-3 border border-[#E5E7EB] rounded-xl bg-[#F9FAFB]">
+                                            <label className="text-xs font-bold text-[#6B7280] uppercase mb-2 block tracking-wider">Poll Options</label>
+                                            <div className="space-y-2">
+                                                {pollOptions.map((opt, idx) => (
+                                                    <input
+                                                        key={idx}
+                                                        value={opt}
+                                                        onChange={(e) => {
+                                                            const newOpts = [...pollOptions];
+                                                            newOpts[idx] = e.target.value;
+                                                            setPollOptions(newOpts);
+                                                        }}
+                                                        placeholder={`Option ${idx + 1}`}
+                                                        className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:outline-none transition-colors"
+                                                    />
+                                                ))}
+                                            </div>
+                                            {pollOptions.length < 4 && (
+                                                <button
+                                                    onClick={() => setPollOptions([...pollOptions, ""])}
+                                                    className="mt-2 text-xs font-bold text-[#6366F1] hover:text-[#4F46E5] transition-colors"
+                                                >
+                                                    + Add Option
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right: Image preview panel – only when image is attached */}
+                                {draftImage && (
+                                    <div className="w-1/2 flex items-center justify-center p-3 bg-[#F9FAFB] relative overflow-hidden">
+                                        <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-black/5" style={{ maxHeight: "280px" }}>
                                             <img
-                                                src={draftImages[0].previewUrl}
+                                                src={draftImage.previewUrl}
                                                 alt="Draft attachment"
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain"
+                                                style={{ maxHeight: "280px" }}
                                             />
+                                            {/* Edit button */}
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const files = draftImages.map(img => img.file);
-                                                    setEditorInitialFiles(files);
+                                                    setEditorInitialFiles([draftImage.file]);
                                                     setIsEditorOpen(true);
                                                 }}
                                                 disabled={isUploading}
@@ -720,124 +713,35 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             >
                                                 <Edit className="w-3.5 h-3.5" />
                                             </button>
+                                            {/* Remove button */}
                                             <button
                                                 type="button"
-                                                onClick={() => handleRemoveDraftImage(0)}
+                                                onClick={handleRemoveDraftImage}
                                                 disabled={isUploading}
                                                 className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
-                                        </div>
-                                    ) : (() => {
-                                        const layout = getLayoutById(selectedLayoutId, draftImages.length);
-                                        const displayedDrafts = draftImages.slice(0, Math.min(draftImages.length, layout.itemClasses.length));
-                                        
-                                        return (
-                                            <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 p-0.5">
-                                                <div className={cn("grid w-full", layout.gridClass)}>
-                                                    {displayedDrafts.map((img, idx) => {
-                                                        const isLastItem = idx === displayedDrafts.length - 1;
-                                                        const extraCount = draftImages.length - displayedDrafts.length;
-                                                        
-                                                        return (
-                                                            <div key={idx} className={cn("relative overflow-hidden w-full h-full min-h-[140px] max-h-[300px]", layout.itemClasses[idx])}>
-                                                                <img
-                                                                    src={img.previewUrl}
-                                                                    alt={`Attachment ${idx + 1}`}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                                {isLastItem && extraCount > 0 && (
-                                                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-base font-bold pointer-events-none">
-                                                                        +{extraCount}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                            {/* Upload overlay */}
+                                            {isUploading && (
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
+                                                    <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+                                                    <span className="text-xs font-semibold tracking-wide">Uploading...</span>
                                                 </div>
-
-                                                {/* Floating layout controls directly matching SkilledCore vibe */}
-                                                <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => setIsLayoutPickerOpen(true)}
-                                                        className="bg-white hover:bg-gray-100 text-zinc-800 hover:text-black border border-gray-200 shadow-md text-xs font-bold rounded-xl h-8 px-3 flex items-center gap-1.5 cursor-pointer transition-all animate-none"
-                                                    >
-                                                        <BarChart2 className="w-3.5 h-3.5 text-violet-600 rotate-90" />
-                                                        Layouts
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const files = draftImages.map(img => img.file);
-                                                            setEditorInitialFiles(files);
-                                                            setIsEditorOpen(true);
-                                                        }}
-                                                        className="bg-white hover:bg-gray-100 text-zinc-800 hover:text-black border border-gray-200 shadow-md text-xs font-bold rounded-xl h-8 px-3 flex items-center gap-1.5 cursor-pointer transition-all animate-none"
-                                                    >
-                                                        <Edit className="w-3.5 h-3.5 text-violet-600" />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => setDraftImages([])}
-                                                        className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 shadow-md text-xs font-bold rounded-xl h-8 px-2.5 flex items-center gap-1 cursor-pointer transition-all animate-none"
-                                                    >
-                                                        <X className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-
-                                    {isUploading && (
-                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
-                                            <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
-                                            <span className="text-xs font-semibold tracking-wide">Uploading...</span>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            )}
- 
-                            {/* Poll Editor */}
-                            {isPollMode && (
-                                <div className="mt-4 p-4 border border-[#E5E7EB] rounded-xl bg-[#F9FAFB]">
-                                    <label className="text-xs font-bold text-[#6B7280] uppercase mb-2 block tracking-wider">Poll Options</label>
-                                    <div className="space-y-2">
-                                        {pollOptions.map((opt, idx) => (
-                                            <input
-                                                key={idx}
-                                                value={opt}
-                                                onChange={(e) => {
-                                                    const newOpts = [...pollOptions];
-                                                    newOpts[idx] = e.target.value;
-                                                    setPollOptions(newOpts);
-                                                }}
-                                                placeholder={`Option ${idx + 1}`}
-                                                className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:outline-none transition-colors"
-                                            />
-                                        ))}
                                     </div>
-                                    {pollOptions.length < 4 && (
-                                        <button
-                                            onClick={() => setPollOptions([...pollOptions, ""])}
-                                            className="mt-2.5 text-xs font-bold text-[#6366F1] hover:text-[#4F46E5] transition-colors"
-                                        >
-                                            + Add Option
-                                        </button>
-                                    )}
-                                </div>
-                            )}
+                                )}
+                            </div>
  
                             {/* Bottom Bar: Tools & Post Button */}
-                            <div className="flex items-center justify-between mt-6 pt-3 border-t border-[#E5E7EB]">
+                            <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB] shrink-0">
                                 <div className="flex items-center gap-1">
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         disabled={isUploading}
-                                        onClick={() => setContent(prev => prev + " #")}
+                                        onClick={() => insertEmoji(" #")}
                                         className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
                                         # Hashtag
@@ -846,7 +750,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         variant="ghost"
                                         size="sm"
                                         disabled={isUploading}
-                                        onClick={() => setContent(prev => prev + " @")}
+                                        onClick={() => insertEmoji(" @")}
                                         className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
                                         @ Mention
@@ -882,7 +786,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                     <EmojiPicker
                                                         theme={"light" as any}
                                                         onEmojiClick={(emojiData) => {
-                                                            setContent(prev => prev + emojiData.emoji);
+                                                            insertEmoji(emojiData.emoji);
                                                             setShowEmojiPicker(false);
                                                         }}
                                                     />
@@ -891,15 +795,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         )}
                                     </div>
  
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        disabled={isUploading}
-                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", draftImages.length > 0 ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <ImageIcon className="w-5 h-5" />
-                                    </Button>
+
 
                                     {/* Text Formatting Toggle Button ("A with Pencil") */}
                                     <Button
@@ -920,18 +816,27 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             <span className="absolute -bottom-1 -right-1 text-[8px]">✎</span>
                                         </span>
                                     </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={isUploading}
+                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", draftImage ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <ImageIcon className="w-5 h-5" />
+                                    </Button>
                                 </div>
  
                                 <div className="flex items-center gap-3">
                                     <span className={cn("text-xs font-mono font-bold transition-colors hidden sm:inline",
-                                        (3000 - content.length) < 0 ? "text-red-500" :
-                                            (3000 - content.length) < 200 ? "text-yellow-500" : "text-[#9CA3AF]"
+                                        (3000 - textLength) < 0 ? "text-red-500" :
+                                            (3000 - textLength) < 200 ? "text-yellow-500" : "text-[#9CA3AF]"
                                     )}>
-                                        {3000 - content.length} chars
+                                        {3000 - textLength} chars
                                     </span>
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={isUploading || (!content.trim() && draftImages.length === 0) || content.length > 3000}
+                                        disabled={isUploading || (textLength === 0 && !draftImage) || textLength > 3000}
                                         className="rounded-full px-6 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold h-9 transition-colors shadow-sm animate-none flex items-center gap-2"
                                     >
                                         {isUploading ? (
@@ -946,6 +851,67 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Beautiful Custom Insert Link Dialog Overlay (Absolute constrained inside DialogContent portal) */}
+                        {isLinkDialogOpen && (
+                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
+                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#6366F1] z-50">
+                                    <h3 className="text-base font-extrabold text-[#111827] mb-4 tracking-tight flex items-center gap-2">
+                                        <Link2 className="w-4.5 h-4.5 text-[#6366F1]" />
+                                        Insert link
+                                    </h3>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Text to display</label>
+                                            <input
+                                                type="text"
+                                                value={linkText}
+                                                onChange={(e) => setLinkText(e.target.value)}
+                                                placeholder="Text to display"
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Address</label>
+                                            <input
+                                                type="text"
+                                                value={linkUrl}
+                                                onChange={(e) => setLinkUrl(e.target.value)}
+                                                placeholder="Link to an existing file or web page"
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        handleInsertLink();
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end gap-2.5 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsLinkDialogOpen(false)}
+                                            className="px-4 py-2 text-xs font-bold text-[#4B5563] hover:text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#E5E7EB] rounded-xl transition-colors cursor-pointer animate-none"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleInsertLink}
+                                            className="px-5 py-2 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer animate-none"
+                                        >
+                                            Insert
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+
                     </DialogContent>
                 </Dialog>
             </div>
@@ -1215,143 +1181,6 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 initialFiles={editorInitialFiles}
                 onApply={handleApplyEditorChanges}
             />
-
-            {/* Beautiful Custom Insert Link Dialog Overlay */}
-            {isLinkDialogOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
-                    <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#6366F1]">
-                        <h3 className="text-base font-extrabold text-[#111827] mb-4 tracking-tight flex items-center gap-2">
-                            <Link2 className="w-4.5 h-4.5 text-[#6366F1]" />
-                            Insert link
-                        </h3>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Text to display</label>
-                                <input
-                                    type="text"
-                                    value={linkText}
-                                    onChange={(e) => setLinkText(e.target.value)}
-                                    placeholder="Text to display"
-                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Address</label>
-                                <input
-                                    type="text"
-                                    value={linkUrl}
-                                    onChange={(e) => setLinkUrl(e.target.value)}
-                                    placeholder="Link to an existing file or web page"
-                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleInsertLink();
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="flex justify-end gap-2.5 mt-6">
-                            <button
-                                type="button"
-                                onClick={() => setIsLinkDialogOpen(false)}
-                                className="px-4 py-2 text-xs font-bold text-[#4B5563] hover:text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#E5E7EB] rounded-xl transition-colors cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleInsertLink}
-                                className="px-5 py-2 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer"
-                            >
-                                Insert
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Premium Dynamic 50+ Collage Layouts Picker (Non-blocking Soft Blur Overlay) */}
-            {isLayoutPickerOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-indigo-900/5 backdrop-blur-[1px] p-4 animate-in fade-in duration-200">
-                    <div className="bg-white/95 border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-[#111827] transform scale-100 transition-all flex flex-col max-h-[85vh] border-t-4 border-t-[#6366F1]">
-                        <div className="flex justify-between items-center mb-4 border-b border-[#F3F4F6] pb-3">
-                            <div>
-                                <h3 className="text-lg font-extrabold text-[#111827] tracking-tight flex items-center gap-2">
-                                    <BarChart2 className="w-5 h-5 text-[#6366F1] rotate-90" />
-                                    Collage Grid Layouts
-                                </h3>
-                                <p className="text-xs text-[#6B7280] font-medium mt-0.5">Select a layout template for your {draftImages.length} images</p>
-                            </div>
-                            <button 
-                                onClick={() => setIsLayoutPickerOpen(false)}
-                                className="text-zinc-400 hover:text-zinc-600 p-1.5 hover:bg-zinc-100 rounded-full transition-colors cursor-pointer"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        {/* Gallery of Prebuilt Layout Templates */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[50vh] pr-1 py-2 custom-scrollbar">
-                            {COLLAGE_LAYOUTS.filter(l => l.imgCount === draftImages.length).map((layout) => {
-                                const isSelected = selectedLayoutId === layout.id;
-                                return (
-                                    <button
-                                        key={layout.id}
-                                        type="button"
-                                        onClick={() => setSelectedLayoutId(layout.id)}
-                                        className={cn(
-                                            "group flex flex-col p-2.5 border rounded-2xl text-left transition-all hover:bg-violet-50/20 cursor-pointer",
-                                            isSelected 
-                                                ? "border-[#6366F1] bg-violet-50/30 ring-1 ring-[#6366F1]/30 shadow-md shadow-[#6366F1]/5" 
-                                                : "border-zinc-200/80 hover:border-violet-300"
-                                        )}
-                                    >
-                                        {/* Dynamic visual grid thumbnail */}
-                                        <div className={cn(
-                                            "grid w-full h-16 border rounded-lg overflow-hidden gap-0.5 p-0.5 transition-all bg-zinc-50/50",
-                                            isSelected ? "border-[#6366F1]/50" : "border-zinc-200 group-hover:border-violet-300"
-                                        )}>
-                                            {layout.itemClasses.map((itemClass, idx) => (
-                                                <div 
-                                                    key={idx} 
-                                                    className={cn(
-                                                        "transition-all rounded-[2px]",
-                                                        isSelected 
-                                                            ? "bg-[#6366F1]/80 border border-[#6366F1]" 
-                                                            : "bg-zinc-300/80 border border-zinc-200 group-hover:bg-violet-100/80 group-hover:border-violet-200",
-                                                        itemClass
-                                                    )} 
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className={cn(
-                                            "text-[10px] font-bold mt-2 truncate w-full transition-colors block text-center",
-                                            isSelected ? "text-[#6366F1]" : "text-zinc-500 group-hover:text-violet-600"
-                                        )}>
-                                            {layout.name}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex justify-end pt-4 mt-4 border-t border-[#F3F4F6]">
-                            <button
-                                type="button"
-                                onClick={() => setIsLayoutPickerOpen(false)}
-                                className="px-6 py-2.5 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer"
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
