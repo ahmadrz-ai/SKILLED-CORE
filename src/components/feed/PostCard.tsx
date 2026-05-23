@@ -583,6 +583,35 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                     const imgCount = parsedImages.length;
 
+                    const renderCollageImage = (img: { url: string; alt?: string }, index: number) => {
+                        return (
+                            <div 
+                                className="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center group"
+                                onClick={() => setLightboxIndex(index)}
+                            >
+                                {/* Ambient Blurred Background (fills the slot beautifully with matching colors) */}
+                                <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none opacity-40 scale-110 blur-xl">
+                                    <img 
+                                        src={img.url} 
+                                        alt="" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                {/* Crisp Foreground Image (fully contained, zero cropping, completely visible text) */}
+                                <img 
+                                    src={img.url} 
+                                    alt={img.alt || `Attachment ${index + 1}`} 
+                                    className="relative z-10 w-full h-full object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+                                />
+                                {img.alt && (
+                                    <div className="absolute bottom-2 left-2 z-20 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                        ALT
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    };
+
                     // If single image, render in original aspect ratio with custom max-height
                     if (imgCount === 1) {
                         const img = parsedImages[0];
@@ -644,16 +673,8 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         return (
                             <div className="relative mt-3 grid grid-cols-2 gap-1.5 aspect-[3/2] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
                                 {parsedImages.map((img, index) => (
-                                    <div 
-                                        key={index}
-                                        className="relative h-full w-full overflow-hidden cursor-pointer group"
-                                        onClick={() => setLightboxIndex(index)}
-                                    >
-                                        <img 
-                                            src={img.url} 
-                                            alt={img.alt || `Attachment ${index + 1}`} 
-                                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                        />
+                                    <div key={index} className="relative h-full w-full overflow-hidden cursor-pointer">
+                                        {renderCollageImage(img, index)}
                                     </div>
                                 ))}
                             </div>
@@ -665,31 +686,16 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         return (
                             <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/10] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
                                 {/* Left tall image */}
-                                <div 
-                                    className="col-span-2 h-full w-full overflow-hidden cursor-pointer group relative"
-                                    onClick={() => setLightboxIndex(0)}
-                                >
-                                    <img 
-                                        src={parsedImages[0].url} 
-                                        alt={parsedImages[0].alt || "Attachment 1"} 
-                                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                    />
+                                <div className="col-span-2 h-full w-full overflow-hidden cursor-pointer">
+                                    {renderCollageImage(parsedImages[0], 0)}
                                 </div>
                                 {/* Right stacked images */}
                                 <div className="col-span-1 flex flex-col gap-1.5 h-full">
                                     {parsedImages.slice(1).map((img, idx) => {
                                         const actualIndex = idx + 1;
                                         return (
-                                            <div 
-                                                key={actualIndex}
-                                                className="h-[calc(50%-3px)] w-full overflow-hidden cursor-pointer group relative"
-                                                onClick={() => setLightboxIndex(actualIndex)}
-                                            >
-                                                <img 
-                                                    src={img.url} 
-                                                    alt={img.alt || `Attachment ${actualIndex + 1}`} 
-                                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                                />
+                                            <div key={actualIndex} className="h-[calc(50%-3px)] w-full overflow-hidden cursor-pointer">
+                                                {renderCollageImage(img, actualIndex)}
                                             </div>
                                         );
                                     })}
@@ -702,35 +708,26 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     return (
                         <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/11] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
                             {/* Left tall image */}
-                            <div 
-                                className="col-span-2 h-full w-full overflow-hidden cursor-pointer group relative"
-                                onClick={() => setLightboxIndex(0)}
-                            >
-                                <img 
-                                    src={parsedImages[0].url} 
-                                    alt={parsedImages[0].alt || "Attachment 1"} 
-                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                />
+                            <div className="col-span-2 h-full w-full overflow-hidden cursor-pointer">
+                                {renderCollageImage(parsedImages[0], 0)}
                             </div>
                             {/* Right stacked images */}
                             <div className="col-span-1 flex flex-col gap-1.5 h-full">
                                 {parsedImages.slice(1, 4).map((img, idx) => {
                                     const actualIndex = idx + 1;
                                     return (
-                                        <div 
-                                            key={actualIndex}
-                                            className="relative h-[calc(33.33%-3px)] w-full overflow-hidden cursor-pointer group"
-                                            onClick={() => setLightboxIndex(actualIndex)}
-                                        >
-                                            <img 
-                                                src={img.url} 
-                                                alt={img.alt || `Attachment ${actualIndex + 1}`} 
-                                                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
-                                            />
+                                        <div key={actualIndex} className="relative h-[calc(33.33%-3px)] w-full overflow-hidden cursor-pointer">
+                                            {renderCollageImage(img, actualIndex)}
                                             
                                             {/* If 5+ images, show "+X more" overlay on the 4th image (3rd index in right stack) */}
                                             {actualIndex === 3 && imgCount > 4 && (
-                                                <div className="absolute inset-0 bg-black/60 hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-white text-base sm:text-lg font-bold select-none cursor-pointer">
+                                                <div 
+                                                    className="absolute inset-0 z-20 bg-black/60 hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-white text-base sm:text-lg font-bold select-none cursor-pointer"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setLightboxIndex(actualIndex);
+                                                    }}
+                                                >
                                                     <span>+{imgCount - 3}</span>
                                                     <span className="text-[10px] tracking-wider uppercase font-medium mt-0.5">more</span>
                                                 </div>
