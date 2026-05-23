@@ -601,6 +601,4 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
             </DialogContent>
         </Dialog>
     );
-}g>
-    );
 }
