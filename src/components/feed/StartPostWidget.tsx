@@ -106,14 +106,14 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 formData.append("file", selectedFile);
                 const uploadRes = await uploadB2File(formData);
                 if (!uploadRes.success || !uploadRes.url) {
-                    toast.error(uploadRes.message || "Failed to upload image to Backblaze B2");
+                    toast.error(uploadRes.message || "Failed to upload image");
                     setIsUploading(false);
                     return;
                 }
                 imageUrl = uploadRes.url;
             } catch (err) {
                 console.error("Upload error:", err);
-                toast.error("Failed to upload image to Backblaze B2");
+                toast.error("Failed to upload image");
                 setIsUploading(false);
                 return;
             }
@@ -215,7 +215,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     {isUploading && (
                                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2">
                                             <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
-                                            <span className="text-xs font-semibold tracking-wide">Uploading image to Backblaze B2...</span>
+                                            <span className="text-xs font-semibold tracking-wide">Uploading...</span>
                                         </div>
                                     )}
                                 </div>

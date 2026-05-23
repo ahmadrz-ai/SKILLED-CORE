@@ -5,8 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { v2 as cloudinary } from "cloudinary";
-import { s3, B2_BUCKET } from "@/lib/b2";
-import { ListObjectsV2Command, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { B2_BUCKET, nativeListB2Files, nativeUploadB2File, nativeDeleteB2File } from "@/lib/b2";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -239,20 +238,7 @@ export async function getB2Files() {
         if (!B2_BUCKET) {
             return { success: true, files: [] };
         }
-        const command = new ListObjectsV2Command({
-            Bucket: B2_BUCKET,
-            MaxKeys: 50,
-        });
-        const res = await s3.send(command);
-        const endpoint = process.env.B2_ENDPOINT;
-        const files = (res.Contents || []).map((file: any) => ({
-            key: file.Key || '',
-            name: (file.Key || '').split('/').pop() || file.Key || '',
-            url: `https://${endpoint}/${B2_BUCKET}/${file.Key}`,
-            size: file.Size || 0,
-            type: 'image',
-            createdAt: file.LastModified ? new Date(file.LastModified).getTime() : Date.now(),
-        }));
+        const files = await nativeListB2Files(50);
         return { success: true, files };
     } catch (error) {
         console.error("Failed to fetch B2 files:", error);
@@ -287,27 +273,17 @@ export async function uploadB2File(formData: FormData) {
         const fileExt = file.name.split('.').pop() || 'jpg';
         const uniqueKey = `feed/${session.user.id}-${Date.now()}.${fileExt}`;
 
-        const command = new PutObjectCommand({
-            Bucket: B2_BUCKET,
-            Key: uniqueKey,
-            Body: buffer,
-            ContentType: file.type,
-        });
-
-        await s3.send(command);
-
-        const endpoint = process.env.B2_ENDPOINT;
-        const fileUrl = `https://${endpoint}/${B2_BUCKET}/${uniqueKey}`;
+        const res = await nativeUploadB2File(buffer, uniqueKey, file.type);
 
         return {
             success: true,
-            url: fileUrl,
+            url: res.url,
             key: uniqueKey,
             name: file.name
         };
     } catch (error) {
         console.error("Failed to upload B2 file:", error);
-        return { success: false, message: "B2 Upload failed" };
+        return { success: false, message: "Upload failed" };
     }
 }
 
@@ -359,11 +335,7 @@ export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' |
 
         if (b2Keys.length > 0) {
             for (const key of b2Keys) {
-                const command = new DeleteObjectCommand({
-                    Bucket: B2_BUCKET,
-                    Key: key
-                });
-                await s3.send(command);
+                await nativeDeleteB2File(key);
             }
         }
 
