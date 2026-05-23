@@ -117,11 +117,17 @@ export default async function FeedPage() {
             }
         }));
 
-        // Fetch a promoted user (Pro/Ultra) to display as an Ad
+        // Fetch a promoted user (Pro/Ultra) to display as an Ad, excluding connected users
+        const connectedUserIds = connections
+            .filter(c => c.status === 'ACCEPTED')
+            .map(c => c.requesterId === user.id ? c.addresseeId : c.requesterId);
+
         const promotedUser = await prisma.user.findFirst({
             where: {
                 OR: [{ plan: "PRO" }, { plan: "ULTRA" }],
-                NOT: { id: user.id }
+                NOT: {
+                    id: { in: [user.id, ...connectedUserIds] }
+                }
             },
             select: {
                 id: true,

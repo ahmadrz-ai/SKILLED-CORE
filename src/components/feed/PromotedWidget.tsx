@@ -2,7 +2,11 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Sparkles } from "lucide-react";
+import { UserPlus, Sparkles, Loader2, Check } from "lucide-react";
+import { useState } from "react";
+import { sendConnectionRequest } from "@/app/(app)/network/actions";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface PromotedWidgetProps {
     promotedUser: {
@@ -15,7 +19,26 @@ interface PromotedWidgetProps {
 }
 
 export function PromotedWidget({ promotedUser, isSelf }: PromotedWidgetProps) {
+    const [connectStatus, setConnectStatus] = useState<'IDLE' | 'LOADING' | 'SENT'>('IDLE');
+
     if (!promotedUser) return null;
+
+    const handleConnect = async () => {
+        setConnectStatus('LOADING');
+        try {
+            const res = await sendConnectionRequest(promotedUser.id);
+            if (res.success) {
+                setConnectStatus('SENT');
+                toast.success(`Connection request sent to ${promotedUser.name}!`);
+            } else {
+                setConnectStatus('IDLE');
+                toast.error(res.message || "Failed to send connection request.");
+            }
+        } catch (err) {
+            setConnectStatus('IDLE');
+            toast.error("Failed to send connection request.");
+        }
+    };
 
     return (
         <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 relative overflow-hidden group mb-4 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -48,10 +71,22 @@ export function PromotedWidget({ promotedUser, isSelf }: PromotedWidgetProps) {
                         <Button 
                             size="sm" 
                             variant="outline" 
-                            className="text-xs h-7.5 border-[#C7D2FE] text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] hover:text-[#4F46E5] rounded-full px-4.5 font-bold shadow-sm transition-all duration-200 inline-flex items-center animate-none"
+                            disabled={connectStatus !== 'IDLE'}
+                            onClick={handleConnect}
+                            className={cn(
+                                "text-xs h-7.5 border rounded-full px-4.5 font-bold shadow-sm transition-all duration-200 inline-flex items-center animate-none",
+                                connectStatus === 'SENT'
+                                    ? "border-[#E5E7EB] text-[#6B7280] bg-[#F9FAFB] cursor-not-allowed"
+                                    : "border-[#C7D2FE] text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] hover:text-[#4F46E5]"
+                            )}
                         >
-                            <UserPlus className="w-3.5 h-3.5 mr-1.5 text-[#6366F1]" />
-                            Connect
+                            {connectStatus === 'LOADING' && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+                            {connectStatus === 'SENT' && <Check className="w-3.5 h-3.5 mr-1.5 text-green-600" />}
+                            {connectStatus === 'IDLE' && <UserPlus className="w-3.5 h-3.5 mr-1.5 text-[#6366F1]" />}
+                            
+                            {connectStatus === 'LOADING' && "Connecting..."}
+                            {connectStatus === 'SENT' && "Pending"}
+                            {connectStatus === 'IDLE' && "Connect"}
                         </Button>
                     )}
                     {isSelf && (

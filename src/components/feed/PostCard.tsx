@@ -367,7 +367,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                     </Button>
                                 </>
                             )}
-                            <DropdownMenu>
+                            <DropdownMenu modal={false}>
                                 <DropdownMenuTrigger asChild>
                                     <button className="text-[#9CA3AF] hover:text-[#6B7280] p-1 rounded hover:bg-[#F3F4F6] transition-colors">
                                         <MoreHorizontal className="w-4 h-4" />

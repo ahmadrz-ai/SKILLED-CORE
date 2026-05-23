@@ -25,6 +25,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "SkilledCore | Talent Intelligence Platform",
   description: "AI-powered talent intelligence, hiring, and skill analytics. Combines ATS, LMS, and AI-driven skill profiling for modern teams.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "SkilledCore — Talent Intelligence Platform",
     description: "AI-powered hiring, skill analytics, and talent management for modern enterprises.",

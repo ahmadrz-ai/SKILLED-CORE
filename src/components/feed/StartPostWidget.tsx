@@ -38,6 +38,26 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const [draftImages, setDraftImages] = useState<DraftImage[]>([]);
     const [editorInitialFiles, setEditorInitialFiles] = useState<File[]>([]);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    // Event State
+    const [isEventOpen, setIsEventOpen] = useState(false);
+    const [eventTitle, setEventTitle] = useState("");
+    const [eventDate, setEventDate] = useState("");
+    const [eventTime, setEventTime] = useState("");
+    const [eventFormat, setEventFormat] = useState<"online" | "in-person">("online");
+    const [eventLocation, setEventLocation] = useState("");
+    const [eventDescription, setEventDescription] = useState("");
+    const [eventErrors, setEventErrors] = useState<Record<string, string>>({});
+    const [isEventSubmitting, setIsEventSubmitting] = useState(false);
+
+    // Article State
+    const [isArticleOpen, setIsArticleOpen] = useState(false);
+    const [articleTitle, setArticleTitle] = useState("");
+    const [articleCoverFile, setArticleCoverFile] = useState<File | null>(null);
+    const [articleCoverPreview, setArticleCoverPreview] = useState("");
+    const [articleBody, setArticleBody] = useState("");
+    const [articleErrors, setArticleErrors] = useState<Record<string, string>>({});
+    const [isArticleSubmitting, setIsArticleSubmitting] = useState(false);
     
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,8 +71,11 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     URL.revokeObjectURL(img.previewUrl);
                 }
             });
+            if (articleCoverPreview) {
+                URL.revokeObjectURL(articleCoverPreview);
+            }
         };
-    }, [draftImages]);
+    }, [draftImages, articleCoverPreview]);
 
     // Force focus when dialog opens
     useEffect(() => {
@@ -110,6 +133,112 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             }
             return prev.filter((_, idx) => idx !== indexToRemove);
         });
+    };
+
+    const handleEventSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const errors: Record<string, string> = {};
+
+        if (eventTitle.trim().length < 3) {
+            errors.title = "Event name must be at least 3 characters.";
+        }
+        if (!eventDate || !eventTime) {
+            errors.dateTime = "Please select both date and time.";
+        } else {
+            const eventDateTime = new Date(`${eventDate}T${eventTime}`);
+            if (eventDateTime.getTime() <= Date.now()) {
+                errors.dateTime = "Event date and time must be in the future.";
+            }
+        }
+        if (!eventLocation.trim()) {
+            errors.location = "Location or Link is required.";
+        } else if (eventFormat === "online") {
+            const isUrl = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(eventLocation.trim());
+            if (!isUrl) {
+                errors.location = "Please enter a valid URL for online format.";
+            }
+        }
+        if (eventDescription.trim().length < 10) {
+            errors.description = "Description must be at least 10 characters.";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setEventErrors(errors);
+            toast.error("Please resolve all validation errors.");
+            return;
+        }
+
+        setEventErrors({});
+        setIsEventSubmitting(true);
+
+        const eventDateTime = new Date(`${eventDate}T${eventTime}`);
+        const formattedPostContent = `📅 **EVENT: ${eventTitle.trim()}**\n\n🕒 **Date & Time:** ${eventDateTime.toLocaleString()}\n📍 **Location:** ${eventFormat === "online" ? "🌐 Online" : "📍 In-Person"} - ${eventLocation.trim()}\n\n📝 **Details:**\n${eventDescription.trim()}`;
+
+        try {
+            onPostCreated?.(formattedPostContent, undefined, undefined);
+            
+            // Reset & Close
+            setEventTitle("");
+            setEventDate("");
+            setEventTime("");
+            setEventFormat("online");
+            setEventLocation("");
+            setEventDescription("");
+            setIsEventOpen(false);
+            toast.success("Event created successfully!");
+        } catch (err) {
+            toast.error("Failed to create event post.");
+        } finally {
+            setIsEventSubmitting(false);
+        }
+    };
+
+    const handleArticleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const errors: Record<string, string> = {};
+
+        if (articleTitle.trim().length < 5) {
+            errors.title = "Article title must be at least 5 characters.";
+        }
+        if (articleBody.trim().length < 20) {
+            errors.body = "Article body must be at least 20 characters.";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setArticleErrors(errors);
+            toast.error("Please resolve all validation errors.");
+            return;
+        }
+
+        setArticleErrors({});
+        setIsArticleSubmitting(true);
+
+        let imageUrl: string | undefined;
+
+        try {
+            if (articleCoverFile) {
+                const secureUrl = await uploadSingleToCloudinary(articleCoverFile);
+                imageUrl = JSON.stringify([{ url: secureUrl, alt: "Article Cover Image", tags: [] }]);
+            }
+
+            const formattedPostContent = `📝 **ARTICLE: ${articleTitle.trim()}**\n\n${articleBody.trim()}`;
+            onPostCreated?.(formattedPostContent, undefined, imageUrl);
+
+            // Reset & Close
+            setArticleTitle("");
+            setArticleCoverFile(null);
+            if (articleCoverPreview) {
+                URL.revokeObjectURL(articleCoverPreview);
+                setArticleCoverPreview("");
+            }
+            setArticleBody("");
+            setIsArticleOpen(false);
+            toast.success("Article published successfully!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to upload cover image.");
+        } finally {
+            setIsArticleSubmitting(false);
+        }
     };
 
     const handleFeatureDisabled = (feature: string) => {
@@ -463,7 +592,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 </button>
  
                 <button
-                    onClick={() => handleFeatureDisabled("Events")}
+                    onClick={() => setIsEventOpen(true)}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FFFBEB] transition-all duration-200 text-[#6B7280] hover:text-[#D97706] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
                 >
                     <Calendar className="w-5 h-5 text-[#D97706] group-hover:scale-110 transition-transform duration-200" />
@@ -471,13 +600,241 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 </button>
  
                 <button
-                    onClick={() => handleFeatureDisabled("Articles")}
+                    onClick={() => setIsArticleOpen(true)}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FEF2F2] transition-all duration-200 text-[#6B7280] hover:text-[#EF4444] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
                 >
                     <FileText className="w-5 h-5 text-[#EF4444] group-hover:scale-110 transition-transform duration-200" />
                     <span>Write article</span>
                 </button>
             </div>
+ 
+            {/* Event Creation Modal */}
+            <Dialog open={isEventOpen} onOpenChange={setIsEventOpen}>
+                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-xl p-0 overflow-visible shadow-2xl rounded-2xl">
+                    <DialogHeader className="p-5 border-b border-[#E5E7EB]">
+                        <DialogTitle className="text-xl font-extrabold text-[#111827]">Create an Event</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleEventSubmit} className="p-6 space-y-4">
+                        {/* Title */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Event Name</label>
+                            <input
+                                type="text"
+                                value={eventTitle}
+                                onChange={(e) => setEventTitle(e.target.value)}
+                                placeholder="e.g. SkilledCore AI Hackathon 2026"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                            />
+                            {eventErrors.title && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.title}</p>}
+                        </div>
+
+                        {/* Date and Time */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Date</label>
+                                <input
+                                    type="date"
+                                    value={eventDate}
+                                    onChange={(e) => setEventDate(e.target.value)}
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Time</label>
+                                <input
+                                    type="time"
+                                    value={eventTime}
+                                    onChange={(e) => setEventTime(e.target.value)}
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                />
+                            </div>
+                        </div>
+                        {eventErrors.dateTime && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.dateTime}</p>}
+
+                        {/* Format Picker */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider block mb-1">Event Format</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setEventFormat("online")}
+                                    className={cn("px-4 py-2.5 text-sm font-bold border rounded-xl flex items-center justify-center gap-2 transition-all duration-200",
+                                        eventFormat === "online" 
+                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1] shadow-sm" 
+                                            : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563] hover:bg-[#F3F4F6]"
+                                    )}
+                                >
+                                    🌐 Online
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEventFormat("in-person")}
+                                    className={cn("px-4 py-2.5 text-sm font-bold border rounded-xl flex items-center justify-center gap-2 transition-all duration-200",
+                                        eventFormat === "in-person" 
+                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1] shadow-sm" 
+                                            : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563] hover:bg-[#F3F4F6]"
+                                    )}
+                                >
+                                    📍 In-Person
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Location / Link */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">
+                                {eventFormat === "online" ? "Meeting URL Link" : "Physical Address / Venue"}
+                            </label>
+                            <input
+                                type="text"
+                                value={eventLocation}
+                                onChange={(e) => setEventLocation(e.target.value)}
+                                placeholder={eventFormat === "online" ? "https://meet.google.com/abc-defg-hij" : "123 Technology Park, London"}
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                            />
+                            {eventErrors.location && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.location}</p>}
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Event Details</label>
+                            <Textarea
+                                value={eventDescription}
+                                onChange={(e: any) => setEventDescription(e.target.value)}
+                                placeholder="Describe the topics, timeline, speakers, and instructions for participants..."
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none min-h-[100px] resize-none"
+                            />
+                            {eventErrors.description && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.description}</p>}
+                        </div>
+
+                        {/* Submit Row */}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setIsEventOpen(false)}
+                                className="rounded-full px-5 text-sm font-bold text-[#6B7280] hover:bg-[#F3F4F6]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isEventSubmitting}
+                                className="rounded-full px-6 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white font-bold text-sm shadow-md hover:opacity-95 transition-opacity"
+                            >
+                                {isEventSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Event"}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Article Creation Modal */}
+            <Dialog open={isArticleOpen} onOpenChange={setIsArticleOpen}>
+                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-2xl p-0 overflow-visible shadow-2xl rounded-2xl">
+                    <DialogHeader className="p-5 border-b border-[#E5E7EB]">
+                        <DialogTitle className="text-xl font-extrabold text-[#111827]">Write an Article</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleArticleSubmit} className="p-6 space-y-4">
+                        {/* Title */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Article Title</label>
+                            <input
+                                type="text"
+                                value={articleTitle}
+                                onChange={(e) => setArticleTitle(e.target.value)}
+                                placeholder="Give your article a catchy, high-engagement headline..."
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                            />
+                            {articleErrors.title && <p className="text-[11px] text-red-500 font-semibold">{articleErrors.title}</p>}
+                        </div>
+
+                        {/* Cover Image */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Cover Image (Optional)</label>
+                            <input
+                                type="file"
+                                id="article-cover-input"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        if (file.size >= 4 * 1024 * 1024) {
+                                            toast.error("Cover image must be under 4MB.");
+                                            return;
+                                        }
+                                        setArticleCoverFile(file);
+                                        setArticleCoverPreview(URL.createObjectURL(file));
+                                    }
+                                }}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                            
+                            {articleCoverPreview ? (
+                                <div className="relative aspect-video rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] group">
+                                    <img
+                                        src={articleCoverPreview}
+                                        alt="Article Cover Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setArticleCoverFile(null);
+                                            URL.revokeObjectURL(articleCoverPreview);
+                                            setArticleCoverPreview("");
+                                        }}
+                                        className="absolute top-3 right-3 bg-black/60 hover:bg-black/85 text-white p-2 rounded-full backdrop-blur-sm shadow transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label
+                                    htmlFor="article-cover-input"
+                                    className="border-2 border-dashed border-[#E5E7EB] hover:border-[#6366F1] rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-[#F9FAFB] cursor-pointer transition-colors group"
+                                >
+                                    <ImageIcon className="w-8 h-8 text-[#9CA3AF] group-hover:text-[#6366F1] transition-colors" />
+                                    <span className="text-xs font-bold text-[#4B5563] group-hover:text-[#6366F1] transition-colors">
+                                        Upload cover image (Under 4MB)
+                                    </span>
+                                </label>
+                            )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[#4B5563] uppercase tracking-wider">Article Content</label>
+                            <Textarea
+                                value={articleBody}
+                                onChange={(e: any) => setArticleBody(e.target.value)}
+                                placeholder="Share your professional insights, technical guides, or industry learnings..."
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none min-h-[160px] resize-none"
+                            />
+                            {articleErrors.body && <p className="text-[11px] text-red-500 font-semibold">{articleErrors.body}</p>}
+                        </div>
+
+                        {/* Submit Row */}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setIsArticleOpen(false)}
+                                className="rounded-full px-5 text-sm font-bold text-[#6B7280] hover:bg-[#F3F4F6]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isArticleSubmitting}
+                                className="rounded-full px-6 bg-gradient-to-r from-[#EC4899] to-[#D946EF] hover:opacity-95 text-white font-bold text-sm shadow-md transition-opacity"
+                            >
+                                {isArticleSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Article"}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* LinkedIn-Style Image Editor Modal */}
             <ImageEditorModal
