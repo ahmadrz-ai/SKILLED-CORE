@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
     ThumbsUp, MessageCircle, Repeat, Send, MoreHorizontal,
     Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck,
-    Tag, Info, ChevronLeft, ChevronRight
+    Tag, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -101,51 +101,8 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [hoveredImageIdx, setHoveredImageIdx] = useState<number | null>(null);
 
-    // Instagram-Style Carousel State
-    const [currentImgIndex, setCurrentImgIndex] = useState(0);
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
     // Post Text Expansion State
     const [isExpanded, setIsExpanded] = useState(false);
-
-    const minSwipeDistance = 50;
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientX);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientX);
-    };
-
-    const handleTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > minSwipeDistance;
-        const isRightSwipe = distance < -minSwipeDistance;
-
-        let parsedImages: any[] = [];
-        if (post.image) {
-            if (post.image.startsWith("[")) {
-                try {
-                    parsedImages = JSON.parse(post.image);
-                } catch (err) {
-                    parsedImages = [{ url: post.image }];
-                }
-            } else {
-                parsedImages = [{ url: post.image }];
-            }
-        }
-
-        if (isLeftSwipe && currentImgIndex < parsedImages.length - 1) {
-            setCurrentImgIndex(prev => prev + 1);
-        }
-        if (isRightSwipe && currentImgIndex > 0) {
-            setCurrentImgIndex(prev => prev - 1);
-        }
-    };
 
     // Sync with server updates
     useEffect(() => {
@@ -682,122 +639,106 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         );
                     }
 
-                    // Otherwise, render carousel for multiple images with object-contain to prevent cropping
-                    return (
-                        <div className="relative mt-3 w-full">
-                            {/* Outer Frame */}
-                            <div 
-                                className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-zinc-950 group aspect-[4/3] sm:aspect-video select-none"
-                                onTouchStart={handleTouchStart}
-                                onTouchMove={handleTouchMove}
-                                onTouchEnd={handleTouchEnd}
-                            >
-                                {/* Images Horizontal Wrapper */}
+                    // If 2 images: 2 equal-width columns side-by-side
+                    if (imgCount === 2) {
+                        return (
+                            <div className="relative mt-3 grid grid-cols-2 gap-1.5 aspect-[3/2] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
+                                {parsedImages.map((img, index) => (
+                                    <div 
+                                        key={index}
+                                        className="relative h-full w-full overflow-hidden cursor-pointer group"
+                                        onClick={() => setLightboxIndex(index)}
+                                    >
+                                        <img 
+                                            src={img.url} 
+                                            alt={img.alt || `Attachment ${index + 1}`} 
+                                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    }
+
+                    // If 3 images: 1 large on left, 2 smaller stacked on right
+                    if (imgCount === 3) {
+                        return (
+                            <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/10] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
+                                {/* Left tall image */}
                                 <div 
-                                    className="flex h-full transition-transform duration-300 ease-out"
-                                    style={{ transform: `translateX(-${currentImgIndex * 100}%)`, width: `${imgCount * 100}%` }}
+                                    className="col-span-2 h-full w-full overflow-hidden cursor-pointer group relative"
+                                    onClick={() => setLightboxIndex(0)}
                                 >
-                                    {parsedImages.map((img, index) => (
+                                    <img 
+                                        src={parsedImages[0].url} 
+                                        alt={parsedImages[0].alt || "Attachment 1"} 
+                                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                                    />
+                                </div>
+                                {/* Right stacked images */}
+                                <div className="col-span-1 flex flex-col gap-1.5 h-full">
+                                    {parsedImages.slice(1).map((img, idx) => {
+                                        const actualIndex = idx + 1;
+                                        return (
+                                            <div 
+                                                key={actualIndex}
+                                                className="h-[calc(50%-3px)] w-full overflow-hidden cursor-pointer group relative"
+                                                onClick={() => setLightboxIndex(actualIndex)}
+                                            >
+                                                <img 
+                                                    src={img.url} 
+                                                    alt={img.alt || `Attachment ${actualIndex + 1}`} 
+                                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // If 4 or more images: 1 large on left, 3 smaller stacked on right (matching the LinkedIn style!)
+                    return (
+                        <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/11] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
+                            {/* Left tall image */}
+                            <div 
+                                className="col-span-2 h-full w-full overflow-hidden cursor-pointer group relative"
+                                onClick={() => setLightboxIndex(0)}
+                            >
+                                <img 
+                                    src={parsedImages[0].url} 
+                                    alt={parsedImages[0].alt || "Attachment 1"} 
+                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                                />
+                            </div>
+                            {/* Right stacked images */}
+                            <div className="col-span-1 flex flex-col gap-1.5 h-full">
+                                {parsedImages.slice(1, 4).map((img, idx) => {
+                                    const actualIndex = idx + 1;
+                                    return (
                                         <div 
-                                            key={index} 
-                                            className="h-full relative flex items-center justify-center overflow-hidden"
-                                            style={{ width: `${100 / imgCount}%` }}
-                                            onMouseEnter={() => setHoveredImageIdx(index)}
-                                            onMouseLeave={() => setHoveredImageIdx(null)}
+                                            key={actualIndex}
+                                            className="relative h-[calc(33.33%-3px)] w-full overflow-hidden cursor-pointer group"
+                                            onClick={() => setLightboxIndex(actualIndex)}
                                         >
                                             <img 
                                                 src={img.url} 
-                                                alt={img.alt || `Attachment ${index + 1}`} 
-                                                className="w-full h-full object-contain cursor-pointer"
-                                                onClick={() => setLightboxIndex(index)}
+                                                alt={img.alt || `Attachment ${actualIndex + 1}`} 
+                                                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
                                             />
-
-                                            {/* Tags on hover */}
-                                            {img.tags && img.tags.map((t, idx) => (
-                                                <div 
-                                                    key={idx}
-                                                    className={cn(
-                                                        "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                        hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                                    )}
-                                                    style={{ left: `${t.x}%`, top: `${t.y}%` }}
-                                                >
-                                                    <div 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            router.push(`/profile/${t.username}`);
-                                                        }}
-                                                        className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                                    >
-                                                        <Tag className="w-3 h-3 text-[#10B981]" />
-                                                        <span>{t.name}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-
-                                            {/* ALT Box */}
-                                            {img.alt && (
-                                                <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                    ALT
-                                                </div>
-                                            )}
-
-                                            {/* Tag count */}
-                                            {img.tags && img.tags.length > 0 && (
-                                                <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                                    <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                                    <span>{img.tags.length} tagged</span>
+                                            
+                                            {/* If 5+ images, show "+X more" overlay on the 4th image (3rd index in right stack) */}
+                                            {actualIndex === 3 && imgCount > 4 && (
+                                                <div className="absolute inset-0 bg-black/60 hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-white text-base sm:text-lg font-bold select-none cursor-pointer">
+                                                    <span>+{imgCount - 3}</span>
+                                                    <span className="text-[10px] tracking-wider uppercase font-medium mt-0.5">more</span>
                                                 </div>
                                             )}
                                         </div>
-                                    ))}
-                                </div>
-
-                                {/* Previous Slide Button */}
-                                {imgCount > 1 && currentImgIndex > 0 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCurrentImgIndex(prev => prev - 1);
-                                        }}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-40 focus:outline-none"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                    </button>
-                                )}
-
-                                {/* Next Slide Button */}
-                                {imgCount > 1 && currentImgIndex < imgCount - 1 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCurrentImgIndex(prev => prev + 1);
-                                        }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-40 focus:outline-none"
-                                    >
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                )}
+                                    );
+                                })}
                             </div>
-
-                            {/* Pagination Dots (Instagram style) */}
-                            {imgCount > 1 && (
-                                <div className="flex justify-center gap-1.5 mt-2.5">
-                                    {parsedImages.map((_, dotIdx) => (
-                                        <button
-                                            key={dotIdx}
-                                            onClick={() => setCurrentImgIndex(dotIdx)}
-                                            className={cn(
-                                                "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                                currentImgIndex === dotIdx 
-                                                    ? "bg-[#6366F1] scale-125" 
-                                                    : "bg-gray-300 hover:bg-gray-400"
-                                            )}
-                                        />
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     );
                 })()}
