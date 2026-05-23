@@ -65,6 +65,117 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     
     // Text Formatting State
     const [showFormatting, setShowFormatting] = useState(false);
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkText, setLinkText] = useState("");
+    const [linkUrl, setLinkUrl] = useState("");
+    const [linkSelectionStart, setLinkSelectionStart] = useState(0);
+    const [linkSelectionEnd, setLinkSelectionEnd] = useState(0);
+
+    // Keyboard Shortcuts and List Conversions
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // Bold: Ctrl+B / Cmd+B
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+            e.preventDefault();
+            formatText("bold");
+            return;
+        }
+
+        // Italic: Ctrl+I / Cmd+I
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
+            e.preventDefault();
+            formatText("italic");
+            return;
+        }
+
+        // Underline: Ctrl+U / Cmd+U
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") {
+            e.preventDefault();
+            formatText("underline");
+            return;
+        }
+
+        // Key interception: Space key pressed for list auto-formatting
+        if (e.key === " ") {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const text = textarea.value;
+
+            // Find start of the current line
+            const lastNewLine = text.lastIndexOf("\n", start - 1);
+            const lineStart = lastNewLine === -1 ? 0 : lastNewLine + 1;
+            const currentLineText = text.substring(lineStart, start);
+
+            // Match if line starts with exactly "*" or "-" followed by space
+            if (currentLineText === "*" || currentLineText === "-") {
+                e.preventDefault();
+                // Replace with bullet "• "
+                const newContent = text.substring(0, lineStart) + "• " + text.substring(start);
+                setContent(newContent);
+
+                // Place cursor after bullet
+                setTimeout(() => {
+                    textarea.focus();
+                    const newPos = lineStart + 2;
+                    textarea.setSelectionRange(newPos, newPos);
+                }, 0);
+            }
+        }
+    };
+
+    const openLinkDialog = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) {
+            setLinkText("");
+            setLinkUrl("");
+            setLinkSelectionStart(0);
+            setLinkSelectionEnd(0);
+            setIsLinkDialogOpen(true);
+            return;
+        }
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selectedText = text.substring(start, end);
+
+        setLinkText(selectedText);
+        setLinkUrl("");
+        setLinkSelectionStart(start);
+        setLinkSelectionEnd(end);
+        setIsLinkDialogOpen(true);
+    };
+
+    const handleInsertLink = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) {
+            setIsLinkDialogOpen(false);
+            return;
+        }
+
+        const start = linkSelectionStart;
+        const end = linkSelectionEnd;
+        const text = textarea.value;
+
+        const displayName = linkText.trim() || "link text";
+        const url = linkUrl.trim() || "https://skilledcore.com";
+
+        // Format as [displayName](url)
+        const replacement = `[${displayName}](${url})`;
+
+        const newContent = text.substring(0, start) + replacement + text.substring(end);
+        setContent(newContent);
+
+        setIsLinkDialogOpen(false);
+
+        // Refocus textarea and place cursor after the link
+        setTimeout(() => {
+            textarea.focus();
+            const newCursorPos = start + replacement.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 50);
+    };
 
     // Cleanup object URLs on unmount
     useEffect(() => {
@@ -115,7 +226,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 replacement = `~~${selectedText || "strikethrough text"}~~`;
                 break;
             case "bullet":
-                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}- ${selectedText || "list item"}`;
+                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}• ${selectedText || "list item"}`;
                 break;
             case "number":
                 replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}1. ${selectedText || "list item"}`;
@@ -129,8 +240,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     : `\`${selectedText || "code"}\``;
                 break;
             case "link":
-                replacement = `[${selectedText || "link text"}](https://skilledcore.com)`;
-                break;
+                openLinkDialog();
+                return;
             default:
                 return;
         }
@@ -559,6 +670,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 ref={textareaRef}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
+                                onKeyDown={handleKeyDown}
                                 placeholder="What do you want to talk about?"
                                 disabled={isUploading}
                                 className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[150px] md:min-h-[200px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
@@ -1031,6 +1143,65 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 initialFiles={editorInitialFiles}
                 onApply={handleApplyEditorChanges}
             />
+
+            {/* Beautiful Custom Insert Link Dialog Overlay */}
+            {isLinkDialogOpen && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-[#1F2937] border border-gray-700/80 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-white transform scale-100 transition-all">
+                        <h3 className="text-base font-bold text-white mb-4 tracking-tight flex items-center gap-2">
+                            <Link2 className="w-4 h-4 text-violet-400" />
+                            Insert link
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Text to display</label>
+                                <input
+                                    type="text"
+                                    value={linkText}
+                                    onChange={(e) => setLinkText(e.target.value)}
+                                    placeholder="Text to display"
+                                    className="w-full bg-[#111827] border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-colors"
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Address</label>
+                                <input
+                                    type="text"
+                                    value={linkUrl}
+                                    onChange={(e) => setLinkUrl(e.target.value)}
+                                    placeholder="Link to an existing file or web page"
+                                    className="w-full bg-[#111827] border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-colors"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleInsertLink();
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setIsLinkDialogOpen(false)}
+                                className="px-4 py-2 text-xs font-bold text-gray-300 hover:text-white bg-transparent hover:bg-gray-800 border border-gray-700 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleInsertLink}
+                                className="px-5 py-2 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors shadow-lg shadow-violet-600/20"
+                            >
+                                Insert
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
