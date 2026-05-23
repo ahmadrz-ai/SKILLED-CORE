@@ -72,13 +72,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Admin Sidebar */}
             <aside className="w-64 border-r border-zinc-800/80 flex flex-col fixed h-full bg-zinc-950/40 backdrop-blur-xl z-50">
                 <div className="p-6 border-b border-zinc-800/50 flex flex-col gap-1">
-                    <div className="flex items-center gap-2.5 text-violet-500">
-                        <div className="p-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                            <Shield className="w-5 h-5 text-violet-400" />
+                    <Link href="/feed" className="flex items-center gap-2.5 group">
+                        <img
+                            src="/logo.png"
+                            alt="SkilledCore"
+                            className="w-8 h-8 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
+                        />
+                        <div className="flex flex-col leading-none">
+                            <span className="text-white font-bold text-sm tracking-tight">SkilledCore</span>
+                            <span className="text-zinc-500 text-[10px] font-medium">Talent Intelligence</span>
                         </div>
-                        <span className="font-sans font-black tracking-tight text-white text-base">SKILLEDCORE</span>
-                    </div>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-sans font-semibold mt-1">
+                    </Link>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-sans font-semibold mt-2">
                         Admin Console
                     </p>
                 </div>

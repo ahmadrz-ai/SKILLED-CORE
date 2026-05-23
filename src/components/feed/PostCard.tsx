@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
     ThumbsUp, MessageCircle, Repeat, Send, MoreHorizontal,
     Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck,
-    Tag, Info
+    Tag, Info, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -100,6 +100,49 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     // Multi-Image & Interactive Tagging State
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [hoveredImageIdx, setHoveredImageIdx] = useState<number | null>(null);
+
+    // Instagram-Style Carousel State
+    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    const minSwipeDistance = 50;
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        let parsedImages: any[] = [];
+        if (post.image) {
+            if (post.image.startsWith("[")) {
+                try {
+                    parsedImages = JSON.parse(post.image);
+                } catch (err) {
+                    parsedImages = [{ url: post.image }];
+                }
+            } else {
+                parsedImages = [{ url: post.image }];
+            }
+        }
+
+        if (isLeftSwipe && currentImgIndex < parsedImages.length - 1) {
+            setCurrentImgIndex(prev => prev + 1);
+        }
+        if (isRightSwipe && currentImgIndex > 0) {
+            setCurrentImgIndex(prev => prev - 1);
+        }
+    };
 
     // Sync with server updates
     useEffect(() => {
@@ -308,16 +351,17 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
     return (
         <div className="group relative bg-white border border-[#E5E7EB] py-5 hover:shadow-sm transition-all duration-200 -mx-4 px-4 lg:mx-0 lg:px-5 lg:rounded-xl lg:mb-3">
-            <div className="flex gap-3">
-                <Link href={`/profile/${authorUsername}`}>
-                    <Avatar className="w-10 h-10 border border-[#E5E7EB] cursor-pointer hover:border-[#6366F1] transition-colors flex-shrink-0">
-                        <AvatarImage src={post.author.avatar || undefined} />
-                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                </Link>
+            {/* Header Section (Not side-by-side with body to allow full width centering of post content) */}
+            <div className="flex justify-between items-center gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                    <Link href={`/profile/${authorUsername}`}>
+                        <Avatar className="w-10 h-10 border border-[#E5E7EB] cursor-pointer hover:border-[#6366F1] transition-colors flex-shrink-0">
+                            <AvatarImage src={post.author.avatar || undefined} />
+                            <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </Link>
 
-                <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
+                    <div className="flex flex-col">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <Link href={`/profile/${authorUsername}`} className="hover:underline group/author flex items-center">
                                 <span className="font-semibold text-[#111827] text-sm group-hover/author:text-[#6366F1] transition-colors leading-none">
@@ -327,8 +371,12 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                             {(post.author.plan === 'PRO' || post.author.plan === 'ULTRA') && (
                                 <TooltipProvider>
                                     <Tooltip>
-                                        <TooltipTrigger className="flex items-center justify-center"><BadgeCheck className="w-4 h-4 text-[#7C3AED]" /></TooltipTrigger>
-                                        <TooltipContent><p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p></TooltipContent>
+                                        <TooltipTrigger className="flex items-center justify-center">
+                                            <BadgeCheck className="w-4 h-4 text-sky-500 fill-sky-500/10" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
+                                        </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
@@ -338,273 +386,197 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                             {post.author.role === 'RECRUITER' && (
                                 <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase border border-[#BFDBFE] leading-none">RECRUITER</span>
                             )}
-                            <span suppressHydrationWarning className="flex items-center text-[#9CA3AF] text-xs leading-none">· {post.timestamp}</span>
                             {post.author.isHiring && (
                                 <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EEF2FF] text-[#6366F1] text-[10px] font-bold uppercase border border-[#C7D2FE] leading-none">Hiring</span>
                             )}
                         </div>
+                        <span suppressHydrationWarning className="flex items-center text-[#9CA3AF] text-xs mt-1">
+                            {post.timestamp}
+                        </span>
+                    </div>
+                </div>
 
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                            {session?.user?.id && session.user.id !== post.author.id && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    {session?.user?.id && session.user.id !== post.author.id && (
+                        <>
+                            {connStatus === 'NONE' && post.author.nodeType !== 'BROADCAST' && post.author.role !== 'RECRUITER' && (
+                                <Button variant="ghost" size="sm" onClick={handleConnect} disabled={loadingConnect}
+                                    className="h-7 px-2.5 text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5] hover:bg-[#EEF2FF] border border-[#C7D2FE] rounded-full">
+                                    <UserPlus className="w-3 h-3 mr-1" /> Connect
+                                </Button>
+                            )}
+                            {connStatus === 'PENDING_SENT' && (
+                                <span className="text-[#9CA3AF] text-[10px] font-semibold uppercase px-2">Pending</span>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={handleFollow} disabled={loadingFollow}
+                                className={cn("h-7 px-2.5 text-xs font-semibold rounded-full border transition-all",
+                                    isFollowing
+                                        ? "text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEF2F2] border-[#E5E7EB]"
+                                        : (post.author.nodeType === 'BROADCAST' || post.author.role === 'RECRUITER')
+                                            ? "text-[#0891B2] bg-[#ECFEFF] hover:bg-[#CFFAFE] border-[#A5F3FC]"
+                                            : "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] border-[#C7D2FE]")}>
+                                {isFollowing ? "Following" : <><Plus className="w-3 h-3 mr-1" />Follow</>}
+                            </Button>
+                        </>
+                    )}
+                    <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                            <button className="text-[#9CA3AF] hover:text-[#6B7280] p-1 rounded hover:bg-[#F3F4F6] transition-colors">
+                                <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-white border-[#E5E7EB] text-[#374151] shadow-lg">
+                            <DropdownMenuItem onClick={() => toast.success("Noted. We will adjust your feed.")} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
+                                <XCircle className="w-4 h-4 text-[#9CA3AF]" /> Not Interested
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
+                                <Flag className="w-4 h-4" /> Report Post
+                            </DropdownMenuItem>
+                            {session?.user?.id === post.author.id && (
                                 <>
-                                    {connStatus === 'NONE' && post.author.nodeType !== 'BROADCAST' && post.author.role !== 'RECRUITER' && (
-                                        <Button variant="ghost" size="sm" onClick={handleConnect} disabled={loadingConnect}
-                                            className="h-7 px-2.5 text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5] hover:bg-[#EEF2FF] border border-[#C7D2FE] rounded-full">
-                                            <UserPlus className="w-3 h-3 mr-1" /> Connect
-                                        </Button>
-                                    )}
-                                    {connStatus === 'PENDING_SENT' && (
-                                        <span className="text-[#9CA3AF] text-[10px] font-semibold uppercase px-2">Pending</span>
-                                    )}
-                                    <Button variant="ghost" size="sm" onClick={handleFollow} disabled={loadingFollow}
-                                        className={cn("h-7 px-2.5 text-xs font-semibold rounded-full border transition-all",
-                                            isFollowing
-                                                ? "text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEF2F2] border-[#E5E7EB]"
-                                                : (post.author.nodeType === 'BROADCAST' || post.author.role === 'RECRUITER')
-                                                    ? "text-[#0891B2] bg-[#ECFEFF] hover:bg-[#CFFAFE] border-[#A5F3FC]"
-                                                    : "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] border-[#C7D2FE]")}>
-                                        {isFollowing ? "Following" : <><Plus className="w-3 h-3 mr-1" />Follow</>}
-                                    </Button>
+                                    <DropdownMenuItem onClick={() => setIsEditModalOpen(true)} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
+                                        <Edit className="w-4 h-4 text-[#9CA3AF]" /> Edit Post
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
+                                        <Trash2 className="w-4 h-4" /> Delete Post
+                                    </DropdownMenuItem>
                                 </>
                             )}
-                            <DropdownMenu modal={false}>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="text-[#9CA3AF] hover:text-[#6B7280] p-1 rounded hover:bg-[#F3F4F6] transition-colors">
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-white border-[#E5E7EB] text-[#374151] shadow-lg">
-                                    <DropdownMenuItem onClick={() => toast.success("Noted. We will adjust your feed.")} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
-                                        <XCircle className="w-4 h-4 text-[#9CA3AF]" /> Not Interested
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
-                                        <Flag className="w-4 h-4" /> Report Post
-                                    </DropdownMenuItem>
-                                    {session?.user?.id === post.author.id && (
-                                        <>
-                                            <DropdownMenuItem onClick={() => setIsEditModalOpen(true)} className="cursor-pointer hover:bg-[#F3F4F6] gap-2 text-sm">
-                                                <Edit className="w-4 h-4 text-[#9CA3AF]" /> Edit Post
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="cursor-pointer text-[#EF4444] hover:bg-[#FEF2F2] gap-2 text-sm">
-                                                <Trash2 className="w-4 h-4" /> Delete Post
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+
+            {/* Sibling Container for Main Content (Centered, full card width) */}
+            <div className="w-full">
+                {/* Edit Dialog */}
+                <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                    <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#111827]">Edit Post</DialogTitle>
+                            <DialogDescription className="text-[#6B7280]">Make changes to your post content here.</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)}
+                                className="bg-[#F9FAFB] border-[#E5E7EB] min-h-[150px] text-[#111827] resize-none focus:ring-[#6366F1]/20 focus:border-[#6366F1]" />
                         </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
+                            <Button onClick={handleUpdate} disabled={isSaving} className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
+                                {isSaving ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#111827]">Delete Post</DialogTitle>
+                            <DialogDescription className="text-[#6B7280]">Are you sure? This action cannot be undone.</DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
+                            <Button onClick={handleDelete} className="bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2] border border-[#FECACA]">Delete</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Text Body */}
+                <div className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">
+                    {parseContent(content)}
+                </div>
+
+                {/* Poll */}
+                {post.poll && (
+                    <div className="mt-4 mb-2">
+                        <InstagramPoll poll={post.poll} onVote={async (pollId, optionId) => {
+                            const result = await votePoll(pollId, optionId);
+                            if (result.success && result.poll) router.refresh();
+                            return { ...result, poll: (result.poll as any) || undefined };
+                        }} />
                     </div>
+                )}
 
-                    {/* Edit Dialog */}
-                    <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                        <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[500px]">
-                            <DialogHeader>
-                                <DialogTitle className="text-[#111827]">Edit Post</DialogTitle>
-                                <DialogDescription className="text-[#6B7280]">Make changes to your post content here.</DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)}
-                                    className="bg-[#F9FAFB] border-[#E5E7EB] min-h-[150px] text-[#111827] resize-none focus:ring-[#6366F1]/20 focus:border-[#6366F1]" />
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
-                                <Button onClick={handleUpdate} disabled={isSaving} className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
-                                    {isSaving ? "Saving..." : "Save Changes"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                        <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle className="text-[#111827]">Delete Post</DialogTitle>
-                                <DialogDescription className="text-[#6B7280]">Are you sure? This action cannot be undone.</DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter className="gap-2 sm:gap-0">
-                                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
-                                <Button onClick={handleDelete} className="bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2] border border-[#FECACA]">Delete</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    {/* Text Body */}
-                    <div className="mt-2 text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">
-                        {parseContent(content)}
+                {/* Tags */}
+                {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 mb-2">
+                        {post.tags.map((tag, i) => (
+                            <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}
+                                className="text-[#6366F1] hover:text-[#4F46E5] hover:underline text-sm font-medium transition-colors">
+                                #{tag.replace('#', '')}
+                            </Link>
+                        ))}
                     </div>
+                )}
 
-                    {/* Poll */}
-                    {post.poll && (
-                        <div className="mt-4 mb-2">
-                            <InstagramPoll poll={post.poll} onVote={async (pollId, optionId) => {
-                                const result = await votePoll(pollId, optionId);
-                                if (result.success && result.poll) router.refresh();
-                                return { ...result, poll: (result.poll as any) || undefined };
-                            }} />
+                {/* Code Snippet */}
+                {post.codeSnippet && (
+                    <div className="mt-3 bg-[#1E1E2E] rounded-lg p-3 border border-[#E5E7EB] font-mono text-xs overflow-x-auto">
+                        <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
+                            <span className="text-[#9CA3AF] flex items-center gap-1"><Code className="w-3 h-3" /> Snippet</span>
+                            <span className="text-[#6B7280]">TypeScript</span>
                         </div>
-                    )}
+                        <pre className="text-emerald-400">{post.codeSnippet}</pre>
+                    </div>
+                )}
 
-                    {/* Tags */}
-                    {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 mb-2">
-                            {post.tags.map((tag, i) => (
-                                <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}
-                                    className="text-[#6366F1] hover:text-[#4F46E5] hover:underline text-sm font-medium transition-colors">
-                                    #{tag.replace('#', '')}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                {/* Instagram-Style Swipable Image Carousel */}
+                {(() => {
+                    if (!post.image) return null;
 
-                    {/* Code Snippet */}
-                    {post.codeSnippet && (
-                        <div className="mt-3 bg-[#1E1E2E] rounded-lg p-3 border border-[#E5E7EB] font-mono text-xs overflow-x-auto">
-                            <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
-                                <span className="text-[#9CA3AF] flex items-center gap-1"><Code className="w-3 h-3" /> Snippet</span>
-                                <span className="text-[#6B7280]">TypeScript</span>
-                            </div>
-                            <pre className="text-emerald-400">{post.codeSnippet}</pre>
-                        </div>
-                    )}
+                    let parsedImages: Array<{ url: string; alt?: string; tags?: Array<{ userId: string; name: string; username: string; x: number; y: number; image?: string | null }> }> = [];
 
-                    {/* Multi-Image and Interactive Tagging Collage */}
-                    {(() => {
-                        if (!post.image) return null;
-                        
-                        let parsedImages: Array<{ url: string; alt?: string; tags?: Array<{ userId: string; name: string; username: string; x: number; y: number; image?: string | null }> }> = [];
-                        let isMulti = false;
-                        
-                        if (post.image.startsWith("[")) {
-                            try {
-                                parsedImages = JSON.parse(post.image);
-                                isMulti = true;
-                            } catch (e) {
-                                parsedImages = [{ url: post.image }];
-                            }
-                        } else {
+                    if (post.image.startsWith("[")) {
+                        try {
+                            parsedImages = JSON.parse(post.image);
+                        } catch (e) {
                             parsedImages = [{ url: post.image }];
                         }
+                    } else {
+                        parsedImages = [{ url: post.image }];
+                    }
 
-                        if (parsedImages.length === 0) return null;
+                    if (parsedImages.length === 0) return null;
 
-                        const imgCount = parsedImages.length;
+                    const imgCount = parsedImages.length;
 
-                        return (
-                            <>
-                                {/* 1 Image layout */}
-                                {imgCount === 1 && (
-                                    <div 
-                                        className="relative mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] group cursor-pointer"
-                                        onClick={() => setLightboxIndex(0)}
-                                        onMouseEnter={() => setHoveredImageIdx(0)}
-                                        onMouseLeave={() => setHoveredImageIdx(null)}
-                                    >
-                                        <img src={parsedImages[0].url} alt={parsedImages[0].alt || "Post attachment"} className="w-full h-auto object-cover max-h-[500px]" />
-                                        
-                                        {/* Hoverable user tags */}
-                                        {parsedImages[0].tags && parsedImages[0].tags.map((t, idx) => (
-                                            <div 
-                                                key={idx}
-                                                className={cn(
-                                                    "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                    hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                                )}
-                                                style={{ left: `${t.x}%`, top: `${t.y}%` }}
-                                            >
-                                                <div 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        router.push(`/profile/${t.username}`);
-                                                    }}
-                                                    className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                                >
-                                                    <Tag className="w-3 h-3 text-[#10B981]" />
-                                                    <span>{t.name}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {parsedImages[0].alt && (
-                                            <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                ALT
-                                            </div>
-                                        )}
-                                        {parsedImages[0].tags && parsedImages[0].tags.length > 0 && (
-                                            <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                                <UserPlus className="w-3 h-3 text-[#10B981]" />
-                                                <span>{parsedImages[0].tags.length} tagged</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* 2 Images layout */}
-                                {imgCount === 2 && (
-                                    <div className="grid grid-cols-2 gap-1.5 mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
-                                        {parsedImages.slice(0, 2).map((img, index) => (
-                                            <div 
-                                                key={index}
-                                                className="relative aspect-square cursor-pointer group"
-                                                onClick={() => setLightboxIndex(index)}
-                                                onMouseEnter={() => setHoveredImageIdx(index)}
-                                                onMouseLeave={() => setHoveredImageIdx(null)}
-                                            >
-                                                <img src={img.url} alt={img.alt || `Attachment ${index + 1}`} className="w-full h-full object-cover" />
-                                                {img.tags && img.tags.map((t, idx) => (
-                                                    <div 
-                                                        key={idx}
-                                                        className={cn(
-                                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                            hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                                        )}
-                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
-                                                    >
-                                                        <div 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                e.preventDefault();
-                                                                router.push(`/profile/${t.username}`);
-                                                            }}
-                                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                                        >
-                                                            <Tag className="w-3 h-3 text-[#10B981]" />
-                                                            <span>{t.name}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {img.alt && (
-                                                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                        ALT
-                                                    </div>
-                                                )}
-                                                {img.tags && img.tags.length > 0 && (
-                                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                                        <span>{img.tags.length}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* 3 Images layout (Collage style) */}
-                                {imgCount === 3 && (
-                                    <div className="grid grid-cols-2 gap-1.5 h-[350px] mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
-                                        {/* Large Left */}
+                    return (
+                        <div className="relative mt-3 w-full">
+                            {/* Outer Frame */}
+                            <div 
+                                className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 group aspect-[4/3] sm:aspect-video select-none"
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                {/* Images Horizontal Wrapper */}
+                                <div 
+                                    className="flex h-full transition-transform duration-300 ease-out"
+                                    style={{ transform: `translateX(-${currentImgIndex * 100}%)`, width: `${imgCount * 100}%` }}
+                                >
+                                    {parsedImages.map((img, index) => (
                                         <div 
-                                            className="relative h-full cursor-pointer group"
-                                            onClick={() => setLightboxIndex(0)}
-                                            onMouseEnter={() => setHoveredImageIdx(0)}
+                                            key={index} 
+                                            className="h-full relative flex items-center justify-center overflow-hidden"
+                                            style={{ width: `${100 / imgCount}%` }}
+                                            onMouseEnter={() => setHoveredImageIdx(index)}
                                             onMouseLeave={() => setHoveredImageIdx(null)}
                                         >
-                                            <img src={parsedImages[0].url} alt={parsedImages[0].alt || "Attachment 1"} className="w-full h-full object-cover" />
-                                            {parsedImages[0].tags && parsedImages[0].tags.map((t, idx) => (
+                                            <img 
+                                                src={img.url} 
+                                                alt={img.alt || `Attachment ${index + 1}`} 
+                                                className="w-full h-full object-cover cursor-pointer"
+                                                onClick={() => setLightboxIndex(index)}
+                                            />
+
+                                            {/* Tags on hover */}
+                                            {img.tags && img.tags.map((t, idx) => (
                                                 <div 
                                                     key={idx}
                                                     className={cn(
                                                         "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                        hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                        hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
                                                     )}
                                                     style={{ left: `${t.x}%`, top: `${t.y}%` }}
                                                 >
@@ -621,266 +593,243 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                                     </div>
                                                 </div>
                                             ))}
-                                            {parsedImages[0].alt && (
-                                                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+
+                                            {/* ALT Box */}
+                                            {img.alt && (
+                                                <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
                                                     ALT
                                                 </div>
                                             )}
-                                            {parsedImages[0].tags && parsedImages[0].tags.length > 0 && (
-                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+
+                                            {/* Tag count */}
+                                            {img.tags && img.tags.length > 0 && (
+                                                <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
                                                     <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                                    <span>{parsedImages[0].tags.length}</span>
+                                                    <span>{img.tags.length} tagged</span>
                                                 </div>
                                             )}
                                         </div>
-                                        
-                                        {/* Right Stack */}
-                                        <div className="flex flex-col gap-1.5 h-full">
-                                            {parsedImages.slice(1, 3).map((img, index) => {
-                                                const actualIndex = index + 1;
-                                                return (
-                                                    <div 
-                                                        key={actualIndex}
-                                                        className="relative h-[171px] cursor-pointer group"
-                                                        onClick={() => setLightboxIndex(actualIndex)}
-                                                        onMouseEnter={() => setHoveredImageIdx(actualIndex)}
-                                                        onMouseLeave={() => setHoveredImageIdx(null)}
-                                                    >
-                                                        <img src={img.url} alt={img.alt || `Attachment ${actualIndex + 1}`} className="w-full h-full object-cover" />
-                                                        {img.tags && img.tags.map((t, idx) => (
+                                    ))}
+                                </div>
+
+                                {/* Previous Slide Button */}
+                                {imgCount > 1 && currentImgIndex > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrentImgIndex(prev => prev - 1);
+                                        }}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-40 focus:outline-none"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                )}
+
+                                {/* Next Slide Button */}
+                                {imgCount > 1 && currentImgIndex < imgCount - 1 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrentImgIndex(prev => prev + 1);
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-40 focus:outline-none"
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Pagination Dots (Instagram style) */}
+                            {imgCount > 1 && (
+                                <div className="flex justify-center gap-1.5 mt-2.5">
+                                    {parsedImages.map((_, dotIdx) => (
+                                        <button
+                                            key={dotIdx}
+                                            onClick={() => setCurrentImgIndex(dotIdx)}
+                                            className={cn(
+                                                "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                                currentImgIndex === dotIdx 
+                                                    ? "bg-[#6366F1] scale-125" 
+                                                    : "bg-gray-300 hover:bg-gray-400"
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
+
+                {/* Premium Image Lightbox Viewer Modal */}
+                {lightboxIndex !== null && (
+                    <div 
+                        className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 cursor-default select-none animate-fade-in"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setLightboxIndex(null);
+                        }}
+                    >
+                        <button 
+                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full transition-all z-50 cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setLightboxIndex(null);
+                            }}
+                        >
+                            <XCircle className="w-6 h-6" />
+                        </button>
+
+                        {/* Large Image Box */}
+                        <div 
+                            className="relative max-w-4xl w-full max-h-[85vh] bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex-1 relative flex items-center justify-center bg-black min-h-[300px]">
+                                <img 
+                                    src={(() => {
+                                        let parsedImages = [];
+                                        if (post.image) {
+                                            if (post.image.startsWith("[")) {
+                                                try { parsedImages = JSON.parse(post.image); }
+                                                catch (e) { parsedImages = [{ url: post.image }]; }
+                                            } else { parsedImages = [{ url: post.image }]; }
+                                        }
+                                        return parsedImages[lightboxIndex]?.url || "";
+                                    })()} 
+                                    alt="Post attachment full screen" 
+                                    className="max-w-full max-h-[75vh] object-contain"
+                                />
+                                
+                                {/* Lightbox tags */}
+                                {(() => {
+                                    let parsedImages = [];
+                                    if (post.image) {
+                                        if (post.image.startsWith("[")) {
+                                            try { parsedImages = JSON.parse(post.image); }
+                                            catch (e) { parsedImages = [{ url: post.image }]; }
+                                        } else { parsedImages = [{ url: post.image }]; }
+                                    }
+                                    const img = parsedImages[lightboxIndex];
+                                    return img?.tags && img.tags.map((t: any, idx: number) => (
+                                        <div 
+                                            key={idx}
+                                            className="absolute z-40 translate-x-[-50%] translate-y-[-50%]"
+                                            style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                        >
+                                            <div 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    setLightboxIndex(null);
+                                                    router.push(`/profile/${t.username}`);
+                                                }}
+                                                className="bg-black/85 hover:bg-black text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-white/25 shadow-2xl flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+                                            >
+                                                <Tag className="w-3.5 h-3.5 text-[#10B981]" />
+                                                <span>{t.name}</span>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+
+                            {/* Sidebar description */}
+                            {(() => {
+                                let parsedImages = [];
+                                if (post.image) {
+                                    if (post.image.startsWith("[")) {
+                                        try { parsedImages = JSON.parse(post.image); }
+                                        catch (e) { parsedImages = [{ url: post.image }]; }
+                                    } else { parsedImages = [{ url: post.image }]; }
+                                }
+                                const img = parsedImages[lightboxIndex];
+                                if (!img || (!img.alt && (!img.tags || img.tags.length === 0))) return null;
+                                return (
+                                    <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/10 bg-zinc-950 p-5 flex flex-col justify-between text-white select-text">
+                                        <div className="space-y-5">
+                                            <div className="border-b border-white/10 pb-3">
+                                                <h4 className="font-bold text-sm text-zinc-400 uppercase tracking-wider">Image Details</h4>
+                                                <span className="text-[10px] text-zinc-500 font-mono">Image {lightboxIndex + 1} of {parsedImages.length}</span>
+                                            </div>
+
+                                            {img.alt && (
+                                                <div className="space-y-1.5">
+                                                    <h5 className="font-bold text-xs text-[#10B981] flex items-center gap-1">
+                                                        <Info className="w-3.5 h-3.5" /> Accessibility ALT Text
+                                                    </h5>
+                                                    <p className="text-xs text-zinc-300 leading-relaxed italic bg-white/5 p-3 rounded-xl border border-white/5">
+                                                        "{img.alt}"
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {img.tags && img.tags.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                    <h5 className="font-bold text-xs text-[#6366F1] flex items-center gap-1">
+                                                        <UserPlus className="w-3.5 h-3.5" /> Tagged People
+                                                    </h5>
+                                                    <div className="space-y-2">
+                                                        {img.tags.map((t: any) => (
                                                             <div 
-                                                                key={idx}
-                                                                className={cn(
-                                                                    "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                                    hoveredImageIdx === actualIndex ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                                                )}
-                                                                style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                                key={t.userId}
+                                                                onClick={() => {
+                                                                    setLightboxIndex(null);
+                                                                    router.push(`/profile/${t.username}`);
+                                                                }}
+                                                                className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition-all"
                                                             >
-                                                                <div 
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        e.preventDefault();
-                                                                        router.push(`/profile/${t.username}`);
-                                                                    }}
-                                                                    className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                                                >
-                                                                    <Tag className="w-3 h-3 text-[#10B981]" />
-                                                                    <span>{t.name}</span>
+                                                                <Avatar className="w-7 h-7 border border-white/10 flex-shrink-0">
+                                                                    <AvatarImage src={t.image || ""} />
+                                                                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-[9px] font-bold">
+                                                                        {t.name.charAt(0)}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="text-xs font-bold text-white truncate">{t.name}</div>
+                                                                    <div className="text-[10px] text-zinc-400 truncate">@{t.username}</div>
                                                                 </div>
                                                             </div>
                                                         ))}
-                                                        {img.alt && (
-                                                            <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                                ALT
-                                                                </div>
-                                                        )}
-                                                        {img.tags && img.tags.length > 0 && (
-                                                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                                                <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                                                <span>{img.tags.length}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 4 Images layout */}
-                                {imgCount >= 4 && (
-                                    <div className="grid grid-cols-2 gap-1.5 mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
-                                        {parsedImages.slice(0, 4).map((img, index) => (
-                                            <div 
-                                                key={index}
-                                                className="relative h-[180px] cursor-pointer group"
-                                                onClick={() => setLightboxIndex(index)}
-                                                onMouseEnter={() => setHoveredImageIdx(index)}
-                                                onMouseLeave={() => setHoveredImageIdx(null)}
-                                            >
-                                                <img src={img.url} alt={img.alt || `Attachment ${index + 1}`} className="w-full h-full object-cover" />
-                                                {img.tags && img.tags.map((t, idx) => (
-                                                    <div 
-                                                        key={idx}
-                                                        className={cn(
-                                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
-                                                            hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
-                                                        )}
-                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
-                                                    >
-                                                        <div 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                e.preventDefault();
-                                                                router.push(`/profile/${t.username}`);
-                                                            }}
-                                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
-                                                        >
-                                                            <Tag className="w-3 h-3 text-[#10B981]" />
-                                                            <span>{t.name}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {img.alt && (
-                                                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                                        ALT
-                                                    </div>
-                                                )}
-                                                {img.tags && img.tags.length > 0 && (
-                                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
-                                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                                        <span>{img.tags.length}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Premium Image Lightbox Viewer Modal */}
-                                {lightboxIndex !== null && (
-                                    <div 
-                                        className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 cursor-default select-none animate-fade-in"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setLightboxIndex(null);
-                                        }}
-                                    >
-                                        <button 
-                                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full transition-all z-50 cursor-pointer"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setLightboxIndex(null);
-                                            }}
-                                        >
-                                            <XCircle className="w-6 h-6" />
-                                        </button>
-
-                                        {/* Large Image Box */}
-                                        <div 
-                                            className="relative max-w-4xl w-full max-h-[85vh] bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <div className="flex-1 relative flex items-center justify-center bg-black min-h-[300px]">
-                                                <img 
-                                                    src={parsedImages[lightboxIndex].url} 
-                                                    alt={parsedImages[lightboxIndex].alt || "Post attachment full screen"} 
-                                                    className="max-w-full max-h-[75vh] object-contain"
-                                                />
-                                                
-                                                {/* Always display tags in full screen lightbox! */}
-                                                {parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.map((t, idx) => (
-                                                    <div 
-                                                        key={idx}
-                                                        className="absolute z-40 translate-x-[-50%] translate-y-[-50%]"
-                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
-                                                    >
-                                                        <div 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                e.preventDefault();
-                                                                setLightboxIndex(null);
-                                                                router.push(`/profile/${t.username}`);
-                                                            }}
-                                                            className="bg-black/85 hover:bg-black text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-white/25 shadow-2xl flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
-                                                        >
-                                                            <Tag className="w-3.5 h-3.5 text-[#10B981]" />
-                                                            <span>{t.name}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Right sidebar inside lightbox containing ALT text descriptions or details */}
-                                            {(parsedImages[lightboxIndex].alt || (parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.length > 0)) && (
-                                                <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/10 bg-zinc-950 p-5 flex flex-col justify-between text-white select-text">
-                                                    <div className="space-y-5">
-                                                        <div className="border-b border-white/10 pb-3">
-                                                            <h4 className="font-bold text-sm text-zinc-400 uppercase tracking-wider">Image Details</h4>
-                                                            <span className="text-[10px] text-zinc-500 font-mono">Image {lightboxIndex + 1} of {parsedImages.length}</span>
-                                                        </div>
-
-                                                        {parsedImages[lightboxIndex].alt && (
-                                                            <div className="space-y-1.5">
-                                                                <h5 className="font-bold text-xs text-[#10B981] flex items-center gap-1">
-                                                                    <Info className="w-3.5 h-3.5" /> Accessibility ALT Text
-                                                                </h5>
-                                                                <p className="text-xs text-zinc-300 leading-relaxed italic bg-white/5 p-3 rounded-xl border border-white/5">
-                                                                    "{parsedImages[lightboxIndex].alt}"
-                                                                </p>
-                                                            </div>
-                                                        )}
-
-                                                        {parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.length > 0 && (
-                                                            <div className="space-y-1.5">
-                                                                <h5 className="font-bold text-xs text-[#6366F1] flex items-center gap-1">
-                                                                    <UserPlus className="w-3.5 h-3.5" /> Tagged People
-                                                                </h5>
-                                                                <div className="space-y-2">
-                                                                    {parsedImages[lightboxIndex].tags.map((t) => (
-                                                                        <div 
-                                                                            key={t.userId}
-                                                                            onClick={() => {
-                                                                                setLightboxIndex(null);
-                                                                                router.push(`/profile/${t.username}`);
-                                                                            }}
-                                                                            className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition-all"
-                                                                        >
-                                                                            <Avatar className="w-7 h-7 border border-white/10 flex-shrink-0">
-                                                                                <AvatarImage src={t.image || ""} />
-                                                                                <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-[9px] font-bold">
-                                                                                    {t.name.charAt(0)}
-                                                                                </AvatarFallback>
-                                                                            </Avatar>
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="text-xs font-bold text-white truncate">{t.name}</div>
-                                                                                <div className="text-[10px] text-zinc-400 truncate">@{t.username}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="text-[10px] text-zinc-500 pt-4 text-center select-none">
-                                                        SkilledCore High Engagement Media Viewer
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
+
+                                        <div className="text-[10px] text-zinc-500 pt-4 text-center select-none">
+                                            SkilledCore High Engagement Media Viewer
+                                        </div>
                                     </div>
-                                )}
-                            </>
-                        );
-                    })()}
-
-                    {/* Action Bar */}
-                    <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">
-                        <button onClick={handleLike}
-                            className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
-                                isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF]")}>
-                            <ThumbsUp className={cn("w-3.5 h-3.5", isLiked && "fill-current")} />
-                            <span>{likesCount}</span>
-                        </button>
-                        <button onClick={() => setShowComments(!showComments)}
-                            className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
-                                showComments ? "text-[#059669] bg-[#ECFDF5]" : "text-[#6B7280] hover:text-[#059669] hover:bg-[#ECFDF5]")}>
-                            <MessageCircle className={cn("w-3.5 h-3.5", showComments && "fill-current")} />
-                            <span>{post.comments}</span>
-                        </button>
-                        <button onClick={() => toast.success("Reposted to your network.")}
-                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium">
-                            <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
-                        </button>
-                        <button onClick={() => setIsShareModalOpen(true)}
-                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF] transition-all font-medium">
-                            <Send className="w-3.5 h-3.5" /><span>Send</span>
-                        </button>
+                                );
+                            })()}
+                        </div>
                     </div>
+                )}
 
-                    {showComments && <CommentSection postId={post.id} />}
+                {/* Action Bar */}
+                <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">
+                    <button onClick={handleLike}
+                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
+                            isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF]")}>
+                        <ThumbsUp className={cn("w-3.5 h-3.5", isLiked && "fill-current")} />
+                        <span>{likesCount}</span>
+                    </button>
+                    <button onClick={() => setShowComments(!showComments)}
+                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
+                            showComments ? "text-[#059669] bg-[#ECFDF5]" : "text-[#6B7280] hover:text-[#059669] hover:bg-[#ECFDF5]")}>
+                        <MessageCircle className={cn("w-3.5 h-3.5", showComments && "fill-current")} />
+                        <span>{post.comments}</span>
+                    </button>
+                    <button onClick={() => toast.success("Reposted to your network.")}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium">
+                        <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
+                    </button>
+                    <button onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF] transition-all font-medium">
+                        <Send className="w-3.5 h-3.5" /><span>Send</span>
+                    </button>
                 </div>
+
+                {showComments && <CommentSection postId={post.id} />}
             </div>
 
             <ReportPostModal postId={post.id} isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} />
