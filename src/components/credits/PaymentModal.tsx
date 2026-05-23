@@ -195,7 +195,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                     }
 
                     if (res.success) {
-                        setCompletedRef(res.refId || trxId);
+                        setCompletedRef((res as any).refId || trxId);
                         setStep(5); // Receipt
                         loadHistory();
                     } else {
