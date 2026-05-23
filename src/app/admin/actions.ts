@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { v2 as cloudinary } from "cloudinary";
-import { B2_BUCKET, nativeListB2Files, nativeUploadB2File, nativeDeleteB2File } from "@/lib/b2";
+
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -232,85 +232,25 @@ export async function getCloudinaryFiles() {
     }
 }
 
-export async function getB2Files() {
-    try {
-        await ensureAdmin();
-        if (!B2_BUCKET) {
-            return { success: true, files: [] };
-        }
-        const files = await nativeListB2Files(50);
-        return { success: true, files };
-    } catch (error) {
-        console.error("Failed to fetch B2 files:", error);
-        return { success: false, files: [] };
-    }
-}
 
-export async function uploadB2File(formData: FormData) {
-    try {
-        const session = await auth();
-        if (!session?.user?.id) {
-            return { success: false, message: "Unauthorized" };
-        }
 
-        const file = formData.get("file") as File;
-        if (!file) {
-            return { success: false, message: "No file provided" };
-        }
-
-        // Limit size to less than 4MB
-        const MAX_SIZE = 4 * 1024 * 1024;
-        if (file.size >= MAX_SIZE) {
-            return { success: false, message: "File exceeds 4MB upload limit" };
-        }
-
-        if (!file.type.startsWith("image/")) {
-            return { success: false, message: "Invalid file type. Only images are allowed." };
-        }
-
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const uniqueKey = `feed/${session.user.id}-${Date.now()}.${fileExt}`;
-
-        const res = await nativeUploadB2File(buffer, uniqueKey, file.type);
-
-        return {
-            success: true,
-            url: res.url,
-            key: uniqueKey,
-            name: file.name
-        };
-    } catch (error) {
-        console.error("Failed to upload B2 file:", error);
-        return { success: false, message: "Upload failed" };
-    }
-}
-
-export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' | 'cloudinary' | 'b2') {
+export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' | 'cloudinary') {
     try {
         await ensureAdmin();
         if (!fileKeys || fileKeys.length === 0) return { success: false, message: "No files selected" };
 
         const utKeys: string[] = [];
         const cloudinaryPublicIds: string[] = [];
-        const b2Keys: string[] = [];
 
         for (const key of fileKeys) {
-            if (provider === 'b2') {
-                b2Keys.push(key);
-            } else if (provider === 'uploadthing') {
+            if (provider === 'uploadthing') {
                 utKeys.push(key);
             } else if (provider === 'cloudinary') {
                 cloudinaryPublicIds.push(key);
             } else {
                 // Auto-detect fallback
                 if (key.includes("/") || key.startsWith("skilledcore")) {
-                    if (key.startsWith("feed/")) {
-                        b2Keys.push(key);
-                    } else {
-                        cloudinaryPublicIds.push(key);
-                    }
+                    cloudinaryPublicIds.push(key);
                 } else {
                     utKeys.push(key);
                 }
@@ -319,7 +259,6 @@ export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' |
 
         let utSuccess = true;
         let cloudinarySuccess = true;
-        let b2Success = true;
 
         if (utKeys.length > 0) {
             const res = await utapi.deleteFiles(utKeys);
@@ -333,16 +272,10 @@ export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' |
             }
         }
 
-        if (b2Keys.length > 0) {
-            for (const key of b2Keys) {
-                await nativeDeleteB2File(key);
-            }
-        }
-
-        const totalDeleted = utKeys.length + cloudinaryPublicIds.length + b2Keys.length;
+        const totalDeleted = utKeys.length + cloudinaryPublicIds.length;
         return {
-            success: utSuccess && cloudinarySuccess && b2Success,
-            message: `Successfully deleted ${totalDeleted} files (${utKeys.length} UploadThing, ${cloudinaryPublicIds.length} Cloudinary, ${b2Keys.length} Backblaze B2)`
+            success: utSuccess && cloudinarySuccess,
+            message: `Successfully deleted ${totalDeleted} files (${utKeys.length} Documents Repository, ${cloudinaryPublicIds.length} Cloudinary Assets)`
         };
     } catch (error) {
         console.error("Failed to delete files:", error);
@@ -367,7 +300,7 @@ export async function getDashboardData() {
     try {
         await ensureAdmin();
 
-        const [verifications, reports, stats, utFiles, clFiles, b2Files] = await Promise.all([
+        const [verifications, reports, stats, utFiles, clFiles] = await Promise.all([
             prisma.verificationRequest.findMany({
                 where: { status: 'PENDING' },
                 take: 5,
@@ -382,8 +315,7 @@ export async function getDashboardData() {
             }),
             getAdminStats(),
             getStorageFiles(),
-            getCloudinaryFiles(),
-            getB2Files()
+            getCloudinaryFiles()
         ]);
 
         return {
@@ -406,8 +338,7 @@ export async function getDashboardData() {
                 })),
                 stats: stats.stats,
                 uploadthingFiles: utFiles.files || [],
-                cloudinaryFiles: clFiles.files || [],
-                b2Files: b2Files.files || []
+                cloudinaryFiles: clFiles.files || []
             }
         };
 

@@ -110,6 +110,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         },
         content: p.content,
         image: p.image,
+        tags: p.tags ? p.tags.split(',') : [],
         timestamp: new Date(p.createdAt).toLocaleString(),
         likes: p.likes?.length || 0,
         comments: p._count?.comments || 0,

@@ -13,20 +13,17 @@ import { deleteFiles } from '@/app/admin/actions';
 interface StorageBrowserProps {
     uploadthingFiles: any[];
     cloudinaryFiles: any[];
-    b2Files: any[];
     dbStats: any;
 }
 
 export default function StorageBrowser({ 
     uploadthingFiles: initialUtFiles, 
     cloudinaryFiles: initialClFiles, 
-    b2Files: initialB2Files,
     dbStats 
 }: StorageBrowserProps) {
-    const [activeTab, setActiveTab] = useState<'neon' | 'uploadthing' | 'cloudinary' | 'b2'>('neon');
+    const [activeTab, setActiveTab] = useState<'neon' | 'uploadthing' | 'cloudinary'>('neon');
     const [utFiles, setUtFiles] = useState(initialUtFiles);
     const [clFiles, setClFiles] = useState(initialClFiles);
-    const [b2Files, setB2Files] = useState(initialB2Files || []);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +33,6 @@ export default function StorageBrowser({
     const NEON_CAPACITY = 512 * 1024 * 1024;       // 512 MB
     const UT_CAPACITY = 2 * 1024 * 1024 * 1024;     // 2 GB
     const CLOUDINARY_CAPACITY = 10 * 1024 * 1024 * 1024; // 10 GB
-    const B2_CAPACITY = 10 * 1024 * 1024 * 1024; // 10 GB
 
     const getStorageStats = () => {
         switch (activeTab) {
@@ -51,7 +47,7 @@ export default function StorageBrowser({
                 };
             case 'uploadthing':
                 return {
-                    name: 'UploadThing',
+                    name: 'Documents Repository',
                     used: utFiles.reduce((acc, f) => acc + (f.size || 0), 0),
                     total: UT_CAPACITY,
                     colorClass: 'bg-blue-500',
@@ -67,15 +63,6 @@ export default function StorageBrowser({
                     gradientClass: 'from-cyan-500 to-sky-600',
                     textClass: 'text-cyan-400',
                 };
-            case 'b2':
-                return {
-                    name: 'Backblaze B2',
-                    used: b2Files.reduce((acc, f) => acc + (f.size || 0), 0),
-                    total: B2_CAPACITY,
-                    colorClass: 'bg-amber-500',
-                    gradientClass: 'from-amber-500 to-orange-600',
-                    textClass: 'text-amber-400',
-                };
         }
     };
 
@@ -86,7 +73,6 @@ export default function StorageBrowser({
     const getActiveFilesList = () => {
         if (activeTab === 'uploadthing') return utFiles;
         if (activeTab === 'cloudinary') return clFiles;
-        if (activeTab === 'b2') return b2Files;
         return [];
     };
 
@@ -131,8 +117,6 @@ export default function StorageBrowser({
                 setUtFiles(prev => prev.filter(f => !selectedKeys.has(f.key)));
             } else if (activeTab === 'cloudinary') {
                 setClFiles(prev => prev.filter(f => !selectedKeys.has(f.key)));
-            } else if (activeTab === 'b2') {
-                setB2Files(prev => prev.filter(f => !selectedKeys.has(f.key)));
             }
             setSelectedKeys(new Set());
         } else {
@@ -140,7 +124,7 @@ export default function StorageBrowser({
         }
     };
 
-    const handleTabChange = (tab: 'neon' | 'uploadthing' | 'cloudinary' | 'b2') => {
+    const handleTabChange = (tab: 'neon' | 'uploadthing' | 'cloudinary') => {
         setActiveTab(tab);
         setSelectedKeys(new Set());
         setSearchQuery('');
@@ -220,22 +204,7 @@ export default function StorageBrowser({
                         )}
                         <Cloud className="w-4 h-4" /> Cloudinary
                     </button>
-                    <button
-                        onClick={() => handleTabChange('b2')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
-                            activeTab === 'b2' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
-                        )}
-                    >
-                        {activeTab === 'b2' && (
-                            <motion.div 
-                                layoutId="active-tab-indicator" 
-                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
-                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                            />
-                        )}
-                        <HardDrive className="w-4 h-4 text-amber-500" /> Backblaze B2
-                    </button>
+
                 </div>
 
                 {/* Search & Actions Area */}
@@ -304,7 +273,6 @@ export default function StorageBrowser({
                             {activeTab === 'neon' && "Real-time database footprints tracking operational records and tables."}
                             {activeTab === 'uploadthing' && "Active file upload bandwidth representing onboarding documents and recruiter attachments."}
                             {activeTab === 'cloudinary' && "Visual media storage showing branding elements, profile banners, and recruiters images."}
-                            {activeTab === 'b2' && "Secure S3-compatible cloud storage dedicated for feed media, community posts and content attachments."}
                         </p>
                     </div>
 
@@ -356,10 +324,6 @@ export default function StorageBrowser({
                                     <stop offset="0%" stopColor="#06b6d4" />
                                     <stop offset="100%" stopColor="#22d3ee" />
                                 </linearGradient>
-                                <linearGradient id="b2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#f59e0b" />
-                                    <stop offset="100%" stopColor="#ea580c" />
-                                </linearGradient>
                             </defs>
 
                             {/* Background Circle representing Total */}
@@ -394,8 +358,7 @@ export default function StorageBrowser({
                                 stroke={
                                     activeTab === 'neon' ? "url(#neonGrad)" :
                                     activeTab === 'uploadthing' ? "url(#utGrad)" :
-                                    activeTab === 'cloudinary' ? "url(#clGrad)" :
-                                    "url(#b2Grad)"
+                                    "url(#clGrad)"
                                 }
                                 strokeLinecap="round"
                             />
@@ -479,7 +442,7 @@ export default function StorageBrowser({
                                             )}
                                         </button>
                                         <h3 className="font-bold text-white text-sm font-sans tracking-tight">
-                                            {activeTab === 'uploadthing' ? 'Documents Repository' : activeTab === 'cloudinary' ? 'Cloudinary Assets' : 'Backblaze B2 Assets'}
+                                            {activeTab === 'uploadthing' ? 'Documents Repository' : 'Cloudinary Assets'}
                                         </h3>
                                     </div>
                                     <span className="text-xs font-mono text-zinc-500">{filteredFiles.length} OF {activeFiles.length} FILES</span>
@@ -490,7 +453,7 @@ export default function StorageBrowser({
                                     ) : filteredFiles.map((file) => {
                                          const isSelected = selectedKeys.has(file.key);
                                          const fileUrl = activeTab === 'uploadthing' ? `https://utfs.io/f/${file.key}` : file.url;
-                                         const fileIsImage = activeTab === 'cloudinary' || activeTab === 'b2' || isImage(file.name);
+                                         const fileIsImage = activeTab === 'cloudinary' || isImage(file.name);
 
                                         return (
                                             <div

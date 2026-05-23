@@ -5,42 +5,54 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { uploadB2File } from "@/app/admin/actions";
-
-import EmojiPicker from 'emoji-picker-react';
+import { getCloudinarySignature } from "@/app/actions/cloudinary";
+import ImageEditorModal from "@/components/feed/ImageEditorModal";
+import EmojiPicker from "emoji-picker-react";
 
 interface StartPostWidgetProps {
     onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
 }
 
+interface DraftImage {
+    file: File;
+    previewUrl: string;
+    alt: string;
+    tags: any[];
+}
+
 export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const { data: session } = useSession();
     const user = session?.user;
+    
     const [isOpen, setIsOpen] = useState(false);
     const [content, setContent] = useState("");
     const [isPollMode, setIsPollMode] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pollOptions, setPollOptions] = useState(["", ""]);
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    // Multi-Image & Editor State
+    const [draftImages, setDraftImages] = useState<DraftImage[]>([]);
+    const [editorInitialFiles, setEditorInitialFiles] = useState<File[]>([]);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+    
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Cleanup preview URL on unmount or URL change
+    // Cleanup object URLs on unmount
     useEffect(() => {
         return () => {
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
+            draftImages.forEach(img => {
+                if (img.previewUrl) {
+                    URL.revokeObjectURL(img.previewUrl);
+                }
+            });
         };
-    }, [previewUrl]);
+    }, [draftImages]);
 
     // Force focus when dialog opens
     useEffect(() => {
@@ -52,11 +64,12 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     }, [isOpen]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         const MAX_SIZE = 4 * 1024 * 1024;
-        if (file.size >= MAX_SIZE) {
+        const oversized = files.some(f => f.size >= MAX_SIZE);
+        if (oversized) {
             toast.error("Images must be strictly under 4MB.");
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
@@ -64,28 +77,85 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             return;
         }
 
-        setSelectedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
+        const totalImages = draftImages.length + files.length;
+        if (totalImages > 4) {
+            toast.error("You can upload up to 4 images maximum.");
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+
+        setEditorInitialFiles(files);
+        setIsEditorOpen(true);
     };
 
-    const handleRemoveImage = () => {
-        setSelectedFile(null);
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-        }
+    const handleApplyEditorChanges = (editedImages: DraftImage[]) => {
+        // Append or replace
+        setDraftImages(prev => {
+            // revoke old urls
+            prev.forEach(p => URL.revokeObjectURL(p.previewUrl));
+            return editedImages;
+        });
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
+    };
+
+    const handleRemoveDraftImage = (indexToRemove: number) => {
+        setDraftImages(prev => {
+            const img = prev[indexToRemove];
+            if (img && img.previewUrl) {
+                URL.revokeObjectURL(img.previewUrl);
+            }
+            return prev.filter((_, idx) => idx !== indexToRemove);
+        });
     };
 
     const handleFeatureDisabled = (feature: string) => {
         toast.info(`${feature} is currently disabled.`);
     };
 
+    // Client-side Direct Cloudinary signed upload
+    const uploadSingleToCloudinary = async (file: File): Promise<string> => {
+        // 1. Fetch Secure Signature from Server
+        const sigRes = await getCloudinarySignature("feed");
+        if (!sigRes.success || !sigRes.signature || !sigRes.timestamp || !sigRes.apiKey || !sigRes.cloudName || !sigRes.folder) {
+            throw new Error(sigRes.message || "Failed to retrieve secure signature from server.");
+        }
+
+        // 2. Construct Signed Upload Payload
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", sigRes.apiKey);
+        formData.append("timestamp", sigRes.timestamp.toString());
+        formData.append("signature", sigRes.signature);
+        formData.append("folder", sigRes.folder);
+
+        // 3. Perform AJAX Request
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${sigRes.cloudName}/image/upload`;
+        const res = await fetch(uploadUrl, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!res.ok) {
+            let errMsg = "Upload failed.";
+            try {
+                const errResponse = await res.json();
+                if (errResponse.error?.message) {
+                    errMsg = errResponse.error.message;
+                }
+            } catch (e) {}
+            throw new Error(errMsg);
+        }
+
+        const responseData = await res.json();
+        return responseData.secure_url;
+    };
+
     const handleSubmit = async () => {
-        if (!content.trim() && !selectedFile) return;
+        if (!content.trim() && draftImages.length === 0) return;
 
         // Validation logic
         let validOptions: string[] | undefined;
@@ -99,21 +169,25 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
         let imageUrl: string | undefined;
 
-        if (selectedFile) {
+        if (draftImages.length > 0) {
             setIsUploading(true);
             try {
-                const formData = new FormData();
-                formData.append("file", selectedFile);
-                const uploadRes = await uploadB2File(formData);
-                if (!uploadRes.success || !uploadRes.url) {
-                    toast.error(uploadRes.message || "Failed to upload image");
-                    setIsUploading(false);
-                    return;
-                }
-                imageUrl = uploadRes.url;
-            } catch (err) {
-                console.error("Upload error:", err);
-                toast.error("Failed to upload image");
+                // Upload all images concurrently to Cloudinary
+                const uploadedAssets = await Promise.all(
+                    draftImages.map(async (img) => {
+                        const secureUrl = await uploadSingleToCloudinary(img.file);
+                        return {
+                            url: secureUrl,
+                            alt: img.alt || "",
+                            tags: img.tags || []
+                        };
+                    })
+                );
+                // Serialize as JSON string to support multi-images and metadata in single column
+                imageUrl = JSON.stringify(uploadedAssets);
+            } catch (err: any) {
+                console.error("Cloudinary upload failed:", err);
+                toast.error("Failed to upload image. Please try again.");
                 setIsUploading(false);
                 return;
             }
@@ -125,11 +199,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
         setContent("");
         setPollOptions(["", ""]);
         setIsPollMode(false);
-        setSelectedFile(null);
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-        }
+        setDraftImages([]);
         setIsUploading(false);
         setIsOpen(false);
         toast.success("Post sent.");
@@ -182,6 +252,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 accept="image/*"
+                                multiple
                                 className="hidden"
                                 disabled={isUploading}
                             />
@@ -196,24 +267,51 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[150px] md:min-h-[200px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
                             />
 
-                            {/* Image Preview */}
-                            {previewUrl && (
-                                <div className="relative mt-4 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] group">
-                                    <img
-                                        src={previewUrl}
-                                        alt="Upload preview"
-                                        className="w-full h-auto max-h-[350px] object-contain mx-auto"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveImage}
-                                        disabled={isUploading}
-                                        className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-colors shadow-md z-10"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
+                            {/* Multiple Draft Images Collage Previews */}
+                            {draftImages.length > 0 && (
+                                <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] p-2 relative">
+                                    {draftImages.map((img, idx) => (
+                                        <div key={idx} className="relative aspect-video bg-black/5 rounded-lg overflow-hidden group">
+                                            <img
+                                                src={img.previewUrl}
+                                                alt={`Draft attachment ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            {img.tags.length > 0 && (
+                                                <span className="absolute bottom-2 left-2 bg-violet-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm shadow border border-white/10 z-10">
+                                                    {img.tags.length} Tag{img.tags.length > 1 ? "s" : ""}
+                                                </span>
+                                            )}
+                                            {img.alt && (
+                                                <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm z-10">
+                                                    ALT
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const files = draftImages.map(img => img.file);
+                                                    setEditorInitialFiles(files);
+                                                    setIsEditorOpen(true);
+                                                }}
+                                                disabled={isUploading}
+                                                className="absolute top-2 left-2 bg-black/60 hover:bg-[#6366F1] text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                title="Edit Image"
+                                            >
+                                                <Edit className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveDraftImage(idx)}
+                                                disabled={isUploading}
+                                                className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
                                     {isUploading && (
-                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2">
+                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30">
                                             <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
                                             <span className="text-xs font-semibold tracking-wide">Uploading...</span>
                                         </div>
@@ -316,7 +414,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         variant="ghost"
                                         size="icon"
                                         disabled={isUploading}
-                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", selectedFile ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", draftImages.length > 0 ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         <ImageIcon className="w-5 h-5" />
@@ -332,7 +430,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     </span>
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={isUploading || (!content.trim() && !selectedFile) || content.length > 3000}
+                                        disabled={isUploading || (!content.trim() && draftImages.length === 0) || content.length > 3000}
                                         className="rounded-full px-6 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold h-9 transition-colors shadow-sm animate-none flex items-center gap-2"
                                     >
                                         {isUploading ? (
@@ -363,7 +461,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     <ImageIcon className="w-5 h-5 text-[#2563EB] group-hover:scale-110 transition-transform duration-200" />
                     <span>Media</span>
                 </button>
-
+ 
                 <button
                     onClick={() => handleFeatureDisabled("Events")}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FFFBEB] transition-all duration-200 text-[#6B7280] hover:text-[#D97706] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
@@ -371,7 +469,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     <Calendar className="w-5 h-5 text-[#D97706] group-hover:scale-110 transition-transform duration-200" />
                     <span>Event</span>
                 </button>
-
+ 
                 <button
                     onClick={() => handleFeatureDisabled("Articles")}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#FEF2F2] transition-all duration-200 text-[#6B7280] hover:text-[#EF4444] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
@@ -380,6 +478,15 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     <span>Write article</span>
                 </button>
             </div>
+
+            {/* LinkedIn-Style Image Editor Modal */}
+            <ImageEditorModal
+                isOpen={isEditorOpen}
+                onClose={() => setIsEditorOpen(false)}
+                initialFiles={editorInitialFiles}
+                onApply={handleApplyEditorChanges}
+            />
         </div>
     );
 }
+

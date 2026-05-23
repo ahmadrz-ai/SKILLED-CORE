@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     ThumbsUp, MessageCircle, Repeat, Send, MoreHorizontal,
-    Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck
+    Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck,
+    Tag, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -95,6 +96,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
     // Optimistic Content State
     const [content, setContent] = useState(post.content);
+
+    // Multi-Image & Interactive Tagging State
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [hoveredImageIdx, setHoveredImageIdx] = useState<number | null>(null);
 
     // Sync with server updates
     useEffect(() => {
@@ -462,12 +467,393 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         </div>
                     )}
 
-                    {/* Image */}
-                    {post.image && (
-                        <div className="mt-3 rounded-xl overflow-hidden border border-[#E5E7EB]">
-                            <img src={post.image} alt="Post attachment" className="w-full h-auto object-cover max-h-[400px]" />
-                        </div>
-                    )}
+                    {/* Multi-Image and Interactive Tagging Collage */}
+                    {(() => {
+                        if (!post.image) return null;
+                        
+                        let parsedImages: Array<{ url: string; alt?: string; tags?: Array<{ userId: string; name: string; username: string; x: number; y: number; image?: string | null }> }> = [];
+                        let isMulti = false;
+                        
+                        if (post.image.startsWith("[")) {
+                            try {
+                                parsedImages = JSON.parse(post.image);
+                                isMulti = true;
+                            } catch (e) {
+                                parsedImages = [{ url: post.image }];
+                            }
+                        } else {
+                            parsedImages = [{ url: post.image }];
+                        }
+
+                        if (parsedImages.length === 0) return null;
+
+                        const imgCount = parsedImages.length;
+
+                        return (
+                            <>
+                                {/* 1 Image layout */}
+                                {imgCount === 1 && (
+                                    <div 
+                                        className="relative mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] group cursor-pointer"
+                                        onClick={() => setLightboxIndex(0)}
+                                        onMouseEnter={() => setHoveredImageIdx(0)}
+                                        onMouseLeave={() => setHoveredImageIdx(null)}
+                                    >
+                                        <img src={parsedImages[0].url} alt={parsedImages[0].alt || "Post attachment"} className="w-full h-auto object-cover max-h-[500px]" />
+                                        
+                                        {/* Hoverable user tags */}
+                                        {parsedImages[0].tags && parsedImages[0].tags.map((t, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className={cn(
+                                                    "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                                    hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                )}
+                                                style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                            >
+                                                <div 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        router.push(`/profile/${t.username}`);
+                                                    }}
+                                                    className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <Tag className="w-3 h-3 text-[#10B981]" />
+                                                    <span>{t.name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {parsedImages[0].alt && (
+                                            <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                ALT
+                                            </div>
+                                        )}
+                                        {parsedImages[0].tags && parsedImages[0].tags.length > 0 && (
+                                            <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                                <UserPlus className="w-3 h-3 text-[#10B981]" />
+                                                <span>{parsedImages[0].tags.length} tagged</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* 2 Images layout */}
+                                {imgCount === 2 && (
+                                    <div className="grid grid-cols-2 gap-1.5 mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
+                                        {parsedImages.slice(0, 2).map((img, index) => (
+                                            <div 
+                                                key={index}
+                                                className="relative aspect-square cursor-pointer group"
+                                                onClick={() => setLightboxIndex(index)}
+                                                onMouseEnter={() => setHoveredImageIdx(index)}
+                                                onMouseLeave={() => setHoveredImageIdx(null)}
+                                            >
+                                                <img src={img.url} alt={img.alt || `Attachment ${index + 1}`} className="w-full h-full object-cover" />
+                                                {img.tags && img.tags.map((t, idx) => (
+                                                    <div 
+                                                        key={idx}
+                                                        className={cn(
+                                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                                            hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                        )}
+                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                    >
+                                                        <div 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                router.push(`/profile/${t.username}`);
+                                                            }}
+                                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Tag className="w-3 h-3 text-[#10B981]" />
+                                                            <span>{t.name}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {img.alt && (
+                                                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                        ALT
+                                                    </div>
+                                                )}
+                                                {img.tags && img.tags.length > 0 && (
+                                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                                        <span>{img.tags.length}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* 3 Images layout (Collage style) */}
+                                {imgCount === 3 && (
+                                    <div className="grid grid-cols-2 gap-1.5 h-[350px] mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
+                                        {/* Large Left */}
+                                        <div 
+                                            className="relative h-full cursor-pointer group"
+                                            onClick={() => setLightboxIndex(0)}
+                                            onMouseEnter={() => setHoveredImageIdx(0)}
+                                            onMouseLeave={() => setHoveredImageIdx(null)}
+                                        >
+                                            <img src={parsedImages[0].url} alt={parsedImages[0].alt || "Attachment 1"} className="w-full h-full object-cover" />
+                                            {parsedImages[0].tags && parsedImages[0].tags.map((t, idx) => (
+                                                <div 
+                                                    key={idx}
+                                                    className={cn(
+                                                        "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                                        hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                    )}
+                                                    style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                >
+                                                    <div 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            router.push(`/profile/${t.username}`);
+                                                        }}
+                                                        className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <Tag className="w-3 h-3 text-[#10B981]" />
+                                                        <span>{t.name}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {parsedImages[0].alt && (
+                                                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                    ALT
+                                                </div>
+                                            )}
+                                            {parsedImages[0].tags && parsedImages[0].tags.length > 0 && (
+                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                                    <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                                    <span>{parsedImages[0].tags.length}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Right Stack */}
+                                        <div className="flex flex-col gap-1.5 h-full">
+                                            {parsedImages.slice(1, 3).map((img, index) => {
+                                                const actualIndex = index + 1;
+                                                return (
+                                                    <div 
+                                                        key={actualIndex}
+                                                        className="relative h-[171px] cursor-pointer group"
+                                                        onClick={() => setLightboxIndex(actualIndex)}
+                                                        onMouseEnter={() => setHoveredImageIdx(actualIndex)}
+                                                        onMouseLeave={() => setHoveredImageIdx(null)}
+                                                    >
+                                                        <img src={img.url} alt={img.alt || `Attachment ${actualIndex + 1}`} className="w-full h-full object-cover" />
+                                                        {img.tags && img.tags.map((t, idx) => (
+                                                            <div 
+                                                                key={idx}
+                                                                className={cn(
+                                                                    "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                                                    hoveredImageIdx === actualIndex ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                                )}
+                                                                style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                            >
+                                                                <div 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        router.push(`/profile/${t.username}`);
+                                                                    }}
+                                                                    className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    <Tag className="w-3 h-3 text-[#10B981]" />
+                                                                    <span>{t.name}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {img.alt && (
+                                                            <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                                ALT
+                                                                </div>
+                                                        )}
+                                                        {img.tags && img.tags.length > 0 && (
+                                                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                                                <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                                                <span>{img.tags.length}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 4 Images layout */}
+                                {imgCount >= 4 && (
+                                    <div className="grid grid-cols-2 gap-1.5 mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB]">
+                                        {parsedImages.slice(0, 4).map((img, index) => (
+                                            <div 
+                                                key={index}
+                                                className="relative h-[180px] cursor-pointer group"
+                                                onClick={() => setLightboxIndex(index)}
+                                                onMouseEnter={() => setHoveredImageIdx(index)}
+                                                onMouseLeave={() => setHoveredImageIdx(null)}
+                                            >
+                                                <img src={img.url} alt={img.alt || `Attachment ${index + 1}`} className="w-full h-full object-cover" />
+                                                {img.tags && img.tags.map((t, idx) => (
+                                                    <div 
+                                                        key={idx}
+                                                        className={cn(
+                                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                                            hoveredImageIdx === index ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                                        )}
+                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                    >
+                                                        <div 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                router.push(`/profile/${t.username}`);
+                                                            }}
+                                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Tag className="w-3 h-3 text-[#10B981]" />
+                                                            <span>{t.name}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {img.alt && (
+                                                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                        ALT
+                                                    </div>
+                                                )}
+                                                {img.tags && img.tags.length > 0 && (
+                                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                                        <span>{img.tags.length}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Premium Image Lightbox Viewer Modal */}
+                                {lightboxIndex !== null && (
+                                    <div 
+                                        className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 cursor-default select-none animate-fade-in"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setLightboxIndex(null);
+                                        }}
+                                    >
+                                        <button 
+                                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full transition-all z-50 cursor-pointer"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setLightboxIndex(null);
+                                            }}
+                                        >
+                                            <XCircle className="w-6 h-6" />
+                                        </button>
+
+                                        {/* Large Image Box */}
+                                        <div 
+                                            className="relative max-w-4xl w-full max-h-[85vh] bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="flex-1 relative flex items-center justify-center bg-black min-h-[300px]">
+                                                <img 
+                                                    src={parsedImages[lightboxIndex].url} 
+                                                    alt={parsedImages[lightboxIndex].alt || "Post attachment full screen"} 
+                                                    className="max-w-full max-h-[75vh] object-contain"
+                                                />
+                                                
+                                                {/* Always display tags in full screen lightbox! */}
+                                                {parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.map((t, idx) => (
+                                                    <div 
+                                                        key={idx}
+                                                        className="absolute z-40 translate-x-[-50%] translate-y-[-50%]"
+                                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                                    >
+                                                        <div 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                setLightboxIndex(null);
+                                                                router.push(`/profile/${t.username}`);
+                                                            }}
+                                                            className="bg-black/85 hover:bg-black text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-white/25 shadow-2xl flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+                                                        >
+                                                            <Tag className="w-3.5 h-3.5 text-[#10B981]" />
+                                                            <span>{t.name}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Right sidebar inside lightbox containing ALT text descriptions or details */}
+                                            {(parsedImages[lightboxIndex].alt || (parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.length > 0)) && (
+                                                <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/10 bg-zinc-950 p-5 flex flex-col justify-between text-white select-text">
+                                                    <div className="space-y-5">
+                                                        <div className="border-b border-white/10 pb-3">
+                                                            <h4 className="font-bold text-sm text-zinc-400 uppercase tracking-wider">Image Details</h4>
+                                                            <span className="text-[10px] text-zinc-500 font-mono">Image {lightboxIndex + 1} of {parsedImages.length}</span>
+                                                        </div>
+
+                                                        {parsedImages[lightboxIndex].alt && (
+                                                            <div className="space-y-1.5">
+                                                                <h5 className="font-bold text-xs text-[#10B981] flex items-center gap-1">
+                                                                    <Info className="w-3.5 h-3.5" /> Accessibility ALT Text
+                                                                </h5>
+                                                                <p className="text-xs text-zinc-300 leading-relaxed italic bg-white/5 p-3 rounded-xl border border-white/5">
+                                                                    "{parsedImages[lightboxIndex].alt}"
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        {parsedImages[lightboxIndex].tags && parsedImages[lightboxIndex].tags.length > 0 && (
+                                                            <div className="space-y-1.5">
+                                                                <h5 className="font-bold text-xs text-[#6366F1] flex items-center gap-1">
+                                                                    <UserPlus className="w-3.5 h-3.5" /> Tagged People
+                                                                </h5>
+                                                                <div className="space-y-2">
+                                                                    {parsedImages[lightboxIndex].tags.map((t) => (
+                                                                        <div 
+                                                                            key={t.userId}
+                                                                            onClick={() => {
+                                                                                setLightboxIndex(null);
+                                                                                router.push(`/profile/${t.username}`);
+                                                                            }}
+                                                                            className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition-all"
+                                                                        >
+                                                                            <Avatar className="w-7 h-7 border border-white/10 flex-shrink-0">
+                                                                                <AvatarImage src={t.image || ""} />
+                                                                                <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-[9px] font-bold">
+                                                                                    {t.name.charAt(0)}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="text-xs font-bold text-white truncate">{t.name}</div>
+                                                                                <div className="text-[10px] text-zinc-400 truncate">@{t.username}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="text-[10px] text-zinc-500 pt-4 text-center select-none">
+                                                        SkilledCore High Engagement Media Viewer
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })()}
 
                     {/* Action Bar */}
                     <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">

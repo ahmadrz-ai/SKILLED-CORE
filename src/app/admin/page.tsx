@@ -14,7 +14,6 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<any>({ users: 0, jobs: 0, applications: 0, posts: 0 });
     const [uploadthingFiles, setUploadthingFiles] = useState<any[]>([]);
     const [cloudinaryFiles, setCloudinaryFiles] = useState<any[]>([]);
-    const [b2Files, setB2Files] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -26,7 +25,6 @@ export default function AdminDashboard() {
                 setStats(res.data.stats);
                 setUploadthingFiles([...res.data.uploadthingFiles]);
                 setCloudinaryFiles([...res.data.cloudinaryFiles]);
-                setB2Files([...(res.data.b2Files || [])]);
             }
             setLoading(false);
         };
@@ -89,7 +87,6 @@ export default function AdminDashboard() {
                     <StorageBrowser 
                         uploadthingFiles={uploadthingFiles} 
                         cloudinaryFiles={cloudinaryFiles} 
-                        b2Files={b2Files}
                         dbStats={stats} 
                     />
                 )}

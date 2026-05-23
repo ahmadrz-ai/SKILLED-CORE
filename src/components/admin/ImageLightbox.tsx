@@ -1,7 +1,7 @@
 'use client';
 
 import { X, ZoomIn, Download } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface ImageLightboxProps {
@@ -17,6 +17,10 @@ export function ImageLightbox({ isOpen, onClose, imageUrl, title }: ImageLightbo
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-7xl h-[90vh] bg-black/95 border-white/10 p-0 overflow-hidden">
+                <DialogTitle className="sr-only">{title || 'Attachment Preview'}</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Preview of the attached media asset.
+                </DialogDescription>
                 {/* Header */}
                 <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
                     <div className="flex items-center justify-between">
