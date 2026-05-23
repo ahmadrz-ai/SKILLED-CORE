@@ -200,26 +200,34 @@ export default function CreditsPage() {
                 ))}
             </div>
 
-            {/* Quick Top-up dark theme accent panel */}
-            <div className="bg-[#111827] border border-gray-800 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-lg">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-[#6366F1]/5 blur-[80px] rounded-full pointer-events-none" />
+            {/* Quick Top-up light theme premium card */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-[0_8px_30px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)]">
+                {/* Premium top accent line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#6366F1] via-[#D946EF] to-[#6366F1]" />
+                
+                <div className="absolute -right-24 -bottom-24 w-52 h-52 bg-[#6366F1]/5 blur-[70px] rounded-full pointer-events-none" />
+                
                 <div className="relative z-10 flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center border border-gray-700/80 shadow-xl flex-shrink-0">
-                        <CreditCard className="w-6 h-6 text-[#10B981]" />
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm flex-shrink-0 transition-transform duration-300 group-hover:scale-105">
+                        <CreditCard className="w-6 h-6 text-[#6366F1]" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-black text-white font-heading tracking-wide uppercase">Quick Balance Top-up</h3>
-                        <p className="text-gray-400 text-xs mt-0.5">Running low? Add standard simulation packs instantly.</p>
+                        <h3 className="text-lg font-black text-gray-950 font-heading tracking-wide uppercase">Quick Balance Top-up</h3>
+                        <p className="text-gray-500 text-xs mt-1 font-medium font-sans">Running low? Add standard simulation packs instantly.</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6 relative z-10 w-full md:w-auto justify-between md:justify-end border-t border-gray-800/80 md:border-none pt-4 md:pt-0">
+                <div className="flex items-center gap-6 relative z-10 w-full md:w-auto justify-between md:justify-end border-t border-gray-100 md:border-none pt-4 md:pt-0">
                     <div className="text-left md:text-right">
-                        <span className="block text-lg font-black text-white font-heading leading-tight">+5 Credits</span>
-                        <span className="text-[#10B981] font-mono text-xs font-bold">$1.00 USD</span>
+                        <span className="block text-xl font-black text-gray-950 font-heading leading-tight">+5 Credits</span>
+                        <div className="mt-1 flex items-center gap-1.5 justify-start md:justify-end">
+                            <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/50">
+                                $1.00 USD
+                            </span>
+                        </div>
                     </div>
                     <PaymentModal onSuccess={fetchData}>
-                        <button className="px-6 py-3 bg-white text-[#111827] hover:bg-gray-100 font-heading font-black text-xs tracking-widest uppercase rounded-xl transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99]">
+                        <button className="px-6 py-3 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-heading font-black text-xs tracking-widest uppercase rounded-xl transition-all shadow-md shadow-[#6366F1]/10 hover:shadow-lg hover:shadow-[#6366F1]/20 hover:scale-[1.01] active:scale-[0.99]">
                             BUY NOW
                         </button>
                     </PaymentModal>
