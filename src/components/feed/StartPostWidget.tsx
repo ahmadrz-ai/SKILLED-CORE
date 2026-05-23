@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import ImageEditorModal from "@/components/feed/ImageEditorModal";
 import EmojiPicker from "emoji-picker-react";
+import { COLLAGE_LAYOUTS, getLayoutById, CollageLayout } from "@/lib/collage-layouts";
 
 interface StartPostWidgetProps {
     onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
@@ -70,6 +71,19 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const [linkUrl, setLinkUrl] = useState("");
     const [linkSelectionStart, setLinkSelectionStart] = useState(0);
     const [linkSelectionEnd, setLinkSelectionEnd] = useState(0);
+
+    // Collage Layout Picker State
+    const [selectedLayoutId, setSelectedLayoutId] = useState("default");
+    const [isLayoutPickerOpen, setIsLayoutPickerOpen] = useState(false);
+
+    // Reset to default layout when image count changes
+    useEffect(() => {
+        if (draftImages.length >= 2) {
+            setSelectedLayoutId(`${draftImages.length}-default`);
+        } else {
+            setSelectedLayoutId("default");
+        }
+    }, [draftImages.length]);
 
     // Keyboard Shortcuts and List Conversions
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -489,8 +503,15 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                         };
                     })
                 );
-                // Serialize as JSON string to support multi-images and metadata in single column
-                imageUrl = JSON.stringify(uploadedAssets);
+                // Serialize as JSON string to support multi-images and metadata with layoutId in single column
+                if (draftImages.length > 1) {
+                    imageUrl = JSON.stringify({
+                        images: uploadedAssets,
+                        layoutId: selectedLayoutId
+                    });
+                } else {
+                    imageUrl = JSON.stringify(uploadedAssets);
+                }
             } catch (err: any) {
                 console.error("Cloudinary upload failed:", err);
                 toast.error("Failed to upload image. Please try again.");
@@ -678,24 +699,14 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
                             {/* Multiple Draft Images Collage Previews */}
                             {draftImages.length > 0 && (
-                                <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] p-2 relative">
-                                    {draftImages.map((img, idx) => (
-                                        <div key={idx} className="relative aspect-video bg-black/5 rounded-lg overflow-hidden group">
+                                <div className="mt-4 relative group">
+                                    {draftImages.length === 1 ? (
+                                        <div className="relative aspect-video bg-black/5 rounded-xl overflow-hidden border border-[#E5E7EB] group">
                                             <img
-                                                src={img.previewUrl}
-                                                alt={`Draft attachment ${idx + 1}`}
+                                                src={draftImages[0].previewUrl}
+                                                alt="Draft attachment"
                                                 className="w-full h-full object-cover"
                                             />
-                                            {img.tags.length > 0 && (
-                                                <span className="absolute bottom-2 left-2 bg-violet-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm shadow border border-white/10 z-10">
-                                                    {img.tags.length} Tag{img.tags.length > 1 ? "s" : ""}
-                                                </span>
-                                            )}
-                                            {img.alt && (
-                                                <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm z-10">
-                                                    ALT
-                                                </span>
-                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -711,16 +722,77 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => handleRemoveDraftImage(idx)}
+                                                onClick={() => handleRemoveDraftImage(0)}
                                                 disabled={isUploading}
                                                 className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
-                                    ))}
+                                    ) : (() => {
+                                        const layout = getLayoutById(selectedLayoutId, draftImages.length);
+                                        const displayedDrafts = draftImages.slice(0, Math.min(draftImages.length, layout.itemClasses.length));
+                                        
+                                        return (
+                                            <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 p-0.5">
+                                                <div className={cn("grid w-full", layout.gridClass)}>
+                                                    {displayedDrafts.map((img, idx) => {
+                                                        const isLastItem = idx === displayedDrafts.length - 1;
+                                                        const extraCount = draftImages.length - displayedDrafts.length;
+                                                        
+                                                        return (
+                                                            <div key={idx} className={cn("relative overflow-hidden w-full h-full min-h-[140px] max-h-[300px]", layout.itemClasses[idx])}>
+                                                                <img
+                                                                    src={img.previewUrl}
+                                                                    alt={`Attachment ${idx + 1}`}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                                {isLastItem && extraCount > 0 && (
+                                                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-base font-bold pointer-events-none">
+                                                                        +{extraCount}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* Floating layout controls directly matching SkilledCore vibe */}
+                                                <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => setIsLayoutPickerOpen(true)}
+                                                        className="bg-white hover:bg-gray-100 text-zinc-800 hover:text-black border border-gray-200 shadow-md text-xs font-bold rounded-xl h-8 px-3 flex items-center gap-1.5 cursor-pointer transition-all animate-none"
+                                                    >
+                                                        <BarChart2 className="w-3.5 h-3.5 text-violet-600 rotate-90" />
+                                                        Layouts
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const files = draftImages.map(img => img.file);
+                                                            setEditorInitialFiles(files);
+                                                            setIsEditorOpen(true);
+                                                        }}
+                                                        className="bg-white hover:bg-gray-100 text-zinc-800 hover:text-black border border-gray-200 shadow-md text-xs font-bold rounded-xl h-8 px-3 flex items-center gap-1.5 cursor-pointer transition-all animate-none"
+                                                    >
+                                                        <Edit className="w-3.5 h-3.5 text-violet-600" />
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => setDraftImages([])}
+                                                        className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 shadow-md text-xs font-bold rounded-xl h-8 px-2.5 flex items-center gap-1 cursor-pointer transition-all animate-none"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
                                     {isUploading && (
-                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30">
+                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
                                             <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
                                             <span className="text-xs font-semibold tracking-wide">Uploading...</span>
                                         </div>
@@ -1146,33 +1218,33 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
             {/* Beautiful Custom Insert Link Dialog Overlay */}
             {isLinkDialogOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#1F2937] border border-gray-700/80 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-white transform scale-100 transition-all">
-                        <h3 className="text-base font-bold text-white mb-4 tracking-tight flex items-center gap-2">
-                            <Link2 className="w-4 h-4 text-violet-400" />
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
+                    <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#6366F1]">
+                        <h3 className="text-base font-extrabold text-[#111827] mb-4 tracking-tight flex items-center gap-2">
+                            <Link2 className="w-4.5 h-4.5 text-[#6366F1]" />
                             Insert link
                         </h3>
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Text to display</label>
+                                <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Text to display</label>
                                 <input
                                     type="text"
                                     value={linkText}
                                     onChange={(e) => setLinkText(e.target.value)}
                                     placeholder="Text to display"
-                                    className="w-full bg-[#111827] border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-colors"
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
                                     autoFocus
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Address</label>
+                                <label className="block text-xs font-bold text-[#4B5563] uppercase tracking-wider mb-1.5">Address</label>
                                 <input
                                     type="text"
                                     value={linkUrl}
                                     onChange={(e) => setLinkUrl(e.target.value)}
                                     placeholder="Link to an existing file or web page"
-                                    className="w-full bg-[#111827] border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-colors"
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") {
                                             e.preventDefault();
@@ -1183,20 +1255,98 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             </div>
                         </div>
                         
-                        <div className="flex justify-end gap-3 mt-6">
+                        <div className="flex justify-end gap-2.5 mt-6">
                             <button
                                 type="button"
                                 onClick={() => setIsLinkDialogOpen(false)}
-                                className="px-4 py-2 text-xs font-bold text-gray-300 hover:text-white bg-transparent hover:bg-gray-800 border border-gray-700 rounded-xl transition-colors"
+                                className="px-4 py-2 text-xs font-bold text-[#4B5563] hover:text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#E5E7EB] rounded-xl transition-colors cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
                                 onClick={handleInsertLink}
-                                className="px-5 py-2 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors shadow-lg shadow-violet-600/20"
+                                className="px-5 py-2 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer"
                             >
                                 Insert
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Premium Dynamic 50+ Collage Layouts Picker (Non-blocking Soft Blur Overlay) */}
+            {isLayoutPickerOpen && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-indigo-900/5 backdrop-blur-[1px] p-4 animate-in fade-in duration-200">
+                    <div className="bg-white/95 border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-[#111827] transform scale-100 transition-all flex flex-col max-h-[85vh] border-t-4 border-t-[#6366F1]">
+                        <div className="flex justify-between items-center mb-4 border-b border-[#F3F4F6] pb-3">
+                            <div>
+                                <h3 className="text-lg font-extrabold text-[#111827] tracking-tight flex items-center gap-2">
+                                    <BarChart2 className="w-5 h-5 text-[#6366F1] rotate-90" />
+                                    Collage Grid Layouts
+                                </h3>
+                                <p className="text-xs text-[#6B7280] font-medium mt-0.5">Select a layout template for your {draftImages.length} images</p>
+                            </div>
+                            <button 
+                                onClick={() => setIsLayoutPickerOpen(false)}
+                                className="text-zinc-400 hover:text-zinc-600 p-1.5 hover:bg-zinc-100 rounded-full transition-colors cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Gallery of Prebuilt Layout Templates */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[50vh] pr-1 py-2 custom-scrollbar">
+                            {COLLAGE_LAYOUTS.filter(l => l.imgCount === draftImages.length).map((layout) => {
+                                const isSelected = selectedLayoutId === layout.id;
+                                return (
+                                    <button
+                                        key={layout.id}
+                                        type="button"
+                                        onClick={() => setSelectedLayoutId(layout.id)}
+                                        className={cn(
+                                            "group flex flex-col p-2.5 border rounded-2xl text-left transition-all hover:bg-violet-50/20 cursor-pointer",
+                                            isSelected 
+                                                ? "border-[#6366F1] bg-violet-50/30 ring-1 ring-[#6366F1]/30 shadow-md shadow-[#6366F1]/5" 
+                                                : "border-zinc-200/80 hover:border-violet-300"
+                                        )}
+                                    >
+                                        {/* Dynamic visual grid thumbnail */}
+                                        <div className={cn(
+                                            "grid w-full h-16 border rounded-lg overflow-hidden gap-0.5 p-0.5 transition-all bg-zinc-50/50",
+                                            isSelected ? "border-[#6366F1]/50" : "border-zinc-200 group-hover:border-violet-300"
+                                        )}>
+                                            {layout.itemClasses.map((itemClass, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    className={cn(
+                                                        "transition-all rounded-[2px]",
+                                                        isSelected 
+                                                            ? "bg-[#6366F1]/80 border border-[#6366F1]" 
+                                                            : "bg-zinc-300/80 border border-zinc-200 group-hover:bg-violet-100/80 group-hover:border-violet-200",
+                                                        itemClass
+                                                    )} 
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className={cn(
+                                            "text-[10px] font-bold mt-2 truncate w-full transition-colors block text-center",
+                                            isSelected ? "text-[#6366F1]" : "text-zinc-500 group-hover:text-violet-600"
+                                        )}>
+                                            {layout.name}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex justify-end pt-4 mt-4 border-t border-[#F3F4F6]">
+                            <button
+                                type="button"
+                                onClick={() => setIsLayoutPickerOpen(false)}
+                                className="px-6 py-2.5 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer"
+                            >
+                                Done
                             </button>
                         </div>
                     </div>

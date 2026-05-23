@@ -20,6 +20,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { deletePost, reportPost, votePoll, updatePost, toggleFollow } from "@/app/(app)/feed/actions";
 import { CommentSection } from "@/components/feed/CommentSection";
+import { getLayoutById } from "@/lib/collage-layouts";
 import {
     Dialog,
     DialogContent,
@@ -567,50 +568,26 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 {(() => {
                     if (!post.image) return null;
 
-                    let parsedImages: Array<{ url: string; alt?: string; tags?: Array<{ userId: string; name: string; username: string; x: number; y: number; image?: string | null }> }> = [];
+                    let parsedImages: Array<{ url: string; alt?: string; tags?: any[] }> = [];
+                    let layoutId = "default";
 
-                    if (post.image.startsWith("[")) {
-                        try {
+                    try {
+                        if (post.image.startsWith("{")) {
+                            const parsedObj = JSON.parse(post.image);
+                            parsedImages = parsedObj.images || [];
+                            layoutId = parsedObj.layoutId || "default";
+                        } else if (post.image.startsWith("[")) {
                             parsedImages = JSON.parse(post.image);
-                        } catch (e) {
+                        } else {
                             parsedImages = [{ url: post.image }];
                         }
-                    } else {
+                    } catch (e) {
                         parsedImages = [{ url: post.image }];
                     }
 
                     if (parsedImages.length === 0) return null;
 
                     const imgCount = parsedImages.length;
-
-                    const renderCollageImage = (img: { url: string; alt?: string }, index: number) => {
-                        return (
-                            <div 
-                                className="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center group"
-                                onClick={() => setLightboxIndex(index)}
-                            >
-                                {/* Ambient Blurred Background (fills the slot beautifully with matching colors) */}
-                                <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none opacity-40 scale-110 blur-xl">
-                                    <img 
-                                        src={img.url} 
-                                        alt="" 
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                {/* Crisp Foreground Image (fully contained, zero cropping, completely visible text) */}
-                                <img 
-                                    src={img.url} 
-                                    alt={img.alt || `Attachment ${index + 1}`} 
-                                    className="relative z-10 w-full h-full object-contain transition-transform duration-200 group-hover:scale-[1.01]"
-                                />
-                                {img.alt && (
-                                    <div className="absolute bottom-2 left-2 z-20 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
-                                        ALT
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    };
 
                     // If single image, render in original aspect ratio with custom max-height
                     if (imgCount === 1) {
@@ -627,7 +604,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 />
 
                                 {/* Tags on hover */}
-                                {img.tags && img.tags.map((t, idx) => (
+                                {img.tags && img.tags.map((t: any, idx: number) => (
                                     <div 
                                         key={idx}
                                         className={cn(
@@ -668,67 +645,42 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         );
                     }
 
-                    // If 2 images: 2 equal-width columns side-by-side
-                    if (imgCount === 2) {
+                    // If multiple images: render dynamically using selected layout with object-cover (no white spaces!)
+                    if (imgCount > 1) {
+                        const layout = getLayoutById(layoutId, imgCount);
+                        const displayedImages = parsedImages.slice(0, Math.min(imgCount, layout.itemClasses.length));
+                        
                         return (
-                            <div className="relative mt-3 grid grid-cols-2 gap-1.5 aspect-[3/2] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
-                                {parsedImages.map((img, index) => (
-                                    <div key={index} className="relative h-full w-full overflow-hidden cursor-pointer">
-                                        {renderCollageImage(img, index)}
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    }
-
-                    // If 3 images: 1 large on left, 2 smaller stacked on right
-                    if (imgCount === 3) {
-                        return (
-                            <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/10] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
-                                {/* Left tall image */}
-                                <div className="col-span-2 h-full w-full overflow-hidden cursor-pointer">
-                                    {renderCollageImage(parsedImages[0], 0)}
-                                </div>
-                                {/* Right stacked images */}
-                                <div className="col-span-1 flex flex-col gap-1.5 h-full">
-                                    {parsedImages.slice(1).map((img, idx) => {
-                                        const actualIndex = idx + 1;
-                                        return (
-                                            <div key={actualIndex} className="h-[calc(50%-3px)] w-full overflow-hidden cursor-pointer">
-                                                {renderCollageImage(img, actualIndex)}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    }
-
-                    // If 4 or more images: 1 large on left, 3 smaller stacked on right (matching the LinkedIn style!)
-                    return (
-                        <div className="relative mt-3 grid grid-cols-3 gap-1.5 aspect-[16/11] w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 select-none">
-                            {/* Left tall image */}
-                            <div className="col-span-2 h-full w-full overflow-hidden cursor-pointer">
-                                {renderCollageImage(parsedImages[0], 0)}
-                            </div>
-                            {/* Right stacked images */}
-                            <div className="col-span-1 flex flex-col gap-1.5 h-full">
-                                {parsedImages.slice(1, 4).map((img, idx) => {
-                                    const actualIndex = idx + 1;
+                            <div className={cn("relative mt-3 select-none overflow-hidden rounded-xl border border-[#E5E7EB] bg-gray-50", layout.gridClass)}>
+                                {displayedImages.map((img, idx) => {
+                                    const isLastItem = idx === displayedImages.length - 1;
+                                    const extraCount = imgCount - displayedImages.length;
+                                    
                                     return (
-                                        <div key={actualIndex} className="relative h-[calc(33.33%-3px)] w-full overflow-hidden cursor-pointer">
-                                            {renderCollageImage(img, actualIndex)}
-                                            
-                                            {/* If 5+ images, show "+X more" overlay on the 4th image (3rd index in right stack) */}
-                                            {actualIndex === 3 && imgCount > 4 && (
+                                        <div 
+                                            key={idx}
+                                            className={cn("relative overflow-hidden cursor-pointer group w-full h-full", layout.itemClasses[idx])}
+                                            onClick={() => setLightboxIndex(idx)}
+                                        >
+                                            <img 
+                                                src={img.url} 
+                                                alt={img.alt || `Attachment ${idx + 1}`} 
+                                                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+                                            />
+                                            {img.alt && (
+                                                <div className="absolute bottom-2 left-2 z-10 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                                    ALT
+                                                </div>
+                                            )}
+                                            {isLastItem && extraCount > 0 && (
                                                 <div 
                                                     className="absolute inset-0 z-20 bg-black/60 hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-white text-base sm:text-lg font-bold select-none cursor-pointer"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setLightboxIndex(actualIndex);
+                                                        setLightboxIndex(idx);
                                                     }}
                                                 >
-                                                    <span>+{imgCount - 3}</span>
+                                                    <span>+{extraCount}</span>
                                                     <span className="text-[10px] tracking-wider uppercase font-medium mt-0.5">more</span>
                                                 </div>
                                             )}
@@ -736,8 +688,8 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                     );
                                 })}
                             </div>
-                        </div>
-                    );
+                        );
+                    }
                 })()}
 
                 {/* Premium Image Lightbox Viewer Modal */}
