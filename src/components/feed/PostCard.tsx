@@ -106,6 +106,9 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+    // Post Text Expansion State
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const minSwipeDistance = 50;
 
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -318,32 +321,78 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         return parts;
     };
 
+    const parseMarkdownInline = (text: string, key: string): React.ReactNode => {
+        const tokenRegex = /(\*\*.*?\*\*|\*.*?\*|__.*?__|~~.*?~~|`.*?`)/g;
+        const parts = text.split(tokenRegex);
+        
+        if (parts.length === 1) return <span key={key}>{text}</span>;
+
+        return (
+            <span key={key}>
+                {parts.map((part, index) => {
+                    const subKey = `${key}-${index}`;
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={subKey} className="font-extrabold text-[#111827]">{part.slice(2, -2)}</strong>;
+                    }
+                    if (part.startsWith('*') && part.endsWith('*')) {
+                        return <em key={subKey} className="italic text-gray-700">{part.slice(1, -1)}</em>;
+                    }
+                    if (part.startsWith('__') && part.endsWith('__')) {
+                        return <span key={subKey} className="underline decoration-[#6366F1]/50 decoration-wavy decoration-1 underline-offset-2">{part.slice(2, -2)}</span>;
+                    }
+                    if (part.startsWith('~~') && part.endsWith('~~')) {
+                        return <span key={subKey} className="line-through text-gray-400">{part.slice(2, -2)}</span>;
+                    }
+                    if (part.startsWith('`') && part.endsWith('`')) {
+                        return <code key={subKey} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-red-600 font-mono text-xs">{part.slice(1, -1)}</code>;
+                    }
+                    return part;
+                })}
+            </span>
+        );
+    };
+
     const parseLinks = (text: string, baseIndex: number): React.ReactNode[] => {
         const words = text.split(/(\s+)/);
         return words.map((word, i) => {
             const key = `${baseIndex}-${i}`;
             if (word.startsWith('#') && word.length > 1) {
+                const cleanTag = word.replace(/[.,!?:;]+$/, "");
+                const punctuation = word.substring(cleanTag.length);
                 return (
-                    <Link key={key} href={`/search?q=${encodeURIComponent(word)}`} className="text-blue-400 hover:underline" onClick={(e) => e.stopPropagation()}>
-                        {word}
-                    </Link>
+                    <span key={key}>
+                        <Link href={`/search?q=${encodeURIComponent(cleanTag)}`} className="text-blue-500 hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                            {cleanTag}
+                        </Link>
+                        {punctuation}
+                    </span>
                 );
             } else if (word.startsWith('@') && word.length > 1) {
                 const rawHandle = word.substring(1);
                 const cleanHandle = rawHandle.replace(/[.,!?:;]+$/, "");
                 const punctuation = rawHandle.substring(cleanHandle.length);
                 return (
-                    (
-                        <span key={key}>
-                            <Link href={`/profile/${cleanHandle}`} className="text-blue-400 hover:underline font-medium" onClick={(e) => e.stopPropagation()}>
-                                @{cleanHandle}
-                            </Link>
-                            {punctuation}
-                        </span>
-                    )
+                    <span key={key}>
+                        <Link href={`/profile/${cleanHandle}`} className="text-[#6366F1] hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                            @{cleanHandle}
+                        </Link>
+                        {punctuation}
+                    </span>
+                );
+            } else if (/^https?:\/\/[^\s]+/i.test(word) || /^www\.[^\s]+/i.test(word)) {
+                const cleanUrl = word.replace(/[.,!?;]+$/, "");
+                const punctuation = word.substring(cleanUrl.length);
+                const href = cleanUrl.startsWith("http") ? cleanUrl : `https://${cleanUrl}`;
+                return (
+                    <span key={key}>
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium break-all" onClick={(e) => e.stopPropagation()}>
+                            {cleanUrl}
+                        </a>
+                        {punctuation}
+                    </span>
                 );
             }
-            return <span key={key}>{word}</span>;
+            return parseMarkdownInline(word, key);
         });
     };
     const authorHandle = post.author?.handle || "@user";
@@ -484,7 +533,43 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                 {/* Text Body */}
                 <div className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">
-                    {parseContent(content)}
+                    {(() => {
+                        const TEXT_LIMIT = 240;
+                        const LINE_LIMIT = 4;
+                        const lines = content.split('\n');
+                        const isLineExceeded = lines.length > LINE_LIMIT;
+                        const isCharExceeded = content.length > TEXT_LIMIT;
+                        const shouldFold = isCharExceeded || isLineExceeded;
+
+                        let displayContent = content;
+                        if (!isExpanded && shouldFold) {
+                            let temp = content;
+                            if (isLineExceeded) {
+                                temp = lines.slice(0, LINE_LIMIT).join('\n');
+                            }
+                            if (temp.length > TEXT_LIMIT) {
+                                temp = temp.substring(0, TEXT_LIMIT);
+                            }
+                            displayContent = temp.trim() + '...';
+                        }
+
+                        return (
+                            <>
+                                {parseContent(displayContent)}
+                                {!isExpanded && shouldFold && (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsExpanded(true);
+                                        }}
+                                        className="text-[#6366F1] hover:text-[#4F46E5] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
+                                    >
+                                        more
+                                    </button>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
 
                 {/* Poll */}
@@ -521,7 +606,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     </div>
                 )}
 
-                {/* Instagram-Style Swipable Image Carousel */}
+                {/* Instagram-Style Swipable Image Carousel or Native Aspect Ratio Single Image */}
                 {(() => {
                     if (!post.image) return null;
 
@@ -541,11 +626,68 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                     const imgCount = parsedImages.length;
 
+                    // If single image, render in original aspect ratio with custom max-height
+                    if (imgCount === 1) {
+                        const img = parsedImages[0];
+                        return (
+                            <div className="relative mt-3 w-full bg-white rounded-xl overflow-hidden border border-[#E5E7EB] flex items-center justify-center max-h-[600px]">
+                                <img 
+                                    src={img.url} 
+                                    alt={img.alt || "Attachment"} 
+                                    className="w-full h-auto max-h-[600px] object-contain cursor-pointer"
+                                    onClick={() => setLightboxIndex(0)}
+                                    onMouseEnter={() => setHoveredImageIdx(0)}
+                                    onMouseLeave={() => setHoveredImageIdx(null)}
+                                />
+
+                                {/* Tags on hover */}
+                                {img.tags && img.tags.map((t, idx) => (
+                                    <div 
+                                        key={idx}
+                                        className={cn(
+                                            "absolute z-30 transition-all duration-300 translate-x-[-50%] translate-y-[-50%]",
+                                            hoveredImageIdx === 0 ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+                                        )}
+                                        style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                                    >
+                                        <div 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                router.push(`/profile/${t.username}`);
+                                            }}
+                                            className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 shadow-2xl flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <Tag className="w-3 h-3 text-[#10B981]" />
+                                            <span>{t.name}</span>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* ALT Box */}
+                                {img.alt && (
+                                    <div className="absolute bottom-2.5 left-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none">
+                                        ALT
+                                    </div>
+                                )}
+
+                                {/* Tag count */}
+                                {img.tags && img.tags.length > 0 && (
+                                    <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1">
+                                        <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
+                                        <span>{img.tags.length} tagged</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
+                    // Otherwise, render carousel for multiple images with object-contain to prevent cropping
                     return (
                         <div className="relative mt-3 w-full">
                             {/* Outer Frame */}
                             <div 
-                                className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-50 group aspect-[4/3] sm:aspect-video select-none"
+                                className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-zinc-950 group aspect-[4/3] sm:aspect-video select-none"
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleTouchEnd}
@@ -566,7 +708,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             <img 
                                                 src={img.url} 
                                                 alt={img.alt || `Attachment ${index + 1}`} 
-                                                className="w-full h-full object-cover cursor-pointer"
+                                                className="w-full h-full object-contain cursor-pointer"
                                                 onClick={() => setLightboxIndex(index)}
                                             />
 
@@ -758,7 +900,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                                         <Info className="w-3.5 h-3.5" /> Accessibility ALT Text
                                                     </h5>
                                                     <p className="text-xs text-zinc-300 leading-relaxed italic bg-white/5 p-3 rounded-xl border border-white/5">
-                                                        "{img.alt}"
+                                                        &ldquo;{img.alt}&rdquo;
                                                     </p>
                                                 </div>
                                             )}

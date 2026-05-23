@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2, Edit } from "lucide-react";
+import { Image as ImageIcon, Calendar, FileText, X, BarChart2, Smile, Send, Loader2, Edit, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Link2, Code2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,9 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    // Text Formatting State
+    const [showFormatting, setShowFormatting] = useState(false);
 
     // Cleanup object URLs on unmount
     useEffect(() => {
@@ -85,6 +88,69 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             }, 100);
         }
     }, [isOpen]);
+
+    // Format Selected Text with Markdown-like tags
+    const formatText = (style: string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selectedText = text.substring(start, end);
+
+        let replacement = "";
+
+        switch (style) {
+            case "bold":
+                replacement = `**${selectedText || "bold text"}**`;
+                break;
+            case "italic":
+                replacement = `*${selectedText || "italic text"}*`;
+                break;
+            case "underline":
+                replacement = `__${selectedText || "underlined text"}__`;
+                break;
+            case "strikethrough":
+                replacement = `~~${selectedText || "strikethrough text"}~~`;
+                break;
+            case "bullet":
+                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}- ${selectedText || "list item"}`;
+                break;
+            case "number":
+                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}1. ${selectedText || "list item"}`;
+                break;
+            case "quote":
+                replacement = `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}> ${selectedText || "quote text"}`;
+                break;
+            case "code":
+                replacement = selectedText.includes("\n")
+                    ? `${start === 0 || text[start - 1] === "\n" ? "" : "\n"}\`\`\`typescript\n${selectedText}\n\`\`\`\n`
+                    : `\`${selectedText || "code"}\``;
+                break;
+            case "link":
+                replacement = `[${selectedText || "link text"}](https://skilledcore.com)`;
+                break;
+            default:
+                return;
+        }
+
+        const newContent = text.substring(0, start) + replacement + text.substring(end);
+        setContent(newContent);
+
+        // Refocus and place cursor in the middle if no text was selected
+        setTimeout(() => {
+            textarea.focus();
+            if (!selectedText) {
+                const backOffset = style === "bold" || style === "underline" || style === "strikethrough" ? 2 : style === "italic" ? 1 : 0;
+                const newCursorPos = start + replacement.length - backOffset;
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+            } else {
+                const newCursorPos = start + replacement.length;
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }, 50);
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -386,11 +452,113 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 disabled={isUploading}
                             />
 
+                            {/* Text Formatting Toolbar */}
+                            {showFormatting && (
+                                <div className="flex flex-wrap items-center gap-1 p-1 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl mb-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("bold")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Bold"
+                                    >
+                                        <Bold className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("italic")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Italic"
+                                    >
+                                        <Italic className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("underline")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Underline"
+                                    >
+                                        <Underline className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("strikethrough")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Strikethrough"
+                                    >
+                                        <Strikethrough className="w-4 h-4" />
+                                    </Button>
+
+                                    <div className="w-px h-5 bg-gray-200 mx-1" />
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("bullet")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Bullet List"
+                                    >
+                                        <List className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("number")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Numbered List"
+                                    >
+                                        <ListOrdered className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("quote")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Blockquote"
+                                    >
+                                        <Quote className="w-4 h-4" />
+                                    </Button>
+
+                                    <div className="w-px h-5 bg-gray-200 mx-1" />
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("link")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Insert Link"
+                                    >
+                                        <Link2 className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => formatText("code")}
+                                        className="w-8 h-8 rounded-lg text-zinc-700 hover:text-black hover:bg-gray-100"
+                                        title="Code Block"
+                                    >
+                                        <Code2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            )}
+
                             {/* Text Area */}
                             <Textarea
                                 ref={textareaRef}
                                 value={content}
-                                onChange={(e: any) => setContent(e.target.value)}
+                                onChange={(e) => setContent(e.target.value)}
                                 placeholder="What do you want to talk about?"
                                 disabled={isUploading}
                                 className="w-full bg-transparent border-none focus-visible:ring-0 text-[#111827] text-lg min-h-[150px] md:min-h-[200px] resize-none placeholder:text-[#9CA3AF] caret-[#6366F1] relative cursor-text display-block focus-visible:ring-offset-0 focus:ring-0"
@@ -547,6 +715,26 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         <ImageIcon className="w-5 h-5" />
+                                    </Button>
+
+                                    {/* Text Formatting Toggle Button ("A with Pencil") */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={isUploading}
+                                        className={cn(
+                                            "rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none border transition-all duration-200", 
+                                            showFormatting 
+                                                ? "text-[#6366F1] bg-[#EEF2FF] border-[#6366F1]/30 hover:bg-[#EEF2FF]" 
+                                                : "text-zinc-500 border-zinc-200/80 hover:border-zinc-300"
+                                        )}
+                                        onClick={() => setShowFormatting(!showFormatting)}
+                                        title="Text Formatting"
+                                    >
+                                        <span className="font-serif font-extrabold text-sm relative flex items-center justify-center">
+                                            A
+                                            <span className="absolute -bottom-1 -right-1 text-[8px]">✎</span>
+                                        </span>
                                     </Button>
                                 </div>
  
