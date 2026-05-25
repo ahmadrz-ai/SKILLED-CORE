@@ -821,10 +821,22 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                     }
                                                     if (emojiButtonRef.current) {
                                                         const rect = emojiButtonRef.current.getBoundingClientRect();
-                                                        setEmojiPickerPos({
-                                                            top: rect.top - 398,
-                                                            left: Math.max(8, rect.right - 340),
-                                                        });
+                                                        const PICKER_H = 398;
+                                                        const PICKER_W = 340;
+                                                        const GAP = 8;
+                                                        // Smart placement: prefer above, fall back to below, clamp to viewport
+                                                        const spaceAbove = rect.top - GAP;
+                                                        const spaceBelow = window.innerHeight - rect.bottom - GAP;
+                                                        const top = spaceAbove >= PICKER_H
+                                                            ? rect.top - PICKER_H - GAP
+                                                            : spaceBelow >= PICKER_H
+                                                                ? rect.bottom + GAP
+                                                                : Math.max(GAP, window.innerHeight - PICKER_H - GAP);
+                                                        const left = Math.min(
+                                                            Math.max(GAP, rect.right - PICKER_W),
+                                                            window.innerWidth - PICKER_W - GAP
+                                                        );
+                                                        setEmojiPickerPos({ top, left });
                                                     }
                                                     setShowEmojiPicker(true);
                                                 } else {
@@ -1223,18 +1235,22 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 onApply={handleApplyEditorChanges}
             />
 
-            {/* Portal-rendered Emoji Picker — floats above dialog, never clipped */}
+            {/* Portal-rendered Emoji Picker — floats above everything including Radix Dialog overlays */}
             {showEmojiPicker && emojiPickerPos && typeof document !== "undefined" && createPortal(
                 <>
-                    {/* Backdrop */}
+                    {/* Backdrop – just below the picker, still above everything else */}
                     <div
-                        className="fixed inset-0 z-[99998]"
+                        style={{ position: "fixed", inset: 0, zIndex: 2147483646 }}
                         onClick={() => setShowEmojiPicker(false)}
                     />
-                    {/* Picker panel */}
+                    {/* Picker panel – maximum z-index so it's always on top */}
                     <div
-                        className="fixed z-[99999]"
-                        style={{ top: emojiPickerPos.top, left: emojiPickerPos.left }}
+                        style={{
+                            position: "fixed",
+                            zIndex: 2147483647,
+                            top: emojiPickerPos.top,
+                            left: emojiPickerPos.left,
+                        }}
                     >
                         <CustomEmojiPicker
                             onEmojiSelect={(emoji) => {
