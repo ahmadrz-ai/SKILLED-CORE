@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import ImageEditorModal from "@/components/feed/ImageEditorModal";
-import EmojiPicker from "emoji-picker-react";
+import CustomEmojiPicker from "@/components/feed/CustomEmojiPicker";
 
 interface StartPostWidgetProps {
     onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
@@ -35,6 +36,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
     const [textLength, setTextLength] = useState(0);
     const [isPollMode, setIsPollMode] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiButtonRef = useRef<HTMLButtonElement>(null);
+    const [emojiPickerPos, setEmojiPickerPos] = useState<{ top: number; left: number } | null>(null);
     const [pollOptions, setPollOptions] = useState(["", ""]);
     // saved selection range so link dialog doesn't lose cursor
     const savedRangeRef = useRef<Range | null>(null);
@@ -207,7 +210,22 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
     // Insert emoji at cursor position inside contenteditable
     const insertEmoji = useCallback((emoji: string) => {
-        editorRef.current?.focus();
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        editor.focus();
+
+        // Restore the saved cursor position.
+        // savedRangeRef is set on mousedown of any insert button BEFORE focus can leave the editor.
+        if (savedRangeRef.current) {
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(savedRangeRef.current);
+            }
+            savedRangeRef.current = null;
+        }
+
         document.execCommand("insertText", false, emoji);
         syncEditorState();
     }, [syncEditorState]);
@@ -741,6 +759,14 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         variant="ghost"
                                         size="sm"
                                         disabled={isUploading}
+                                        onMouseDown={(e) => {
+                                            // Capture cursor BEFORE mousedown steals focus from the editor
+                                            e.preventDefault();
+                                            const sel = window.getSelection();
+                                            if (sel && sel.rangeCount > 0) {
+                                                savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                                            }
+                                        }}
                                         onClick={() => insertEmoji(" #")}
                                         className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
@@ -750,6 +776,14 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         variant="ghost"
                                         size="sm"
                                         disabled={isUploading}
+                                        onMouseDown={(e) => {
+                                            // Capture cursor BEFORE mousedown steals focus from the editor
+                                            e.preventDefault();
+                                            const sel = window.getSelection();
+                                            if (sel && sel.rangeCount > 0) {
+                                                savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                                            }
+                                        }}
                                         onClick={() => insertEmoji(" @")}
                                         className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
@@ -771,28 +805,35 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
  
                                     <div className="relative">
                                         <Button
+                                            ref={emojiButtonRef}
                                             variant="ghost"
                                             size="icon"
                                             disabled={isUploading}
                                             className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", showEmojiPicker ? "text-[#D97706] bg-[#FFFBEB] hover:bg-[#FFFBEB]" : "text-[#6B7280]")}
-                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                            onMouseDown={(e) => {
+                                                // Capture cursor position on mousedown — BEFORE browser shifts focus away from the editor.
+                                                // This must happen on mousedown, not click, because mousedown fires first and can blur the editor.
+                                                if (!showEmojiPicker) {
+                                                    e.preventDefault(); // prevent focus theft
+                                                    const sel = window.getSelection();
+                                                    if (sel && sel.rangeCount > 0) {
+                                                        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                                                    }
+                                                    if (emojiButtonRef.current) {
+                                                        const rect = emojiButtonRef.current.getBoundingClientRect();
+                                                        setEmojiPickerPos({
+                                                            top: rect.top - 398,
+                                                            left: Math.max(8, rect.right - 340),
+                                                        });
+                                                    }
+                                                    setShowEmojiPicker(true);
+                                                } else {
+                                                    setShowEmojiPicker(false);
+                                                }
+                                            }}
                                         >
                                             <Smile className="w-5 h-5" />
                                         </Button>
-                                        {showEmojiPicker && (
-                                            <div className="absolute bottom-full left-0 z-50 mb-2">
-                                                <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-                                                <div className="relative z-50 shadow-2xl rounded-lg overflow-hidden border border-[#E5E7EB]">
-                                                    <EmojiPicker
-                                                        theme={"light" as any}
-                                                        onEmojiClick={(emojiData) => {
-                                                            insertEmoji(emojiData.emoji);
-                                                            setShowEmojiPicker(false);
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
  
 
@@ -1181,6 +1222,31 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 initialFiles={editorInitialFiles}
                 onApply={handleApplyEditorChanges}
             />
+
+            {/* Portal-rendered Emoji Picker — floats above dialog, never clipped */}
+            {showEmojiPicker && emojiPickerPos && typeof document !== "undefined" && createPortal(
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[99998]"
+                        onClick={() => setShowEmojiPicker(false)}
+                    />
+                    {/* Picker panel */}
+                    <div
+                        className="fixed z-[99999]"
+                        style={{ top: emojiPickerPos.top, left: emojiPickerPos.left }}
+                    >
+                        <CustomEmojiPicker
+                            onEmojiSelect={(emoji) => {
+                                insertEmoji(emoji);
+                                setShowEmojiPicker(false);
+                            }}
+                            onClose={() => setShowEmojiPicker(false)}
+                        />
+                    </div>
+                </>,
+                document.body
+            )}
         </div>
     );
 }

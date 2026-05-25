@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     ThumbsUp, MessageCircle, Repeat, Send, MoreHorizontal,
     Share2, Bookmark, Code, Trash2, Flag, XCircle, Edit, Plus, UserPlus, BadgeCheck,
-    Tag, Info
+    Tag, Info, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Link2, Code2, Image as ImageIcon, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { deletePost, reportPost, votePoll, updatePost, toggleFollow } from "@/app/(app)/feed/actions";
+import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import { CommentSection } from "@/components/feed/CommentSection";
 import {
     Dialog,
@@ -29,7 +30,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { InstagramPoll } from "./InstagramPoll";
 import { ReportPostModal } from "./ReportPostModal";
 import { SharePostModal } from "./SharePostModal";
@@ -94,6 +94,18 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
     const [editContent, setEditContent] = useState(post.content);
     const [isSaving, setIsSaving] = useState(false);
 
+    // WYSIWYG Edit Editor State
+    const editEditorRef = useRef<HTMLDivElement>(null);
+    const [editShowFormatting, setEditShowFormatting] = useState(true);
+    const [editIsLinkDialogOpen, setEditIsLinkDialogOpen] = useState(false);
+    const [editLinkText, setEditLinkText] = useState("");
+    const [editLinkUrl, setEditLinkUrl] = useState("");
+    const editSavedRangeRef = useRef<Range | null>(null);
+    const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+    const [editImageFile, setEditImageFile] = useState<File | null>(null);
+    const editFileInputRef = useRef<HTMLInputElement>(null);
+    const [editIsUploading, setEditIsUploading] = useState(false);
+
     // Optimistic Content State
     const [content, setContent] = useState(post.content);
 
@@ -151,16 +163,189 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         setIsDeleteDialogOpen(false);
     };
 
+    // WYSIWYG Edit Editor Helpers
+    const syncEditEditorState = useCallback(() => {
+        const el = editEditorRef.current;
+        if (!el) return;
+        setEditContent(el.innerHTML);
+    }, []);
+
+    const execEditFormat = useCallback((command: string, value?: string) => {
+        editEditorRef.current?.focus();
+        document.execCommand(command, false, value);
+        syncEditEditorState();
+    }, [syncEditEditorState]);
+
+    const formatEditText = useCallback((style: string) => {
+        switch (style) {
+            case "bold":          execEditFormat("bold"); break;
+            case "italic":        execEditFormat("italic"); break;
+            case "underline":     execEditFormat("underline"); break;
+            case "strikethrough": execEditFormat("strikeThrough"); break;
+            case "bullet":        execEditFormat("insertUnorderedList"); break;
+            case "number":        execEditFormat("insertOrderedList"); break;
+            case "quote":
+                editEditorRef.current?.focus();
+                document.execCommand("formatBlock", false, "blockquote");
+                syncEditEditorState();
+                break;
+            case "code": {
+                const sel = window.getSelection();
+                const selected = sel?.toString() || "code";
+                document.execCommand("insertHTML", false,
+                    `<code style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:0.85em;color:#DC2626;">${selected}</code>`);
+                syncEditEditorState();
+                break;
+            }
+            case "link": {
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                    editSavedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                    setEditLinkText(sel.toString());
+                } else {
+                    editSavedRangeRef.current = null;
+                    setEditLinkText("");
+                }
+                setEditLinkUrl("");
+                setEditIsLinkDialogOpen(true);
+                break;
+            }
+            default: break;
+        }
+    }, [execEditFormat, syncEditEditorState]);
+
+    const handleEditInsertLink = useCallback(() => {
+        const displayName = editLinkText.trim() || "link";
+        const url = editLinkUrl.trim();
+        if (!url) { setEditIsLinkDialogOpen(false); return; }
+        const href = url.startsWith("http") ? url : `https://${url}`;
+        editEditorRef.current?.focus();
+        const sel = window.getSelection();
+        if (sel && editSavedRangeRef.current) {
+            sel.removeAllRanges();
+            sel.addRange(editSavedRangeRef.current);
+        }
+        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#6366F1;text-decoration:underline;">${displayName}</a>`;
+        document.execCommand("insertHTML", false, html);
+        syncEditEditorState();
+        setEditIsLinkDialogOpen(false);
+    }, [editLinkText, editLinkUrl, syncEditEditorState]);
+
+    const insertEditText = useCallback((text: string) => {
+        const editor = editEditorRef.current;
+        if (!editor) return;
+        editor.focus();
+        // Restore cursor saved on mousedown (before focus theft occurred)
+        if (editSavedRangeRef.current) {
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(editSavedRangeRef.current);
+            }
+            editSavedRangeRef.current = null;
+        }
+        document.execCommand("insertText", false, text);
+        syncEditEditorState();
+    }, [syncEditEditorState]);
+
+    const handleEditKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") { e.preventDefault(); execEditFormat("bold"); return; }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") { e.preventDefault(); execEditFormat("italic"); return; }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "u") { e.preventDefault(); execEditFormat("underline"); return; }
+    };
+
+    // Initialize editor content when modal opens
+    useEffect(() => {
+        if (isEditModalOpen && editEditorRef.current) {
+            setTimeout(() => {
+                if (editEditorRef.current) {
+                    editEditorRef.current.innerHTML = post.content || "";
+                    document.execCommand("defaultParagraphSeparator", false, "div");
+                    editEditorRef.current.focus();
+                    // Place cursor at end
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(editEditorRef.current);
+                    range.collapse(false);
+                    sel?.removeAllRanges();
+                    sel?.addRange(range);
+                }
+                // Parse existing image from post
+                if (post.image) {
+                    try {
+                        let parsedImages: any[] = [];
+                        if (post.image.startsWith("{")) {
+                            parsedImages = JSON.parse(post.image).images || [];
+                        } else if (post.image.startsWith("[")) {
+                            parsedImages = JSON.parse(post.image);
+                        } else {
+                            parsedImages = [{ url: post.image }];
+                        }
+                        if (parsedImages[0]?.url) setEditImagePreview(parsedImages[0].url);
+                    } catch { setEditImagePreview(null); }
+                } else {
+                    setEditImagePreview(null);
+                }
+                setEditImageFile(null);
+            }, 80);
+        }
+        if (!isEditModalOpen) {
+            setEditIsLinkDialogOpen(false);
+            setEditImageFile(null);
+        }
+    }, [isEditModalOpen, post.content, post.image]);
+
+    const uploadEditImageToCloudinary = async (file: File): Promise<string> => {
+        const sigRes = await getCloudinarySignature("feed");
+        if (!sigRes.success || !sigRes.signature || !sigRes.timestamp || !sigRes.apiKey || !sigRes.cloudName || !sigRes.folder) {
+            throw new Error(sigRes.message || "Failed to retrieve signature.");
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", sigRes.apiKey);
+        formData.append("timestamp", sigRes.timestamp.toString());
+        formData.append("signature", sigRes.signature);
+        formData.append("folder", sigRes.folder);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${sigRes.cloudName}/image/upload`, { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Upload failed.");
+        const data = await res.json();
+        return data.secure_url;
+    };
+
     const handleUpdate = async () => {
+        const rawHtml = editEditorRef.current?.innerHTML ?? editContent;
         setIsSaving(true);
-        const result = await updatePost(post.id, editContent);
+        setEditIsUploading(false);
+
+        let finalContent = rawHtml;
+        let imageUrl = post.image; // keep existing image by default
+
+        // If user uploaded a new image, upload it
+        if (editImageFile) {
+            setEditIsUploading(true);
+            try {
+                const secureUrl = await uploadEditImageToCloudinary(editImageFile);
+                imageUrl = JSON.stringify([{ url: secureUrl, alt: "", tags: [] }]);
+            } catch (err: any) {
+                toast.error("Image upload failed: " + (err.message || "Unknown error"));
+                setIsSaving(false);
+                setEditIsUploading(false);
+                return;
+            }
+            setEditIsUploading(false);
+        } else if (editImagePreview === null && post.image) {
+            // User removed the image
+            imageUrl = null;
+        }
+
+        const result = await updatePost(post.id, finalContent);
         setIsSaving(false);
 
         if (result.success) {
-            setContent(editContent); // Update UI immediately
+            setContent(finalContent);
             toast.success(result.message);
             setIsEditModalOpen(false);
-            router.refresh(); // Sync server in background
+            router.refresh();
         } else {
             toast.error(result.message);
         }
@@ -455,23 +640,249 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
             {/* Sibling Container for Main Content (Centered, full card width) */}
             <div className="w-full">
-                {/* Edit Dialog */}
+                {/* ── Upgraded WYSIWYG Edit Dialog ── */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent className="bg-white border-[#E5E7EB] sm:max-w-[500px]">
-                        <DialogHeader>
-                            <DialogTitle className="text-[#111827]">Edit Post</DialogTitle>
-                            <DialogDescription className="text-[#6B7280]">Make changes to your post content here.</DialogDescription>
+                    <DialogContent
+                        className="bg-white border-[#E5E7EB] sm:max-w-2xl p-0 overflow-visible shadow-2xl"
+                        onOpenAutoFocus={(e) => { e.preventDefault(); editEditorRef.current?.focus(); }}
+                    >
+                        {/* Header */}
+                        <DialogHeader className="px-5 pt-5 pb-3 border-b border-[#E5E7EB]">
+                            <DialogTitle className="text-base font-bold text-[#111827] flex items-center gap-2">
+                                <Edit className="w-4 h-4 text-[#6366F1]" /> Edit Post
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-[#9CA3AF] mt-0.5">Your post will be updated instantly after saving.</DialogDescription>
                         </DialogHeader>
-                        <div className="py-4">
-                            <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)}
-                                className="bg-[#F9FAFB] border-[#E5E7EB] min-h-[150px] text-[#111827] resize-none focus:ring-[#6366F1]/20 focus:border-[#6366F1]" />
+
+                        {/* Body */}
+                        <div className="flex flex-col overflow-hidden" style={{ maxHeight: "calc(85vh - 130px)" }}>
+
+                            {/* Author row + formatting toolbar */}
+                            <div className="px-5 pt-4 shrink-0">
+                                <div className="flex items-center gap-2.5 mb-3">
+                                    <Avatar className="w-9 h-9 border border-[#E5E7EB] flex-shrink-0">
+                                        <AvatarImage src={post.author.avatar || undefined} />
+                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <div className="font-bold text-sm text-[#111827] leading-none">{post.author.name}</div>
+                                        <div className="text-[11px] text-[#9CA3AF] mt-0.5">Editing post</div>
+                                    </div>
+                                </div>
+
+                                {/* Formatting Toolbar */}
+                                {editShowFormatting && (
+                                    <div className="flex flex-wrap items-center gap-0.5 p-1 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl mb-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        {[
+                                            { icon: <Bold className="w-3.5 h-3.5" />, action: "bold", title: "Bold" },
+                                            { icon: <Italic className="w-3.5 h-3.5" />, action: "italic", title: "Italic" },
+                                            { icon: <Underline className="w-3.5 h-3.5" />, action: "underline", title: "Underline" },
+                                            { icon: <Strikethrough className="w-3.5 h-3.5" />, action: "strikethrough", title: "Strikethrough" },
+                                        ].map(({ icon, action, title }) => (
+                                            <Button key={action} type="button" variant="ghost" size="icon"
+                                                onClick={() => formatEditText(action)}
+                                                className="w-7 h-7 rounded-lg text-zinc-600 hover:text-black hover:bg-gray-100" title={title}>
+                                                {icon}
+                                            </Button>
+                                        ))}
+                                        <div className="w-px h-4 bg-gray-200 mx-0.5" />
+                                        {[
+                                            { icon: <List className="w-3.5 h-3.5" />, action: "bullet", title: "Bullet List" },
+                                            { icon: <ListOrdered className="w-3.5 h-3.5" />, action: "number", title: "Numbered List" },
+                                            { icon: <Quote className="w-3.5 h-3.5" />, action: "quote", title: "Blockquote" },
+                                        ].map(({ icon, action, title }) => (
+                                            <Button key={action} type="button" variant="ghost" size="icon"
+                                                onClick={() => formatEditText(action)}
+                                                className="w-7 h-7 rounded-lg text-zinc-600 hover:text-black hover:bg-gray-100" title={title}>
+                                                {icon}
+                                            </Button>
+                                        ))}
+                                        <div className="w-px h-4 bg-gray-200 mx-0.5" />
+                                        <Button type="button" variant="ghost" size="icon"
+                                            onClick={() => formatEditText("link")}
+                                            className="w-7 h-7 rounded-lg text-zinc-600 hover:text-black hover:bg-gray-100" title="Insert Link">
+                                            <Link2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon"
+                                            onClick={() => formatEditText("code")}
+                                            className="w-7 h-7 rounded-lg text-zinc-600 hover:text-black hover:bg-gray-100" title="Inline Code">
+                                            <Code2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Editor + Image split pane */}
+                            <div className={cn("flex overflow-y-auto flex-1", editImagePreview ? "divide-x divide-[#F3F4F6]" : "")}>
+
+                                {/* WYSIWYG editor */}
+                                <div className={cn("flex flex-col overflow-y-auto", editImagePreview ? "w-1/2 px-5 pb-4" : "w-full px-5 pb-4")}>
+                                    <div
+                                        ref={editEditorRef}
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onInput={syncEditEditorState}
+                                        onKeyDown={handleEditKeyDown}
+                                        data-placeholder="Edit your post..."
+                                        className={cn(
+                                            "w-full bg-transparent text-[#111827] text-sm min-h-[120px] outline-none caret-[#6366F1] cursor-text",
+                                            "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
+                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer",
+                                            "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_li]:my-0.5",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&_code]:bg-[#F3F4F6] [&_code]:border [&_code]:border-[#E5E7EB] [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-red-600",
+                                            "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[#9CA3AF] [&:empty]:before:pointer-events-none"
+                                        )}
+                                        style={{ whiteSpace: "pre-wrap" }}
+                                    />
+                                </div>
+
+                                {/* Image preview panel */}
+                                {editImagePreview && (
+                                    <div className="w-1/2 flex items-center justify-center p-3 bg-[#F9FAFB] relative overflow-hidden">
+                                        <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-black/5" style={{ maxHeight: "220px" }}>
+                                            <img
+                                                src={editImagePreview}
+                                                alt="Post image"
+                                                className="w-full h-full object-contain"
+                                                style={{ maxHeight: "220px" }}
+                                            />
+                                            {(isSaving && editIsUploading) && (
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-[#6366F1]" />
+                                                    <span className="text-[10px] font-semibold">Uploading...</span>
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => { setEditImagePreview(null); setEditImageFile(null); }}
+                                                className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                title="Remove image"
+                                            >
+                                                <XCircle className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Bottom toolbar */}
+                            <div className="flex items-center justify-between px-5 py-3 border-t border-[#E5E7EB] shrink-0">
+                                <div className="flex items-center gap-0.5">
+                                    {/* Hashtag */}
+                                    <Button variant="ghost" size="sm"
+                                        onMouseDown={(e) => {
+                                            // Capture cursor BEFORE mousedown can steal focus from the editor
+                                            e.preventDefault();
+                                            const sel = window.getSelection();
+                                            if (sel && sel.rangeCount > 0) {
+                                                editSavedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                                            }
+                                        }}
+                                        onClick={() => insertEditText(" #")}
+                                        className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2 rounded-full text-xs h-8">
+                                        # Hashtag
+                                    </Button>
+                                    {/* Mention */}
+                                    <Button variant="ghost" size="sm"
+                                        onMouseDown={(e) => {
+                                            // Capture cursor BEFORE mousedown can steal focus from the editor
+                                            e.preventDefault();
+                                            const sel = window.getSelection();
+                                            if (sel && sel.rangeCount > 0) {
+                                                editSavedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                                            }
+                                        }}
+                                        onClick={() => insertEditText(" @")}
+                                        className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2 rounded-full text-xs h-8">
+                                        @ Mention
+                                    </Button>
+
+                                    <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+
+                                    {/* Formatting toggle */}
+                                    <Button variant="ghost" size="icon"
+                                        className={cn(
+                                            "rounded-full w-8 h-8 border transition-all duration-200",
+                                            editShowFormatting
+                                                ? "text-[#6366F1] bg-[#EEF2FF] border-[#6366F1]/30 hover:bg-[#EEF2FF]"
+                                                : "text-zinc-500 border-zinc-200/80 hover:border-zinc-300 hover:bg-[#F3F4F6]"
+                                        )}
+                                        onClick={() => setEditShowFormatting(!editShowFormatting)}
+                                        title="Text Formatting">
+                                        <span className="font-serif font-extrabold text-xs relative flex items-center justify-center">
+                                            A<span className="absolute -bottom-1 -right-1 text-[7px]">✎</span>
+                                        </span>
+                                    </Button>
+
+                                    {/* Image upload */}
+                                    <input
+                                        type="file"
+                                        ref={editFileInputRef}
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            if (file.size >= 4 * 1024 * 1024) { toast.error("Image must be under 4MB."); return; }
+                                            setEditImageFile(file);
+                                            setEditImagePreview(URL.createObjectURL(file));
+                                            if (editFileInputRef.current) editFileInputRef.current.value = "";
+                                        }}
+                                    />
+                                    <Button variant="ghost" size="icon"
+                                        className={cn("rounded-full w-8 h-8 hover:bg-[#F3F4F6] text-[#6B7280]", editImagePreview ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        onClick={() => editFileInputRef.current?.click()}
+                                        title="Change image">
+                                        <ImageIcon className="w-4 h-4" />
+                                    </Button>
+                                </div>
+
+                                {/* Save / Cancel */}
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" onClick={() => setIsEditModalOpen(false)}
+                                        className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] h-8 px-4 text-xs rounded-full">
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleUpdate} disabled={isSaving}
+                                        className="bg-[#6366F1] hover:bg-[#4F46E5] text-white h-8 px-5 text-xs rounded-full font-bold shadow-sm flex items-center gap-1.5">
+                                        {isSaving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</> : "Save Changes"}
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]">Cancel</Button>
-                            <Button onClick={handleUpdate} disabled={isSaving} className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
-                                {isSaving ? "Saving..." : "Save Changes"}
-                            </Button>
-                        </DialogFooter>
+
+                        {/* Insert Link overlay */}
+                        {editIsLinkDialogOpen && (
+                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
+                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-xs w-full p-5 text-[#111827] border-t-4 border-t-[#6366F1]">
+                                    <h3 className="text-sm font-extrabold text-[#111827] mb-4 flex items-center gap-2">
+                                        <Link2 className="w-4 h-4 text-[#6366F1]" /> Insert link
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-[#4B5563] uppercase tracking-wider mb-1">Display text</label>
+                                            <input type="text" value={editLinkText} onChange={(e) => setEditLinkText(e.target.value)}
+                                                placeholder="Link text" autoFocus
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:outline-none transition-all" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-[#4B5563] uppercase tracking-wider mb-1">URL</label>
+                                            <input type="text" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)}
+                                                placeholder="https://example.com"
+                                                onKeyDown={(e) => { if (e.key === "Enter") handleEditInsertLink(); }}
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:outline-none transition-all" />
+                                        </div>
+                                        <div className="flex gap-2 pt-1">
+                                            <Button variant="outline" className="flex-1 border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] h-8 text-xs rounded-xl"
+                                                onClick={() => setEditIsLinkDialogOpen(false)}>Cancel</Button>
+                                            <Button className="flex-1 bg-[#6366F1] hover:bg-[#4F46E5] text-white h-8 text-xs font-bold rounded-xl"
+                                                onClick={handleEditInsertLink}>Insert</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
 
