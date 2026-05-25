@@ -1238,12 +1238,16 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             {/* Portal-rendered Emoji Picker — floats above everything including Radix Dialog overlays */}
             {showEmojiPicker && emojiPickerPos && typeof document !== "undefined" && createPortal(
                 <>
-                    {/* Backdrop – just below the picker, still above everything else */}
+                    {/* Backdrop – closes picker when clicking outside it.
+                        stopPropagation prevents Radix DismissableLayer from also closing the dialog. */}
                     <div
                         style={{ position: "fixed", inset: 0, zIndex: 2147483646 }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => setShowEmojiPicker(false)}
                     />
-                    {/* Picker panel – maximum z-index so it's always on top */}
+                    {/* Picker panel – max z-index + stopPropagation so Radix Dialog never
+                        sees these pointer events as "outside the dialog" and dismisses it. */}
                     <div
                         style={{
                             position: "fixed",
@@ -1251,6 +1255,9 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             top: emojiPickerPos.top,
                             left: emojiPickerPos.left,
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <CustomEmojiPicker
                             onEmojiSelect={(emoji) => {
