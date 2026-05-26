@@ -70,39 +70,41 @@ export default async function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground font-sans relative`}
       >
         {/* ── Google Analytics 4 + Consent Mode v2 ─────────────────────────
-            IMPORTANT: The consent 'default' block MUST run before
-            gtag('config', ...) so GA4 knows to hold data until the user
-            accepts. This is a Google Consent Mode v2 requirement.
-            The CookieConsentBanner component calls gtag('consent','update')
-            when the user makes a choice, unlocking full measurement.
+            IMPORTANT: The consent 'default' block MUST run synchronously
+            before gtag.js executes so GA4 knows to hold data until the user
+            accepts. This is a strict Google Consent Mode v2 requirement.
+            Explicitly bind window.gtag so it is instantly available.
         ──────────────────────────────────────────────────────────────── */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-QYCWDJSRZ5"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-consent-default" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = window.gtag || function(){dataLayer.push(arguments);};
 
-            // ── Consent Mode v2: default to denied until user decides ──
-            // Check if user has already saved a preference in localStorage
-            (function() {
-              try {
-                var saved = localStorage.getItem('skilledcore_consent_v2');
-                if (saved) {
-                  var prefs = JSON.parse(saved);
-                  // Re-apply saved consent immediately (no banner flash)
-                  gtag('consent', 'default', {
-                    analytics_storage:   prefs.analytics_storage   || 'denied',
-                    ad_storage:          prefs.ad_storage           || 'denied',
-                    ad_user_data:        prefs.ad_user_data         || 'denied',
-                    ad_personalization:  prefs.ad_personalization   || 'denied',
-                    wait_for_update: 500,
-                  });
-                } else {
-                  // First-time visitor: deny everything until banner response
-                  gtag('consent', 'default', {
+              // ── Consent Mode v2: default to denied until user decides ──
+              (function() {
+                try {
+                  var saved = localStorage.getItem('skilledcore_consent_v2');
+                  if (saved) {
+                    var prefs = JSON.parse(saved);
+                    window.gtag('consent', 'default', {
+                      analytics_storage:   prefs.analytics_storage   || 'denied',
+                      ad_storage:          prefs.ad_storage           || 'denied',
+                      ad_user_data:        prefs.ad_user_data         || 'denied',
+                      ad_personalization:  prefs.ad_personalization   || 'denied',
+                      wait_for_update: 500,
+                    });
+                  } else {
+                    window.gtag('consent', 'default', {
+                      analytics_storage:  'denied',
+                      ad_storage:         'denied',
+                      ad_user_data:       'denied',
+                      ad_personalization: 'denied',
+                      wait_for_update: 3000,
+                    });
+                  }
+                } catch(e) {
+                  window.gtag('consent', 'default', {
                     analytics_storage:  'denied',
                     ad_storage:         'denied',
                     ad_user_data:       'denied',
@@ -110,23 +112,19 @@ export default async function RootLayout({
                     wait_for_update: 3000,
                   });
                 }
-              } catch(e) {
-                gtag('consent', 'default', {
-                  analytics_storage:  'denied',
-                  ad_storage:         'denied',
-                  ad_user_data:       'denied',
-                  ad_personalization: 'denied',
-                  wait_for_update: 3000,
-                });
-              }
-            })();
+              })();
 
-            gtag('js', new Date());
-            gtag('config', 'G-QYCWDJSRZ5', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
+              window.gtag('js', new Date());
+              window.gtag('config', 'G-QYCWDJSRZ5', {
+                page_path: window.location.pathname,
+              });
+            `
+          }}
+        />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-QYCWDJSRZ5"
+          strategy="afterInteractive"
+        />
 
         <SessionWrapper session={session}>
           <Script src="https://pl29525465.effectivecpmnetwork.com/ef/98/25/ef98254b199dcd319964f5315bb46e8c.js" strategy="lazyOnload" />
