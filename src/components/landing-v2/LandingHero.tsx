@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function LandingHero() {
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 overflow-hidden" style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}>
+    <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}>
       {/* Subtle mesh background */}
       <div
         className="absolute inset-0 opacity-[0.035]"
@@ -29,41 +36,54 @@ export function LandingHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
-            className="flex justify-center mb-8"
+            className="flex justify-center mb-6"
           >
             <Image
               src="/logo.png"
               alt="SkilledCore"
-              width={72}
-              height={72}
+              width={64}
+              height={64}
               className="drop-shadow-lg"
             />
           </motion.div>
 
-          {/* Headline */}
+          {/* Pain Statement Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="font-bold tracking-tight mb-6"
-            style={{ fontSize: "clamp(2.25rem, 5vw, 3.5rem)", lineHeight: 1.15, letterSpacing: "-0.03em", color: "#1E1B4B" }}
+            className="font-black tracking-tight mb-6"
+            style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)", lineHeight: 1.15, letterSpacing: "-0.03em", color: "#1E1B4B" }}
           >
-            The next engineer you hire wrong will cost you{" "}
-            <span style={{ background: "linear-gradient(135deg, #7C3AED, #5B21B6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              $180,000.
+            Your ATS tells you who applied.{" "}
+            <span style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              It still can't tell you who can build.
             </span>
           </motion.h1>
 
-          {/* Subtext */}
+          {/* Sub-headline Category Shift */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl leading-relaxed max-w-3xl mx-auto mb-10"
-            style={{ color: "#64748B" }}
+            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8 font-medium"
+            style={{ color: "#475569" }}
           >
-            3 months of lost velocity, wasted base salary, and a painful PIP. SkilledCore measures actual execution depth and debugging capability directly in isolated sandbox environments — stopping bad hires before they happen.
+            Skilled Core evaluates execution, not credentials. Designed for engineering teams that cannot afford a wrong hire.
           </motion.p>
+
+          {/* Single Focused Social Proof */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white border border-indigo-100 rounded-2xl shadow-sm mb-10 max-w-xl text-left"
+          >
+            <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
+            <p className="text-xs md:text-sm font-semibold text-zinc-700 leading-tight">
+              Design partner teams reduced time-to-qualified-shortlist by 14 days while maintaining 100% EM control over evaluation criteria.
+            </p>
+          </motion.div>
 
           {/* CTAs */}
           <motion.div
@@ -72,31 +92,31 @@ export function LandingHero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6"
           >
-            <Link
-              href="/register?role=recruiter"
-              className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-base group"
-              style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+            <button
+              onClick={() => scrollToSection("apply-pilot")}
+              className="inline-flex items-center gap-2 px-8 py-4 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95 duration-100"
+              style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)" }}
             >
-              Apply for Design Partner Pilot
+              Apply to be a Design Partner
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link
-              href="/register?role=candidate"
-              className="inline-flex items-center gap-2 px-7 py-3.5 font-semibold rounded-xl border-2 transition-all duration-200 text-base"
-              style={{ borderColor: "#E2E8F0", color: "#475569", background: "white" }}
+            </button>
+            <button
+              onClick={() => scrollToSection("rubric-builder")}
+              className="inline-flex items-center gap-2 px-8 py-4 font-bold rounded-xl border border-zinc-200 text-base bg-white hover:bg-zinc-50 transition-all shadow-sm active:scale-95 duration-100 text-zinc-700"
             >
-              Explore Opportunities
-            </Link>
+              Build Rubric Demo
+              <ChevronDown className="w-4 h-4" />
+            </button>
           </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.45 }}
-            className="text-sm"
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-xs font-semibold tracking-wider uppercase"
             style={{ color: "#94A3B8" }}
           >
-            Free to get started · No credit card required
+            ⚠️ Cohort limited to exactly 20 companies to ensure high-velocity onboarding
           </motion.p>
         </div>
       </div>

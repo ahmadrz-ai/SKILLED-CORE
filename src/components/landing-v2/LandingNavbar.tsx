@@ -7,6 +7,8 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
+  { label: "Interactive Demo", href: "#rubric-builder" },
+  { label: "Apply for Pilot", href: "#apply-pilot" },
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#solutions" },
   { label: "Pricing", href: "#pricing" },
@@ -69,14 +71,14 @@ export function LandingNavbar() {
               Sign in
             </Link>
             <Link
-              href="/register"
+              href="#apply-pilot"
               className="px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
               style={{
                 background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
                 color: "#fff",
               }}
             >
-              Get started free
+              Apply for Pilot
             </Link>
           </div>
 
@@ -106,15 +108,16 @@ export function LandingNavbar() {
               </Link>
             ))}
             <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
-              <Link href="/login" className="block px-3 py-2.5 text-sm font-medium text-slate-600 text-center border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+              <Link href="/login" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm font-medium text-slate-600 text-center border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                 Sign in
               </Link>
               <Link
-                href="/register"
+                href="#apply-pilot"
+                onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2.5 text-sm font-semibold text-white text-center rounded-lg transition-colors"
                 style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
               >
-                Get started free
+                Apply for Pilot
               </Link>
             </div>
           </div>

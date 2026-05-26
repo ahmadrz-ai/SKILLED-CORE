@@ -57,27 +57,23 @@ export function NotificationsClient({ initialData }: { initialData: Notification
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'CONNECTION_REQUEST': return <User className="w-4 h-4 text-blue-400" />;
-            case 'JOB_ALERT': return <Briefcase className="w-4 h-4 text-violet-400" />;
-            case 'POST_LIKE': return <Heart className="w-4 h-4 text-red-500 fill-red-500/10" />;
-            case 'COMMENT': return <MessageSquare className="w-4 h-4 text-emerald-400" />;
-            case 'SYSTEM': return <Bell className="w-4 h-4 text-amber-400" />;
-            default: return <Star className="w-4 h-4 text-zinc-400" />;
+            case 'CONNECTION_REQUEST': return <User className="w-4 h-4 text-blue-600" />;
+            case 'JOB_ALERT': return <Briefcase className="w-4 h-4 text-indigo-600" />;
+            case 'POST_LIKE': return <Heart className="w-4 h-4 text-red-500 fill-red-100" />;
+            case 'COMMENT': return <MessageSquare className="w-4 h-4 text-emerald-600" />;
+            case 'SYSTEM': return <Bell className="w-4 h-4 text-amber-600" />;
+            default: return <Star className="w-4 h-4 text-zinc-500" />;
         }
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
+        <div className="max-w-2xl mx-auto py-8 px-4 text-zinc-800">
             <div className="flex items-center justify-between mb-8">
-                <h1 className="text-2xl font-bold text-white font-heading">Notifications</h1>
+                <h1 className="text-2xl font-bold text-zinc-800 font-heading">Notifications</h1>
                 <div className="flex items-center gap-2">
-                    {/* <Button variant="ghost" size="sm" onClick={handleMarkAll} className="text-zinc-400 hover:text-white">
-                        <Check className="w-4 h-4 mr-2" />
-                        Mark all as read
-                    </Button> */}
                     <button
                         onClick={handleMarkAll}
-                        className="text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors uppercase tracking-wider"
+                        className="text-xs font-bold text-indigo-650 hover:text-indigo-700 transition-colors uppercase tracking-wider"
                     >
                         Mark all read
                     </button>
@@ -85,30 +81,30 @@ export function NotificationsClient({ initialData }: { initialData: Notification
             </div>
 
             {/* TABS */}
-            <div className="flex gap-2 mb-6 border-b border-white/5 pb-1">
+            <div className="flex gap-2 mb-6 border-b border-zinc-200 pb-1">
                 {['ALL', 'JOBS', 'POSTS'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setFilter(tab as any)}
                         className={cn(
                             "px-4 py-2 text-sm font-medium transition-colors relative",
-                            filter === tab ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                            filter === tab ? "text-zinc-900 font-bold" : "text-zinc-500 hover:text-zinc-800"
                         )}
                     >
                         {tab === 'ALL' ? 'All' : tab === 'JOBS' ? 'Jobs' : 'My Posts'}
                         {filter === tab && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 shadow-[0_0_10px_#8b5cf6]" />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
                         )}
                     </button>
                 ))}
             </div>
 
             {/* LIST */}
-            <div className="space-y-2">
+            <div className="space-y-3">
                 {filtered.length === 0 ? (
-                    <div className="text-center py-12 bg-zinc-900/30 rounded-2xl border border-white/5 border-dashed">
-                        <Bell className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-                        <p className="text-zinc-500">No notifications to display.</p>
+                    <div className="text-center py-12 bg-white rounded-2xl border border-zinc-200 border-dashed">
+                        <Bell className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
+                        <p className="text-zinc-500 font-semibold">No notifications to display.</p>
                     </div>
                 ) : (
                     filtered.map((notification) => (
@@ -116,29 +112,29 @@ export function NotificationsClient({ initialData }: { initialData: Notification
                             key={notification.id}
                             onClick={() => handleRead(notification.id, notification.resourcePath)}
                             className={cn(
-                                "group flex gap-4 p-4 rounded-xl border transition-all cursor-pointer relative overflow-hidden",
+                                "group flex gap-4 p-4 rounded-xl border transition-all cursor-pointer relative overflow-hidden shadow-sm",
                                 notification.read
-                                    ? "bg-transparent border-transparent hover:bg-white/5 hover:border-white/5"
-                                    : "bg-violet-500/5 border-violet-500/20 hover:bg-violet-500/10"
+                                    ? "bg-white border-zinc-200/80 hover:bg-zinc-50/50"
+                                    : "bg-indigo-50/20 border-indigo-100 hover:bg-indigo-50/40"
                             )}
                         >
                             {/* Unread Dot */}
                             {!notification.read && (
-                                <div className="absolute top-4 right-4 w-2 h-2 bg-violet-500 rounded-full shadow-[0_0_8px_#8b5cf6]" />
+                                <div className="absolute top-4 right-4 w-2 h-2 bg-indigo-600 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
                             )}
 
                             {/* Icon / Avatar */}
                             <div className="flex-shrink-0 pt-1">
                                 <div className="relative">
                                     {notification.actor?.image ? (
-                                        <img src={notification.actor.image} alt="" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                                        <img src={notification.actor.image} alt="" className="w-10 h-10 rounded-full object-cover border border-zinc-200" />
                                     ) : (
-                                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center border border-white/10">
+                                        <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200">
                                             {getIcon(notification.type)}
                                         </div>
                                     )}
                                     {notification.actor && (
-                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-950">
+                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center border border-zinc-200">
                                             {getIcon(notification.type)}
                                         </div>
                                     )}
@@ -147,18 +143,18 @@ export function NotificationsClient({ initialData }: { initialData: Notification
 
                             {/* Content */}
                             <div className="flex-1">
-                                <div className="text-sm text-zinc-300 leading-relaxed">
+                                <div className="text-sm text-zinc-700 leading-relaxed">
                                     {notification.actor && (
-                                        <span className="font-bold text-white mr-1">{notification.actor.name}</span>
+                                        <span className="font-bold text-zinc-900 mr-1">{notification.actor.name}</span>
                                     )}
                                     <span dangerouslySetInnerHTML={{ __html: notification.message }} />
                                 </div>
                                 <div className="mt-1 flex items-center gap-2">
-                                    <span className="text-[10px] text-zinc-500 font-medium">
+                                    <span className="text-[10px] text-zinc-450 font-medium">
                                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                                     </span>
                                     {notification.type === 'JOB_ALERT' && (
-                                        <span className="px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20 text-[9px] text-violet-400">
+                                        <span className="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-[9px] text-indigo-650 font-semibold">
                                             Job Alert
                                         </span>
                                     )}
@@ -167,7 +163,7 @@ export function NotificationsClient({ initialData }: { initialData: Notification
 
                             {/* Action Button (Optional) */}
                             <div className="flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreHorizontal className="w-4 h-4 text-zinc-500" />
+                                <MoreHorizontal className="w-4 h-4 text-zinc-400" />
                             </div>
                         </div>
                     ))
@@ -176,7 +172,7 @@ export function NotificationsClient({ initialData }: { initialData: Notification
 
             {/* End of list */}
             <div className="mt-8 text-center">
-                <p className="text-xs text-zinc-600">You're all caught up!</p>
+                <p className="text-xs text-zinc-400 font-bold">You're all caught up!</p>
             </div>
         </div>
     );

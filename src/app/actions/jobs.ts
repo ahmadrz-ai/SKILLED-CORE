@@ -78,26 +78,35 @@ export async function rewriteJobDescription(currentDescription: string) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
-    // Deduct 1 Credit
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { credits: true, plan: true }
     });
 
-    if (!user || user.credits < 1) {
-        return { success: false, message: "Insufficient credits. Please top up." };
+    if (!user) {
+        return { success: false, message: "User not found." };
     }
 
     if (user.plan === "BASIC") {
         return { success: false, message: "Upgrade to PRO to access Neural Rewrite." }; // Enforcing Plan as requested
     }
 
-    await prisma.user.update({
-        where: { id: session.user.id },
-        data: { credits: { decrement: 1 } }
-    });
-    revalidatePath("/credits");
-    revalidatePath("/", "layout"); // Update sidebar/header credits
+    const isUltra = user.plan === "ULTRA";
+
+    // If they are not Ultra, verify they have enough credits
+    if (!isUltra && user.credits < 1) {
+        return { success: false, message: "Insufficient credits. Please top up." };
+    }
+
+    // Only decrement credits if they are not Ultra
+    if (!isUltra) {
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { credits: { decrement: 1 } }
+        });
+        revalidatePath("/credits");
+        revalidatePath("/", "layout"); // Update sidebar/header credits
+    }
 
     // Real AI Logic
     const apiKey = process.env.QODEE_API_KEY;
@@ -117,18 +126,24 @@ export async function rewriteJobDescription(currentDescription: string) {
             system: `You are an expert technical recruiter and copywriter. 
 Your task is to rewrite and improve the following job description.
 Make it professional, engaging, and structured with clear sections (Role, Responsibilities, Requirements).
-Use Markdown formatting. Keep the tone exciting but professional.`,
+Use HTML formatting tags compatible with standard browser styling (like <b>, <i>, <ul>, <li>, <blockquote>, <p>). Keep the tone exciting but professional.`,
             prompt: currentDescription,
         });
 
-        return { success: true, description: text, message: "Content enhanced (1 Credit used)." };
+        return { 
+            success: true, 
+            description: text, 
+            message: isUltra ? "Content enhanced (Free with Ultra Plan)!" : "Content enhanced (1 Credit used)." 
+        };
     } catch (error: any) {
         console.error("AI Rewrite Error:", error);
-        // Refund credit if failed
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { credits: { increment: 1 } }
-        });
+        // Refund credit if failed and they were charged
+        if (!isUltra) {
+            await prisma.user.update({
+                where: { id: session.user.id },
+                data: { credits: { increment: 1 } }
+            });
+        }
         return { success: false, message: "AI enhancement failed. Credit refunded." };
     }
 }

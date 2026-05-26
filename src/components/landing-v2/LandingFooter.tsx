@@ -8,8 +8,8 @@ const FOOTER_LINKS = {
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
     { label: "How It Works", href: "#solutions" },
-    { label: "For Recruiters", href: "/register?role=recruiter" },
-    { label: "For Candidates", href: "/register?role=candidate" },
+    { label: "Interactive Demo", href: "#rubric-builder" },
+    { label: "Apply for Pilot", href: "#apply-pilot" },
   ],
   Resources: [
     { label: "Help Center", href: "/help" },

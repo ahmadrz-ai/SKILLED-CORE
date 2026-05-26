@@ -15,7 +15,7 @@ export default async function NotificationsPage() {
     }));
 
     return (
-        <div className="min-h-screen bg-obsidian">
+        <div className="w-full min-h-[calc(100vh-120px)] rounded-2xl">
             <NotificationsClient initialData={sanitizedNotifications} />
         </div>
     );

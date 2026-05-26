@@ -6,55 +6,53 @@ import { Check, Zap } from "lucide-react";
 
 const PLANS = [
   {
-    name: "Basic",
-    price: "Free",
-    period: "",
-    description: "Get started with the essentials. Perfect for candidates exploring the platform.",
+    name: "Developer Seat",
+    price: "Zero Cost",
+    period: "during pilot",
+    description: "For individual engineering managers looking to evaluate sandboxed execution rubrics.",
     features: [
-      "10 monthly credits",
-      "Basic job search & apply",
-      "Standard candidate profile",
-      "3 skill assessments/month",
-      "Community support",
+      "1 custom sandbox rubric builder",
+      "Up to 5 active candidate traces",
+      "Direct EM telemetry metrics",
+      "Basic ATS pattern diagnostic",
+      "Standard support channels",
     ],
-    cta: "Get started free",
-    href: "/register?role=candidate",
+    cta: "Apply for Pilot",
+    href: "#apply-pilot",
     popular: false,
   },
   {
-    name: "Pro",
-    price: "$5",
-    period: "/month",
-    description: "For active job seekers and recruiters who need more reach and visibility.",
+    name: "Team Scale Pilot",
+    price: "Zero Cost",
+    period: "during pilot",
+    description: "For growing engineering teams looking to co-define precision hiring benchmarks.",
     features: [
-      "50 monthly credits",
-      "Verified profile badge",
-      "Promoted feed visibility",
-      "Who viewed your profile",
-      "Featured applicant status",
-      "Direct messaging (InMail)",
-      "Priority support",
+      "Full team sandbox environments",
+      "Unlimited candidate execution traces",
+      "100% EM control over evaluation rubrics",
+      "Cognitive audio & transcript parsing",
+      "2-Hour Priority SLA Response Guarantee",
+      "Dedicated Slack collaborative channel",
     ],
-    cta: "Upgrade to Pro",
-    href: "/register",
+    cta: "Apply for Pilot",
+    href: "#apply-pilot",
     popular: true,
   },
   {
-    name: "Ultra",
-    price: "$10",
-    period: "/month",
-    description: "The complete package with salary insights, learning academy, and unlimited search.",
+    name: "Enterprise Calibration",
+    price: "Custom",
+    period: "enterprise SLA",
+    description: "For large engineering organizations requiring custom security sandboxes and integrations.",
     features: [
-      "100 monthly credits",
-      "Everything in Pro",
-      "Salary insights access",
-      "Learning Academy courses",
-      "Unlimited search",
-      "Priority support",
-      "Advanced analytics",
+      "Everything in Team Scale Pilot",
+      "Greenhouse / Lever custom sync integration",
+      "Evolutionary conservation & TFBS maps",
+      "Demographic bias audit compliance logs",
+      "Dedicated TAM advisory & SOC2 isolation",
+      "Custom legal terms & custom SLA priority",
     ],
-    cta: "Go Ultra",
-    href: "/register",
+    cta: "Apply for Pilot",
+    href: "#apply-pilot",
     popular: false,
   },
 ];
@@ -73,7 +71,7 @@ export function LandingPricing() {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold mb-4"
             style={{ background: "#EDE9FE", border: "1px solid #DDD6FE", color: "#6D28D9" }}
           >
-            Pricing
+            Pilot Seat Cohort
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 12 }}
@@ -83,17 +81,17 @@ export function LandingPricing() {
             className="text-3xl md:text-4xl font-bold mb-4"
             style={{ letterSpacing: "-0.02em", color: "#1E1B4B" }}
           >
-            Simple, transparent pricing
+            Zero-Cost Design Partner Pilots
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-lg"
+            className="text-lg font-medium"
             style={{ color: "#64748B" }}
           >
-            Start for free. Upgrade when you need more.
+            Join 12 engineering teams defining what great technical hiring looks like.
           </motion.p>
         </div>
 
@@ -157,7 +155,7 @@ export function LandingPricing() {
                   style={
                     plan.popular
                       ? { background: "linear-gradient(135deg, #7C3AED, #6D28D9)", color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }
-                      : plan.name === "Ultra"
+                      : plan.name === "Enterprise Calibration"
                       ? { background: "#1E1B4B", color: "#fff" }
                       : { background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0" }
                   }
