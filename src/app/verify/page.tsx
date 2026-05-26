@@ -98,69 +98,88 @@ function VerifyPageContent() {
     }
 
     return (
-        <div className="min-h-screen w-full flex bg-black text-white items-center justify-center p-6 relative overflow-hidden font-mono">
-            {/* Ambient */}
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05),transparent_70%)]" />
+        <div 
+            className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans"
+            style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}
+        >
+            {/* Subtle mesh background */}
+            <div
+                className="absolute inset-0 opacity-[0.035]"
+                style={{
+                    backgroundImage: `radial-gradient(circle at 25% 25%, #6366F1 1px, transparent 1px), radial-gradient(circle at 75% 75%, #6366F1 1px, transparent 1px)`,
+                    backgroundSize: "48px 48px",
+                }}
+            />
 
-            <div className="relative z-10 max-w-md w-full bg-zinc-950 border border-zinc-800 rounded-xl p-8 shadow-2xl">
-                <div className="flex justify-center mb-6">
-                    <div className="h-12 w-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800">
-                        <ShieldCheck className="w-6 h-6 text-emerald-500" />
-                    </div>
-                </div>
+            {/* Soft gradient orbs */}
+            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-gradient-to-bl from-indigo-200/30 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-[-50px] left-[-100px] w-[300px] h-[300px] bg-gradient-to-tr from-violet-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold tracking-tight mb-2">Verify Identity</h1>
-                    <p className="text-sm text-zinc-500">
-                        Enter the SECURE CODE sent to <br />
-                        <span className="text-zinc-300 font-bold">{email}</span>
-                    </p>
-                </div>
+            <div className="relative z-10 max-w-md w-full bg-white border border-zinc-200/80 rounded-2xl shadow-2xl overflow-hidden">
+                {/* Brand top accent bar */}
+                <div className="w-full h-1" style={{ background: "linear-gradient(90deg, #6366F1, #06B6D4)" }} />
 
-                <form onSubmit={handleVerify} className="space-y-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="code" className="text-xs uppercase tracking-widest text-zinc-500">Secure Code</Label>
-                        <Input
-                            id="code"
-                            placeholder="000000"
-                            className="bg-zinc-900 border-zinc-800 text-center text-2xl tracking-[0.5em] font-bold h-14 focus:border-emerald-500/50 transition-all placeholder:tracking-normal placeholder:text-zinc-700"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                            maxLength={6}
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded text-xs flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            {error}
+                <div className="p-8">
+                    <div className="flex justify-center mb-6">
+                        <div className="h-14 w-14 bg-indigo-50/50 rounded-full flex items-center justify-center border border-indigo-100 shadow-inner">
+                            <ShieldCheck className="w-7 h-7 text-indigo-600" />
                         </div>
-                    )}
+                    </div>
 
-                    <Button
-                        type="submit"
-                        disabled={isLoading || code.length !== 6}
-                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wide"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "AUTHENTICATE"}
-                    </Button>
-                </form>
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">Verify Identity</h1>
+                        <p className="text-sm text-zinc-500 leading-relaxed">
+                            Enter the 6-digit secure code sent to <br />
+                            <span className="text-indigo-600 font-bold">{email}</span>
+                        </p>
+                    </div>
 
-                <div className="mt-6 text-center">
-                    <button
-                        onClick={handleResend}
-                        disabled={isResending}
-                        className="text-xs text-zinc-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
-                    >
-                        {isResending ? "SENDING..." : "RESEND CODE"}
-                    </button>
+                    <form onSubmit={handleVerify} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="code" className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Secure Code</Label>
+                            <Input
+                                id="code"
+                                placeholder="000000"
+                                className="bg-white border-zinc-200 text-center text-3xl tracking-[0.5em] font-mono font-black h-16 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all rounded-xl shadow-inner text-zinc-800 placeholder:text-zinc-200"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                                maxLength={6}
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-600 p-3 rounded-lg text-xs flex items-center gap-2 font-medium">
+                                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                {error}
+                            </div>
+                        )}
+
+                        <Button
+                            type="submit"
+                            disabled={isLoading || code.length !== 6}
+                            className="w-full h-12 text-white font-bold tracking-widest rounded-xl transition-all shadow-lg hover:shadow-xl force-white-text active:scale-95 duration-150 border-none shrink-0"
+                            style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)" }}
+                        >
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "AUTHENTICATE"}
+                        </Button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <button
+                            onClick={handleResend}
+                            disabled={isResending}
+                            className="text-xs font-semibold text-zinc-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
+                        >
+                            {isResending ? "SENDING..." : "RESEND CODE"}
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div className="absolute bottom-6 left-0 w-full text-center">
-                <div className="flex items-center justify-center gap-2 opacity-30">
-                    <QodeeLogo className="w-4 h-4 grayscale" />
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Skilled Core Security</span>
+                <div className="flex items-center justify-center gap-2 opacity-50">
+                    <QodeeLogo className="w-3.5 h-3.5 text-zinc-400 grayscale" />
+                    <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">Skilled Core Security Protocol</span>
                 </div>
             </div>
         </div>
