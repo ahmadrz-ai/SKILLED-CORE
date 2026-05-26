@@ -181,13 +181,23 @@ body {
 }
 
 /* 3. White/Light text on now-white backgrounds → dark text */
-/* Scoped: only inside app pages, not landing page dark sections */
-:not(.landing-dark) > [class*="text-white"] {
+/* Scoped: only inside app pages, not landing page dark sections.
+   IMPORTANT: Exclude elements that have a colored background where
+   white text is intentional (buttons, badges, chat bubbles, alerts). */
+:not(.landing-dark) > [class*="text-white"]:not([class*="bg-"]):not(button):not([data-slot="button"]):not(.force-white-text) {
   color: #111827 !important;
 }
 /* Allow dark sections on landing page to keep white text */
 .landing-dark [class*="text-white"],
 .landing-dark[class*="text-white"] {
+  color: #FFFFFF !important;
+}
+/* Force white text on colored-background interactive elements */
+button[class*="bg-"][class*="text-white"],
+a[class*="bg-"][class*="text-white"],
+[data-slot="button"][class*="text-white"],
+.force-white-text,
+.force-white-text * {
   color: #FFFFFF !important;
 }
 [class*="text-zinc-1"],
@@ -595,8 +605,4 @@ button, a, input[type="submit"], [role="button"] { min-height: 44px; min-width: 
   -webkit-backdrop-filter: blur(4px) !important;
 }
 
-/* Force white text overrides for sent chat bubbles and invitation cards */
-.force-white-text,
-.force-white-text * {
-  color: #FFFFFF !important;
-}
+

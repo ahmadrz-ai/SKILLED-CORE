@@ -104,11 +104,14 @@ export function RubricBuilder() {
         setVisibleLogs([]);
         
         let logIndex = 0;
-        const logs = TRACES[selectedCategory].logs;
+        const logs = TRACES[selectedCategory]?.logs || [];
         
         const interval = setInterval(() => {
             if (logIndex < logs.length) {
-                setVisibleLogs(prev => [...prev, logs[logIndex]]);
+                const nextLog = logs[logIndex];
+                if (nextLog !== undefined) {
+                    setVisibleLogs(prev => [...prev, nextLog]);
+                }
                 logIndex++;
             } else {
                 clearInterval(interval);
@@ -227,15 +230,15 @@ export function RubricBuilder() {
                                 
                                 {/* Target info */}
                                 <div className="border-b border-zinc-900 pb-3">
-                                    <p className="text-zinc-500"><span className="text-zinc-650 font-bold">CANDIDATE:</span> {currentTrace.candidate}</p>
-                                    <p className="text-zinc-500 mt-1"><span className="text-zinc-650 font-bold">CHALLENGE:</span> {currentTrace.scenario}</p>
+                                    <p className="text-zinc-500"><span className="text-zinc-650 font-bold">CANDIDATE:</span> {currentTrace?.candidate}</p>
+                                    <p className="text-zinc-500 mt-1"><span className="text-zinc-650 font-bold">CHALLENGE:</span> {currentTrace?.scenario}</p>
                                 </div>
 
                                 {/* Simulation Logs */}
                                 <div className="space-y-1">
                                     {visibleLogs.map((log, idx) => {
-                                        const isAlert = log.includes("DIAGNOSTIC") || log.includes("OBSERVATION");
-                                        const isPassed = log.includes("CHECK") || log.includes("MEMCHECK");
+                                        const isAlert = log?.includes("DIAGNOSTIC") || log?.includes("OBSERVATION");
+                                        const isPassed = log?.includes("CHECK") || log?.includes("MEMCHECK");
                                         return (
                                             <p 
                                                 key={idx} 
