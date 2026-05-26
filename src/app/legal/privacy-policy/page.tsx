@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
                 <h1 className="text-4xl md:text-5xl font-heading font-bold text-white tracking-tight">Privacy Policy</h1>
                 <p className="text-zinc-400">Effective Date: January 1, 2026</p>
                 <p className="text-lg leading-relaxed">
-                    At Skilled Core, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclosure, and safeguard your information when you visit our professional network ("Platform").
+                    At Skilled Core, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our professional network ("Platform").
                 </p>
             </div>
 
@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
                             <strong>3.2 Recruiters:</strong> We share your profile data with recruiters and hiring managers who use our Talent Solutions, subject to your privacy settings.
                         </p>
                         <p>
-                            <strong>3.3 Legal Disclosures:</strong> It is possible that we will need to disclose information about you when required by law, subpoena, or other legal process or if we have a good faith belief that disclosure is reasonably necessary to separate illegal activity or protect the safety of any person.
+                            <strong>3.3 Legal Disclosures:</strong> It is possible that we will need to disclose information about you when required by law, subpoena, or other legal process or if we have a good faith belief that disclosure is reasonably necessary to prevent illegal activity or protect the safety of any person.
                         </p>
                     </div>
                 </section>

@@ -86,7 +86,7 @@ const sponsoredPosts = [
     content: "Unlock deep-search filters, direct developer inbox credits, and verified Recruiter Badges to accelerate your hire rates. Get started with SkilledCore Premium today.",
     imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
     ctaText: "Upgrade Plan",
-    ctaUrl: "/pricing",
+    ctaUrl: "/credits",
     initialLikes: 256,
     initialViews: 3210
   }

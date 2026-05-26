@@ -8,50 +8,35 @@ import {
 
 const FEATURES = [
   {
-    icon: Brain, color: "#7C3AED", bg: "#EDE9FE",
-    title: "AI Skill Profiling",
-    description: "Automatically analyze candidate skills from resumes and assessments with AI-powered profiling."
+    icon: Target, color: "#7C3AED", bg: "#EDE9FE",
+    title: "Direct Sandbox Execution",
+    description: "Measure capability directly. We test actual code execution, task decomposition, and debugging under time pressure — never pseudoscientific proxies or behavior heuristics."
   },
   {
-    icon: Target, color: "#0891B2", bg: "#ECFEFF",
-    title: "Smart Matching",
-    description: "AI-powered job-to-candidate matching with explainable match scores to find the right fit."
+    icon: Brain, color: "#0891B2", bg: "#ECFEFF",
+    title: "Explainable Reasoning Chains",
+    description: "Gain complete explainability. Every report delivers granular reasoning chains outlining what the candidate did, why they scored, and specific failed assertions."
   },
   {
-    icon: BarChart3, color: "#059669", bg: "#ECFDF5",
-    title: "Hiring Analytics",
-    description: "Real-time dashboards tracking pipeline health, engagement, and team performance metrics."
+    icon: Zap, color: "#059669", bg: "#ECFDF5",
+    title: "Bidirectional ATS Sync",
+    description: "Eliminate manual data re-entry. Real-time webhooks natively integrate with Greenhouse, Ashby, and Lever to keep candidates synced instantly."
   },
   {
     icon: Users, color: "#D97706", bg: "#FFFBEB",
-    title: "Candidate Pipeline",
-    description: "Visual Kanban board with drag-and-drop tracking from application to offer in one view."
+    title: "Calibration Cohort Intake",
+    description: "Solve the cold-start bottleneck. Seed local evaluation models with historical candidate benchmarks to capture your stack's specific ontology."
   },
   {
     icon: BookOpen, color: "#7C3AED", bg: "#EDE9FE",
-    title: "Built-in Assessments",
-    description: "Send skill assessments directly from the platform and get objective, benchmarked scores."
+    title: "Human-in-the-Loop Override",
+    description: "Empower engineering managers to edit, annotate, and override AI decisions, allowing local models to actively learn from your team's feedback."
   },
   {
     icon: Shield, color: "#DC2626", bg: "#FEF2F2",
-    title: "Privacy First",
-    description: "Enterprise-grade data privacy with role-based access control and Ghost Mode for candidates."
-  },
-  {
-    icon: Zap, color: "#EA580C", bg: "#FFF7ED",
-    title: "AI Interview Simulator",
-    description: "Practice interviews with AI-powered mock sessions including real-time feedback and scoring."
-  },
-  {
-    icon: MessageSquare, color: "#0891B2", bg: "#ECFEFF",
-    title: "Direct Messaging",
-    description: "Built-in messaging with reactions, replies, and attachments to connect recruiters and candidates."
-  },
-  {
-    icon: TrendingUp, color: "#059669", bg: "#ECFDF5",
-    title: "Profile Analytics",
-    description: "Track who viewed your profile, engagement trends, and visibility metrics across the platform."
-  },
+    title: "GDPR Ghost Protocol",
+    description: "Stealth candidate profile protection. Encrypts and shields developer search status from current employers, building total candidate trust."
+  }
 ];
 
 export function LandingFeatures() {

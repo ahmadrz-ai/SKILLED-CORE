@@ -46,14 +46,12 @@ export function LandingHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="font-bold tracking-tight mb-6"
-            style={{ fontSize: "clamp(2.25rem, 5vw, 3.5rem)", lineHeight: 1.1, letterSpacing: "-0.03em", color: "#1E1B4B" }}
+            style={{ fontSize: "clamp(2.25rem, 5vw, 3.5rem)", lineHeight: 1.15, letterSpacing: "-0.03em", color: "#1E1B4B" }}
           >
-            The smarter way to{" "}
+            The next engineer you hire wrong will cost you{" "}
             <span style={{ background: "linear-gradient(135deg, #7C3AED, #5B21B6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              hire, assess,
+              $180,000.
             </span>
-            <br />
-            and grow talent
           </motion.h1>
 
           {/* Subtext */}
@@ -61,11 +59,10 @@ export function LandingHero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-10"
+            className="text-lg md:text-xl leading-relaxed max-w-3xl mx-auto mb-10"
             style={{ color: "#64748B" }}
           >
-            SkilledCore unifies your hiring pipeline, skill assessments, and team analytics
-            into one powerful platform. Built for recruiters and candidates who value clarity.
+            3 months of lost velocity, wasted base salary, and a painful PIP. SkilledCore measures actual execution depth and debugging capability directly in isolated sandbox environments — stopping bad hires before they happen.
           </motion.p>
 
           {/* CTAs */}
@@ -80,7 +77,7 @@ export function LandingHero() {
               className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-base group"
               style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
             >
-              Start hiring
+              Apply for Design Partner Pilot
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
@@ -88,7 +85,7 @@ export function LandingHero() {
               className="inline-flex items-center gap-2 px-7 py-3.5 font-semibold rounded-xl border-2 transition-all duration-200 text-base"
               style={{ borderColor: "#E2E8F0", color: "#475569", background: "white" }}
             >
-              Find opportunities
+              Explore Opportunities
             </Link>
           </motion.div>
 

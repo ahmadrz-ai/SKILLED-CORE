@@ -23,9 +23,10 @@ const CANDIDATE_STEPS = [
 ];
 
 const RECRUITER_STEPS = [
-    { id: 1, title: "Establish Company HQ", description: "Where is your base of operations?" },
-    { id: 2, title: "Verify Authority", description: "Confirm your command credentials." },
-    { id: 3, title: "Initialization", description: "Prepare to deploy." },
+    { id: 1, title: "Establish Company HQ", description: "Who are you building and hiring for?" },
+    { id: 2, title: "Bidirectional ATS Sync", description: "Integrate native webhooks to eliminate manual data entry." },
+    { id: 3, title: "Cohort Calibration Ingestion", description: "Seed the ontology using past passed and failed candidate benchmarks." },
+    { id: 4, title: "Ontology Model Initialization", description: "Compiling your stack's local calibration criteria." },
 ];
 
 const SUGGESTED_SKILLS = ["React", "TypeScript", "Node.js", "Python", "Design Systems", "AWS", "GraphQL"];
@@ -46,6 +47,50 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [pageError, setPageError] = useState<string | null>(null);
 
+    // Recruiter Model Calibration Telemetry compiler
+    const [compileProgress, setCompileProgress] = useState(0);
+    const [activeLogs, setActiveLogs] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (role === 'recruiter' && currentStep === 4) {
+            setCompileProgress(0);
+            setActiveLogs(["Initializing connection protocol..."]);
+            const logs = [
+                "Verifying command credentials...",
+                "Configuring bidirectional ATS webhooks...",
+                "Ingesting Hero Hire benchmark telemetry...",
+                "Decomposing Missed Signal parameters...",
+                "Calibrating Mismatched Hire failed assertions...",
+                "Synthesizing custom stack ontology rubric...",
+                "Local execution models fully calibrated!"
+            ];
+            
+            let currentLogIndex = 0;
+            const logInterval = setInterval(() => {
+                if (currentLogIndex < logs.length) {
+                    setActiveLogs(prev => [...prev, logs[currentLogIndex]]);
+                    currentLogIndex++;
+                }
+            }, 550);
+
+            const interval = setInterval(() => {
+                setCompileProgress(prev => {
+                    if (prev >= 100) {
+                        clearInterval(interval);
+                        clearInterval(logInterval);
+                        return 100;
+                    }
+                    return prev + 4;
+                });
+            }, 150);
+
+            return () => {
+                clearInterval(interval);
+                clearInterval(logInterval);
+            };
+        }
+    }, [currentStep, role]);
+
     // --- FORM STATE ---
     const [formData, setFormData] = useState({
         username: dbUsername || '',
@@ -59,7 +104,20 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
         workEmail: '',
         experience: [] as any[],
         education: [] as any[],
-        // resumeUrl removed
+        // ATS Integrations
+        atsSystem: 'greenhouse',
+        atsWebhookSync: true,
+        atsAutoPipeline: false,
+        // Calibration Cohort Ingestions
+        heroName: '',
+        heroRole: '',
+        heroOntology: '',
+        missedName: '',
+        missedRole: '',
+        missedOntology: '',
+        mismatchedName: '',
+        mismatchedRole: '',
+        mismatchedOntology: '',
     });
 
     // Sync from props and sessionStorage on mount
@@ -155,12 +213,26 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
 
         if (role === 'recruiter') {
             if (step === 1) {
+                if (!formData.username) return "Unique ID (Username) is required.";
+                if (formData.username.length < 3) return "Username must be at least 3 characters.";
+                if (usernameStatus === 'taken') return "Username is already taken.";
                 if (!formData.companyName.trim()) return "Organization Name is required.";
                 if (!formData.industry.trim()) return "Industry is required.";
             }
             if (step === 2) {
                 if (!formData.workEmail.trim()) return "Work Email is required.";
                 if (!formData.workEmail.includes('@')) return "Please enter a valid email address.";
+            }
+            if (step === 3) {
+                if (!formData.heroName.trim()) return "Hero Hire candidate name is required.";
+                if (!formData.heroRole.trim()) return "Hero Hire engineering role is required.";
+                if (!formData.heroOntology.trim()) return "Hero Hire execution characteristics are required.";
+                if (!formData.missedName.trim()) return "Missed Signal candidate name is required.";
+                if (!formData.missedRole.trim()) return "Missed Signal engineering role is required.";
+                if (!formData.missedOntology.trim()) return "Missed Signal pass rationale is required.";
+                if (!formData.mismatchedName.trim()) return "Mismatched Hire candidate name is required.";
+                if (!formData.mismatchedRole.trim()) return "Mismatched Hire engineering role is required.";
+                if (!formData.mismatchedOntology.trim()) return "Mismatched Hire fail metrics are required.";
             }
         }
         return null;
@@ -585,40 +657,210 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
 
                                                 {currentStep === 2 && (
                                                     <div className="space-y-6">
-                                                        <div className="bg-violet-500/10 border border-violet-500/20 p-4 rounded-xl flex items-start gap-3">
-                                                            <CheckCircle2 className="w-5 h-5 text-violet-500 mt-0.5" />
-                                                            <div>
-                                                                <h4 className="text-violet-400 font-bold text-sm">Verification Required</h4>
-                                                                <p className="text-zinc-400 text-xs leading-relaxed mt-1">To prevent fraud, we require a work email address matching your organization's domain.</p>
+                                                        <div className="space-y-4 border-b border-white/5 pb-5">
+                                                            <div className="flex items-center gap-2 text-violet-400 font-mono text-xs uppercase tracking-wider mb-2">
+                                                                <Hexagon className="w-3.5 h-3.5" />
+                                                                1. Verify Command Credentials
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label className="text-zinc-400 text-xs uppercase tracking-wide">Work Email <span className="text-red-500">*</span></Label>
+                                                                <div className="relative">
+                                                                    <Mail className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                    <Input
+                                                                        placeholder="you@company.com"
+                                                                        type="email"
+                                                                        className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                        value={formData.workEmail}
+                                                                        onChange={e => setFormData({ ...formData, workEmail: e.target.value })}
+                                                                        autoFocus
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Work Email <span className="text-red-500">*</span></Label>
-                                                            <div className="relative">
-                                                                <Mail className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
-                                                                <Input
-                                                                    placeholder="you@company.com"
-                                                                    type="email"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
-                                                                    value={formData.workEmail}
-                                                                    onChange={e => setFormData({ ...formData, workEmail: e.target.value })}
-                                                                    autoFocus
-                                                                />
+
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center gap-2 text-violet-400 font-mono text-xs uppercase tracking-wider">
+                                                                <Building2 className="w-3.5 h-3.5" />
+                                                                2. Select Primary ATS Integration
+                                                            </div>
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                {(['greenhouse', 'lever', 'ashby'] as const).map(ats => (
+                                                                    <button
+                                                                        key={ats}
+                                                                        type="button"
+                                                                        onClick={() => setFormData(prev => ({ ...prev, atsSystem: ats }))}
+                                                                        className={cn(
+                                                                            "py-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                                                                            formData.atsSystem === ats
+                                                                                ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-sm"
+                                                                                : "bg-zinc-900/30 border-white/5 text-zinc-500 hover:text-zinc-300"
+                                                                        )}
+                                                                    >
+                                                                        {ats}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                                <div className="flex items-center justify-between p-3 bg-zinc-900/30 border border-white/5 rounded-xl">
+                                                                    <div>
+                                                                        <div className="text-xs font-bold text-zinc-200">Webhook Sync</div>
+                                                                        <div className="text-[10px] text-zinc-500">Real-time bi-directional pipeline update</div>
+                                                                    </div>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={formData.atsWebhookSync}
+                                                                        onChange={e => setFormData(prev => ({ ...prev, atsWebhookSync: e.target.checked }))}
+                                                                        className="w-4 h-4 rounded text-violet-500 bg-zinc-900 border-white/5 focus:ring-violet-500 cursor-pointer"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex items-center justify-between p-3 bg-zinc-900/30 border border-white/5 rounded-xl">
+                                                                    <div>
+                                                                        <div className="text-xs font-bold text-zinc-200">Auto-Pipeline</div>
+                                                                        <div className="text-[10px] text-zinc-500">Automate screening triggers</div>
+                                                                    </div>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={formData.atsAutoPipeline}
+                                                                        onChange={e => setFormData(prev => ({ ...prev, atsAutoPipeline: e.target.checked }))}
+                                                                        className="w-4 h-4 rounded text-violet-500 bg-zinc-900 border-white/5 focus:ring-violet-500 cursor-pointer"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 {currentStep === 3 && (
-                                                    <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-8">
-                                                        <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20 shadow-[0_0_30px_-5px_rgba(139,92,246,0.2)] animate-pulse">
-                                                            <Rocket className="w-12 h-12 text-violet-400" />
+                                                    <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                                                        <div className="bg-violet-500/10 border border-violet-500/20 p-3 rounded-xl flex items-start gap-2.5 mb-2">
+                                                            <CheckCircle2 className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" />
+                                                            <div className="text-xs text-zinc-400 leading-relaxed">
+                                                                To eliminate the <strong>cold start</strong>, please seed SkilledCore with 3 past benchmark candidates. This trains your local execution model on your exact stack ontology.
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <h3 className="text-2xl font-heading font-black text-white mb-2">Systems Online</h3>
-                                                            <p className="text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                                                                Your command center is ready. Prepare to scout the best talent in the sector.
-                                                            </p>
+
+                                                        {/* Hero Hire Card */}
+                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
+                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                                                Cohort 1: The Hero Hire (Successful Senior)
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <Input
+                                                                    placeholder="Candidate name"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.heroName}
+                                                                    onChange={e => setFormData({ ...formData, heroName: e.target.value })}
+                                                                />
+                                                                <Input
+                                                                    placeholder="Role (e.g. Senior Node Dev)"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.heroRole}
+                                                                    onChange={e => setFormData({ ...formData, heroRole: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <textarea
+                                                                placeholder="Standout execution characteristics (e.g., deep system architecture knowledge, modular code decomposer)..."
+                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                value={formData.heroOntology}
+                                                                onChange={e => setFormData({ ...formData, heroOntology: e.target.value })}
+                                                            />
+                                                        </div>
+
+                                                        {/* Missed Signal Card */}
+                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
+                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
+                                                                Cohort 2: The Missed Signal (Regret Pass)
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <Input
+                                                                    placeholder="Candidate name"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.missedName}
+                                                                    onChange={e => setFormData({ ...formData, missedName: e.target.value })}
+                                                                />
+                                                                <Input
+                                                                    placeholder="Role (e.g. Fullstack Dev)"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.missedRole}
+                                                                    onChange={e => setFormData({ ...formData, missedRole: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <textarea
+                                                                placeholder="Why was this candidate passed on? (e.g. failed a generic algorithmic brainteaser but excels at high-performance systems execution)..."
+                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                value={formData.missedOntology}
+                                                                onChange={e => setFormData({ ...formData, missedOntology: e.target.value })}
+                                                            />
+                                                        </div>
+
+                                                        {/* Mismatched Hire Card */}
+                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
+                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 text-red-500" />
+                                                                Cohort 3: The Mismatched Hire (Regret Hired)
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <Input
+                                                                    placeholder="Candidate name"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.mismatchedName}
+                                                                    onChange={e => setFormData({ ...formData, mismatchedName: e.target.value })}
+                                                                />
+                                                                <Input
+                                                                    placeholder="Role (e.g. Lead Frontend Dev)"
+                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    value={formData.mismatchedRole}
+                                                                    onChange={e => setFormData({ ...formData, mismatchedRole: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <textarea
+                                                                placeholder="Failed execution metrics (e.g. strong behavioral skills but lacks problem-solving autonomy and coding velocity)..."
+                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                value={formData.mismatchedOntology}
+                                                                onChange={e => setFormData({ ...formData, mismatchedOntology: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {currentStep === 4 && (
+                                                    <div className="flex flex-col h-full space-y-5 py-2">
+                                                        <div className="space-y-2 text-center">
+                                                            <div className="text-violet-400 font-mono text-xs uppercase tracking-widest animate-pulse">
+                                                                ONTOLOGY SYNTHESIS IN PROGRESS...
+                                                            </div>
+                                                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-white/5">
+                                                                <motion.div
+                                                                    className="h-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-[0_0_10px_rgba(124,58,237,0.5)]"
+                                                                    initial={{ width: "0%" }}
+                                                                    animate={{ width: `${compileProgress}%` }}
+                                                                    transition={{ duration: 0.3 }}
+                                                                />
+                                                            </div>
+                                                            <div className="text-[10px] text-zinc-500 font-mono text-right">
+                                                                {compileProgress}% COMPLETE
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Scrolling Telemetry Logs */}
+                                                        <div className="flex-1 min-h-[160px] max-h-[180px] bg-black/80 border border-white/5 rounded-xl p-4 overflow-y-auto space-y-1.5 font-mono text-[10px] text-zinc-500 leading-normal scrollbar-thin">
+                                                            {activeLogs.map((log, i) => (
+                                                                <motion.div
+                                                                    key={i}
+                                                                    initial={{ opacity: 0, x: -5 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    className={cn(
+                                                                        "flex gap-2 items-center",
+                                                                        i === activeLogs.length - 1 ? "text-violet-400 font-bold" : "text-zinc-500"
+                                                                    )}
+                                                                >
+                                                                    <span className="text-zinc-700 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                                                                    <span>&gt;&gt; {log}</span>
+                                                                </motion.div>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 )}

@@ -48,6 +48,7 @@ export const viewport = {
 import { CommandPalette } from "@/components/CommandPalette";
 import SessionWrapper from "@/components/auth/SessionWrapper";
 import { GlobalAiAssistant } from "@/components/GlobalAiAssistant";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { auth } from "@/auth";
 
 export default async function RootLayout({
@@ -68,19 +69,58 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground font-sans relative`}
       >
-        {/* ── Google Analytics 4 (GA4) ─────────────────────────────────────
-            Measurement ID: G-QYCWDJSRZ5  |  Stream: Skilled Core
-            Using next/script with afterInteractive so it doesn't block
-            the initial page render but still fires on every route change.
+        {/* ── Google Analytics 4 + Consent Mode v2 ─────────────────────────
+            IMPORTANT: The consent 'default' block MUST run before
+            gtag('config', ...) so GA4 knows to hold data until the user
+            accepts. This is a Google Consent Mode v2 requirement.
+            The CookieConsentBanner component calls gtag('consent','update')
+            when the user makes a choice, unlocking full measurement.
         ──────────────────────────────────────────────────────────────── */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-QYCWDJSRZ5"
           strategy="afterInteractive"
         />
-        <Script id="ga4-config" strategy="afterInteractive">
+        <Script id="ga4-consent-default" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+
+            // ── Consent Mode v2: default to denied until user decides ──
+            // Check if user has already saved a preference in localStorage
+            (function() {
+              try {
+                var saved = localStorage.getItem('skilledcore_consent_v2');
+                if (saved) {
+                  var prefs = JSON.parse(saved);
+                  // Re-apply saved consent immediately (no banner flash)
+                  gtag('consent', 'default', {
+                    analytics_storage:   prefs.analytics_storage   || 'denied',
+                    ad_storage:          prefs.ad_storage           || 'denied',
+                    ad_user_data:        prefs.ad_user_data         || 'denied',
+                    ad_personalization:  prefs.ad_personalization   || 'denied',
+                    wait_for_update: 500,
+                  });
+                } else {
+                  // First-time visitor: deny everything until banner response
+                  gtag('consent', 'default', {
+                    analytics_storage:  'denied',
+                    ad_storage:         'denied',
+                    ad_user_data:       'denied',
+                    ad_personalization: 'denied',
+                    wait_for_update: 3000,
+                  });
+                }
+              } catch(e) {
+                gtag('consent', 'default', {
+                  analytics_storage:  'denied',
+                  ad_storage:         'denied',
+                  ad_user_data:       'denied',
+                  ad_personalization: 'denied',
+                  wait_for_update: 3000,
+                });
+              }
+            })();
+
             gtag('js', new Date());
             gtag('config', 'G-QYCWDJSRZ5', {
               page_path: window.location.pathname,
@@ -94,6 +134,8 @@ export default async function RootLayout({
           <GlobalAiAssistant />
           {children}
           <Toaster richColors position="bottom-right" theme="dark" closeButton />
+          {/* ── Cookie Consent Banner (Consent Mode v2) ── */}
+          <CookieConsentBanner />
         </SessionWrapper>
       </body>
     </html>

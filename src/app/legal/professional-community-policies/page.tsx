@@ -8,7 +8,7 @@ export default function CommunityPoliciesPage() {
             {/* Header */}
             <div className="space-y-4 border-b border-white/10 pb-8">
                 <h1 className="text-4xl md:text-5xl font-heading font-bold text-white tracking-tight">Professional Community Policies</h1>
-                <p className="text-zinc-400">These policies help ensure Skiled Core remains a professional and safe environment.</p>
+                <p className="text-zinc-400">These policies help ensure Skilled Core remains a professional and safe environment.</p>
             </div>
 
             <div className="space-y-12">

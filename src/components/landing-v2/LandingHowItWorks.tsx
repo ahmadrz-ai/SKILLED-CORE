@@ -9,36 +9,36 @@ const STEPS = [
     icon: Upload,
     color: "#7C3AED",
     bg: "#EDE9FE",
-    title: "Create your profile",
-    description: "Sign up as a recruiter or candidate. Upload your resume or post your first job in minutes.",
-    tag: "Quick Setup"
+    title: "Deploy Calibration Cohort",
+    description: "Seed your environment. Ingest passed and failed benchmark candidates to train SkilledCore on your engineering team's precise execution rubric.",
+    tag: "Zero Cold Start"
   },
   {
     number: "02",
     icon: Search,
     color: "#0891B2",
     bg: "#ECFEFF",
-    title: "Discover & connect",
-    description: "AI-powered matching surfaces the best candidates for your roles, or the right jobs for your skills.",
-    tag: "AI-Powered"
+    title: "Enable Bidirectional Sync",
+    description: "Hook into your existing ecosystem. We support instant, webhook-based Greenhouse, Lever, and Ashby syncs to eliminate manual recruiter re-entry.",
+    tag: "Native ATS Webhooks"
   },
   {
     number: "03",
     icon: BarChart3,
     color: "#059669",
     bg: "#ECFDF5",
-    title: "Assess & evaluate",
-    description: "Run skill assessments and AI-powered mock interviews to objectively evaluate talent.",
-    tag: "Built-in Tests"
+    title: "Direct Sandbox Testing",
+    description: "Assess actual output. Candidates solve execution-based coding tasks inside isolated containerized sandboxes to measure real engineering execution depth.",
+    tag: "Execution-Based"
   },
   {
     number: "04",
     icon: CheckCircle2,
     color: "#D97706",
     bg: "#FFFBEB",
-    title: "Hire with clarity",
-    description: "Track candidates through your pipeline, communicate directly, and make data-informed decisions.",
-    tag: "End-to-End"
+    title: "Audit Reasoning Trails",
+    description: "Get explainable decisions. We generate structured XAI reports showing explicit reasoning chains, logic steps, and assertion metrics.",
+    tag: "Explainable AI"
   }
 ];
 
