@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { updateApplicationStatus } from "@/app/actions/ats";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, MessageSquare, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import Link from "next/link";
+import { MoreHorizontal, MessageSquare, FileText, CheckCircle2, User, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner"; // Assuming sonner or similar toast
+import { toast } from "sonner";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,17 +28,19 @@ type Application = {
         image: string | null;
         email: string | null;
         resumeUrl: string | null;
+        username?: string | null;
+        headline?: string | null;
     };
 };
 
 type ColumnType = "PENDING" | "REVIEWED" | "SHORTLISTED" | "REJECTED" | "HIRED";
 
-const COLUMNS: { id: ColumnType; label: string; color: string }[] = [
-    { id: "PENDING", label: "Inbox", color: "bg-zinc-500" },
-    { id: "REVIEWED", label: "In Review", color: "bg-blue-500" },
-    { id: "SHORTLISTED", label: "Shortlisted", color: "bg-violet-500" },
-    { id: "HIRED", label: "Hired", color: "bg-emerald-500" },
-    { id: "REJECTED", label: "Rejected", color: "bg-red-500" },
+const COLUMNS: { id: ColumnType; label: string; dotColor: string; bgClass: string; textClass: string; borderClass: string }[] = [
+    { id: "PENDING", label: "Inbox", dotColor: "bg-slate-400", bgClass: "bg-slate-50", textClass: "text-slate-700", borderClass: "border-slate-200" },
+    { id: "REVIEWED", label: "In Review", dotColor: "bg-blue-500", bgClass: "bg-blue-50/30", textClass: "text-blue-700", borderClass: "border-blue-150" },
+    { id: "SHORTLISTED", label: "Shortlisted", dotColor: "bg-indigo-500", bgClass: "bg-indigo-50/30", textClass: "text-indigo-700", borderClass: "border-indigo-150" },
+    { id: "HIRED", label: "Hired", dotColor: "bg-emerald-500", bgClass: "bg-emerald-50/30", textClass: "text-emerald-700", borderClass: "border-emerald-150" },
+    { id: "REJECTED", label: "Rejected", dotColor: "bg-rose-500", bgClass: "bg-rose-50/30", textClass: "text-rose-700", borderClass: "border-rose-150" },
 ];
 
 export default function KanbanBoard({ job }: { job: any }) {
@@ -47,99 +50,168 @@ export default function KanbanBoard({ job }: { job: any }) {
 
     const handleMove = async (appId: string, newStatus: string) => {
         // Optimistic Update
+        const previousApplications = [...applications];
         setApplications(prev =>
             prev.map(app => app.id === appId ? { ...app, status: newStatus } : app)
         );
 
-        const result = await updateApplicationStatus(appId, newStatus);
-        if (!result.success) {
-            toast.error("Failed to move candidate");
-            // Revert on error (simplified for demo, ideally revert state)
-        }
+        toast.promise(
+            updateApplicationStatus(appId, newStatus).then(result => {
+                if (!result.success) {
+                    setApplications(previousApplications); // Revert
+                    throw new Error("Failed to move candidate");
+                }
+                return result;
+            }),
+            {
+                loading: "Moving candidate to new stage...",
+                success: "Candidate pipeline stage updated!",
+                error: "Could not update pipeline stage. Please retry.",
+            }
+        );
     };
 
     const getColumnApps = (status: string) => applications.filter(a => a.status === status);
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
-            {COLUMNS.map(col => (
-                <div key={col.id} className="min-w-[320px] bg-zinc-900/40 rounded-2xl border border-white/5 flex flex-col">
-                    {/* Column Header */}
-                    <div className="p-4 border-b border-white/5 flex justify-between items-center sticky top-0 bg-zinc-900/90 backdrop-blur-sm z-10 rounded-t-2xl">
-                        <div className="flex items-center gap-2">
-                            <div className={cn("w-2 h-2 rounded-full", col.color)} />
-                            <span className="font-bold text-sm text-zinc-300">{col.label}</span>
-                        </div>
-                        <Badge variant="secondary" className="bg-white/5 text-zinc-500 border-none">{getColumnApps(col.id).length}</Badge>
-                    </div>
-
-                    {/* Column Content */}
-                    <div className="p-3 space-y-3 flex-1 overflow-y-auto">
-                        {getColumnApps(col.id).map(app => (
-                            <div key={app.id} className="bg-black/40 p-4 rounded-xl border border-white/5 hover:border-violet-500/30 transition-all group shadow-sm">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="w-10 h-10 border border-white/10">
-                                            <AvatarImage src={app.applicant.image || ""} />
-                                            <AvatarFallback>{app.applicant.name?.[0]}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <div className="font-bold text-sm text-white">{app.applicant.name}</div>
-                                            <div className="text-xs text-zinc-500">{app.applicant.email}</div>
-                                        </div>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <button className="text-zinc-600 hover:text-white transition-colors">
-                                                <MoreHorizontal className="w-4 h-4" />
-                                            </button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-white">
-                                            {COLUMNS.filter(c => c.id !== col.id).map(targetCol => (
-                                                <DropdownMenuItem
-                                                    key={targetCol.id}
-                                                    onClick={() => handleMove(app.id, targetCol.id)}
-                                                    className="hover:bg-zinc-800 cursor-pointer"
-                                                >
-                                                    Move to {targetCol.label}
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-
-                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
-                                    {app.matchScore ? (
-                                        <div className="text-xs font-mono text-emerald-400">
-                                            {app.matchScore}% Match
-                                        </div>
-                                    ) : (
-                                        <div className="text-xs font-mono text-zinc-600">
-                                            No AI Score
-                                        </div>
-                                    )}
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => app.applicant.resumeUrl ? window.open(app.applicant.resumeUrl, '_blank') : toast.error("No resume uploaded")}
-                                            className={cn("p-1.5 rounded-md transition-colors", app.applicant.resumeUrl ? "hover:bg-white/10 text-zinc-500 hover:text-white" : "text-zinc-700 cursor-not-allowed")}
-                                            title="View Resume"
-                                        >
-                                            <FileText className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => router.push(`/messages?userId=${app.applicant.id}`)}
-                                            className="p-1.5 hover:bg-white/10 rounded-md text-zinc-500 hover:text-white transition-colors"
-                                            title="Message"
-                                        >
-                                            <MessageSquare className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
+        <div className="flex gap-6 overflow-x-auto pb-6 h-[calc(100vh-230px)] custom-scrollbar items-start">
+            {COLUMNS.map(col => {
+                const columnApps = getColumnApps(col.id);
+                return (
+                    <div 
+                        key={col.id} 
+                        className={cn(
+                            "min-w-[340px] max-w-[340px] rounded-2xl border flex flex-col max-h-full shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition-all",
+                            col.bgClass,
+                            col.borderClass
+                        )}
+                    >
+                        {/* Column Header */}
+                        <div className="p-4 border-b border-inherit flex justify-between items-center bg-white/70 backdrop-blur-md sticky top-0 z-10 rounded-t-2xl">
+                            <div className="flex items-center gap-2.5">
+                                <div className={cn("w-2 h-2 rounded-full animate-pulse", col.dotColor)} />
+                                <span className={cn("font-bold text-sm tracking-tight", col.textClass)}>{col.label}</span>
                             </div>
-                        ))}
+                            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 border border-slate-200 px-1.5 text-[11px] font-bold text-slate-600">
+                                {columnApps.length}
+                            </span>
+                        </div>
+
+                        {/* Column Content */}
+                        <div className="p-3.5 space-y-3 flex-1 overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar">
+                            {columnApps.length > 0 ? (
+                                columnApps.map(app => {
+                                    const profileLink = app.applicant.username 
+                                        ? `/profile/${app.applicant.username}`
+                                        : `/profile/${app.applicant.id}`;
+
+                                    return (
+                                        <div 
+                                            key={app.id} 
+                                            className="bg-white p-4.5 rounded-xl border border-slate-200/80 hover:border-indigo-400 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-200 group relative"
+                                        >
+                                            <div className="flex justify-between items-start gap-2 mb-2.5">
+                                                {/* Candidate Profile Details */}
+                                                <Link 
+                                                    href={profileLink} 
+                                                    className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-95"
+                                                    title="View Full Profile"
+                                                >
+                                                    <Avatar className="w-10 h-10 border border-slate-200/80 shrink-0 group-hover:scale-105 transition-transform">
+                                                        <AvatarImage src={app.applicant.image || ""} />
+                                                        <AvatarFallback className="bg-indigo-50 text-indigo-700 font-bold text-sm">
+                                                            {app.applicant.name?.[0]?.toUpperCase() || "C"}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="min-w-0 text-left">
+                                                        <div className="font-bold text-sm text-slate-800 truncate flex items-center gap-1 group-hover:text-indigo-650 transition-colors">
+                                                            {app.applicant.name}
+                                                            <ChevronRight className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                                                            {app.applicant.headline || app.applicant.email}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+
+                                                {/* Dropdown Options */}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-50 transition-all">
+                                                            <MoreHorizontal className="w-4 h-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="bg-white border border-slate-200 text-slate-700 shadow-md rounded-xl p-1 w-48">
+                                                        <DropdownMenuItem
+                                                            onClick={() => router.push(profileLink)}
+                                                            className="hover:bg-slate-50 focus:bg-slate-50 cursor-pointer rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                                                        >
+                                                            <User className="w-3.5 h-3.5 text-slate-400" /> View Profile
+                                                        </DropdownMenuItem>
+                                                        <div className="h-px bg-slate-100 my-1" />
+                                                        {COLUMNS.filter(c => c.id !== col.id).map(targetCol => (
+                                                            <DropdownMenuItem
+                                                                key={targetCol.id}
+                                                                onClick={() => handleMove(app.id, targetCol.id)}
+                                                                className="hover:bg-indigo-50 hover:text-indigo-700 focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer rounded-lg px-2.5 py-2 text-xs font-semibold flex items-center gap-2"
+                                                            >
+                                                                <div className={cn("w-1.5 h-1.5 rounded-full", targetCol.dotColor)} />
+                                                                Move to {targetCol.label}
+                                                            </DropdownMenuItem>
+                                                        ))}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+
+                                            {/* Score Card and Actions */}
+                                            <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-100">
+                                                {app.matchScore ? (
+                                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 text-[10px] font-bold font-mono text-emerald-700 border border-emerald-150">
+                                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                                        {app.matchScore}% Match
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-wide">
+                                                        Pending Score
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="flex gap-1.5">
+                                                    <button
+                                                        onClick={() => app.applicant.resumeUrl ? window.open(app.applicant.resumeUrl, '_blank') : toast.error("No resume uploaded")}
+                                                        className={cn(
+                                                            "p-2 rounded-lg border transition-all flex items-center justify-center", 
+                                                            app.applicant.resumeUrl 
+                                                                ? "hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800" 
+                                                                : "border-slate-100 text-slate-300 cursor-not-allowed"
+                                                        )}
+                                                        title="View Resume"
+                                                        disabled={!app.applicant.resumeUrl}
+                                                    >
+                                                        <FileText className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => router.push(`/messages?userId=${app.applicant.id}`)}
+                                                        className="p-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center"
+                                                        title="Send Message"
+                                                    >
+                                                        <MessageSquare className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="h-28 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 px-4 text-center">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider">Empty Stage</p>
+                                    <p className="text-[10px] text-slate-400 font-normal mt-1 leading-snug">Drag candidates here to advance their pipeline</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }

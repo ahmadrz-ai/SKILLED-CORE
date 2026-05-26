@@ -21,6 +21,7 @@ export async function getJobWithApplications(jobId: string) {
                             image: true,
                             headline: true,
                             resumeUrl: true, // Use existing field
+                            username: true,
                         }
                     }
                 },
