@@ -28,14 +28,13 @@ import {
 const NAV_ITEMS = [
   { label: "Home", icon: Home, path: "/feed" },
   { label: "Network", icon: Users, path: "/network" },
-  { label: "Find Talent", icon: Users, path: "/hire/search", highlightRole: "RECRUITER" },
+  { label: "Find Talent", icon: Users, path: "/hire", highlightRole: "RECRUITER" },
   { label: "Jobs", icon: Briefcase, path: "/jobs" },
-  { label: "Post Job", icon: PlusCircle, path: "/jobs/create", role: "RECRUITER" },
   { label: "AI Interview", icon: MessageSquarePlus, path: "/interview", highlight: true },
   { label: "Salary", icon: DollarSign, path: "/salary" },
   { label: "Learning", icon: BookOpen, path: "/learning" },
   { label: "Messages", icon: MessageSquare, path: "/messages" },
-  { label: "Analytics", icon: BarChart, path: "/analytics" },
+  { label: "Analytics", icon: BarChart, path: "/analytics-dashboard" },
   { label: "Credits", icon: CreditCard, path: "/credits" },
 ];
 
@@ -97,7 +96,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.path);
-          const isProtected = ["/jobs/create", "/hire/search"].includes(item.path);
+          const isProtected = ["/jobs/create", "/hire"].includes(item.path);
 
           // @ts-ignore
           if (item.role && (user as any)?.role !== item.role && (user as any)?.role !== "ADMIN") {

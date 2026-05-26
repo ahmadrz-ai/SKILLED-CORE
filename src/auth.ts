@@ -27,17 +27,32 @@ const nextAuth = NextAuth({
         async session({ session, token }) {
             if (session.user && token.sub) {
                 session.user.id = token.sub;
+
+                // Elevate superusers to ADMIN dynamically
+                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
+                const userEmail = session.user.email || "";
+
+                if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
+                    // @ts-ignore
+                    session.user.role = "ADMIN";
+                }
+
                 // Fetch fresh role from DB to handle external updates
                 try {
-                    // console.log("Session Sync: Starting for user", token.sub);
                     const freshUser = await prisma.user.findUnique({
                         where: { id: token.sub },
-                        select: { role: true, name: true, image: true, username: true, credits: true }
+                        select: { role: true, name: true, image: true, username: true, credits: true, email: true }
                     });
-                    // console.log("Session Sync: DB Result", freshUser);
 
-                    // @ts-ignore
-                    session.user.role = freshUser?.role || token.role;
+                    const activeEmail = freshUser?.email || userEmail;
+                    if (activeEmail && cleanEmails.includes(activeEmail.toLowerCase().trim())) {
+                        // @ts-ignore
+                        session.user.role = "ADMIN";
+                    } else {
+                        // @ts-ignore
+                        session.user.role = freshUser?.role || token.role;
+                    }
+
                     if (freshUser?.name) session.user.name = freshUser.name;
                     if (freshUser?.image) session.user.image = freshUser.image;
                     // @ts-ignore
@@ -46,12 +61,15 @@ const nextAuth = NextAuth({
                     if (freshUser?.credits !== undefined) session.user.credits = freshUser.credits;
                 } catch (error: any) {
                     const msg = error?.message || "Unknown error";
-                    // Treat all DB errors in session sync as warnings to prevent console spam
                     console.warn("Session Sync WARN:", msg);
 
-                    // Fallback to token values if DB fails
-                    // @ts-ignore
-                    session.user.role = token.role;
+                    if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
+                        // @ts-ignore
+                        session.user.role = "ADMIN";
+                    } else {
+                        // @ts-ignore
+                        session.user.role = token.role;
+                    }
                 }
             }
             return session;
@@ -149,26 +167,6 @@ const nextAuth = NextAuth({
 
                 const identifier = credentials.email as string;
                 const cleanEmail = identifier.toLowerCase().trim();
-                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-
-                // Support and Admin superuser bypass (Passwordless & OTP-less entry)
-                if (cleanEmails.includes(cleanEmail) && !credentials.password && !credentials.otp) {
-                    let user = await prisma.user.findFirst({
-                        where: { email: { equals: cleanEmail, mode: 'insensitive' } }
-                    });
-                    if (!user) {
-                        user = await prisma.user.create({
-                            data: {
-                                email: cleanEmail,
-                                name: cleanEmail === "ahmadrazaai801@gmail.com" ? "Ahmad Raza" : cleanEmail === "ahmad@skilledcore.com" ? "Ahmad" : "Support Team",
-                                role: "ADMIN",
-                                username: cleanEmail.split("@")[0],
-                                emailVerified: new Date()
-                            }
-                        });
-                    }
-                    return user;
-                }
 
                 // --- OTP LOGIN FLOW ---
                 if (credentials.otp) {
@@ -256,7 +254,7 @@ const nextAuth = NextAuth({
                     return null;
                 } catch (e) {
                     console.error("Authorize Error:", e);
-                    const errMessage = (e as any).message;
+                    const errMessage = (e as any)?.message || "";
                     const isDbConnectionError = errMessage.includes('Can\'t reach database server') || errMessage.includes('connect to database');
 
                     if (process.env.NODE_ENV === 'development' && isDbConnectionError && (identifier.includes('test') || identifier.includes('mock'))) {
@@ -292,25 +290,5 @@ export const signIn = nextAuth.signIn;
 export const signOut = nextAuth.signOut;
 
 export async function auth() {
-    try {
-        const { cookies } = await import("next/headers");
-        const cookiesList = await cookies();
-        const bypassEmail = cookiesList.get("admin_bypass_email")?.value?.toLowerCase().trim();
-        const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-        
-        if (bypassEmail && cleanEmails.includes(bypassEmail)) {
-            return {
-                user: {
-                    id: `bypass-admin-${bypassEmail.split("@")[0]}`,
-                    name: bypassEmail === "ahmadrazaai801@gmail.com" ? "Ahmad Raza" : bypassEmail === "ahmad@skilledcore.com" ? "Ahmad" : "Support Team",
-                    email: bypassEmail,
-                    role: "ADMIN",
-                    credits: 999999
-                },
-                expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            };
-        }
-    } catch (e) {}
-    
     return (nextAuth.auth as any)();
 }

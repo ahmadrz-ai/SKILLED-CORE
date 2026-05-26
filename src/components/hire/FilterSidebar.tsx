@@ -40,7 +40,7 @@ export function FilterSidebar({ activeTechFilters = [], onTechFilterChange, onCl
                         <span className="flex items-center gap-2"><Layers className="w-4 h-4" /> Tech Stack</span>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-2">
-                        {['React', 'Node.js', 'Typescript', 'Python', 'AWS', 'Next.js'].map((tech) => (
+                        {['React', 'Node.js', 'Typescript', 'Python', 'AWS', 'Next.js', 'Docker', 'GraphQL'].map((tech) => (
                             <div key={tech} className="flex items-center space-x-2">
                                 <Checkbox 
                                     id={tech} 

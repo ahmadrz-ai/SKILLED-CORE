@@ -8,7 +8,7 @@ const PROTECTED_ROUTES = [
     '/messages',
     '/network',
     '/settings',
-    '/analytics',
+    '/analytics-dashboard',
     '/notifications',
     '/profile',
     '/applications',
@@ -28,14 +28,8 @@ export const authConfig = {
         error: '/auth/error',
     },
     callbacks: {
-        authorized({ auth, request: { nextUrl, headers } }) {
-            const cookieHeader = headers.get("cookie") || "";
-            const match = cookieHeader.match(/admin_bypass_email=([^;]+)/);
-            const bypassEmailCookie = match ? decodeURIComponent(match[1]).toLowerCase().trim() : null;
-            const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-            
-            const isBypassed = bypassEmailCookie && cleanEmails.includes(bypassEmailCookie);
-            const isLoggedIn = !!auth?.user || isBypassed;
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user;
             const path = nextUrl.pathname;
 
             // Check if this is a protected route
@@ -62,6 +56,13 @@ export const authConfig = {
                 token.id = user.id;
                 // @ts-ignore
                 token.role = user.role;
+
+                // Elevate superusers to ADMIN dynamically
+                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
+                if (user.email && cleanEmails.includes(user.email.toLowerCase().trim())) {
+                    // @ts-ignore
+                    token.role = "ADMIN";
+                }
             }
             if (trigger === "update" && session) {
                 token = { ...token, ...session.user };
@@ -73,9 +74,17 @@ export const authConfig = {
                 session.user.id = token.id as string;
                 // @ts-ignore
                 session.user.role = token.role as string;
+
+                // Elevate superusers to ADMIN dynamically
+                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
+                if (session.user.email && cleanEmails.includes(session.user.email.toLowerCase().trim())) {
+                    // @ts-ignore
+                    session.user.role = "ADMIN";
+                }
             }
             return session;
         }
     },
     providers: [], // Providers configured in auth.ts
 } satisfies NextAuthConfig;
+

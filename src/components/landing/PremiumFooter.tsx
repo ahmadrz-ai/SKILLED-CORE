@@ -15,7 +15,7 @@ export function PremiumFooter() {
         product: [
             { label: "AI Interview", href: "/interview" },
             { label: "Find Jobs", href: "/jobs" },
-            { label: "Find Talent", href: "/hire/search" },
+            { label: "Find Talent", href: "/hire" },
             { label: "Pricing", href: "/#pricing" }
         ],
         company: [
@@ -38,7 +38,7 @@ export function PremiumFooter() {
                 { label: "Network", href: "/network" },
                 { label: "Messages", href: "/messages" },
                 { label: "Settings", href: "/settings" },
-                { label: "Analytics", href: "/analytics" }
+                { label: "Analytics", href: "/analytics-dashboard" }
             ]
             : [
                 // Public alternatives for unauthenticated visitors

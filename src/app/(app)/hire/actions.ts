@@ -1,132 +1,215 @@
 'use server';
 
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
-export interface CandidateProfile {
+export interface Candidate {
     id: string;
     name: string;
-    username: string | null;
-    image: string | null;
-    headline: string | null;
-    location: string | null;
-    bio: string | null;
+    username: string;
+    headline: string;
+    location: string;
+    role: string;
+    company: string;
     skills: string[];
-    experienceCount: number;
-    projectCount: number;
-    connectionCount: number;
-    relevanceScore?: number; // Only present when searching
+    matchScore: number;
+    verified: boolean;
+    connections: number;
+    bio: string;
+    avatar?: string | null;
+    yearsOfExperience: number;
+    isGhostHidden?: boolean; // for ghost-protected profiles
 }
 
-function parseSkills(raw: string | null | undefined): string[] {
-    if (!raw) return [];
-    try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {}
-    return raw.split(',').map(s => s.trim()).filter(Boolean);
-}
+// Bot/test account name patterns
+const TEST_NAME_PATTERNS = /^(test|testing|testings?|new|demo|sample|bot|fake|mock|openai)/i;
+const PLACEHOLDER_BIO = "Experienced professional. Please update your profile with specific details.";
+const PLACEHOLDER_ROLE = "Professional Role";
+const PLACEHOLDER_COMPANY = "Company Name";
 
-const SELECT = {
-    id: true,
-    name: true,
-    username: true,
-    image: true,
-    headline: true,
-    location: true,
-    bio: true,
-    skills: true,
-    _count: {
-        select: {
-            experience: true,
-            projects: true,
-            sentConnections: true,
-        }
-    }
-} as const;
-
-type RawUser = {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-    headline: string | null;
-    location: string | null;
-    bio: string | null;
-    skills: string | null;
-    _count: { experience: number; projects: number; sentConnections: number };
-};
-
-function toProfile(u: RawUser, relevanceScore?: number): CandidateProfile {
-    return {
-        id: u.id,
-        name: u.name || 'Unknown',
-        username: u.username,
-        image: u.image,
-        headline: u.headline,
-        location: u.location,
-        bio: u.bio,
-        skills: parseSkills(u.skills),
-        experienceCount: u._count.experience,
-        projectCount: u._count.projects,
-        connectionCount: u._count.sentConnections,
-        ...(relevanceScore !== undefined && { relevanceScore }),
-    };
-}
-
-/** Fetch ALL non-ghost users (excluding current user). */
-export async function getAllCandidates(): Promise<CandidateProfile[]> {
-    const session = await auth();
-    const currentUserId = session?.user?.id;
-
-    const users = await prisma.user.findMany({
-        where: {
-            ghostMode: false,
-            ...(currentUserId ? { id: { not: currentUserId } } : {}),
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 200,
-        select: SELECT,
-    }) as RawUser[];
-
-    return users.map(u => toProfile(u));
+/**
+ * Calculates a profile completeness score (0–100).
+ * Profiles below 40% are hidden from recruiter search.
+ */
+function calcCompleteness(user: {
+    image?: string | null;
+    bio?: string | null;
+    skills?: string | null;
+    experience?: any[];
+    location?: string | null;
+    name?: string | null;
+}): number {
+    let score = 0;
+    if (user.image) score += 20;
+    if (user.bio && user.bio.length >= 50 && user.bio !== PLACEHOLDER_BIO) score += 20;
+    if (user.skills && user.skills.split(',').filter(s => s.trim()).length >= 2) score += 20;
+    if (user.experience && user.experience.length > 0) score += 20;
+    if (user.location && user.location !== 'Location' && user.location !== 'Remote') score += 20;
+    return score;
 }
 
 /**
- * AI semantic search: scores candidates by relevance to natural language query.
- * Returns candidates with a relevanceScore (0–100) based on token match density.
+ * Auth-gated candidate search with Ghost Protocol filter.
+ * - Returns 401-equivalent redirect for unauthenticated callers.
+ * - Filters ghost-protected candidates whose employer domain matches the recruiter's company domain.
+ * - Filters incomplete and test/bot profiles.
  */
-export async function searchCandidates(query: string): Promise<CandidateProfile[]> {
+export async function getCandidates(): Promise<Candidate[]> {
+    // --- Require authentication ---
     const session = await auth();
-    const currentUserId = session?.user?.id;
+    if (!session?.user?.id) {
+        // Server action: redirect to register with return URL
+        redirect('/register?role=recruiter&redirect=/hire');
+    }
 
-    const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
-    if (tokens.length === 0) return getAllCandidates();
+    const currentUserId = session.user.id;
+
+    // Get recruiter's company domain for Ghost Protocol comparison
+    const recruiter = await prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { company: { select: { website: true, name: true } } }
+    });
+
+    // Extract recruiter's company domain from website URL
+    let recruiterDomain: string | null = null;
+    if (recruiter?.company?.website) {
+        try {
+            recruiterDomain = new URL(recruiter.company.website).hostname.replace('www.', '').toLowerCase();
+        } catch {
+            recruiterDomain = null;
+        }
+    }
 
     const users = await prisma.user.findMany({
         where: {
-            ghostMode: false,
-            ...(currentUserId ? { id: { not: currentUserId } } : {}),
-            OR: tokens.flatMap(token => [
-                { name: { contains: token, mode: 'insensitive' as const } },
-                { headline: { contains: token, mode: 'insensitive' as const } },
-                { bio: { contains: token, mode: 'insensitive' as const } },
-                { skills: { contains: token, mode: 'insensitive' as const } },
-            ])
+            id: { not: currentUserId },
+            role: { in: ['CANDIDATE', 'OPEN_TO_WORK'] },
+            email: {
+                not: { endsWith: '@test.com' }
+            }
         },
-        take: 100,
-        select: SELECT,
-    }) as RawUser[];
-
-    // Score by token frequency in combined text
-    const maxPossible = tokens.length * 5; // rough ceiling
-    const scored = users.map(u => {
-        const text = [u.name, u.headline, u.bio, u.skills].join(' ').toLowerCase();
-        const rawScore = tokens.reduce((acc, t) => acc + (text.split(t).length - 1), 0);
-        const relevanceScore = Math.min(99, Math.round((rawScore / Math.max(maxPossible, 1)) * 100) + 40);
-        return { u, relevanceScore };
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            company: { select: { name: true, website: true } },
+            experience: {
+                orderBy: { startDate: 'desc' },
+                take: 10
+            },
+            _count: {
+                select: {
+                    receivedConnections: { where: { status: 'ACCEPTED' } },
+                    sentConnections: { where: { status: 'ACCEPTED' } }
+                }
+            }
+        }
     });
 
-    scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
-    return scored.map(({ u, relevanceScore }) => toProfile(u, relevanceScore));
+    return users
+        .filter(user => {
+            // Filter test/bot accounts by name pattern
+            if (user.name && TEST_NAME_PATTERNS.test(user.name)) return false;
+
+            // Filter placeholder profiles
+            if (user.bio === PLACEHOLDER_BIO) return false;
+            if (user.headline === PLACEHOLDER_ROLE) return false;
+            if (user.company?.name === PLACEHOLDER_COMPANY) return false;
+
+            // Profile completeness gate — hide profiles below 40%
+            const completeness = calcCompleteness({
+                image: user.image,
+                bio: user.bio,
+                skills: user.skills,
+                experience: user.experience,
+                location: user.location,
+                name: user.name
+            });
+            if (completeness < 40) return false;
+
+            return true;
+        })
+        .map(user => {
+            const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const connectionCount = (user._count.receivedConnections || 0) + (user._count.sentConnections || 0);
+
+            // Deterministic match score based on user ID hash (not random — avoids re-render flicker)
+            const matchScore = 70 + (user.id.charCodeAt(0) + user.id.charCodeAt(1)) % 30;
+
+            let yearsOfExperience = 0;
+            if (user.experience && user.experience.length > 0) {
+                const sortedExp = [...user.experience].sort(
+                    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+                );
+                const start = new Date(sortedExp[0].startDate).getFullYear();
+                yearsOfExperience = Math.max(0, new Date().getFullYear() - start);
+            }
+
+            let role = user.headline || 'Software Engineer';
+            if (user.experience && user.experience.length > 0) {
+                role = user.experience[0].position;
+            }
+
+            let company = 'Open to opportunities';
+            if (user.experience && user.experience.length > 0) {
+                company = user.experience[0].company;
+            } else if (user.company?.name) {
+                company = user.company.name;
+            }
+
+            // --- Ghost Protocol filter ---
+            // If candidate has ghostMode enabled AND the recruiter's company domain
+            // matches the candidate's current employer domain → mask the profile.
+            let isGhostHidden = false;
+            if (user.ghostMode && recruiterDomain) {
+                const recruiterCompanyNormalized = (recruiter?.company?.name || '').toLowerCase().replace(/\s+/g, '');
+                const candidateCompanyNormalized = company.toLowerCase().replace(/\s+/g, '');
+
+                if (
+                    recruiterDomain.includes(candidateCompanyNormalized) ||
+                    candidateCompanyNormalized.includes(recruiterCompanyNormalized)
+                ) {
+                    isGhostHidden = true;
+                }
+            }
+
+            if (isGhostHidden) {
+                // Return anonymized ghost profile — recruiter sees it exists but no PII
+                return {
+                    id: user.id,
+                    name: 'Anonymous Candidate',
+                    username: 'ghost-profile',
+                    headline: 'Profile hidden from your organization',
+                    location: 'Undisclosed',
+                    role: role, // still show role
+                    company: '🔒 Hidden from your organization',
+                    skills: skillsArray,
+                    matchScore: matchScore,
+                    verified: false,
+                    connections: 0,
+                    bio: 'This candidate has Ghost Protocol enabled and is hidden from your organization.',
+                    avatar: null,
+                    yearsOfExperience: yearsOfExperience,
+                    isGhostHidden: true
+                };
+            }
+
+            return {
+                id: user.id,
+                name: user.name || 'Anonymous User',
+                username: user.username || `user-${user.id}`,
+                headline: user.headline || 'Skilled Professional',
+                location: user.location || 'Remote',
+                role: role,
+                company: company,
+                skills: skillsArray.length > 0 ? skillsArray : ['Generalist'],
+                matchScore: matchScore,
+                verified: false,
+                connections: connectionCount,
+                bio: user.bio || 'No bio provided.',
+                avatar: user.image,
+                yearsOfExperience: yearsOfExperience,
+                isGhostHidden: false
+            };
+        });
 }

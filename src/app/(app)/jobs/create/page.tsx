@@ -35,7 +35,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('bold')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Bold"
             >
                 <Bold className="w-4 h-4" />
@@ -43,7 +43,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('italic')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Italic"
             >
                 <Italic className="w-4 h-4" />
@@ -51,7 +51,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('underline')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Underline"
             >
                 <Underline className="w-4 h-4" />
@@ -59,7 +59,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('strikethrough')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Strikethrough"
             >
                 <Strikethrough className="w-4 h-4" />
@@ -68,7 +68,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('bullet')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Bullet List"
             >
                 <List className="w-4 h-4" />
@@ -76,7 +76,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('quote')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Blockquote"
             >
                 <Quote className="w-4 h-4" />
@@ -84,7 +84,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('link')} 
-                className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
                 title="Insert Link"
             >
                 <Link2 className="w-4 h-4" />
@@ -106,7 +106,7 @@ const MarkdownToolbar = ({
                         }}
                     />
                 </div>
-                <button type="button" className="p-2 hover:bg-zinc-150 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors" title="Upload Image">
+                <button type="button" className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" title="Upload Image">
                     <ImageIcon className="w-4 h-4" />
                 </button>
             </div>
@@ -479,7 +479,7 @@ export default function JobWizardPage() {
                         {credits !== null && (
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-zinc-200 rounded-full shadow-sm">
                                 <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                <span className="text-xs font-bold text-zinc-750">{credits} Credits</span>
+                                <span className="text-xs font-bold text-zinc-700">{credits} Credits</span>
                             </div>
                         )}
                     </div>
@@ -711,8 +711,8 @@ export default function JobWizardPage() {
                                                 className={cn(
                                                     "transition-colors font-bold text-xs rounded-lg px-3 py-1.5 flex items-center gap-1.5 border border-indigo-100 shadow-sm",
                                                     isPremium 
-                                                        ? "text-indigo-600 bg-indigo-50/50 hover:bg-indigo-55 hover:text-indigo-700" 
-                                                        : "text-zinc-400 bg-zinc-50 hover:text-zinc-550 cursor-not-allowed"
+                                                        ? "text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 hover:text-indigo-700" 
+                                                        : "text-zinc-400 bg-zinc-50 hover:text-zinc-600 cursor-not-allowed"
                                                 )}
                                             >
                                                 {isPremium ? <Sparkles className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
@@ -844,13 +844,13 @@ export default function JobWizardPage() {
                                     </div>
                                     <div className="space-y-4">
                                         <Label className="text-zinc-500 font-semibold text-sm">Pay Period</Label>
-                                        <div className="flex bg-zinc-150 p-1 rounded-xl border border-zinc-200 h-14 items-center">
+                                        <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200 h-14 items-center">
                                             {['Hourly', 'Yearly'].map(p => (
                                                 <button
                                                     key={p}
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, payPeriod: p })}
-                                                    className={cn("flex-1 h-full rounded-lg text-sm font-bold transition-all", formData.payPeriod === p ? "bg-white text-indigo-600 shadow-sm border border-zinc-200/50" : "text-zinc-505 hover:text-zinc-700")}
+                                                    className={cn("flex-1 h-full rounded-lg text-sm font-bold transition-all", formData.payPeriod === p ? "bg-white text-indigo-600 shadow-sm border border-zinc-200/50" : "text-zinc-500 hover:text-zinc-700")}
                                                 >
                                                     {p}
                                                 </button>
@@ -885,11 +885,11 @@ export default function JobWizardPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-zinc-950">Neural Rewrite</h3>
-                                        <p className="text-xs text-zinc-450">AI Enhancement</p>
+                                        <p className="text-xs text-zinc-500">AI Enhancement</p>
                                     </div>
                                 </div>
 
-                                <p className="text-zinc-650 text-sm mb-6 leading-relaxed">
+                                <p className="text-zinc-600 text-sm mb-6 leading-relaxed">
                                     {userPlan === 'ULTRA' 
                                         ? "This action will rewrite and optimize your job description using advanced AI models. (Free with Ultra Plan)"
                                         : "This action will consume 1 Credit to rewrite and optimize your job description using advanced AI models."
@@ -906,7 +906,7 @@ export default function JobWizardPage() {
                                     </Button>
                                     <Button
                                         onClick={confirmAIRewrite}
-                                        className="flex-1 bg-indigo-600 hover:bg-indigo-750 text-white font-bold"
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
                                     >
                                         {userPlan === 'ULTRA' ? "Confirm (Free)" : "Confirm (-1 Credit)"}
                                     </Button>
@@ -923,7 +923,7 @@ export default function JobWizardPage() {
                         onClick={prevStep}
                         variant="ghost"
                         disabled={currentStep === 1}
-                        className="text-zinc-450 hover:text-zinc-800 hover:bg-zinc-50 font-semibold"
+                        className="text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 font-semibold"
                     >
                         <ChevronLeft className="w-4 h-4 mr-2" /> Back
                     </Button>
@@ -941,7 +941,7 @@ export default function JobWizardPage() {
                             type="button"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="bg-indigo-650 hover:bg-indigo-750 text-white font-bold tracking-wide shadow-[0_4px_14px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.4)] px-8 rounded-xl border-none active:scale-95 duration-100"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-[0_4px_14px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.4)] px-8 rounded-xl border-none active:scale-95 duration-100"
                         >
                             {isSubmitting ? "Launching..." : "Post Job (1 Credit)"}
                         </Button>

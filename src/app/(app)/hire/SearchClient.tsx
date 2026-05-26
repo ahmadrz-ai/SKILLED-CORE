@@ -46,9 +46,6 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
         }
 
         // Apply Sorting by Match Score (Descending)
-        // If hasSearched is true, we sort by matchScore. 
-        // For default empty state, we can leave as is or also sort by matchScore.
-        // Let's always sort by match score if there's any search/filter active.
         const isSearchActive = searchQuery.trim() !== "" || activeTechFilters.length > 0;
         if (isSearchActive) {
             filtered = [...filtered].sort((a, b) => b.matchScore - a.matchScore);

@@ -98,7 +98,7 @@ export function CommandPalette() {
                             <CommandItem icon={Users} onSelect={() => runCommand(() => router.push('/network'))}>
                                 Network
                             </CommandItem>
-                            <CommandItem icon={Users} onSelect={() => runCommand(() => router.push('/hire/search'))}>
+                            <CommandItem icon={Users} onSelect={() => runCommand(() => router.push('/hire'))}>
                                 Find Talent (Sourcing)
                             </CommandItem>
                             <CommandItem icon={Briefcase} onSelect={() => runCommand(() => router.push('/jobs'))}>
@@ -119,7 +119,7 @@ export function CommandPalette() {
                             <CommandItem icon={MessageSquare} onSelect={() => runCommand(() => router.push('/messages'))}>
                                 Messages
                             </CommandItem>
-                            <CommandItem icon={BarChart} onSelect={() => runCommand(() => router.push('/analytics'))}>
+                            <CommandItem icon={BarChart} onSelect={() => runCommand(() => router.push('/analytics-dashboard'))}>
                                 Analytics
                             </CommandItem>
                             <CommandItem icon={CreditCard} onSelect={() => runCommand(() => router.push('/credits'))}>

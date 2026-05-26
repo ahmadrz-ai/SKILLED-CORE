@@ -24,15 +24,14 @@ async function JobsContent({ searchParams, userId }: { searchParams: any; userId
         fetchError = "Unable to load jobs right now. Please try again.";
     }
 
-    // FIX-005: Error state — never a blank page
     if (fetchError) {
         return (
-            <div className="text-center py-20 bg-zinc-900/20 rounded-2xl border border-red-500/20 border-dashed">
-                <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Unable to Load Jobs</h3>
-                <p className="text-zinc-500 mb-6">{fetchError}</p>
+            <div className="text-center py-16 bg-white rounded-2xl border border-red-200 shadow-sm border-dashed">
+                <AlertCircle className="w-10 h-10 mx-auto text-red-500 mb-4" />
+                <h3 className="text-lg font-semibold text-[#111827] mb-1">Unable to Load Jobs</h3>
+                <p className="text-sm text-[#6B7280] mb-6">{fetchError}</p>
                 <Link href="/jobs">
-                    <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white">
+                    <Button variant="outline" className="border-[#E5E7EB] text-[#374151] hover:bg-slate-50 transition-colors">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Try Again
                     </Button>
@@ -51,24 +50,24 @@ export default async function JobsPage(props: {
     const session = await auth();
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
+        <div className="bg-transparent text-[#111827] font-sans">
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                    <div className="space-y-2">
-                        <h1 className="text-4xl font-heading font-bold text-white tracking-tight">
-                            Command Center <span className="text-teal-500">Jobs</span>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-[#E5E7EB] pb-6">
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-bold text-[#111827] tracking-tight">
+                            Jobs Feed
                         </h1>
-                        <p className="text-zinc-400 max-w-2xl text-lg">
+                        <p className="text-[#6B7280] max-w-2xl text-sm">
                             Access high-priority contracts and permanent positions across the network.
                         </p>
                     </div>
 
                     <Link href="/hire/dashboard">
-                        <Button className="bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10 font-medium h-11 min-w-[44px]">
+                        <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-sm font-medium h-10 transition-colors">
                             <LayoutDashboard className="w-4 h-4 mr-2" />
-                            Recruiter Dashboard
+                            Recruitment Dashboard
                         </Button>
                     </Link>
                 </div>

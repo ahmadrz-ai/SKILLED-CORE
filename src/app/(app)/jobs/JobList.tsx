@@ -39,10 +39,10 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
 
     if (initialJobs.length === 0) {
         return (
-            <div className="text-center py-20 bg-zinc-900/20 rounded-2xl border border-white/5 border-dashed">
-                <Briefcase className="w-12 h-12 mx-auto text-zinc-600 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No Operations Found</h3>
-                <p className="text-zinc-500">Adjust your filter parameters to locate new contracts.</p>
+            <div className="text-center py-20 bg-white rounded-2xl border border-[#E5E7EB] border-dashed shadow-sm">
+                <Briefcase className="w-10 h-10 mx-auto text-[#9CA3AF] mb-4" />
+                <h3 className="text-lg font-semibold text-[#111827] mb-1">No Jobs Found</h3>
+                <p className="text-sm text-[#6B7280]">Adjust your filter parameters to locate new postings.</p>
             </div>
         );
     }
@@ -54,11 +54,11 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                     key={job.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="group relative bg-zinc-900/40 border border-white/5 hover:border-teal-500/30 rounded-2xl p-6 transition-all hover:bg-zinc-900/60"
+                    className="group relative bg-white border border-[#E5E7EB] hover:border-[#6366F1]/40 rounded-2xl p-6 transition-all hover:bg-slate-50/50 shadow-sm"
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-xl font-bold text-white border border-white/10 overflow-hidden">
+                            <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-lg font-bold text-[#6366F1] border border-[#EEF2FF] overflow-hidden flex-shrink-0">
                                 {job.company.logo ? (
                                     <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -66,54 +66,54 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                                 )}
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg text-white group-hover:text-teal-400 transition-colors flex items-center gap-2">
+                                <h3 className="font-bold text-lg text-[#111827] group-hover:text-[#4F46E5] transition-colors flex flex-wrap items-center gap-2">
                                     {job.title}
-                                    <span className="text-xs font-normal text-zinc-500 border border-white/10 px-2 py-0.5 rounded-full bg-zinc-900/50">
+                                    <span className="text-xs font-medium text-[#4F46E5] border border-[#EEF2FF] px-2.5 py-0.5 rounded-full bg-[#EEF2FF]">
                                         {job.workplaceType}
                                     </span>
                                 </h3>
-                                <div className="flex items-center gap-2 text-zinc-400 text-sm mt-1">
-                                    <Briefcase className="w-3 h-3" />
-                                    {job.company.name}
+                                <div className="flex items-center gap-2 text-[#6B7280] text-sm mt-1">
+                                    <Briefcase className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                                    <span className="font-medium text-[#374151]">{job.company.name}</span>
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={() => handleSave(job.id)}
                             className={cn(
-                                "p-2 rounded-lg transition-colors border border-transparent",
-                                saved.has(job.id) ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                                "p-2 rounded-lg transition-colors border border-transparent flex-shrink-0",
+                                saved.has(job.id) ? "text-[#F59E0B] bg-[#FEF3C7] border-[#FDE68A]" : "text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6]"
                             )}
                         >
-                            <Bookmark className={cn("w-5 h-5", saved.has(job.id) && "fill-current")} />
+                            <Bookmark className={cn("w-4 h-4", saved.has(job.id) && "fill-current")} />
                         </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 mb-6">
-                        <Badge variant="secondary" className="bg-zinc-800/50 text-zinc-400 border border-white/5 gap-1.5 font-normal">
-                            <MapPin className="w-3 h-3" /> {job.location}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        <Badge variant="secondary" className="bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB] hover:bg-[#F3F4F6] gap-1.5 font-normal py-1">
+                            <MapPin className="w-3 h-3 text-[#9CA3AF]" /> {job.location}
                         </Badge>
-                        <Badge variant="secondary" className="bg-zinc-800/50 text-zinc-400 border border-white/5 gap-1.5 font-normal">
-                            <Briefcase className="w-3 h-3" /> {job.type}
+                        <Badge variant="secondary" className="bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB] hover:bg-[#F3F4F6] gap-1.5 font-normal py-1">
+                            <Briefcase className="w-3 h-3 text-[#9CA3AF]" /> {job.type}
                         </Badge>
                         {job.salaryMin && (
-                            <Badge variant="secondary" className="bg-zinc-800/50 text-emerald-400/80 border border-emerald-500/20 gap-1.5 font-normal">
-                                <DollarSign className="w-3 h-3" />
+                            <Badge variant="secondary" className="bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0] hover:bg-[#ECFDF5] gap-1.5 font-normal py-1">
+                                <DollarSign className="w-3 h-3 text-[#059669]" />
                                 ${job.salaryMin.toLocaleString()} - {job.salaryMax ? `$${job.salaryMax.toLocaleString()}` : '+'}
                             </Badge>
                         )}
-                        <Badge variant="secondary" className="bg-zinc-800/50 text-zinc-500 border border-white/5 gap-1.5 font-normal">
-                            <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(job.createdAt))} ago
+                        <Badge variant="secondary" className="bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F3F4F6] gap-1.5 font-normal py-1">
+                            <Clock className="w-3 h-3 text-[#9CA3AF]" /> {formatDistanceToNow(new Date(job.createdAt))} ago
                         </Badge>
                     </div>
 
-                    <p className="text-zinc-400 text-sm mb-6 leading-relaxed line-clamp-2">
+                    <p className="text-[#4B5563] text-sm mb-5 leading-relaxed line-clamp-2">
                         {job.description.replace(/(\*\*|__|^#+\s|`)/g, '')}
                     </p>
 
                     <div className="flex gap-3">
                         <Link href={`/jobs/${job.id}`} className="flex-1">
-                            <Button className="w-full bg-white hover:bg-zinc-200 text-black font-bold h-11 group/btn">
+                            <Button className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold h-10 shadow-sm group/btn transition-colors">
                                 View Intelligence
                                 <ChevronRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                             </Button>

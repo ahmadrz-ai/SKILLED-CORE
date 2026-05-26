@@ -98,7 +98,7 @@ export async function upgradePlan(plan: "BASIC" | "PRO" | "ULTRA") {
     });
 
     revalidatePath("/credits");
-    revalidatePath("/analytics");
+    revalidatePath("/analytics-dashboard");
     revalidatePath("/feed");
     revalidatePath("/profile");
     revalidatePath("/", "layout"); // Revalidate sidebar
