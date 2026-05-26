@@ -68,6 +68,26 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground font-sans relative`}
       >
+        {/* ── Google Analytics 4 (GA4) ─────────────────────────────────────
+            Measurement ID: G-QYCWDJSRZ5  |  Stream: Skilled Core
+            Using next/script with afterInteractive so it doesn't block
+            the initial page render but still fires on every route change.
+        ──────────────────────────────────────────────────────────────── */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-QYCWDJSRZ5"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-config" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-QYCWDJSRZ5', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+
         <SessionWrapper session={session}>
           <Script src="https://pl29525465.effectivecpmnetwork.com/ef/98/25/ef98254b199dcd319964f5315bb46e8c.js" strategy="lazyOnload" />
           <CommandPalette />
