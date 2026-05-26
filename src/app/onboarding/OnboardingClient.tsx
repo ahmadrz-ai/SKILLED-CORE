@@ -47,6 +47,21 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [pageError, setPageError] = useState<string | null>(null);
 
+    // Interactive Calibration Walkthrough states
+    const [showCohortGuide, setShowCohortGuide] = useState(false);
+    const [cohortGuideStep, setCohortGuideStep] = useState(1);
+    const [cohortGuideMinimized, setCohortGuideMinimized] = useState(false);
+
+    useEffect(() => {
+        if (role === 'recruiter' && currentStep === 3) {
+            setShowCohortGuide(true);
+            setCohortGuideMinimized(false);
+            setCohortGuideStep(1);
+        } else {
+            setShowCohortGuide(false);
+        }
+    }, [currentStep, role]);
+
     // Recruiter Model Calibration Telemetry compiler
     const [compileProgress, setCompileProgress] = useState(0);
     const [activeLogs, setActiveLogs] = useState<string[]>([]);
@@ -895,6 +910,158 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                 </div>
 
             </div>
+
+            {/* COHORT WALKTHROUGH GUIDE POPUP (Floating, non-blocking) */}
+            <AnimatePresence>
+                {showCohortGuide && !cohortGuideMinimized && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-[2px] font-sans"
+                    >
+                        <div className="w-full max-w-lg bg-zinc-950 border border-violet-500/30 rounded-2xl p-6 md:p-8 shadow-[0_10px_50px_rgba(124,58,237,0.15)] relative overflow-hidden text-left">
+                            {/* Decorative top line */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 to-indigo-600" />
+                            
+                            {/* Header */}
+                            <div className="flex justify-between items-start mb-5">
+                                <div>
+                                    <span className="text-[10px] font-mono font-bold tracking-widest text-violet-400 uppercase">Interactive Calibration Walkthrough</span>
+                                    <h3 className="text-lg font-black text-white tracking-tight mt-1">Understanding Talent Calibration Cohorts</h3>
+                                </div>
+                                <button 
+                                    onClick={() => setCohortGuideMinimized(true)}
+                                    className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            {/* Content based on Cohort Guide Step */}
+                            <div className="min-h-[160px] flex flex-col justify-between">
+                                <AnimatePresence mode="wait">
+                                    {cohortGuideStep === 1 && (
+                                        <motion.div
+                                            key="step1"
+                                            initial={{ opacity: 0, x: 10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -10 }}
+                                            className="space-y-3"
+                                        >
+                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                                A <strong>Calibration Cohort</strong> is a structural learning batch that trains your custom recruitment model on your team's specific stack ontology. 
+                                            </p>
+                                            <p className="text-xs text-zinc-450 leading-relaxed font-semibold">
+                                                How it works:
+                                            </p>
+                                            <ul className="text-xs text-zinc-500 leading-relaxed space-y-2 list-disc pl-4">
+                                                <li>You seed the system with three key engineer profiles from your history.</li>
+                                                <li>SkilledCore parses their characteristics to build a 100% objective sandbox evaluation benchmark.</li>
+                                                <li>Subsequent candidates are evaluated directly against your high-performer execution criteria.</li>
+                                            </ul>
+                                        </motion.div>
+                                    )}
+
+                                    {cohortGuideStep === 2 && (
+                                        <motion.div
+                                            key="step2"
+                                            initial={{ opacity: 0, x: 10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -10 }}
+                                            className="space-y-3"
+                                        >
+                                            <p className="text-xs text-zinc-455 leading-relaxed font-semibold">
+                                                Step 1: The Hero Hire (Your benchmark standard)
+                                            </p>
+                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                                Think of the strongest developer on your team. Write their details in the first block:
+                                            </p>
+                                            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-3.5 space-y-1">
+                                                <p className="text-xs font-bold text-violet-300">How to fill the fields:</p>
+                                                <ul className="text-[11px] text-zinc-500 space-y-1 list-disc pl-4 leading-normal">
+                                                    <li><span className="font-semibold text-zinc-400">Candidate Name / Role:</span> Their name and exact technical focus (e.g. Senior Backend Architect).</li>
+                                                    <li><span className="font-semibold text-zinc-400">Standout execution characteristics:</span> Define what makes them excel. (e.g. lock-free atomic synchronizations, modular decoupling, or performance profiling depth).</li>
+                                                </ul>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {cohortGuideStep === 3 && (
+                                        <motion.div
+                                            key="step3"
+                                            initial={{ opacity: 0, x: 10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -10 }}
+                                            className="space-y-3"
+                                        >
+                                            <p className="text-xs text-zinc-455 leading-relaxed font-semibold">
+                                                Step 2 & 3: Missed Signals & Mismatched Hires
+                                            </p>
+                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                                To build a strong competitive moat, the model needs to understand who you regrettably missed vs who interviewed perfectly but failed on execution:
+                                            </p>
+                                            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-3.5 space-y-2">
+                                                <div>
+                                                    <p className="text-[11px] font-bold text-violet-300">The Missed Signal (Regret Pass):</p>
+                                                    <p className="text-[10px] text-zinc-500 leading-normal pl-1">Explain who you passed on for superficial reasons (e.g. poor verbal presentation, missed a generic graph traversal riddle) but who is actually a highly capable builder.</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-bold text-red-400">The Mismatched Hire (Regret Hired):</p>
+                                                    <p className="text-[10px] text-zinc-500 leading-normal pl-1">Explain who was a verbal genius (rehearsed credentials) but failed to write autonomous, thread-safe production code under actual load spikes.</p>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Controls */}
+                                <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
+                                    <div className="flex gap-1 text-[10px] font-mono text-zinc-500">
+                                        Step {cohortGuideStep} of 3
+                                    </div>
+                                    <div className="flex gap-2 shrink-0">
+                                        {cohortGuideStep > 1 && (
+                                            <Button
+                                                onClick={() => setCohortGuideStep(prev => prev - 1)}
+                                                className="bg-transparent border border-white/10 hover:bg-white/5 text-xs text-zinc-400 hover:text-white px-3 h-9"
+                                            >
+                                                Back
+                                            </Button>
+                                        )}
+                                        <Button
+                                            onClick={() => {
+                                                if (cohortGuideStep < 3) {
+                                                    setCohortGuideStep(prev => prev + 1);
+                                                } else {
+                                                    setCohortGuideMinimized(true);
+                                                }
+                                            }}
+                                            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-xs text-white px-4 h-9 font-bold"
+                                        >
+                                            {cohortGuideStep === 3 ? "Close Guide" : "Next Step"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Minimized floating recall bubble */}
+                {showCohortGuide && cohortGuideMinimized && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        onClick={() => setCohortGuideMinimized(false)}
+                        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-4 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 border border-violet-500/20 text-xs tracking-wider uppercase active:scale-95 transition-transform"
+                    >
+                        <AlertCircle className="w-4 h-4" />
+                        Calibration Guide
+                    </motion.button>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
