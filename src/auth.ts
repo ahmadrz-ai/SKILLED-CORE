@@ -148,6 +148,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 if (!credentials?.email) return null;
 
                 const identifier = credentials.email as string;
+                const cleanEmail = identifier.toLowerCase().trim();
 
                 // --- OTP LOGIN FLOW ---
                 if (credentials.otp) {
@@ -155,7 +156,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                     const token = await prisma.verificationToken.findFirst({
                         where: {
-                            identifier: identifier,
+                            identifier: { equals: cleanEmail, mode: 'insensitive' },
                             token: otp
                         }
                     });
@@ -168,25 +169,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         throw new Error("Code expired");
                     }
 
-                    // Find User
+                    // Find User (Case-insensitive match on both email and username)
                     const user = await prisma.user.findFirst({
                         where: {
                             OR: [
-                                { email: identifier },
-                                { username: identifier } // Handle username as identifier too if needed
+                                { email: { equals: cleanEmail, mode: 'insensitive' } },
+                                { username: { equals: cleanEmail, mode: 'insensitive' } }
                             ]
                         }
                     });
 
                     if (!user) return null;
 
-                    // Verify User Email
+                    // Verify User Email using their safe unique ID
                     await prisma.user.update({
                         where: { id: user.id },
                         data: { emailVerified: new Date() },
                     });
 
-                    // Consume Token
+                    // Consume Token using exact retrieved parameters
                     await prisma.verificationToken.delete({
                         where: {
                             identifier_token: {

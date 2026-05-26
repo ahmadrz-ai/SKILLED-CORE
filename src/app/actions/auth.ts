@@ -9,19 +9,20 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendVerificationCode(email: string) {
     try {
+        const cleanEmail = email.toLowerCase().trim();
         // Generate 6-digit code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         // Delete existing tokens for this user
         await prisma.verificationToken.deleteMany({
-            where: { identifier: email },
+            where: { identifier: { equals: cleanEmail, mode: 'insensitive' } },
         });
 
         // Save new token
         await prisma.verificationToken.create({
             data: {
-                identifier: email,
+                identifier: cleanEmail,
                 token: code,
                 expires,
             },
@@ -30,7 +31,7 @@ export async function sendVerificationCode(email: string) {
         // Send email
         const { data, error } = await resend.emails.send({
             from: 'Skilled Core <noreply@skilledcore.com>',
-            to: [email],
+            to: [cleanEmail],
             subject: 'Secure Login Code',
             react: OtpEmail({ validationCode: code }),
         });
@@ -51,10 +52,11 @@ export async function verifyCode(email: string, code: string) {
     if (!email || !code) return { error: 'Missing email or code' };
 
     try {
+        const cleanEmail = email.toLowerCase().trim();
         // Find token
         const token = await prisma.verificationToken.findFirst({
             where: {
-                identifier: email,
+                identifier: { equals: cleanEmail, mode: 'insensitive' },
                 token: code,
             },
         });
@@ -68,9 +70,18 @@ export async function verifyCode(email: string, code: string) {
             return { error: 'Code expired.' };
         }
 
-        // Verify User
+        // Find User safely to get their exact ID
+        const dbUser = await prisma.user.findFirst({
+            where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+        });
+
+        if (!dbUser) {
+            return { error: 'User not found.' };
+        }
+
+        // Verify User using unique DB ID
         await prisma.user.update({
-            where: { email },
+            where: { id: dbUser.id },
             data: { emailVerified: new Date() },
         });
 
