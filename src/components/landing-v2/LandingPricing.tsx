@@ -45,7 +45,7 @@ const PLANS = [
     description: "For large engineering organizations requiring custom security sandboxes and integrations.",
     features: [
       "Everything in Team Scale Pilot",
-      "Greenhouse / Lever custom sync integration",
+      "Custom developer API access & webhooks",
       "Evolutionary conservation & TFBS maps",
       "Demographic bias audit compliance logs",
       "Dedicated TAM advisory & SOC2 isolation",
@@ -71,7 +71,7 @@ export function LandingPricing() {
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold mb-4"
             style={{ background: "#EDE9FE", border: "1px solid #DDD6FE", color: "#6D28D9" }}
           >
-            Pilot Seat Cohort
+            Flexible Pricing Plans
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 12 }}
@@ -81,7 +81,7 @@ export function LandingPricing() {
             className="text-3xl md:text-4xl font-bold mb-4"
             style={{ letterSpacing: "-0.02em", color: "#1E1B4B" }}
           >
-            Zero-Cost Design Partner Pilots
+            SaaS & Pilot Pricing Options
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -91,7 +91,7 @@ export function LandingPricing() {
             className="text-lg font-medium"
             style={{ color: "#64748B" }}
           >
-            Join 12 engineering teams defining what great technical hiring looks like.
+            Start building your verified execution profile for free, or upgrade to recruit.
           </motion.p>
         </div>
 

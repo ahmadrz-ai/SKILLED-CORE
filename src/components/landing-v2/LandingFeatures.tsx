@@ -19,13 +19,13 @@ const FEATURES = [
   },
   {
     icon: Zap, color: "#059669", bg: "#ECFDF5",
-    title: "Bidirectional ATS Sync",
-    description: "Eliminate manual data re-entry. Real-time webhooks natively integrate with Greenhouse, Ashby, and Lever to keep candidates synced instantly."
+    title: "Instant Candidate Discovery",
+    description: "Unlock high-intent interview requests. Build your profile once, complete verification sandboxes, and get noticed by engineering teams looking for actual builders."
   },
   {
     icon: Users, color: "#D97706", bg: "#FFFBEB",
-    title: "Calibration Cohort Intake",
-    description: "Solve the cold-start bottleneck. Seed local evaluation models with historical candidate benchmarks to capture your stack's specific ontology."
+    title: "Verified Execution Badges",
+    description: "Earn public technical credibility. Show off your real-world debugging speed, systems architecture depth, and modular coding standards on your profile."
   },
   {
     icon: BookOpen, color: "#7C3AED", bg: "#EDE9FE",

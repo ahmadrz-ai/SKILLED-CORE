@@ -26,7 +26,7 @@ export function LandingCTA() {
           className="text-3xl md:text-4xl font-bold mb-4"
           style={{ letterSpacing: "-0.02em", color: "#FFFFFF" }}
         >
-          Join the Precision Hiring Cohort
+          Ready to Build Your Future?
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -36,7 +36,7 @@ export function LandingCTA() {
           className="text-lg mb-10 max-w-xl mx-auto"
           style={{ color: "#E9D5FF" }}
         >
-          We are looking for engineering leaders who want to co-define what great technical hiring looks like. Design partner seats are strictly limited.
+          Create your execution-based profile in 5 minutes, pass technical sandboxes, and get discovered by top engineering teams seeking verified builders.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -46,19 +46,19 @@ export function LandingCTA() {
           className="flex flex-col sm:flex-row gap-3 justify-center"
         >
           <Link
-            href="#apply-pilot"
+            href="/register?role=candidate"
             className="inline-flex items-center justify-center gap-2 px-7 py-3.5 font-semibold rounded-xl transition-all duration-200 text-base group shadow-lg hover:shadow-xl"
             style={{ background: "#FFFFFF", color: "#5B21B6" }}
           >
-            Apply for Pilot Seat
+            Create Your Profile — It's Free
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
           <Link
-            href="#rubric-builder"
+            href="/register?role=recruiter"
             className="inline-flex items-center justify-center gap-2 px-7 py-3.5 font-semibold rounded-xl border-2 transition-all duration-200 text-base"
             style={{ borderColor: "rgba(255,255,255,0.3)", color: "#FFFFFF", background: "rgba(255,255,255,0.1)" }}
           >
-            Try Interactive Demo
+            Register as Recruiter
           </Link>
         </motion.div>
       </div>

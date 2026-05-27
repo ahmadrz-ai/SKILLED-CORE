@@ -69,7 +69,10 @@ export function LandingHero() {
             className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8 font-medium"
             style={{ color: "#475569" }}
           >
-            Skilled Core evaluates execution, not credentials. Designed for engineering teams that cannot afford a wrong hire.
+            SkilledCore evaluates execution, not credentials.<br />
+            <span className="text-sm font-semibold text-indigo-650 block mt-2">
+              For candidates: build your execution profile and get discovered. For companies: evaluate who can actually build.
+            </span>
           </motion.p>
 
           {/* Single Focused Social Proof */}
@@ -81,7 +84,7 @@ export function LandingHero() {
           >
             <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
             <p className="text-xs md:text-sm font-semibold text-zinc-700 leading-tight">
-              Design partner teams reduced time-to-qualified-shortlist by 14 days while maintaining 100% EM control over evaluation criteria.
+              Join engineers already building their verified skill profile to skip screening loops.
             </p>
           </motion.div>
 
@@ -92,19 +95,19 @@ export function LandingHero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6"
           >
-            <button
-              onClick={() => scrollToSection("apply-pilot")}
-              className="inline-flex items-center gap-2 px-8 py-4 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95 duration-100"
+            <Link
+              href="/register?role=candidate"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95 duration-100"
               style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)" }}
             >
-              Apply to be a Design Partner
+              Create Your Profile — It's Free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            </Link>
             <button
-              onClick={() => scrollToSection("rubric-builder")}
-              className="inline-flex items-center gap-2 px-8 py-4 font-bold rounded-xl border border-zinc-200 text-base bg-white hover:bg-zinc-50 transition-all shadow-sm active:scale-95 duration-100 text-zinc-700"
+              onClick={() => scrollToSection("apply-pilot")}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl border border-zinc-200 text-base bg-white hover:bg-zinc-50 transition-all shadow-sm active:scale-95 duration-100 text-zinc-700"
             >
-              Build Rubric Demo
+              Apply as Design Partner
               <ChevronDown className="w-4 h-4" />
             </button>
           </motion.div>
@@ -113,10 +116,10 @@ export function LandingHero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-xs font-semibold tracking-wider uppercase"
+            className="text-xs font-semibold tracking-wider"
             style={{ color: "#94A3B8" }}
           >
-            ⚠️ Cohort limited to exactly 20 companies to ensure high-velocity onboarding
+            Join elite developers showcasing verified coding & distributed system execution traces.
           </motion.p>
         </div>
       </div>

@@ -9,36 +9,36 @@ const STEPS = [
     icon: Upload,
     color: "#7C3AED",
     bg: "#EDE9FE",
-    title: "Deploy Calibration Cohort",
-    description: "Seed your environment. Ingest passed and failed benchmark candidates to train SkilledCore on your engineering team's precise execution rubric.",
-    tag: "Zero Cold Start"
+    title: "Build Execution Profile",
+    description: "Build your professional profile and link your technical stack. It takes under 5 minutes to launch your early verified execution profile.",
+    tag: "Candidate Onboarding"
   },
   {
     number: "02",
     icon: Search,
     color: "#0891B2",
     bg: "#ECFEFF",
-    title: "Enable Bidirectional Sync",
-    description: "Hook into your existing ecosystem. We support instant, webhook-based Greenhouse, Lever, and Ashby syncs to eliminate manual recruiter re-entry.",
-    tag: "Native ATS Webhooks"
+    title: "Pass Verification Sandboxes",
+    description: "Complete real-world coding, distributed systems design, or communication exercises in our secure, sandboxed container environments.",
+    tag: "Skill Badging"
   },
   {
     number: "03",
     icon: BarChart3,
     color: "#059669",
     bg: "#ECFDF5",
-    title: "Direct Sandbox Testing",
-    description: "Assess actual output. Candidates solve execution-based coding tasks inside isolated containerized sandboxes to measure real engineering execution depth.",
-    tag: "Execution-Based"
+    title: "Get Discovered Automatically",
+    description: "Our intelligence engine maps your verified capability directly. Hiring managers view actual execution traces, not just resume keywords.",
+    tag: "Talent Marketplace"
   },
   {
     number: "04",
     icon: CheckCircle2,
     color: "#D97706",
     bg: "#FFFBEB",
-    title: "Audit Reasoning Trails",
-    description: "Get explainable decisions. We generate structured XAI reports showing explicit reasoning chains, logic steps, and assertion metrics.",
-    tag: "Explainable AI"
+    title: "Land Exceptional Roles",
+    description: "Skip endless screening loops. Jump straight into final rounds with verified technical credibility that engineering teams already trust.",
+    tag: "Hired with Evidence"
   }
 ];
 

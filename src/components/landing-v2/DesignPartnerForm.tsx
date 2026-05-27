@@ -123,7 +123,7 @@ export function DesignPartnerForm() {
         
         return {
             pattern: "Resume Credentialing Bias (Inaccurate screening parameters)",
-            mitigation: "We solve this via ATS greenhouse/lever auto sync calibration cohorts. By ingesting historical success profiles (Hero Hires vs. Regret Passes), SkilledCore establishes a custom precision screening baseline calibrated directly from your existing top developers."
+            mitigation: "We solve this by matching candidates directly through execution traces. Instead of evaluating keywords on a standard static resume, SkilledCore compares actual execution capabilities in coding, distributed systems, and real-world system debugging to locate authentic top-tier developers."
         };
     };
 
