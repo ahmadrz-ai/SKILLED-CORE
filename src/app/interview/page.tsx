@@ -95,8 +95,8 @@ export default function DojoPage() {
         return (
             <div className="min-h-screen bg-transparent flex items-center justify-center">
                 <div className="text-center space-y-4">
-                    <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-                    <p className="text-zinc-400 font-mono text-sm tracking-widest uppercase">
+                    <Loader2 className="w-10 h-10 text-text-brand animate-spin mx-auto" />
+                    <p className="text-text-secondary font-mono text-sm tracking-widest uppercase animate-pulse font-bold">
                         Initializing AI Interviewer...
                     </p>
                 </div>
@@ -109,8 +109,8 @@ export default function DojoPage() {
         return (
             <div className="min-h-screen bg-transparent flex items-center justify-center">
                 <div className="text-center space-y-4">
-                    <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto" />
-                    <p className="text-zinc-400 text-sm">Redirecting to login...</p>
+                    <Loader2 className="w-8 h-8 text-text-brand animate-spin mx-auto" />
+                    <p className="text-text-secondary text-sm">Redirecting to login...</p>
                 </div>
             </div>
         );
@@ -127,51 +127,51 @@ export default function DojoPage() {
         <div className="min-h-[100dvh] bg-transparent p-4 lg:p-6 flex flex-col" style={{ height: '100dvh', overflow: 'hidden' }}>
 
             {/* Header */}
-            <header className="flex-none mb-4 flex items-center justify-between border-b border-white/5 pb-4">
+            <header className="flex-none mb-4 flex items-center justify-between border-b border-border-default pb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-900/20 flex items-center justify-center border border-cyan-500/30 shadow-[0_0_15px_rgba(8,145,178,0.3)]">
-                        <MessageSquarePlus className="w-6 h-6 text-cyan-400" />
+                    <div className="w-10 h-10 rounded-xl bg-sc-purple-50 flex items-center justify-center border border-sc-purple-200 shadow-sc-xs">
+                        <MessageSquarePlus className="w-6 h-6 text-text-brand" />
                     </div>
                     <div>
-                        {/* Dynamic title for premium professionalism — changed text-zinc-900 to text-zinc-100 */}
-                        <h1 className="text-xl font-heading font-black text-zinc-100 tracking-tight flex items-center gap-2">
+                        {/* Dynamic title for premium professionalism */}
+                        <h1 className="text-xl font-heading font-black text-text-heading tracking-tight flex items-center gap-2">
                             {sessionActive ? (
                                 <>
-                                    <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">{sessionTitle}</span>
-                                    <span className="text-zinc-400 font-normal text-sm ml-2">— {candidateName}</span>
+                                    <span className="bg-gradient-to-r from-sc-purple-650 via-sc-purple-700 to-sc-purple-800 bg-clip-text text-transparent">{sessionTitle}</span>
+                                    <span className="text-text-secondary font-normal text-sm ml-2">— {candidateName}</span>
                                 </>
                             ) : (
-                                <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">AI Interview</span>
+                                <span className="bg-gradient-to-r from-sc-purple-650 via-sc-purple-700 to-sc-purple-800 bg-clip-text text-transparent">AI Interview</span>
                             )}
                         </h1>
-                        <p className="text-xs text-zinc-550 font-medium hidden sm:block">
+                        <p className="text-xs text-text-secondary font-medium hidden sm:block">
                             Elevating technical standards with real-time adaptive feedback
                             {config?.useResume && (
-                                <span className="ml-2 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 tracking-wider font-mono">
+                                <span className="ml-2 px-2 py-0.5 rounded bg-bg-badge-success text-text-success text-[10px] font-bold border border-border-success/30 tracking-wider font-mono">
                                     • RESUME ACTIVE
                                 </span>
                             )}
                         </p>
                     </div>
-
+ 
                     {/* Navigation Tabs */}
-                    <div className="hidden md:flex items-center gap-1 bg-white/5 rounded-lg p-1 ml-6 border border-white/5">
-                        <button className="px-3 py-1 rounded-md bg-zinc-800 text-white text-xs font-bold shadow-sm cursor-default">
+                    <div className="hidden md:flex items-center gap-1 bg-bg-secondary-panel rounded-lg p-1 ml-6 border border-border-default">
+                        <button className="px-3 py-1 rounded-md bg-bg-card text-text-brand text-xs font-bold shadow-sc-xs cursor-default border-none">
                             Interview
                         </button>
                         <Link href="/assessments">
-                            <button className="flex items-center gap-2 px-3 py-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-all min-h-[44px] md:min-h-0">
-                                <FileText className="w-3 h-3" />
+                            <button className="flex items-center gap-2 px-3 py-1 rounded-md text-text-secondary hover:text-text-heading hover:bg-bg-card/50 text-xs font-bold transition-all min-h-[44px] md:min-h-0 border-none bg-transparent cursor-pointer">
+                                <FileText className="w-3 h-3 text-text-tertiary" />
                                 Assessments
                             </button>
                         </Link>
                     </div>
                 </div>
-
+ 
                 {/* Session Controls */}
                 <div className="flex items-center gap-4">
                     {!sessionActive && (
-                        <Link href="/feed" className="text-xs font-mono text-zinc-550 hover:text-white transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0">
+                        <Link href="/feed" className="text-xs font-mono text-text-secondary hover:text-text-heading transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0">
                             <LogOut className="w-3 h-3" /> EXIT
                         </Link>
                     )}
@@ -180,23 +180,23 @@ export default function DojoPage() {
                             <button
                                 onClick={() => setIsVoiceActive(!isVoiceActive)}
                                 className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border min-h-[44px] md:min-h-0",
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border min-h-[44px] md:min-h-0 cursor-pointer",
                                     isVoiceActive
-                                        ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]"
-                                        : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white"
+                                        ? "bg-bg-error border-border-error text-text-error shadow-sc-xs animate-pulse"
+                                        : "bg-bg-secondary-panel border-border-default text-text-secondary hover:bg-bg-sidebar-hover hover:text-text-heading"
                                 )}
                             >
                                 <Mic className="w-3 h-3" />
                                 {isVoiceActive ? "VOICE LIVE" : "ENABLE VOICE"}
                             </button>
-
+ 
                             <button
                                 onClick={toggleCodingMode}
                                 className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border min-h-[44px] md:min-h-0",
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border min-h-[44px] md:min-h-0 cursor-pointer",
                                     isCoding
-                                        ? "bg-blue-650 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                                        : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white"
+                                        ? "bg-sc-purple-50 border-sc-purple-200 text-text-brand shadow-sc-xs"
+                                        : "bg-bg-secondary-panel border-border-default text-text-secondary hover:bg-bg-sidebar-hover hover:text-text-heading"
                                 )}
                             >
                                 <Code2 className="w-3 h-3" />

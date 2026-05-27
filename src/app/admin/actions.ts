@@ -84,25 +84,77 @@ export async function updateVerificationStatus(requestId: string, status: 'APPRO
     try {
         const session = await ensureAdmin();
 
-        if (status === 'REJECTED') {
-            // Fetch the request to get the userId
-            const request = await prisma.verificationRequest.findUnique({
-                where: { id: requestId }
-            });
+        // Fetch the request first to check type and user
+        const request = await prisma.verificationRequest.findUnique({
+            where: { id: requestId }
+        });
 
-            if (request) {
-                // DESTRUCTIVE: Delete the user account to force logout and restart
+        if (!request) {
+            return { success: false, message: "Request not found." };
+        }
+
+        if (status === 'REJECTED') {
+            if (request.type === 'ROLE_CHANGE') {
+                // For role changes, do not delete the candidate's account. Simply mark request as rejected.
+                await prisma.verificationRequest.update({
+                    where: { id: requestId },
+                    data: {
+                        status: 'REJECTED',
+                        feedback: feedback || 'Rejected by Admin',
+                        reviewedBy: session.user?.id,
+                        reviewedAt: new Date()
+                    }
+                });
+
+                revalidatePath('/admin/verifications');
+                return { success: true, message: "Recruiter onboarding request rejected." };
+            } else {
+                // DESTRUCTIVE: Delete the user account to force logout and restart for other verification types (IDENTITY)
                 await prisma.user.delete({
                     where: { id: request.userId }
                 });
 
                 revalidatePath('/admin/verifications');
                 return { success: true, message: "Verification denied. User account deleted." };
-            } else {
-                return { success: false, message: "Request not found." };
             }
         }
 
+        // APPROVED path
+        if (request.type === 'ROLE_CHANGE') {
+            // Check if corporate email is already taken by another account to prevent unique constraint failures
+            const emailInUse = await prisma.user.findFirst({
+                where: { email: { equals: request.documentUrl, mode: 'insensitive' } }
+            });
+
+            if (emailInUse && emailInUse.id !== request.userId) {
+                return { success: false, message: `Approval failed: Corporate email '${request.documentUrl}' is already registered to another user.` };
+            }
+
+            // Perform transaction to approve request and promote User
+            await prisma.$transaction([
+                prisma.verificationRequest.update({
+                    where: { id: requestId },
+                    data: {
+                        status: 'APPROVED',
+                        feedback,
+                        reviewedBy: session.user?.id,
+                        reviewedAt: new Date()
+                    }
+                }),
+                prisma.user.update({
+                    where: { id: request.userId },
+                    data: {
+                        role: 'RECRUITER',
+                        email: request.documentUrl
+                    }
+                })
+            ]);
+
+            revalidatePath('/admin/verifications');
+            return { success: true, message: "Recruiter onboarding approved! User promoted and email updated." };
+        }
+
+        // Standard approval for other types
         await prisma.verificationRequest.update({
             where: { id: requestId },
             data: {

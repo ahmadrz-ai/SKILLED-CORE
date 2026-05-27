@@ -161,7 +161,7 @@ export default function RegisterPageContent() {
     };
 
     return (
-        <div className="h-screen w-full flex overflow-hidden" style={{ background: "#FAFAFE" }}>
+        <div className="h-screen w-full flex overflow-hidden bg-bg-secondary-panel">
             {/* LEFT SIDE - BRAND */}
             <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col justify-between p-12"
                 style={{ background: 'linear-gradient(165deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%)' }}>
@@ -179,41 +179,41 @@ export default function RegisterPageContent() {
                 <div className="relative z-10 flex items-center gap-3">
                     <Image src="/logo.png" alt="SkilledCore" width={44} height={44} className="drop-shadow-lg" />
                     <div>
-                        <h3 style={{ color: "#F8FAFC", fontWeight: 800, fontSize: "18px", letterSpacing: "-0.01em" }}>SkilledCore</h3>
-                        <p style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 500 }}>Talent Intelligence Platform</p>
+                        <h3 className="text-sc-gray-55 font-extrabold text-[18px] tracking-[-0.01em]">SkilledCore</h3>
+                        <p className="text-sc-gray-400 text-[11px] font-medium">Talent Intelligence Platform</p>
                     </div>
                 </div>
 
                 <div className="relative z-10 max-w-lg">
-                    <h1 className="text-5xl font-bold leading-tight tracking-tight mb-6" style={{ color: "#F8FAFC", letterSpacing: "-0.03em" }}>
+                    <h1 className="text-5xl font-bold leading-tight tracking-tight mb-6 text-sc-gray-55">
                         &quot;The future belongs to the{" "}
                         <span style={{ background: "linear-gradient(135deg, #C4B5FD, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                             builders
                         </span>.&quot;
                     </h1>
-                    <div className="flex items-center gap-2 text-xs" style={{ color: "#94A3B8" }}>
-                        <Shield className="w-3 h-3" style={{ color: "#10B981" }} />
+                    <div className="flex items-center gap-2 text-xs text-sc-gray-400">
+                        <Shield className="w-3 h-3 text-sc-green-600" />
                         <span>CAPTCHA-protected • AES-256 Encrypted • GDPR Compliant</span>
                     </div>
                 </div>
 
-                <div className="relative z-10 text-xs uppercase tracking-widest" style={{ color: "#64748B" }}>
+                <div className="relative z-10 text-xs uppercase tracking-widest text-sc-gray-500">
                     Secure Connection • AES-256 Encryption
                 </div>
             </div>
 
             {/* RIGHT SIDE - FORM */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-                <div className="max-w-md w-full rounded-2xl p-8" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 4px 24px rgba(0,0,0,0.04)" }}>
+                <div className="max-w-md w-full rounded-2xl p-8 bg-bg-card border border-border-card shadow-sc-lg">
                     {/* Mobile Logo */}
                     <div className="flex items-center gap-2.5 mb-6 lg:hidden justify-center">
                         <Image src="/logo.png" alt="SkilledCore" width={32} height={32} className="drop-shadow-lg" />
-                        <span className="font-bold text-sm" style={{ color: '#1E1B4B' }}>SkilledCore</span>
+                        <span className="font-bold text-sm text-text-heading">SkilledCore</span>
                     </div>
 
                     <div className="text-center space-y-2 mb-6">
-                        <h2 className="text-2xl font-bold tracking-tight" style={{ color: "#1E1B4B" }}>Create Account</h2>
-                        <p className="text-sm" style={{ color: "#64748B" }}>Join the professional network of SkilledCore.</p>
+                        <h2 className="text-2xl font-bold tracking-tight text-text-heading">Create Account</h2>
+                        <p className="text-sm text-text-secondary">Join the professional network of SkilledCore.</p>
                     </div>
 
                     {/* Social Login */}
@@ -221,8 +221,7 @@ export default function RegisterPageContent() {
                         <Button
                             id="register-google-btn"
                             variant="outline"
-                            className="h-11"
-                            style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#475569" }}
+                            className="h-11 w-full bg-bg-card hover:bg-bg-card-hover border-border-input text-text-body-strong"
                             onClick={() => handleSocialLogin('google')}
                             disabled={!!isLoading}
                         >
@@ -232,8 +231,7 @@ export default function RegisterPageContent() {
                         <Button
                             id="register-github-btn"
                             variant="outline"
-                            className="h-11"
-                            style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#475569" }}
+                            className="h-11 w-full bg-bg-card hover:bg-bg-card-hover border-border-input text-text-body-strong"
                             onClick={() => handleSocialLogin('github')}
                             disabled={!!isLoading}
                         >
@@ -244,15 +242,15 @@ export default function RegisterPageContent() {
 
                     <div className="relative my-5">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full" style={{ borderTop: "1px solid #E2E8F0" }} />
+                            <span className="w-full border-t border-border-default" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="px-2 text-xs" style={{ background: "#FFFFFF", color: "#94A3B8" }}>Or register with email</span>
+                            <span className="px-2 text-xs bg-bg-card text-text-tertiary">Or register with email</span>
                         </div>
                     </div>
 
                     {/* Role Selector */}
-                    <div className="grid grid-cols-2 p-1 rounded-lg mb-5" style={{ background: "#F1F5F9", border: "1px solid #E2E8F0" }}>
+                    <div className="grid grid-cols-2 p-1 rounded-lg mb-5 bg-bg-secondary-panel border border-border-default">
                         <button
                             id="role-candidate-btn"
                             type="button"
@@ -260,10 +258,9 @@ export default function RegisterPageContent() {
                             className={cn(
                                 "py-2 text-sm font-medium rounded-md transition-all",
                                 role === 'CANDIDATE'
-                                    ? "shadow-sm"
-                                    : ""
+                                    ? "bg-bg-card text-text-heading shadow-sc-sm border border-border-subtle"
+                                    : "text-text-tertiary hover:text-text-secondary"
                             )}
-                            style={role === 'CANDIDATE' ? { background: "#FFFFFF", color: "#1E1B4B", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" } : { color: "#94A3B8" }}
                         >
                             Candidate
                         </button>
@@ -274,10 +271,9 @@ export default function RegisterPageContent() {
                             className={cn(
                                 "py-2 text-sm font-medium rounded-md transition-all",
                                 role === 'RECRUITER'
-                                    ? "shadow-sm"
-                                    : ""
+                                    ? "bg-bg-card text-text-heading shadow-sc-sm border border-border-subtle"
+                                    : "text-text-tertiary hover:text-text-secondary"
                             )}
-                            style={role === 'RECRUITER' ? { background: "#FFFFFF", color: "#1E1B4B", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" } : { color: "#94A3B8" }}
                         >
                             Recruiter
                         </button>
@@ -286,13 +282,12 @@ export default function RegisterPageContent() {
                     {/* Registration Form */}
                     <form id="register-form" onSubmit={handleRegister} className="space-y-3">
                         <div className="space-y-1.5">
-                            <Label htmlFor="name" style={{ color: "#475569", fontSize: "13px" }}>Full Name</Label>
+                            <Label htmlFor="name" className="text-text-body-strong text-[13px]">Full Name</Label>
                             <div className="relative">
                                 <Input
                                     id="name"
                                     placeholder="John Doe"
-                                    className="pl-9 h-10"
-                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
+                                    className="pl-9 h-10 bg-bg-input border-border-input text-text-body"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
@@ -305,13 +300,12 @@ export default function RegisterPageContent() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="username" style={{ color: "#475569", fontSize: "13px" }}>Username</Label>
+                            <Label htmlFor="username" className="text-text-body-strong text-[13px]">Username</Label>
                             <div className="relative">
                                 <Input
                                     id="username"
                                     placeholder="johndoe"
-                                    className="pl-9 h-10"
-                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
+                                    className="pl-9 h-10 bg-bg-input border-border-input text-text-body"
                                     value={formData.username}
                                     onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                                     required
@@ -324,7 +318,7 @@ export default function RegisterPageContent() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="email" style={{ color: "#475569", fontSize: "13px" }}>
+                            <Label htmlFor="email" className="text-text-body-strong text-[13px]">
                                 {role === 'RECRUITER' ? 'Work Email' : 'Email'}
                             </Label>
                             <div className="relative">
@@ -332,8 +326,7 @@ export default function RegisterPageContent() {
                                     id="email"
                                     type="email"
                                     placeholder={role === 'RECRUITER' ? 'name@company.com' : 'you@example.com'}
-                                    className="pl-9 h-10"
-                                    style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
+                                    className="pl-9 h-10 bg-bg-input border-border-input text-text-body"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     required
@@ -346,14 +339,13 @@ export default function RegisterPageContent() {
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label htmlFor="password" style={{ color: "#475569", fontSize: "13px" }}>Password</Label>
+                                <Label htmlFor="password" className="text-text-body-strong text-[13px]">Password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Min. 8 chars"
-                                        className="pl-9 pr-9 h-10"
-                                        style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
+                                        className="pl-9 pr-9 h-10 bg-bg-input border-border-input text-text-body"
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required
@@ -365,8 +357,7 @@ export default function RegisterPageContent() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-2.5 min-h-0 min-w-0"
-                                        style={{ color: "#94A3B8" }}
+                                        className="absolute right-3 top-2.5 min-h-0 min-w-0 text-text-tertiary hover:text-text-secondary"
                                         aria-label="Toggle password visibility"
                                     >
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -375,14 +366,13 @@ export default function RegisterPageContent() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="confirmPassword" style={{ color: "#475569", fontSize: "13px" }}>Confirm</Label>
+                                <Label htmlFor="confirmPassword" className="text-text-body-strong text-[13px]">Confirm</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
                                         type="password"
                                         placeholder="Repeat password"
-                                        className="pl-9 h-10"
-                                        style={{ background: "#F8FAFC", borderColor: "#E2E8F0", color: "#1E1B4B" }}
+                                        className="pl-9 h-10 bg-bg-input border-border-input text-text-body"
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                         required
@@ -394,15 +384,15 @@ export default function RegisterPageContent() {
                             </div>
                         </div>
 
-                        {/* FIX-003: Cloudflare Turnstile CAPTCHA */}
+                        {/* CAPTCHA */}
                         <div className="space-y-1">
                             <TurnstileWidget onVerify={setTurnstileToken} />
                             {turnstileToken ? (
-                                <p className="text-xs flex items-center gap-1" style={{ color: "#059669" }}>
+                                <p className="text-xs flex items-center gap-1 text-text-success">
                                     <Check className="w-3 h-3" /> Security check passed
                                 </p>
                             ) : (
-                                <p className="text-xs" style={{ color: "#94A3B8" }}>Complete the security check above to continue</p>
+                                <p className="text-xs text-text-tertiary">Complete the security check above to continue</p>
                             )}
                         </div>
 
@@ -411,15 +401,14 @@ export default function RegisterPageContent() {
                                 type="checkbox"
                                 id="agreement"
                                 required
-                                className="mt-1 w-4 h-4 rounded cursor-pointer accent-indigo-600"
-                                style={{ borderColor: "#D1D5DB" }}
+                                className="mt-1 w-4 h-4 rounded cursor-pointer accent-sc-purple-600 border-border-input bg-bg-input"
                             />
-                            <Label htmlFor="agreement" className="text-xs font-normal leading-relaxed cursor-pointer" style={{ color: "#64748B" }}>
+                            <Label htmlFor="agreement" className="text-xs font-normal leading-relaxed cursor-pointer text-text-secondary">
                                 By creating an account, you agree to the Skilled Core{" "}
-                                <Link href="/legal/user-agreement" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">User Agreement</Link>,{" "}
-                                <Link href="/terms" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Terms of Service</Link>,{" "}
-                                <Link href="/legal/privacy-policy" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Privacy Policy</Link>, and{" "}
-                                <Link href="/legal/cookie-policy" className="hover:underline" style={{ color: "#6366F1" }} target="_blank">Cookie Policy</Link>.
+                                <Link href="/legal/user-agreement" className="hover:underline text-text-brand hover:text-text-brand-hover" target="_blank">User Agreement</Link>,{" "}
+                                <Link href="/terms" className="hover:underline text-text-brand hover:text-text-brand-hover" target="_blank">Terms of Service</Link>,{" "}
+                                <Link href="/legal/privacy-policy" className="hover:underline text-text-brand hover:text-text-brand-hover" target="_blank">Privacy Policy</Link>, and{" "}
+                                <Link href="/legal/cookie-policy" className="hover:underline text-text-brand hover:text-text-brand-hover" target="_blank">Cookie Policy</Link>.
                             </Label>
                         </div>
 
@@ -427,16 +416,15 @@ export default function RegisterPageContent() {
                             id="register-submit-btn"
                             type="submit"
                             disabled={!!isLoading || !turnstileToken}
-                            className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(99,102,241,0.25)" }}
+                            className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-btn-primary-bg text-btn-primary-text hover:bg-btn-primary-bg-hover shadow-sc-md"
                         >
                             {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Create Account"}
                         </button>
                     </form>
 
                     <div className="text-center text-sm mt-5">
-                        <span style={{ color: "#94A3B8" }}>Already have an account? </span>
-                        <Link href="/login" className="font-bold transition-colors" style={{ color: "#6366F1" }}>
+                        <span className="text-text-tertiary">Already have an account? </span>
+                        <Link href="/login" className="font-bold transition-colors text-text-brand hover:text-text-brand-hover">
                             Sign In
                         </Link>
                     </div>

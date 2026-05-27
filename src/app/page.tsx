@@ -3,12 +3,6 @@ import { redirect } from "next/navigation";
 import LandingContent from "@/components/landing-v2/LandingContent";
 import { prisma } from "@/lib/prisma";
 
-/* ── V1 DARK DESIGN (Hibernated) ─────────────────────────────────
-   To restore the old dark landing, change the import above to:
-   import LandingContent from "@/components/landing-v1-dark/LandingContent";
-   See: src/components/landing-v1-dark/README.md for full instructions.
-──────────────────────────────────────────────────────────────── */
-
 export default async function LandingPage() {
   // Graceful auth — stale cookies must not crash the landing page
   let session = null;

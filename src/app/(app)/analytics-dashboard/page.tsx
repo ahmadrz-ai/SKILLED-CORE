@@ -2,30 +2,29 @@
 
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, Download, User } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAnalytics, AnalyticsData } from "@/app/actions/analytics";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 // --- Components ---
 
 const StatCard = ({ label, value, trend, trendDir }: { label: string, value: string | number, trend: string, trendDir: string }) => (
-    <div className="bg-zinc-900/50 backdrop-blur-md border border-white/5 rounded-xl p-6 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="bg-bg-card border border-border-card rounded-xl p-6 relative overflow-hidden group shadow-sc-card hover:border-border-selected hover:shadow-sc-md transition-all">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-sc-purple-100/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="flex justify-between items-start mb-4">
-            <h3 className="text-zinc-500 font-mono text-xs uppercase tracking-widest">{label}</h3>
-            {trendDir === "up" && <ArrowUpRight className="w-4 h-4 text-green-400" />}
-            {trendDir === "down" && <ArrowDownRight className="w-4 h-4 text-red-500" />}
-            {trendDir === "flat" && <Minus className="w-4 h-4 text-zinc-600" />}
+            <h3 className="text-text-secondary font-bold font-mono text-xs uppercase tracking-widest">{label}</h3>
+            {trendDir === "up" && <ArrowUpRight className="w-4 h-4 text-text-success" />}
+            {trendDir === "down" && <ArrowDownRight className="w-4 h-4 text-text-error" />}
+            {trendDir === "flat" && <Minus className="w-4 h-4 text-text-tertiary" />}
         </div>
         <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold font-heading text-white">{value}</span>
+            <span className="text-3xl font-bold font-heading text-text-heading">{value}</span>
             <span className={cn(
-                "text-xs font-mono font-bold px-1.5 py-0.5 rounded",
-                trendDir === "up" ? "bg-green-500/10 text-green-400" :
-                    trendDir === "down" ? "bg-red-950/30 text-red-400" :
-                        "bg-zinc-800 text-zinc-500"
+                "text-xs font-mono font-bold px-1.5 py-0.5 rounded border",
+                trendDir === "up" ? "bg-bg-success text-text-success border-border-success/30" :
+                    trendDir === "down" ? "bg-bg-error text-text-error border-border-error/30" :
+                        "bg-bg-secondary-panel text-text-secondary border-border-default"
             )}>
                 {trend}
             </span>
@@ -36,13 +35,13 @@ const StatCard = ({ label, value, trend, trendDir }: { label: string, value: str
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-zinc-950 border border-white/10 p-3 rounded-lg shadow-xl">
-                <p className="text-zinc-400 font-mono text-xs mb-2">{label}</p>
+            <div className="bg-bg-dropdown border border-border-dropdown p-3 rounded-lg shadow-sc-dropdown text-text-body">
+                <p className="text-text-secondary font-mono text-xs mb-2">{label}</p>
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-sm">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                        <span className="text-white font-bold">{entry.value}</span>
-                        <span className="text-zinc-500 text-xs uppercase">{entry.name}</span>
+                        <span className="text-text-heading font-bold">{entry.value}</span>
+                        <span className="text-text-tertiary text-xs uppercase">{entry.name}</span>
                     </div>
                 ))}
             </div>
@@ -51,7 +50,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const COLORS = ["#8b5cf6", "#14b8a6", "#f59e0b", "#ec4899"];
+const COLORS = ["#5B35D5", "#16A34A", "#D97706", "#2563EB"];
 
 export default function AnalyticsPage() {
     const [data, setData] = useState<AnalyticsData | null>(null);
@@ -77,45 +76,47 @@ export default function AnalyticsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center pt-24">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
-                    <p className="text-zinc-500 font-mono text-sm animate-pulse">ESTABLISHING UPLINK...</p>
+            <div className="min-h-screen flex items-center justify-center pt-24 bg-bg-secondary-panel">
+                <div className="flex flex-col items-center gap-4 text-text-brand">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <p className="text-text-secondary font-mono text-sm animate-pulse font-bold">ESTABLISHING UPLINK...</p>
                 </div>
             </div>
         );
     }
 
-    if (!data) return <div className="min-h-screen pt-32 px-10 text-zinc-500 font-mono">No telemetry signal detected.</div>;
+    if (!data) return <div className="min-h-screen pt-32 px-10 text-text-secondary font-mono bg-bg-secondary-panel">No telemetry signal detected.</div>;
 
     const { stats, trendData, demographics, recentActivity } = data;
 
     return (
-        <div className="min-h-screen p-6 lg:p-10 pt-24 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="min-h-screen p-6 lg:p-10 pt-24 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500 bg-bg-secondary-panel font-sans">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-heading font-bold text-white mb-2 tracking-tight">
-                        COMMAND <span className="text-violet-500">METRICS</span>
+                    <h1 className="text-4xl font-heading font-black text-text-heading mb-2 tracking-tight">
+                        COMMAND <span className="text-text-brand">METRICS</span>
                     </h1>
-                    <p className="text-zinc-400 font-mono text-sm max-w-lg">
+                    <p className="text-text-secondary font-medium text-sm max-w-lg">
                         Real-time telemetry of your network impact and profile resonance.
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <div className="px-4 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs font-mono text-zinc-400 border-l-2 border-l-violet-500 flex items-center gap-2 uppercase">
-                        <User className="w-3 h-3" />
+                    <div className="px-4 py-2 rounded-lg bg-bg-card border border-border-card shadow-sc-xs text-xs font-mono text-text-body border-l-2 border-l-sc-purple-650 flex items-center gap-2 uppercase font-bold">
+                        <User className="w-3.5 h-3.5 text-text-brand" />
                         {data.role}
                     </div>
 
-                    <div className="bg-zinc-900 border border-white/10 rounded-lg p-1 flex items-center">
+                    <div className="bg-bg-secondary-panel border border-border-default rounded-lg p-1 flex items-center shadow-sc-xs">
                         {['7d', '30d', 'ALL'].map((range) => (
                             <button
                                 key={range}
                                 onClick={() => setTimeRange(range)}
                                 className={cn(
-                                    "px-3 py-1.5 rounded-md text-xs font-bold font-mono transition-all",
-                                    timeRange === range ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                                    "px-3 py-1.5 rounded-md text-xs font-bold font-mono transition-all border-none cursor-pointer",
+                                    timeRange === range
+                                        ? "bg-sc-purple-600 text-text-inverse shadow-sc-xs"
+                                        : "text-text-secondary hover:text-text-heading hover:bg-bg-card/50"
                                 )}
                             >
                                 {range.toUpperCase()}
@@ -151,10 +152,10 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[500px]">
 
                 {/* Main Trend Chart */}
-                <div className="lg:col-span-2 bg-zinc-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 flex flex-col relative overflow-hidden min-h-[300px]">
+                <div className="lg:col-span-2 bg-bg-card border border-border-card rounded-2xl p-6 flex flex-col relative overflow-hidden min-h-[300px] shadow-sc-card">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-heading font-bold text-white flex items-center gap-2">
-                            <Eye className="w-5 h-5 text-violet-500" />
+                        <h3 className="font-heading font-bold text-text-heading flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-text-brand" />
                             Engagement Pulse (Last 30 Days)
                         </h3>
                     </div>
@@ -163,19 +164,19 @@ export default function AnalyticsPage() {
                             <AreaChart data={trendData}>
                                 <defs>
                                     <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="var(--sc-purple-600)" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="var(--sc-purple-600)" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                                <XAxis dataKey="date" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                                <XAxis dataKey="date" stroke="var(--text-tertiary)" fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis stroke="var(--text-tertiary)" fontSize={10} tickLine={false} axisLine={false} />
                                 <ChartTooltip content={<CustomTooltip />} />
                                 <Area
                                     type="monotone"
                                     dataKey="views"
-                                    stroke="#8b5cf6"
-                                    strokeWidth={2}
+                                    stroke="var(--sc-purple-600)"
+                                    strokeWidth={2.5}
                                     fillOpacity={1}
                                     fill="url(#colorViews)"
                                 />
@@ -188,9 +189,9 @@ export default function AnalyticsPage() {
                 <div className="space-y-6 flex flex-col h-full">
 
                     {/* Donut Chart */}
-                    <div className="bg-zinc-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 flex-1 flex flex-col min-h-[300px]">
-                        <h3 className="font-heading font-bold text-white flex items-center gap-2 mb-4">
-                            <Briefcase className="w-5 h-5 text-teal-400" />
+                    <div className="bg-bg-card border border-border-card rounded-2xl p-6 flex-1 flex flex-col min-h-[300px] shadow-sc-card">
+                        <h3 className="font-heading font-bold text-text-heading flex items-center gap-2 mb-4">
+                            <Briefcase className="w-5 h-5 text-text-brand" />
                             Viewer Demographics
                         </h3>
                         {demographics.length > 0 ? (
@@ -216,28 +217,28 @@ export default function AnalyticsPage() {
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-8">
-                                    <span className="text-2xl font-bold font-heading text-white">
+                                    <span className="text-2xl font-bold font-heading text-text-heading">
                                         {demographics.reduce((a, b) => a + b.value, 0)}
                                     </span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm italic">
+                            <div className="flex-1 flex items-center justify-center text-text-placeholder text-sm italic font-medium">
                                 No demographic data yet
                             </div>
                         )}
                     </div>
 
                     {/* AI Insight Panel */}
-                    <div className="bg-teal-500/5 border-l-4 border-teal-500 rounded-r-xl p-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-50">
-                            <Sparkles className="w-12 h-12 text-teal-500/20" />
+                    <div className="bg-sc-purple-50 border border-sc-purple-200 border-l-4 border-l-sc-purple-600 rounded-r-xl p-6 relative overflow-hidden group shadow-sc-card">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Sparkles className="w-12 h-12 text-text-brand" />
                         </div>
-                        <h4 className="flex items-center gap-2 text-teal-400 font-bold font-mono text-sm mb-2">
-                            <Sparkles className="w-4 h-4" />
+                        <h4 className="flex items-center gap-2 text-text-brand font-bold font-mono text-sm mb-2">
+                            <Sparkles className="w-4 h-4 text-text-brand" />
                             CORTEX OPTIMIZATION
                         </h4>
-                        <p className="text-zinc-300 text-sm leading-relaxed relative z-10">
+                        <p className="text-text-body text-sm leading-relaxed relative z-10 font-medium">
                             {stats.impressions === 0
                                 ? "Your telemetry is silent. Initialize first contact by posting content or updating your profile."
                                 : "Engagement is detected. Maintain momentum by responding to high-intent signals immediately."}
@@ -248,33 +249,35 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Recent Activity Table */}
-            <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-6">
-                <h3 className="font-heading font-bold text-white mb-6">LIVE SIGNAL FEED</h3>
+            <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-sc-card">
+                <h3 className="font-heading font-bold text-text-heading mb-6">LIVE SIGNAL FEED</h3>
                 <div className="space-y-4">
                     {recentActivity.length > 0 ? recentActivity.map((activity) => (
-                        <div key={activity.id} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+                        <div key={activity.id} className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0">
                             <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                                    <MousePointerClick className="w-4 h-4 text-zinc-500" />
+                                <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center text-text-tertiary shadow-sc-xs border border-border-default">
+                                    <MousePointerClick className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-zinc-300 font-medium">
+                                    <p className="text-sm text-text-body font-semibold">
                                         {activity.viewerName} ({activity.viewerRole}) viewed you
                                     </p>
-                                    <p className="text-xs text-zinc-600 font-mono">
+                                    <p className="text-xs text-text-secondary font-mono font-medium">
                                         {activity.time} • {activity.location}
                                     </p>
                                 </div>
                             </div>
                             <span className={cn(
-                                "text-xs font-mono px-2 py-1 rounded",
-                                activity.type === "CONNECT_REQUEST" ? "text-violet-500 bg-violet-500/10" : "text-zinc-500 bg-zinc-800"
+                                "text-xs font-bold font-mono px-2 py-1 rounded border",
+                                activity.type === "CONNECT_REQUEST" 
+                                    ? "text-text-brand bg-sc-purple-50 border-sc-purple-200" 
+                                    : "text-text-secondary bg-bg-secondary-panel border-border-default"
                             )}>
                                 {activity.type === "CONNECT_REQUEST" ? "HIGH INTENT" : "IMPRESSION"}
                             </span>
                         </div>
                     )) : (
-                        <div className="text-zinc-500 italic text-sm py-4">No recent signals detected.</div>
+                        <div className="text-text-placeholder italic text-sm py-4 font-medium">No recent signals detected.</div>
                     )}
                 </div>
             </div>

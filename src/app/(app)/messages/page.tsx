@@ -259,57 +259,57 @@ export default function MessagesPage() {
     );
 
     return (
-        <div className="h-[calc(100vh-64px)] w-full flex bg-white text-[#111827] overflow-hidden font-sans">
+        <div className="h-[calc(100vh-64px)] w-full flex bg-bg-page text-text-body overflow-hidden font-sans">
             {/* Sidebar */}
-            <div className="w-80 lg:w-96 border-r border-[#E5E7EB] bg-white flex flex-col flex-shrink-0 z-10">
-                <div className="p-4 lg:p-6 border-b border-[#E5E7EB] flex flex-col gap-4 bg-white relative z-20">
-                    <h2 className="text-xl font-bold text-[#111827] tracking-tight">
+            <div className="w-80 lg:w-96 border-r border-border-sidebar bg-bg-sidebar flex flex-col flex-shrink-0 z-10">
+                <div className="p-4 lg:p-6 border-b border-border-sidebar flex flex-col gap-4 bg-bg-sidebar relative z-20">
+                    <h2 className="text-xl font-bold text-text-heading tracking-tight">
                         Messages
                     </h2>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-placeholder" />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg pl-10 pr-4 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 transition-all shadow-sm"
+                            className="w-full bg-bg-input border border-border-input rounded-lg pl-10 pr-4 py-2 text-sm text-text-body placeholder:text-text-placeholder focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus-shadow transition-all shadow-sm"
                         />
                     </div>
                 </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-bg-sidebar">
                     {loading ? (
-                        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#9CA3AF]" /></div>
+                        <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-text-placeholder" /></div>
                     ) : filteredConversations.map(contact => (
                         <div
                             key={contact.id}
                             onClick={() => handleSelectContact(contact.contactId)}
                             className={cn(
-                                "flex items-center gap-4 p-4 cursor-pointer hover:bg-[#F9FAFB] transition-colors border-b border-[#F3F4F6] relative",
-                                selectedContactId === contact.contactId ? "bg-[#EEF2FF]" : "bg-transparent"
+                                "flex items-center gap-4 p-4 cursor-pointer hover:bg-bg-sidebar-hover transition-colors border-b border-border-subtle relative",
+                                selectedContactId === contact.contactId ? "bg-bg-sidebar-active" : "bg-transparent"
                             )}
                         >
                             {selectedContactId === contact.contactId && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#7C3AED]" />
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-sc-purple-600" />
                             )}
                             <div className="relative ml-1">
-                                <Avatar className="w-12 h-12 border border-[#E5E7EB]">
+                                <Avatar className="w-12 h-12 border border-border-default">
                                     <AvatarImage src={contact.avatar} />
-                                    <AvatarFallback className="bg-[#EEF2FF] text-[#7C3AED] font-semibold">{contact.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{contact.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                {contact.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />}
+                                {contact.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-bg-sidebar rounded-full" />}
                             </div>
                             <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex justify-between items-baseline mb-0.5">
-                                    <h3 className="font-semibold text-sm truncate text-[#111827]">{contact.name}</h3>
-                                    <span className="text-[11px] text-[#9CA3AF] font-medium">{contact.time}</span>
+                                    <h3 className="font-semibold text-sm truncate text-text-heading">{contact.name}</h3>
+                                    <span className="text-[11px] text-text-tertiary font-medium">{contact.time}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className={cn("text-xs truncate w-40", contact.unread > 0 ? "text-[#111827] font-semibold" : "text-[#6B7280]")}>
+                                    <p className={cn("text-xs truncate w-40", contact.unread > 0 ? "text-text-heading font-semibold" : "text-text-secondary")}>
                                         {contact.lastMessage}
                                     </p>
                                     {contact.unread > 0 && (
-                                        <div className="w-2.5 h-2.5 bg-[#7C3AED] rounded-full shadow-sm" />
+                                        <div className="w-2.5 h-2.5 bg-sc-purple-600 rounded-full shadow-sm" />
                                     )}
                                 </div>
                             </div>
@@ -320,22 +320,22 @@ export default function MessagesPage() {
 
             {/* Chat Area */}
             {selectedContact ? (
-                <div className="flex-1 flex flex-col bg-[#F9FAFB] relative">
+                <div className="flex-1 flex flex-col bg-bg-secondary-panel relative">
                     {/* Header */}
-                    <div className="h-[73px] px-6 border-b border-[#E5E7EB] flex items-center justify-between bg-white z-20 shadow-sm">
+                    <div className="h-[73px] px-6 border-b border-border-default flex items-center justify-between bg-bg-page z-20 shadow-sc-sm">
                         <div className="flex items-center gap-4">
-                            <Avatar className="w-10 h-10 border border-[#E5E7EB]">
+                            <Avatar className="w-10 h-10 border border-border-default">
                                 <AvatarImage src={selectedContact.avatar} />
-                                <AvatarFallback className="bg-[#EEF2FF] text-[#7C3AED] font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <h3 className="font-semibold text-base text-[#111827]">{selectedContact.name}</h3>
-                                <p className="text-xs text-[#6B7280]">{selectedContact.role || 'Active now'}</p>
+                                <h3 className="font-semibold text-base text-text-heading">{selectedContact.name}</h3>
+                                <p className="text-xs text-text-secondary">{selectedContact.role || 'Active now'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
-                            {canCall && <Video className="w-6 h-6 text-[#6B7280] hover:text-[#7C3AED] transition-colors cursor-pointer" />}
-                            <AlertCircle className="w-6 h-6 text-[#6B7280] hover:text-[#7C3AED] transition-colors cursor-pointer" />
+                            {canCall && <Video className="w-6 h-6 text-text-secondary hover:text-text-brand transition-colors cursor-pointer" />}
+                            <AlertCircle className="w-6 h-6 text-text-secondary hover:text-text-brand transition-colors cursor-pointer" />
                         </div>
                     </div>
 
@@ -375,17 +375,17 @@ export default function MessagesPage() {
                                             <div className={cn(
                                                 "max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
                                                 isMe
-                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-[#7C3AED] text-white force-white-text rounded-l-2xl`
-                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-white border border-[#E5E7EB] text-[#111827] rounded-r-2xl`,
-                                                msg.isDeleted && "italic text-[#9CA3AF] bg-transparent border border-[#E5E7EB] shadow-none"
+                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-sc-purple-600 text-text-inverse force-white-text rounded-l-2xl`
+                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-bg-card border border-border-default text-text-body rounded-r-2xl`,
+                                                msg.isDeleted && "italic text-text-placeholder bg-transparent border border-border-default shadow-none"
                                             )}>
                                                 {/* Reply Context */}
                                                 {msg.replyTo && (
                                                     <div className={cn(
                                                         "mb-2 pl-3 border-l-2 text-xs opacity-90 py-1 rounded",
-                                                        isMe ? "border-white/50 bg-black/10" : "border-[#7C3AED] bg-[#F9FAFB] text-[#4B5563]"
+                                                        isMe ? "border-text-inverse/50 bg-sc-purple-700/50" : "border-border-brand bg-bg-secondary-panel text-text-secondary"
                                                     )}>
-                                                        <p className={cn("font-semibold mb-0.5", isMe ? "text-white" : "text-[#7C3AED]")}>{msg.replyTo.senderName}</p>
+                                                        <p className={cn("font-semibold mb-0.5", isMe ? "text-text-inverse" : "text-text-brand")}>{msg.replyTo.senderName}</p>
                                                         <p className="truncate">{msg.replyTo.content}</p>
                                                     </div>
                                                 )}
@@ -395,7 +395,7 @@ export default function MessagesPage() {
                                                 {/* Reactions */}
                                                 {msg.reactions && msg.reactions.length > 0 && !msg.isDeleted && (
                                                     <div className={cn(
-                                                        "absolute -bottom-2 h-5 px-1 bg-white border border-[#E5E7EB] rounded-full flex items-center justify-center text-[10px] shadow-sm whitespace-nowrap z-10",
+                                                        "absolute -bottom-2 h-5 px-1 bg-bg-card border border-border-default rounded-full flex items-center justify-center text-[10px] shadow-sc-xs whitespace-nowrap z-10",
                                                         isMe ? "right-0" : "left-0"
                                                     )}>
                                                         {msg.reactions.map((r: any, idx: number) => <span key={idx}>{r.emoji}</span>)}
@@ -403,11 +403,11 @@ export default function MessagesPage() {
                                                 )}
                                             </div>
                                         </ContextMenuTrigger>
-                                        <ContextMenuContent className="w-48 bg-white border-[#E5E7EB] text-[#111827] shadow-lg">
-                                            <ContextMenuItem onSelect={() => setReplyingTo(msg)} className="focus:bg-[#F3F4F6] cursor-pointer text-sm">Reply</ContextMenuItem>
-                                            <ContextMenuItem onSelect={() => handleCopy(msg.text)} className="focus:bg-[#F3F4F6] cursor-pointer text-sm">Copy</ContextMenuItem>
+                                        <ContextMenuContent className="w-48 bg-bg-dropdown border border-border-dropdown text-text-body shadow-sc-dropdown">
+                                            <ContextMenuItem onSelect={() => setReplyingTo(msg)} className="focus:bg-bg-dropdown-item-hover cursor-pointer text-sm">Reply</ContextMenuItem>
+                                            <ContextMenuItem onSelect={() => handleCopy(msg.text)} className="focus:bg-bg-dropdown-item-hover cursor-pointer text-sm">Copy</ContextMenuItem>
                                             {isMe && !msg.isDeleted && (
-                                                <ContextMenuItem onSelect={() => handleUnsend(msg.id)} className="focus:bg-[#FEF2F2] text-[#EF4444] focus:text-[#DC2626] cursor-pointer text-sm font-medium">
+                                                <ContextMenuItem onSelect={() => handleUnsend(msg.id)} className="focus:bg-bg-error/30 text-text-error focus:text-text-error cursor-pointer text-sm font-medium">
                                                     Unsend
                                                 </ContextMenuItem>
                                             )}
@@ -423,23 +423,23 @@ export default function MessagesPage() {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-white border-t border-[#E5E7EB] z-20">
+                    <div className="p-4 bg-bg-page border-t border-border-default z-20">
                         {replyingTo && (
-                            <div className="flex justify-between items-center mb-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
+                            <div className="flex justify-between items-center mb-3 p-3 bg-bg-secondary-panel rounded-xl border border-border-default">
                                 <div>
-                                    <p className="text-xs text-[#6B7280]">Replying to <span className="text-[#111827] font-semibold">{replyingTo.sender === 'me' ? 'Yourself' : selectedContact.name}</span></p>
-                                    <p className="text-sm text-[#4B5563] truncate max-w-xs">{replyingTo.text}</p>
+                                    <p className="text-xs text-text-secondary">Replying to <span className="text-text-heading font-semibold">{replyingTo.sender === 'me' ? 'Yourself' : selectedContact.name}</span></p>
+                                    <p className="text-sm text-text-secondary truncate max-w-xs">{replyingTo.text}</p>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 rounded-full p-0 text-[#6B7280] hover:text-[#111827] hover:bg-[#E5E7EB]">X</Button>
+                                <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 rounded-full p-0 text-text-secondary hover:text-text-heading hover:bg-bg-secondary-panel">X</Button>
                             </div>
                         )}
 
                         <div className="flex items-center gap-4">
                             {/* Main Input Bar */}
-                            <div className="flex-1 flex items-center gap-3 bg-white rounded-full px-4 py-2 border border-[#E5E7EB] focus-within:border-[#7C3AED] focus-within:ring-1 focus-within:ring-[#7C3AED]/20 transition-all shadow-sm">
+                            <div className="flex-1 flex items-center gap-3 bg-bg-input rounded-full px-4 py-2 border border-border-input focus-within:border-border-focus focus-within:ring-1 focus-within:ring-border-focus-shadow transition-all shadow-sm">
 
                                 {/* File Upload */}
-                                <label htmlFor="file-upload" className="cursor-pointer text-[#9CA3AF] hover:text-[#7C3AED] transition-colors shrink-0">
+                                <label htmlFor="file-upload" className="cursor-pointer text-text-placeholder hover:text-text-brand transition-colors shrink-0">
                                     {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
                                 </label>
                                 <input
@@ -458,7 +458,7 @@ export default function MessagesPage() {
                                     onChange={e => setMessageInput(e.target.value)}
                                     onKeyDown={handleKeyPress}
                                     placeholder="Type your message..."
-                                    className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#111827] resize-none max-h-32 min-h-[24px] py-1 placeholder:text-[#9CA3AF] custom-scrollbar leading-relaxed"
+                                    className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-text-body resize-none max-h-32 min-h-[24px] py-1 placeholder:text-text-placeholder custom-scrollbar leading-relaxed"
                                     rows={1}
                                     style={{ height: '30px' }} // Fix initial height
                                 />
@@ -468,7 +468,7 @@ export default function MessagesPage() {
                                     {/* Emoji Trigger */}
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <button className="text-[#9CA3AF] hover:text-[#7C3AED] transition-colors p-1">
+                                            <button className="text-text-placeholder hover:text-text-brand transition-colors p-1">
                                                 <Smile className="w-5 h-5" />
                                             </button>
                                         </PopoverTrigger>
@@ -487,7 +487,7 @@ export default function MessagesPage() {
                                         disabled={!messageInput.trim()}
                                         className={cn(
                                             "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                                            messageInput.trim() ? "bg-[#7C3AED] text-white hover:bg-[#6D28D9] shadow-sm" : "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
+                                            messageInput.trim() ? "bg-sc-purple-600 text-text-inverse hover:bg-sc-purple-700 shadow-sm" : "bg-bg-input-disabled text-text-placeholder cursor-not-allowed"
                                         )}
                                     >
                                         <Send className="w-4 h-4 ml-0.5" />
@@ -499,13 +499,13 @@ export default function MessagesPage() {
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center bg-[#F9FAFB]">
-                    <div className="w-24 h-24 rounded-full border-2 border-[#E5E7EB] bg-white flex items-center justify-center mb-6 shadow-sm">
-                        <Send className="-rotate-45 w-10 h-10 text-[#7C3AED] ml-2 mt-1" />
+                <div className="flex-1 flex flex-col items-center justify-center bg-bg-secondary-panel">
+                    <div className="w-24 h-24 rounded-full border-2 border-border-default bg-bg-page flex items-center justify-center mb-6 shadow-sm">
+                        <Send className="-rotate-45 w-10 h-10 text-text-brand ml-2 mt-1" />
                     </div>
-                    <h2 className="text-2xl font-bold text-[#111827]">Your Messages</h2>
-                    <p className="text-[#6B7280] mt-2">Send private messages and connect with talent.</p>
-                    <Button className="mt-6 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-full px-6 shadow-sm">Send Message</Button>
+                    <h2 className="text-2xl font-bold text-text-heading">Your Messages</h2>
+                    <p className="text-text-secondary mt-2">Send private messages and connect with talent.</p>
+                    <Button className="mt-6 bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse rounded-full px-6 shadow-sm">Send Message</Button>
                 </div>
             )}
         </div>
@@ -540,7 +540,7 @@ function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean
                         <a
                             className={cn(
                                 "underline font-bold transition-colors",
-                                isMe ? "text-white hover:text-white/80" : "text-[#7C3AED] hover:text-[#6D28D9]"
+                                isMe ? "text-text-inverse hover:text-text-inverse/80" : "text-text-brand hover:text-text-brand-hover"
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -568,7 +568,7 @@ function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean
         }
         return (
             <div className="space-y-1">
-                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline text-white/90">
+                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className={cn("flex items-center gap-2 underline", isMe ? "text-text-inverse/90" : "text-text-body")}>
                     <Paperclip className="w-4 h-4" />
                     <span>Attachment</span>
                 </a>
@@ -586,27 +586,27 @@ function MessageActions({ msg, onReply, onReact, onUnsend, onCopy }: any) {
             "opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-2",
             isMe ? "flex-row-reverse" : "flex-row"
         )}>
-            {!msg.isDeleted && <button onClick={onReply} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><CornerUpLeft className="w-4 h-4" /></button>}
+            {!msg.isDeleted && <button onClick={onReply} className="p-1.5 hover:bg-bg-sidebar-hover rounded-full text-text-secondary hover:text-text-heading transition-colors"><CornerUpLeft className="w-4 h-4" /></button>}
             {onReact && !msg.isDeleted && (
                 <Popover>
                     <PopoverTrigger asChild>
-                        <button className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><Smile className="w-4 h-4" /></button>
+                        <button className="p-1.5 hover:bg-bg-sidebar-hover rounded-full text-text-secondary hover:text-text-heading transition-colors"><Smile className="w-4 h-4" /></button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 bg-[#262626] border border-white/10 rounded-full flex gap-1">
+                    <PopoverContent className="w-auto p-1.5 bg-bg-dropdown border border-border-dropdown rounded-full flex gap-1 shadow-sc-dropdown">
                         {EMOJI_REACTIONS.map(emoji => (
-                            <button key={emoji} onClick={() => onReact(emoji)} className="p-1 hover:bg-white/10 rounded-full text-lg hover:scale-125 transition-transform">{emoji}</button>
+                            <button key={emoji} onClick={() => onReact(emoji)} className="p-1 hover:bg-bg-dropdown-item-hover rounded-full text-lg hover:scale-125 transition-transform">{emoji}</button>
                         ))}
                     </PopoverContent>
                 </Popover>
             )}
             <Popover>
                 <PopoverTrigger asChild>
-                    <button className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                    <button className="p-1.5 hover:bg-bg-sidebar-hover rounded-full text-text-secondary hover:text-text-heading transition-colors"><MoreVertical className="w-4 h-4" /></button>
                 </PopoverTrigger>
-                <PopoverContent className="w-32 p-1 bg-[#262626] border border-white/10 text-white rounded-lg">
+                <PopoverContent className="w-32 p-1 bg-bg-dropdown border border-border-dropdown text-text-body rounded-lg shadow-sc-dropdown">
                     <div className="flex flex-col text-sm">
-                        <button onClick={() => onCopy(msg.text)} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 w-full text-left rounded-md"><Copy className="w-3 h-3" /> Copy</button>
-                        {isMe && !msg.isDeleted && <button onClick={onUnsend} className="flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 text-red-500 w-full text-left rounded-md"><Trash2 className="w-3 h-3" /> Unsend</button>}
+                        <button onClick={() => onCopy(msg.text)} className="flex items-center gap-2 px-3 py-2 hover:bg-bg-dropdown-item-hover w-full text-left rounded-md"><Copy className="w-3 h-3" /> Copy</button>
+                        {isMe && !msg.isDeleted && <button onClick={onUnsend} className="flex items-center gap-2 px-3 py-2 hover:bg-bg-error/30 text-text-error w-full text-left rounded-md"><Trash2 className="w-3 h-3" /> Unsend</button>}
                     </div>
                 </PopoverContent>
             </Popover>

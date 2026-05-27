@@ -8,7 +8,7 @@ const FOOTER_LINKS = {
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
     { label: "How It Works", href: "#solutions" },
-    { label: "Interactive Demo", href: "#rubric-builder" },
+    { label: "Interactive Demo", href: "#platform" },
   ],
   Resources: [
     { label: "Help Center", href: "/help" },
@@ -58,7 +58,7 @@ const SOCIAL_LINKS = [
 
 export function LandingFooter() {
   return (
-    <footer className="landing-dark" style={{ background: "#090817" }}>
+    <footer className="relative border-t border-slate-200/90" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 100%)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Main Footer */}
@@ -72,12 +72,14 @@ export function LandingFooter() {
                 alt="SkilledCore"
                 width={36}
                 height={36}
-                className="flex-shrink-0"
+                className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
               />
-              <span style={{ color: "#F8FAFC", fontWeight: 700, fontSize: "16px", letterSpacing: "-0.01em" }}>SkilledCore</span>
+              <span style={{ color: "#1E1B4B", fontWeight: 800, fontSize: "17px", letterSpacing: "-0.02em" }}>
+                SkilledCore
+              </span>
             </Link>
-            <p style={{ color: "#7C8DB0", fontSize: "14px", lineHeight: 1.7 }} className="mb-6">
-              The unified platform for smarter hiring, skill assessments, and talent development. Built for teams that value clarity and efficiency.
+            <p style={{ color: "#475569", fontSize: "14px", lineHeight: 1.7 }} className="mb-6 font-medium">
+              The unified talent intelligence platform for smarter hiring, custom sandboxed verification, and accelerated engineering discovery.
             </p>
 
             {/* Social Links */}
@@ -90,14 +92,14 @@ export function LandingFooter() {
                   rel="noopener noreferrer"
                   aria-label={s.name}
                   className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "#7C8DB0" }}
+                  style={{ background: "#EDE9FE", color: "#4F46E5" }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(124,58,237,0.15)";
-                    e.currentTarget.style.color = "#C4B5FD";
+                    e.currentTarget.style.background = "#4F46E5";
+                    e.currentTarget.style.color = "#FFFFFF";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                    e.currentTarget.style.color = "#7C8DB0";
+                    e.currentTarget.style.background = "#EDE9FE";
+                    e.currentTarget.style.color = "#4F46E5";
                   }}
                 >
                   {s.icon}
@@ -109,14 +111,16 @@ export function LandingFooter() {
           {/* Link Columns */}
           {Object.entries(FOOTER_LINKS).map(([group, links]) => (
             <div key={group} className="col-span-1 md:col-span-2">
-              <h4 style={{ color: "#E2E8F0", fontWeight: 600, fontSize: "13px", letterSpacing: "0.04em", textTransform: "uppercase" }} className="mb-4">{group}</h4>
+              <h4 style={{ color: "#1E1B4B", fontWeight: 700, fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase" }} className="mb-4">
+                {group}
+              </h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      style={{ color: "#7C8DB0", fontSize: "14px" }}
-                      className="transition-colors duration-150 hover:!text-white"
+                      style={{ color: "#475569", fontSize: "14px" }}
+                      className="transition-colors duration-150 font-medium hover:text-[#4F46E5]"
                     >
                       {link.label}
                     </Link>
@@ -128,13 +132,15 @@ export function LandingFooter() {
 
           {/* Contact Column */}
           <div className="col-span-2 md:col-span-2">
-            <h4 style={{ color: "#E2E8F0", fontWeight: 600, fontSize: "13px", letterSpacing: "0.04em", textTransform: "uppercase" }} className="mb-4">Contact</h4>
+            <h4 style={{ color: "#1E1B4B", fontWeight: 700, fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase" }} className="mb-4">
+              Contact
+            </h4>
             <ul className="space-y-2.5">
               <li>
                 <a
                   href="mailto:contact@skilledcore.com"
-                  style={{ color: "#7C8DB0", fontSize: "14px" }}
-                  className="transition-colors duration-150 hover:!text-white"
+                  style={{ color: "#475569", fontSize: "14px" }}
+                  className="transition-colors duration-150 font-medium hover:text-[#4F46E5]"
                 >
                   contact@skilledcore.com
                 </a>
@@ -142,8 +148,8 @@ export function LandingFooter() {
               <li>
                 <Link
                   href="/support"
-                  style={{ color: "#7C8DB0", fontSize: "14px" }}
-                  className="transition-colors duration-150 hover:!text-white"
+                  style={{ color: "#475569", fontSize: "14px" }}
+                  className="transition-colors duration-150 font-medium hover:text-[#4F46E5]"
                 >
                   Support Center
                 </Link>
@@ -155,15 +161,15 @@ export function LandingFooter() {
         {/* Bottom Bar */}
         <div
           className="py-6 flex flex-col md:flex-row items-center justify-between gap-4"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderTop: "1px solid #E2E8F0" }}
         >
-          <p style={{ color: "#4B5C78", fontSize: "13px" }}>
+          <p style={{ color: "#64748B", fontSize: "13px", fontWeight: 555 }}>
             © {new Date().getFullYear()} SkilledCore. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
-            <Link href="/legal/privacy-policy" style={{ color: "#4B5C78", fontSize: "13px" }} className="transition-colors hover:!text-slate-300">Privacy</Link>
-            <Link href="/legal/user-agreement" style={{ color: "#4B5C78", fontSize: "13px" }} className="transition-colors hover:!text-slate-300">Terms</Link>
-            <Link href="/accessibility" style={{ color: "#4B5C78", fontSize: "13px" }} className="transition-colors hover:!text-slate-300">Accessibility</Link>
+            <Link href="/legal/privacy-policy" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4F46E5]">Privacy</Link>
+            <Link href="/legal/user-agreement" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4F46E5]">Terms</Link>
+            <Link href="/accessibility" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4F46E5]">Accessibility</Link>
           </div>
         </div>
       </div>

@@ -104,14 +104,14 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
             />
 
             <div className="max-w-4xl mx-auto py-8 px-4">
-                <Link href="/jobs" className="inline-flex items-center text-zinc-400 hover:text-white mb-8 transition-colors">
+                <Link href="/jobs" className="inline-flex items-center text-text-secondary hover:text-text-brand mb-8 transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back to Jobs
                 </Link>
 
                 {/* Header */}
-                <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-8 backdrop-blur-sm mb-8">
+                <div className="bg-bg-card border border-border-card rounded-2xl p-8 shadow-sc-card mb-8">
                     <div className="flex flex-col md:flex-row gap-6 items-start">
-                        <div className="w-20 h-20 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0 text-3xl font-bold text-white overflow-hidden">
+                        <div className="w-20 h-20 rounded-xl bg-bg-secondary-panel border border-border-default flex items-center justify-center shrink-0 text-3xl font-bold text-text-heading overflow-hidden">
                             {job.company.logo
                                 ? <img src={job.company.logo} alt={`${job.company.name} logo`} className="w-full h-full object-cover rounded-xl" />
                                 : job.company.name.charAt(0)
@@ -119,8 +119,8 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                         </div>
 
                         <div className="flex-1 space-y-2">
-                            <h1 className="text-3xl font-bold text-white">{job.title}</h1>
-                            <div className="flex items-center text-zinc-400 gap-4 flex-wrap text-sm">
+                            <h1 className="text-3xl font-bold text-text-heading">{job.title}</h1>
+                            <div className="flex items-center text-text-secondary gap-4 flex-wrap text-sm">
                                 <div className="flex items-center">
                                     <Building2 className="w-4 h-4 mr-2" />
                                     {job.company.name}
@@ -143,7 +143,7 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                                     href={job.externalUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-center text-sm text-zinc-500 hover:text-violet-400 flex items-center justify-center"
+                                    className="text-center text-sm text-text-secondary hover:text-text-brand flex items-center justify-center"
                                 >
                                     Open Original Post <Globe className="w-3 h-3 ml-1" />
                                 </a>
@@ -152,14 +152,14 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                     </div>
 
                     {/* Badges */}
-                    <div className="flex gap-3 mt-8 border-t border-white/5 pt-6 flex-wrap">
-                        <span className="px-3 py-1 bg-white/5 rounded-full text-sm text-zinc-300 border border-white/5">{job.type}</span>
-                        <span className="px-3 py-1 bg-white/5 rounded-full text-sm text-zinc-300 border border-white/5">{job.workplaceType}</span>
+                    <div className="flex gap-3 mt-8 border-t border-border-subtle pt-6 flex-wrap">
+                        <span className="px-3 py-1 bg-bg-secondary-panel rounded-full text-sm text-text-body border border-border-default">{job.type}</span>
+                        <span className="px-3 py-1 bg-bg-secondary-panel rounded-full text-sm text-text-body border border-border-default">{job.workplaceType}</span>
                         {job.experienceLevel && (
-                            <span className="px-3 py-1 bg-white/5 rounded-full text-sm text-zinc-300 border border-white/5">{job.experienceLevel}</span>
+                            <span className="px-3 py-1 bg-bg-secondary-panel rounded-full text-sm text-text-body border border-border-default">{job.experienceLevel}</span>
                         )}
                         {job.salaryMin && job.salaryMax && (
-                            <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm border border-green-500/20 flex items-center">
+                            <span className="px-3 py-1 bg-bg-badge-success text-text-success rounded-full text-sm border border-border-success flex items-center font-medium">
                                 <DollarSign className="w-3 h-3 mr-1" />
                                 {(job.salaryMin / 1000).toFixed(0)}k - {(job.salaryMax / 1000).toFixed(0)}k/yr
                             </span>
@@ -171,8 +171,8 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2 space-y-8">
                         <section className="space-y-4">
-                            <h2 className="text-xl font-bold text-white">Job Description</h2>
-                            <div className="prose prose-invert max-w-none text-zinc-400">
+                            <h2 className="text-xl font-bold text-text-heading">Job Description</h2>
+                            <div className="prose max-w-none text-text-body">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {job.description}
                                 </ReactMarkdown>
@@ -181,20 +181,20 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                     </div>
 
                     <div className="space-y-6">
-                        <div className="bg-zinc-900/30 rounded-xl p-6 border border-white/5">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Required Skills</h3>
+                        <div className="bg-bg-secondary-panel rounded-xl p-6 border border-border-default shadow-sc-xs">
+                            <h3 className="text-sm font-bold text-text-heading uppercase tracking-wider mb-4">Required Skills</h3>
                             <div className="flex flex-wrap gap-2">
                                 {job.skills.split(',').map((skill, i) => (
-                                    <span key={i} className="px-3 py-1 bg-violet-500/10 text-violet-300 text-xs rounded-lg border border-violet-500/20">
+                                    <span key={i} className="px-3 py-1 bg-sc-purple-50 text-sc-purple-700 text-xs rounded-lg border border-sc-purple-200 font-medium">
                                         {skill.trim()}
                                     </span>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="bg-zinc-900/30 rounded-xl p-6 border border-white/5">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">About the Company</h3>
-                            <p className="text-zinc-400 text-sm">{job.company.description || `${job.company.name} is hiring on SkilledCore.`}</p>
+                        <div className="bg-bg-secondary-panel rounded-xl p-6 border border-border-default shadow-sc-xs">
+                            <h3 className="text-sm font-bold text-text-heading uppercase tracking-wider mb-4">About the Company</h3>
+                            <p className="text-text-secondary text-sm">{job.company.description || `${job.company.name} is hiring on SkilledCore.`}</p>
                         </div>
                     </div>
                 </div>

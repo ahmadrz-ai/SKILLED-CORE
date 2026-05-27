@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "Interactive Demo", href: "#rubric-builder" },
+  { label: "Interactive Demo", href: "#platform" },
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#solutions" },
   { label: "Pricing", href: "#pricing" },

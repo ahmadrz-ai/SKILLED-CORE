@@ -88,51 +88,51 @@ export default async function AboutPage() {
     const { userCount, jobCount } = await getStats();
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="min-h-screen bg-bg-page text-text-body">
             {/* Hero */}
             <section className="relative py-24 px-4 text-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-sc-purple-50/20 via-transparent to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-600/10 border border-violet-500/20 text-violet-300 text-sm mb-8">
-                        <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sc-purple-50 border border-sc-purple-100 text-sc-purple-700 text-sm mb-8">
+                        <span className="w-2 h-2 rounded-full bg-sc-purple-500 animate-pulse" />
                         Building the future of hiring
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-heading font-black text-white tracking-tight mb-6 leading-tight">
+                    <h1 className="text-5xl md:text-7xl font-heading font-black text-text-heading tracking-tight mb-6 leading-tight">
                         Where Talent Meets{" "}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-sc-purple-600 to-sc-purple-400">
                             Opportunity
                         </span>
                     </h1>
-                    <p className="text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
                         SkilledCore is an AI-powered recruitment and talent marketplace built to eliminate the noise in hiring.
                         We connect exceptional professionals with companies that deserve them — with privacy, speed, and intelligence at the core.
                     </p>
                 </div>
             </section>
 
-            {/* FIX-011: Real stats — no fabricated numbers */}
+            {/* Real stats — no fabricated numbers */}
             {(userCount > 0 || jobCount > 0) && (
-                <section className="py-16 px-4 border-y border-white/5 bg-black/20">
+                <section className="py-16 px-4 border-y border-border-default bg-bg-secondary-panel">
                     <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div className="text-4xl font-heading font-black text-white mb-2">
+                            <div className="text-4xl font-heading font-black text-text-heading mb-2">
                                 {userCount > 0 ? `${userCount}+` : "Early"}
                             </div>
-                            <div className="text-zinc-500 text-sm">Verified Members</div>
+                            <div className="text-text-tertiary text-sm">Verified Members</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-heading font-black text-teal-400 mb-2">
+                            <div className="text-4xl font-heading font-black text-text-brand mb-2">
                                 {jobCount > 0 ? `${jobCount}` : "0"}
                             </div>
-                            <div className="text-zinc-500 text-sm">Open Positions</div>
+                            <div className="text-text-tertiary text-sm">Open Positions</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-heading font-black text-violet-400 mb-2">AI</div>
-                            <div className="text-zinc-500 text-sm">Powered Matching</div>
+                            <div className="text-4xl font-heading font-black text-sc-purple-500 mb-2">AI</div>
+                            <div className="text-text-tertiary text-sm">Powered Matching</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-heading font-black text-fuchsia-400 mb-2">0</div>
-                            <div className="text-zinc-500 text-sm">Resume Spam</div>
+                            <div className="text-4xl font-heading font-black text-sc-purple-600 mb-2">0</div>
+                            <div className="text-text-tertiary text-sm">Resume Spam</div>
                         </div>
                     </div>
                 </section>
@@ -141,9 +141,9 @@ export default async function AboutPage() {
             {/* Mission */}
             <section className="py-24 px-4">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-3xl font-heading font-black text-white mb-6">Our Mission</h2>
+                    <h2 className="text-3xl font-heading font-black text-text-heading mb-6">Our Mission</h2>
                     <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="space-y-4 text-zinc-400 leading-relaxed">
+                        <div className="space-y-4 text-text-secondary leading-relaxed">
                             <p>
                                 The hiring process is broken. Candidates send hundreds of applications into the void.
                                 Recruiters sift through mountains of irrelevant CVs. Both sides waste weeks on poor matches.
@@ -159,11 +159,11 @@ export default async function AboutPage() {
                         </div>
                         <div className="space-y-4">
                             {VALUES.map(v => (
-                                <div key={v.title} className="flex gap-4 p-4 bg-zinc-900/40 rounded-xl border border-white/5">
-                                    <v.icon className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+                                <div key={v.title} className="flex gap-4 p-4 bg-bg-card rounded-xl border border-border-default shadow-sc-sm">
+                                    <v.icon className="w-5 h-5 text-text-brand shrink-0 mt-0.5" />
                                     <div>
-                                        <div className="text-white font-semibold text-sm">{v.title}</div>
-                                        <div className="text-zinc-500 text-sm mt-0.5">{v.desc}</div>
+                                        <div className="text-text-heading font-semibold text-sm">{v.title}</div>
+                                        <div className="text-text-secondary text-sm mt-0.5">{v.desc}</div>
                                     </div>
                                 </div>
                             ))}
@@ -173,22 +173,22 @@ export default async function AboutPage() {
             </section>
 
             {/* How It Works */}
-            <section className="py-24 px-4 bg-black/20 border-y border-white/5">
+            <section className="py-24 px-4 bg-bg-secondary-panel border-y border-border-default">
                 <div className="max-w-5xl mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-heading font-black text-white mb-4">How It Works</h2>
-                        <p className="text-zinc-400">Three steps from sign-up to hired.</p>
+                        <h2 className="text-3xl font-heading font-black text-text-heading mb-4">How It Works</h2>
+                        <p className="text-text-secondary">Three steps from sign-up to hired.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {HOW_IT_WORKS.map(step => (
                             <div key={step.step} className="relative group">
-                                <div className="p-6 bg-zinc-900/40 rounded-2xl border border-white/5 hover:border-violet-500/30 transition-all h-full">
+                                <div className="p-6 bg-bg-card rounded-2xl border border-border-default hover:border-border-selected hover:shadow-sc-md transition-all h-full">
                                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4`}>
                                         <step.icon className="w-6 h-6 text-white" />
                                     </div>
-                                    <div className="text-xs font-mono text-zinc-600 mb-2">STEP {step.step}</div>
-                                    <h3 className="text-lg font-bold text-white mb-3">{step.title}</h3>
-                                    <p className="text-zinc-400 text-sm leading-relaxed">{step.description}</p>
+                                    <div className="text-xs font-mono text-text-tertiary mb-2">STEP {step.step}</div>
+                                    <h3 className="text-lg font-bold text-text-heading mb-3">{step.title}</h3>
+                                    <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
                                 </div>
                             </div>
                         ))}
@@ -200,17 +200,17 @@ export default async function AboutPage() {
             <section className="py-24 px-4">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-heading font-black text-white mb-4">The Team</h2>
-                        <p className="text-zinc-400">A small, focused team on a big mission.</p>
+                        <h2 className="text-3xl font-heading font-black text-text-heading mb-4">The Team</h2>
+                        <p className="text-text-secondary">A small, focused team on a big mission.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {TEAM.map(member => (
-                            <div key={member.initials} className="p-6 bg-zinc-900/40 border border-white/5 rounded-2xl text-center hover:border-violet-500/30 transition-all">
+                            <div key={member.initials} className="p-6 bg-bg-card border border-border-default rounded-2xl text-center hover:border-border-selected hover:shadow-sc-md transition-all">
                                 <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${member.color} flex items-center justify-center text-2xl font-heading font-black text-white mx-auto mb-4`}>
                                     {member.initials}
                                 </div>
-                                <div className="font-bold text-white mb-1">{member.title}</div>
-                                <p className="text-zinc-400 text-sm">{member.bio}</p>
+                                <div className="font-bold text-text-heading mb-1">{member.title}</div>
+                                <p className="text-text-secondary text-sm">{member.bio}</p>
                             </div>
                         ))}
                     </div>
@@ -218,22 +218,22 @@ export default async function AboutPage() {
             </section>
 
             {/* Contact */}
-            <section className="py-24 px-4 text-center border-t border-white/5">
+            <section className="py-24 px-4 text-center border-t border-border-default">
                 <div className="max-w-2xl mx-auto space-y-6">
-                    <h2 className="text-3xl font-heading font-black text-white">Get in Touch</h2>
-                    <p className="text-zinc-400">
+                    <h2 className="text-3xl font-heading font-black text-text-heading">Get in Touch</h2>
+                    <p className="text-text-secondary">
                         Questions, partnerships, or press inquiries — we're a small team and we read every email.
                     </p>
                     <a
                         href="mailto:support@skilledcore.com"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600/10 border border-violet-500/30 rounded-xl text-violet-300 hover:text-white hover:bg-violet-600/20 transition-all"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-sc-purple-50 border border-sc-purple-200 rounded-xl text-text-brand hover:text-text-brand-hover hover:bg-sc-purple-100/50 transition-all font-semibold"
                     >
                         <Mail className="w-4 h-4" />
                         support@skilledcore.com
                     </a>
                     <div className="pt-4">
                         <Link href="/register">
-                            <Button className="bg-violet-600 hover:bg-violet-500 text-white font-bold px-8 h-12">
+                            <Button className="bg-btn-primary-bg hover:bg-btn-primary-bg-hover text-btn-primary-text font-bold px-8 h-12">
                                 Join SkilledCore
                                 <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>

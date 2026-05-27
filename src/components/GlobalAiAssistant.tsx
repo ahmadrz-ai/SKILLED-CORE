@@ -114,16 +114,19 @@ export function GlobalAiAssistant() {
                         className="pointer-events-auto mb-4 w-[380px] h-[600px] max-h-[80vh] bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5"
                     >
                         {/* Header */}
-                        <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                        <div 
+                            className="p-4 border-b border-slate-800 flex items-center justify-between text-white force-white-text"
+                            style={{ backgroundColor: '#0f172a' }}
+                        >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500/20 to-teal-500/20 p-1.5 border border-white/10 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-slate-800 p-1.5 border border-slate-700 flex items-center justify-center">
                                     <Image src="/logo.png" alt="AI Assistant" width={24} height={24} className="w-full h-full object-contain" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-sm bg-gradient-to-r from-violet-400 to-teal-400 bg-clip-text text-transparent">Qodee</h3>
+                                    <h3 className="font-bold text-white text-sm force-white-text" style={{ color: '#ffffff' }}>Qodee</h3>
                                     <div className="flex items-center gap-1.5">
                                         <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", status === 'ready' ? "bg-green-500" : "bg-violet-500")} />
-                                        <span className="text-[10px] text-zinc-400 font-medium">
+                                        <span className="text-[10px] text-slate-300 font-medium" style={{ color: '#cbd5e1' }}>
                                             {status === 'streaming' ? 'Thinking...' : 'Online & Ready'}
                                         </span>
                                     </div>
@@ -132,7 +135,8 @@ export function GlobalAiAssistant() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-zinc-400 hover:text-white rounded-full hover:bg-white/10"
+                                className="h-8 w-8 text-slate-300 hover:text-white rounded-full hover:bg-slate-800 compact-btn"
+                                style={{ color: '#cbd5e1' }}
                                 onClick={() => setIsOpen(false)}
                             >
                                 <X className="w-4 h-4" />

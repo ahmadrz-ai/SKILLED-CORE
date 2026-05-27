@@ -219,7 +219,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         : [];
 
     return (
-        <div className="min-h-screen bg-transparent text-white pb-20 font-sans">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 font-sans">
 
             {/* --- Modals Manager --- */}
             {isOwner && (
@@ -245,16 +245,15 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                 {/* Cover Image */}
                 <div className="absolute inset-0 bg-zinc-900">
                     {user.bannerUrl ? (
-                        <img src={user.bannerUrl} alt="Cover" className="w-full h-full object-cover opacity-80" />
+                        <img src={user.bannerUrl} alt="Cover" className="w-full h-full object-cover opacity-100" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-r from-violet-900 via-zinc-900 to-teal-900 opacity-50" />
                     )}
                 </div>
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-obsidian to-transparent" />
 
                 {/* Back Button */}
                 <div className="absolute top-6 left-6 z-10">
-                    <Button variant="ghost" onClick={() => router.back()} className="text-white hover:bg-white/10">
+                    <Button variant="ghost" onClick={() => router.back()} className="bg-slate-900/60 hover:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 rounded-full font-bold px-4 py-2 transition-all">
                         ← Back
                     </Button>
                 </div>
@@ -262,7 +261,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                 {/* Edit Banner Trigger */}
                 {isOwner && (
                     <div className="absolute top-6 right-6 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="secondary" size="sm" onClick={() => openModal('banner')} className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border-none">
+                        <Button variant="secondary" size="sm" onClick={() => openModal('banner')} className="bg-slate-900/60 hover:bg-slate-900/80 backdrop-blur-md text-white border border-white/10 rounded-full font-bold px-4 py-2 transition-all">
                             <Pencil className="w-4 h-4 mr-2" /> Edit Banner
                         </Button>
                     </div>
@@ -276,7 +275,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                     <div className="w-full md:w-80 space-y-6">
 
                         {/* Identity Card */}
-                        <div className="bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center shadow-2xl relative overflow-hidden group">
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm relative overflow-hidden group">
 
                             {/* Edit Identity Trigger */}
                             {isOwner && (
@@ -284,7 +283,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => openModal('identity')}
-                                    className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-all rounded-full"
                                 >
                                     <Pencil className="w-4 h-4" />
                                 </Button>
@@ -293,7 +292,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                             {/* Avatar */}
                             <div className="relative mx-auto w-32 h-32 mb-4 group/avatar cursor-pointer" onClick={() => isOwner && openModal('identity')}>
                                 <div className={cn(
-                                    "w-32 h-32 rounded-full border-4 overflow-hidden relative z-10 bg-zinc-800 flex items-center justify-center text-4xl font-bold border-violet-500 shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+                                    "w-32 h-32 rounded-full border-4 overflow-hidden relative z-10 bg-slate-100 flex items-center justify-center text-4xl font-bold border-violet-500 shadow-[0_0_30px_rgba(139,92,246,0.15)] text-slate-700"
                                 )}>
                                     {user.image ? <img src={user.image} alt="Avatar" className="w-full h-full object-cover" /> : user.name?.charAt(0)}
 
@@ -308,7 +307,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                             {/* Role Badge (Top Left) */}
                             <div className="absolute top-4 left-4">
-                                <div className="px-2 py-1 rounded text-[10px] font-bold tracking-wider bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase shadow-lg">
+                                <div className="px-2 py-1 rounded text-[10px] font-bold tracking-wider bg-slate-100 text-slate-600 border border-slate-200 uppercase shadow-sm">
                                     {user.role}
                                 </div>
                             </div>
@@ -320,13 +319,13 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 </div>
                             )}
 
-                            <h1 className="text-2xl font-bold font-cinzel tracking-wide mb-1 flex items-center justify-center gap-2">
+                            <h1 className="text-2xl font-bold font-cinzel tracking-wide text-slate-950 mb-1 flex items-center justify-center gap-2">
                                 {user.name}
                                 {(user.plan === 'PRO' || user.plan === 'ULTRA') && (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <BadgeCheck className="w-5 h-5 text-sky-400 fill-sky-500/10" />
+                                                <BadgeCheck className="w-5 h-5 text-sky-500 fill-sky-500/10" />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>{user.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
@@ -336,29 +335,29 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 )}
                             </h1>
                             {user.username && (
-                                <p className="text-sm text-zinc-500 mb-1">@{user.username}</p>
+                                <p className="text-sm text-slate-400 mb-1">@{user.username}</p>
                             )}
-                            <p className="text-sm text-zinc-400 mb-4 h-6 overflow-hidden text-ellipsis whitespace-nowrap">{user.headline || "No headline set"}</p>
+                            <p className="text-sm text-slate-600 mb-4 h-6 overflow-hidden text-ellipsis whitespace-nowrap font-medium">{user.headline || "No headline set"}</p>
 
-                            <div className="flex items-center justify-center gap-4 text-xs text-zinc-500 mb-4 font-mono">
-                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {user.location || "Unknown"}</span>
+                            <div className="flex items-center justify-center gap-4 text-xs text-slate-500 mb-4 font-mono">
+                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-450" /> {user.location || "Unknown"}</span>
                             </div>
 
                             {/* STATS */}
-                            <div className="flex justify-center gap-6 text-sm mb-6 pb-6 border-b border-white/5">
+                            <div className="flex justify-center gap-6 text-sm mb-6 pb-6 border-b border-slate-100">
                                 <button
                                     onClick={() => setListType('followers')}
-                                    className="text-center group cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                    className="text-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
                                 >
-                                    <div className="font-bold text-white text-lg group-hover:text-violet-400 transition-colors">{followerCount}</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider">Followers</div>
+                                    <div className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{followerCount}</div>
+                                    <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Followers</div>
                                 </button>
                                 <button
                                     onClick={() => setListType('following')}
-                                    className="text-center group cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                    className="text-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
                                 >
-                                    <div className="font-bold text-white text-lg group-hover:text-violet-400 transition-colors">{counts.following}</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider">Following</div>
+                                    <div className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{counts.following}</div>
+                                    <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Following</div>
                                 </button>
                             </div>
 
@@ -369,25 +368,25 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         {/* Resume Section - Hidden for Recruiters */}
                                         {user.role !== 'RECRUITER' && (
                                             <>
-                                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 mt-2 w-full text-center">Resume</h3>
+                                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 mt-2 w-full text-center">Resume</h3>
                                                 <div className="flex gap-2 w-full">
                                                     {user.resumeUrl ? (
                                                         <Button
                                                             variant="outline"
                                                             asChild
-                                                            className="flex-1 border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                                            className="flex-1 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-medium transition-all"
                                                         >
                                                             <Link href={user.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                                                <Eye className="w-4 h-4 mr-2" /> View
+                                                                <Eye className="w-4 h-4 mr-2 text-slate-500" /> View
                                                             </Link>
                                                         </Button>
                                                     ) : (
                                                         <Button
                                                             variant="outline"
                                                             disabled
-                                                            className="flex-1 border-dashed border-zinc-700 text-zinc-400 opacity-50 cursor-not-allowed"
+                                                            className="flex-1 border border-slate-100 text-slate-300 bg-slate-50/50 cursor-not-allowed"
                                                         >
-                                                            <Eye className="w-4 h-4 mr-2" /> View
+                                                            <Eye className="w-4 h-4 mr-2 text-slate-350" /> View
                                                         </Button>
                                                     )}
 
@@ -397,12 +396,12 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                                 <Button
                                                                     variant="outline"
                                                                     onClick={() => openModal('resume')}
-                                                                    className="flex-1 border-dashed border-violet-500/30 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+                                                                    className="flex-1 border border-indigo-200 text-indigo-600 bg-indigo-50/30 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 shadow-sm font-medium transition-all"
                                                                 >
-                                                                    <FileText className="w-4 h-4 mr-2" /> Update
+                                                                    <FileText className="w-4 h-4 mr-2 text-indigo-500" /> Update
                                                                 </Button>
                                                             </TooltipTrigger>
-                                                            <TooltipContent className="bg-zinc-800 border-white/10 text-zinc-300 text-xs shadow-xl">
+                                                            <TooltipContent className="bg-slate-800 border-white/10 text-slate-300 text-xs shadow-xl">
                                                                 <p>Update your resume with new achievements</p>
                                                             </TooltipContent>
                                                         </Tooltip>
@@ -412,9 +411,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                         variant="outline"
                                                         size="icon"
                                                         onClick={() => setEditSection('share')}
-                                                        className="border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                                        className="border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm transition-all"
                                                     >
-                                                        <Share2 className="w-4 h-4" />
+                                                        <Share2 className="w-4 h-4 text-slate-500" />
                                                     </Button>
                                                 </div>
                                             </>
@@ -427,9 +426,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 <Button
                                                     variant="outline"
                                                     onClick={() => setEditSection('share')}
-                                                    className="w-full border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                                    className="w-full border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-semibold py-2 transition-all"
                                                 >
-                                                    <Share2 className="w-4 h-4 mr-2" /> Share Profile
+                                                    <Share2 className="w-4 h-4 mr-2 text-slate-500" /> Share Profile
                                                 </Button>
                                             </div>
                                         )}
@@ -439,15 +438,15 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         <div className="flex gap-2">
                                             {/* PRIMARY ACTION LOGIC */}
                                             {connStatus === 'CONNECTED' ? (
-                                                <Button className="flex-1 bg-zinc-800 hover:bg-zinc-700" onClick={() => router.push(`/messages?userId=${user.id}`)}>
+                                                <Button className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 shadow-sm" onClick={() => router.push(`/messages?userId=${user.id}`)}>
                                                     <MessageSquare className="w-4 h-4 mr-2" /> Message
                                                 </Button>
                                             ) : connStatus === 'PENDING_SENT' ? (
-                                                <Button disabled className="flex-1 bg-zinc-800 text-zinc-400">
-                                                    <CheckCircle2 className="w-4 h-4 mr-2" /> Pending
+                                                <Button disabled className="flex-1 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed font-medium">
+                                                    <CheckCircle2 className="w-4 h-4 mr-2 text-slate-400" /> Pending
                                                 </Button>
                                             ) : connStatus === 'PENDING_RECEIVED' ? (
-                                                <Button className="flex-1 bg-violet-600 hover:bg-violet-500" onClick={() => router.push('/network')}>
+                                                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-sm" onClick={() => router.push('/network')}>
                                                     <CheckCircle2 className="w-4 h-4 mr-2" /> Respond
                                                 </Button>
                                             ) : (
@@ -456,7 +455,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     {/* If OPEN Node & Not Recruiter -> Primary Connect */}
                                                     {user.nodeType !== 'BROADCAST' && user.role !== 'RECRUITER' ? (
                                                         <Button
-                                                            className="flex-1 bg-violet-600 hover:bg-violet-500 shadow-[0_0_20px_rgba(124,58,237,0.3)]"
+                                                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-md shadow-indigo-100"
                                                             onClick={handleConnect}
                                                             disabled={isConnectLoading}
                                                         >
@@ -467,10 +466,10 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                         // If BROADCAST/RECRUITER -> Primary Follow
                                                         <Button
                                                             className={cn(
-                                                                "flex-1 shadow-lg transition-all",
+                                                                "flex-1 font-semibold py-2 shadow-sm transition-all border",
                                                                 followingState
-                                                                    ? "bg-zinc-800 hover:bg-red-900/20 hover:text-red-400 text-zinc-400"
-                                                                    : "bg-teal-600 hover:bg-teal-500 text-white shadow-[0_0_20px_rgba(20,184,166,0.3)]"
+                                                                    ? "bg-slate-100 hover:bg-red-50 hover:text-red-650 hover:border-red-200 text-slate-700 border-slate-200"
+                                                                    : "bg-teal-650 hover:bg-teal-700 text-white border-transparent"
                                                             )}
                                                             onClick={handleFollow}
                                                             disabled={isFollowLoading}
@@ -486,22 +485,22 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         <div className="flex gap-2">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" size="icon" className="border-zinc-700 text-zinc-400 hover:text-white">
-                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    <Button variant="outline" size="icon" className="border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white shadow-sm">
+                                                        <MoreHorizontal className="w-4 h-4 text-slate-500" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-zinc-300">
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5">
-                                                        <Send className="w-4 h-4" /> Send profile via message
+                                                <DropdownMenuContent align="end" className="bg-white border border-slate-200 text-slate-750 shadow-lg font-medium">
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700">
+                                                        <Send className="w-4 h-4 text-slate-400" /> Send profile via message
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => setEditSection('share')}>
-                                                        <Share2 className="w-4 h-4" /> Share Profile
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => setEditSection('share')}>
+                                                        <Share2 className="w-4 h-4 text-slate-400" /> Share Profile
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5" onClick={() => window.print()}>
-                                                        <Download className="w-4 h-4" /> Save to PDF
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => window.print()}>
+                                                        <Download className="w-4 h-4 text-slate-400" /> Save to PDF
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-white/5 text-red-400">
-                                                        <Flag className="w-4 h-4" /> Report User
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650">
+                                                        <Flag className="w-4 h-4 text-red-500" /> Report User
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -511,10 +510,10 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 <Button
                                                     variant="outline"
                                                     asChild
-                                                    className="flex-1 border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                                    className="flex-1 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-semibold transition-all"
                                                 >
                                                     <Link href={user.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                                        <FileText className="w-4 h-4 mr-2" /> View Resume
+                                                        <FileText className="w-4 h-4 mr-2 text-slate-500" /> View Resume
                                                     </Link>
                                                 </Button>
                                             )}
@@ -525,44 +524,44 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                         </div>
 
                         {/* Sidebar: Socials & Custom Links */}
-                        <div className="bg-zinc-900/50 rounded-xl border border-white/5 p-6 space-y-4 group relative">
+                        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 group relative shadow-sm">
                             {/* Edit Links Trigger */}
                             {isOwner && (
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => openModal('links')}
-                                    className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-all rounded-full"
                                 >
                                     <Pencil className="w-4 h-4" />
                                 </Button>
                             )}
 
-                            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Connect</h3>
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Connect</h3>
                             <div className="space-y-3">
                                 {user.linkedin && (
                                     <Link href={user.linkedin} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white">
+                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
                                             <Linkedin className="w-4 h-4 mr-2 text-[#0077b5]" /> LinkedIn
                                         </Button>
                                     </Link>
                                 )}
                                 {user.github && (
                                     <Link href={user.github} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white">
-                                            <Github className="w-4 h-4 mr-2 text-white" /> GitHub
+                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
+                                            <Github className="w-4 h-4 mr-2 text-slate-955" /> GitHub
                                         </Button>
                                     </Link>
                                 )}
                                 {parsedLinks.map((link, i) => (
                                     <Link key={i} href={link.url} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white">
+                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
                                             {renderLinkIcon(link.icon)} <span className="ml-2">{link.title}</span>
                                         </Button>
                                     </Link>
                                 ))}
                                 {(!user.linkedin && !user.github && parsedLinks.length === 0) && (
-                                    <p className="text-zinc-500 text-xs italic">No links added.</p>
+                                    <p className="text-slate-400 text-xs italic font-medium">No links added.</p>
                                 )}
                             </div>
                         </div>
@@ -573,7 +572,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                     <div className="flex-1 space-y-8 pb-12">
 
                         {/* Tabs */}
-                        <div className="flex items-center gap-8 border-b border-white/10 px-2 sticky top-0 bg-black/20 backdrop-blur-md z-40 pt-4">
+                        <div className="flex items-center gap-8 border-b border-slate-200 px-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-40 pt-4">
                             {(['overview', 'projects', 'interviews'] as const).map((tab) => {
                                 if (tab === 'projects' && user.role === 'RECRUITER') return null;
                                 return (
@@ -582,14 +581,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         onClick={() => setActiveTab(tab)}
                                         className={cn(
                                             "pb-4 text-sm font-bold tracking-wide transition-all relative uppercase",
-                                            activeTab === tab ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"
+                                            activeTab === tab ? "text-indigo-650" : "text-slate-500 hover:text-slate-800"
                                         )}
                                     >
                                         {tab === 'interviews' ? 'AI Interviews' : tab}
                                         {activeTab === tab && (
                                             <motion.div
                                                 layoutId="activeTab"
-                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500"
+                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-650"
                                             />
                                         )}
                                     </button>
@@ -608,79 +607,79 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     className="space-y-8"
                                 >
                                     {/* About Section */}
-                                    <section className="bg-zinc-900/30 rounded-xl p-6 border border-white/5 group relative">
-                                        {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('about')} className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100"><Pencil className="w-4 h-4" /></Button>}
-                                        <h2 className="text-lg font-bold text-white mb-4">About</h2>
-                                        <p className="text-zinc-400 leading-relaxed text-sm whitespace-pre-wrap">
+                                    <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm group relative">
+                                        {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('about')} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 rounded-full transition-all"><Pencil className="w-4 h-4" /></Button>}
+                                        <h2 className="text-lg font-bold text-slate-900 mb-4">About</h2>
+                                        <p className="text-slate-650 leading-relaxed text-sm whitespace-pre-wrap font-medium">
                                             {user.bio || "No bio info available."}
                                         </p>
                                     </section>
 
                                     {user.role !== 'RECRUITER' && (
-                                        <section className="bg-zinc-900/30 rounded-xl p-6 border border-white/5 group relative">
-                                            {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('education')} className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100"><Pencil className="w-4 h-4" /></Button>}
-                                            <h2 className="text-lg font-bold text-white mb-6">Education</h2>
-                                            <div className="space-y-6 border-l border-white/10 ml-3 pl-8 py-2">
+                                        <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm group relative">
+                                            {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('education')} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 rounded-full transition-all"><Pencil className="w-4 h-4" /></Button>}
+                                            <h2 className="text-lg font-bold text-slate-900 mb-6">Education</h2>
+                                            <div className="space-y-6 border-l border-slate-150 ml-3 pl-8 py-2">
                                                 {educationData.map((edu: any, i) => (
                                                     <div key={i} className="relative">
-                                                        <div className="absolute -left-[39px] top-1 w-5 h-5 rounded-full bg-zinc-900 border-2 border-teal-500/50 flex items-center justify-center">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                                        <div className="absolute -left-[39px] top-1 w-5 h-5 rounded-full bg-slate-50 border-2 border-teal-500/50 flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                                                         </div>
                                                         <div>
-                                                            <h3 className="text-white font-bold text-md">{edu.school}</h3>
-                                                            <p className="text-zinc-400 text-sm mb-1">{edu.degree}</p>
-                                                            <p className="text-zinc-500 text-sm">{edu.startDate}</p>
+                                                            <h3 className="text-slate-900 font-bold text-md">{edu.school}</h3>
+                                                            <p className="text-slate-600 text-sm font-semibold mb-1">{edu.degree}</p>
+                                                            <p className="text-slate-450 text-xs font-medium">{edu.startDate}</p>
                                                         </div>
                                                     </div>
                                                 ))}
-                                                {educationData.length === 0 && <p className="text-zinc-500 text-sm italic">No education recorded.</p>}
+                                                {educationData.length === 0 && <p className="text-slate-400 text-sm italic">No education recorded.</p>}
                                             </div>
                                         </section>
                                     )}
 
                                     {user.role !== 'RECRUITER' && (
-                                        <section className="bg-zinc-900/30 rounded-xl p-6 border border-white/5 group relative">
-                                            {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('skills')} className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100"><Pencil className="w-4 h-4" /></Button>}
-                                            <h2 className="text-lg font-bold text-white mb-4">Skills & Arsenal</h2>
+                                        <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm group relative">
+                                            {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('skills')} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 rounded-full transition-all"><Pencil className="w-4 h-4" /></Button>}
+                                            <h2 className="text-lg font-bold text-slate-900 mb-4">Skills & Arsenal</h2>
                                             <div className="flex flex-wrap gap-2">
                                                 {parsedSkills.map((skill, i) => {
                                                     const isVerified = skill.includes("(Verified)");
                                                     const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "");
                                                     return (
                                                         <div key={i} className={cn(
-                                                            "px-3 py-1.5 rounded-md text-xs font-mono font-medium border flex items-center gap-2",
+                                                            "px-3 py-1.5 rounded-md text-xs font-mono font-semibold border flex items-center gap-2",
                                                             isVerified
-                                                                ? "bg-violet-500/20 text-violet-300 border-violet-500/50 shadow-[0_0_10px_rgba(139,92,246,0.3)]"
-                                                                : "bg-violet-500/10 text-violet-300 border-violet-500/20"
+                                                                ? "bg-indigo-50 text-indigo-755 border-indigo-200 shadow-[0_0_10px_rgba(99,102,241,0.05)]"
+                                                                : "bg-slate-100 text-slate-700 border-slate-200"
                                                         )}>
                                                             {cleanSkill}
-                                                            {isVerified && <CheckCircle2 className="w-3 h-3 text-violet-400" />}
+                                                            {isVerified && <CheckCircle2 className="w-3 h-3 text-indigo-500" />}
                                                         </div>
                                                     );
                                                 })}
-                                                {parsedSkills.length === 0 && <p className="text-zinc-500 text-xs italic">No skills listed.</p>}
+                                                {parsedSkills.length === 0 && <p className="text-slate-400 text-xs italic">No skills listed.</p>}
                                             </div>
                                         </section>
                                     )}
 
                                     {/* Experience Section */}
-                                    <section className="bg-zinc-900/30 rounded-xl p-6 border border-white/5 group relative">
-                                        {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('experience')} className="absolute top-2 right-2 text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100"><Pencil className="w-4 h-4" /></Button>}
-                                        <h2 className="text-lg font-bold text-white mb-6">Experience</h2>
-                                        <div className="space-y-8 border-l border-white/10 ml-3 pl-8 py-2">
+                                    <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm group relative">
+                                        {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('experience')} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 rounded-full transition-all"><Pencil className="w-4 h-4" /></Button>}
+                                        <h2 className="text-lg font-bold text-slate-900 mb-6">Experience</h2>
+                                        <div className="space-y-8 border-l border-slate-150 ml-3 pl-8 py-2">
                                             {experienceData.map((exp: any, i) => (
                                                 <div key={i} className="relative">
-                                                    <div className="absolute -left-[39px] top-1 w-5 h-5 rounded-full bg-zinc-900 border-2 border-violet-500/50 flex items-center justify-center">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                                                    <div className="absolute -left-[39px] top-1 w-5 h-5 rounded-full bg-slate-50 border-2 border-violet-500/50 flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-600" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-white font-bold text-md">{exp.position}</h3>
-                                                        <p className="text-zinc-400 text-sm mb-1">{exp.company} • {exp.startDate} - {exp.endDate || 'Present'}</p>
-                                                        <p className="text-zinc-500 text-sm leading-relaxed mt-2">{exp.description}</p>
+                                                        <h3 className="text-slate-900 font-bold text-md">{exp.position}</h3>
+                                                        <p className="text-slate-600 text-sm font-semibold mb-1">{exp.company} • {exp.startDate} - {exp.endDate || 'Present'}</p>
+                                                        <p className="text-slate-500 text-sm leading-relaxed font-medium mt-2">{exp.description}</p>
                                                     </div>
                                                 </div>
                                             ))}
-                                            {experienceData.length === 0 && <p className="text-zinc-500 text-sm italic">No experience recorded.</p>}
+                                            {experienceData.length === 0 && <p className="text-slate-400 text-sm italic">No experience recorded.</p>}
                                         </div>
                                     </section>
 
@@ -695,14 +694,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     className="space-y-6"
                                 >
                                     {isOwner && (
-                                        <Button onClick={() => openModal('projects')} className="w-full border border-dashed border-white/10 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white py-8">
+                                        <Button onClick={() => openModal('projects')} className="w-full border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-500 hover:text-indigo-650 font-semibold py-8 transition-all shadow-sm">
                                             <Plus className="w-5 h-5 mr-2" /> Add New Project
                                         </Button>
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {user.projects && user.projects.map((project: any) => (
-                                            <div key={project.id} className="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden group relative hover:border-violet-500/30 transition-all flex flex-col">
+                                            <div key={project.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden group relative hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col shadow-sm">
                                                 {isOwner && (
                                                     <Button
                                                         variant="secondary"
@@ -712,7 +711,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                             e.stopPropagation();
                                                             openModal('projects', project);
                                                         }}
-                                                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100"
+                                                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 bg-slate-900/60 hover:bg-slate-900/80 text-white backdrop-blur-md rounded-full border-none transition-all shadow-sm"
                                                     >
                                                         <Pencil className="w-4 h-4" />
                                                     </Button>
@@ -722,7 +721,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     {project.imageUrl ? (
                                                         <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                     ) : (
-                                                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-600">
+                                                        <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
                                                             <FolderOpen className="w-8 h-8 opacity-50" />
                                                         </div>
                                                     )}
@@ -730,17 +729,17 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                                 <div className="p-4 flex flex-col flex-1">
                                                     <Link href={`/project/${project.id}`}>
-                                                        <h3 className="font-bold text-lg text-white mb-1 hover:text-violet-400 transition-colors">{project.title}</h3>
+                                                        <h3 className="font-bold text-lg text-slate-900 mb-1 hover:text-indigo-650 transition-colors">{project.title}</h3>
                                                     </Link>
 
-                                                    <p className="text-zinc-400 text-sm mb-4 line-clamp-3 flex-1">{project.description}</p>
+                                                    <p className="text-slate-650 text-sm mb-4 line-clamp-3 flex-1 font-medium">{project.description}</p>
 
-                                                    <div className="flex items-center gap-4 mt-auto pt-4 border-t border-white/5">
-                                                        <Link href={`/project/${project.id}`} className="text-xs text-white hover:text-violet-400 font-bold flex items-center transition-colors">
+                                                    <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-100">
+                                                        <Link href={`/project/${project.id}`} className="text-xs text-indigo-600 hover:text-indigo-755 font-bold flex items-center transition-colors">
                                                             View Details
                                                         </Link>
                                                         {project.link && (
-                                                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center ml-auto transition-colors">
+                                                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-700 flex items-center ml-auto transition-colors font-medium">
                                                                 <LinkIcon className="w-3 h-3 mr-1" /> External Link
                                                             </a>
                                                         )}
@@ -751,8 +750,8 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     </div>
 
                                     {(!user.projects || user.projects.length === 0) && !isOwner && (
-                                        <div className="text-center py-20 text-zinc-600">
-                                            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                                        <div className="text-center py-20 text-slate-400 font-medium">
+                                            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-indigo-600" />
                                             <p>No projects declassified.</p>
                                         </div>
                                     )}
@@ -798,27 +797,27 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                                 for (let i = 1; i <= 5; i++) {
                                                     if (i <= roundedFull) {
-                                                        stars.push(<Star key={i} size={15} className="fill-violet-400 text-violet-400 stroke-violet-500" />);
+                                                        stars.push(<Star key={i} size={15} className="fill-indigo-500 text-indigo-500 stroke-indigo-650" />);
                                                     } else if (i === roundedFull + 1 && hasHalf) {
-                                                        stars.push(<StarHalf key={i} size={15} className="fill-violet-400 text-violet-400 stroke-violet-500" />);
+                                                        stars.push(<StarHalf key={i} size={15} className="fill-indigo-500 text-indigo-500 stroke-indigo-650" />);
                                                     } else {
-                                                        stars.push(<Star key={i} size={15} className="text-zinc-700 fill-zinc-800/40 stroke-zinc-700" />);
+                                                        stars.push(<Star key={i} size={15} className="text-slate-200 fill-slate-100 stroke-slate-200" />);
                                                     }
                                                 }
                                                 return <div className="flex items-center gap-0.5">{stars}</div>;
                                             };
 
                                             return (
-                                                <div key={interview.id} className="bg-zinc-900/60 border border-white/5 rounded-2xl overflow-hidden group hover:border-violet-500/25 hover:shadow-[0_0_30px_rgba(139,92,246,0.05)] transition-all flex flex-col h-full backdrop-blur-xl">
-                                                    {/* Top banner graphic, matching Image 3 style */}
-                                                    <div className="w-full h-24 bg-gradient-to-br from-purple-950/30 via-zinc-950 to-cyan-950/30 relative flex flex-col justify-end p-4 border-b border-white/5 overflow-hidden">
-                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-500/10 via-transparent to-transparent pointer-events-none" />
-                                                        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/5 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
-                                                            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-bold">
+                                                <div key={interview.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col h-full shadow-sm">
+                                                    {/* Top banner graphic */}
+                                                    <div className="w-full h-24 bg-gradient-to-br from-indigo-50/50 via-slate-50 to-teal-50/50 relative flex flex-col justify-end p-4 border-b border-slate-150 overflow-hidden">
+                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
+                                                        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-sm">
+                                                            <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest font-bold">
                                                                 AI EVALUATED
                                                             </span>
                                                         </div>
-                                                        <div className="text-[10px] font-mono text-violet-400 uppercase tracking-widest font-bold mb-1">
+                                                        <div className="text-[10px] font-mono text-indigo-600 uppercase tracking-widest font-bold mb-1">
                                                             SkilledCore Talent AI
                                                         </div>
                                                     </div>
@@ -826,33 +825,33 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     {/* Card Content */}
                                                     <div className="p-5 flex-1 flex flex-col justify-between">
                                                         <div>
-                                                            <h3 className="font-bold text-lg text-white font-heading tracking-tight leading-snug group-hover:text-violet-300 transition-colors">
+                                                            <h3 className="font-bold text-lg text-slate-900 font-heading tracking-tight leading-snug group-hover:text-indigo-650 transition-colors">
                                                                 {roleTitle}
                                                             </h3>
                                                             
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 {renderStars()}
-                                                                <span className="text-xs font-mono font-bold text-violet-400 pl-1">
+                                                                <span className="text-xs font-mono font-bold text-indigo-600 pl-1">
                                                                     {starRating.toFixed(1)} / 5.0
                                                                 </span>
                                                             </div>
 
-                                                            <p className="text-xs font-mono text-zinc-500 mt-2">
+                                                            <p className="text-xs font-mono text-slate-500 mt-2 font-medium">
                                                                 Difficulty: Level {interview.difficulty} • {new Date(interview.createdAt).toLocaleDateString()}
                                                             </p>
-                                                            <p className="text-zinc-400 text-sm italic mt-3.5 leading-relaxed line-clamp-3 pl-1">
+                                                            <p className="text-slate-650 text-sm italic mt-3.5 leading-relaxed line-clamp-3 pl-1 font-medium">
                                                                 &ldquo;{interview.feedback}&rdquo;
                                                             </p>
                                                         </div>
 
-                                                        <div className="border-t border-white/5 mt-5 pt-4 flex items-center justify-between">
+                                                        <div className="border-t border-slate-100 mt-5 pt-4 flex items-center justify-between">
                                                             <Link 
                                                                 href={`/interview/${interview.id}`}
-                                                                className="text-sm font-bold text-violet-400 hover:text-violet-300 flex items-center gap-1.5 transition-colors group/btn"
+                                                                className="text-sm font-bold text-indigo-600 hover:text-indigo-755 flex items-center gap-1.5 transition-colors group/btn"
                                                             >
-                                                                <FileText className="w-4 h-4 text-violet-400" />
+                                                                <FileText className="w-4 h-4 text-indigo-500" />
                                                                 Open Interview Details
-                                                                <ArrowRight className="w-4 h-4 text-violet-400 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                                <ArrowRight className="w-4 h-4 text-indigo-500 group-hover/btn:translate-x-0.5 transition-transform" />
                                                             </Link>
 
                                                             <div className="flex items-center gap-2">
@@ -862,7 +861,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                                         size="icon"
                                                                         disabled={deletingId === interview.id}
                                                                         onClick={(e) => handleDeleteInterview(interview.id, e)}
-                                                                        className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-md border border-red-500/20 hover:border-red-500/30 transition-all compact-btn shrink-0"
+                                                                        className="h-8 w-8 text-red-600 hover:text-red-500 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-all compact-btn shrink-0"
                                                                     >
                                                                         {deletingId === interview.id ? (
                                                                             <Loader2 className="w-4 h-4 animate-spin text-red-500" />
@@ -871,7 +870,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                                         )}
                                                                     </Button>
                                                                 )}
-                                                                <span className="text-xs font-mono font-bold text-zinc-500 bg-white/[0.02] border border-white/5 px-2.5 py-1 rounded-md">
+                                                                <span className="text-xs font-mono font-bold text-slate-650 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
                                                                     SCORE: {interview.score}/100
                                                                 </span>
                                                             </div>
@@ -881,9 +880,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                             );
                                         })}
                                         {(!(user as any).interviews || (user as any).interviews.length === 0) && (
-                                            <div className="col-span-full text-center py-20 text-zinc-600 bg-zinc-900/10 border border-white/5 border-dashed rounded-2xl">
-                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20 text-violet-400" />
-                                                <p className="font-mono text-sm tracking-widest uppercase">No interview simulations recorded.</p>
+                                            <div className="col-span-full text-center py-20 text-slate-400 bg-white border border-slate-200 border-dashed rounded-2xl">
+                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-indigo-600" />
+                                                <p className="font-mono text-sm tracking-widest uppercase font-semibold">No interview simulations recorded.</p>
                                             </div>
                                         )}
                                     </div>

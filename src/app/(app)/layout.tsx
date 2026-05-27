@@ -67,7 +67,7 @@ export default async function AppLayout({
     const plan = user?.plan || "BASIC";
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] text-[#111827] font-sans">
+        <div className="min-h-screen bg-bg-secondary-panel text-text-body font-sans">
             {/* Desktop Sidebar — Fixed Left */}
             <Sidebar
                 counts={{

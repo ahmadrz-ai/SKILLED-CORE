@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, Loader2, ArrowLeft } from "lucide-react";
 import { Button3D } from "@/components/ui/Button3D";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { sendVerificationCode } from "@/app/actions/auth";
 import { toast } from "sonner";
 import Image from "next/image";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -26,7 +25,6 @@ export default function ForgotPasswordPage() {
             const res = await sendVerificationCode(email);
             if (res.success) {
                 toast.success("Reset code sent to " + email);
-                // Redirect to Reset Password page with email pre-filled
                 router.push(`/reset-password?email=${encodeURIComponent(email)}`);
             } else {
                 toast.error(res.error || "Failed to send code.");
@@ -39,34 +37,29 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-transparent text-white relative">
-            <ParticleBackground />
-
-            {/* Content Container */}
+        <div className="min-h-screen w-full flex bg-bg-secondary-panel text-text-body relative">
             <div className="w-full h-screen flex items-center justify-center p-4 relative z-10">
-                <div className="max-w-md w-full bg-zinc-950/80 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl relative">
-
-                    {/* Header */}
+                <div className="max-w-md w-full bg-bg-card border border-border-card rounded-2xl p-8 shadow-sc-lg relative">
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-4">
-                            <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-lg" />
+                            <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-sm" />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Reset Password</h1>
-                        <p className="text-sm text-zinc-400">
+                        <h1 className="text-2xl font-bold tracking-tight text-text-heading mb-2">Reset Password</h1>
+                        <p className="text-sm text-text-secondary">
                             Enter your email to receive a secure reset code.
                         </p>
                     </div>
 
                     <form onSubmit={handleSendCode} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
+                            <Label htmlFor="email" className="text-text-body-strong font-semibold">Email Address</Label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                <Mail className="absolute left-3 top-3.5 w-4 h-4 text-text-tertiary" />
                                 <Input
                                     id="email"
                                     type="email"
                                     placeholder="name@example.com"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800 focus:border-indigo-500/50 transition-colors"
+                                    className="pl-10 bg-bg-input border-border-input text-text-body placeholder:text-text-placeholder"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -84,7 +77,7 @@ export default function ForgotPasswordPage() {
                     </form>
 
                     <div className="mt-6 text-center">
-                        <Link href="/login" className="text-sm text-zinc-500 hover:text-white flex items-center justify-center gap-2 transition-colors">
+                        <Link href="/login" className="text-sm text-text-secondary hover:text-text-heading flex items-center justify-center gap-2 transition-colors font-medium">
                             <ArrowLeft className="w-4 h-4" /> Back to Login
                         </Link>
                     </div>

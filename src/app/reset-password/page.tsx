@@ -10,7 +10,6 @@ import { resetPassword } from "@/app/actions/reset-password";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import { cn } from "@/lib/utils";
 
 function ResetPasswordContent() {
@@ -50,9 +49,9 @@ function ResetPasswordContent() {
 
     if (!email) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+            <div className="flex flex-col items-center justify-center h-full text-text-secondary">
                 <p>Missing email parameter.</p>
-                <button onClick={() => router.push('/forgot-password')} className="text-indigo-400 hover:underline mt-4">
+                <button onClick={() => router.push('/forgot-password')} className="text-text-brand hover:underline mt-4 font-semibold hover:text-text-brand-hover">
                     Request new code
                 </button>
             </div>
@@ -61,20 +60,20 @@ function ResetPasswordContent() {
 
     return (
         <div className="w-full h-screen flex items-center justify-center p-4 relative z-10">
-            <div className="max-w-md w-full bg-zinc-950/80 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl relative">
+            <div className="max-w-md w-full bg-bg-card border border-border-card rounded-2xl p-8 shadow-sc-lg relative">
 
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="relative z-10 flex items-center justify-center gap-3 mb-4">
-                        <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-lg" />
-                        <div>
-                            <h3 className="font-heading font-black tracking-widest text-lg">SKILLED CORE</h3>
-                            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Enterprise Node</p>
+                        <Image src="/logo.png" alt="Logo" width={48} height={48} className="drop-shadow-sm" />
+                        <div className="text-left">
+                            <h3 className="font-heading font-black tracking-widest text-lg text-text-heading leading-none">SKILLEDCORE</h3>
+                            <p className="text-[10px] text-text-tertiary font-mono uppercase tracking-widest mt-0.5">Enterprise Node</p>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Secure Reset</h1>
-                    <p className="text-sm text-zinc-500">
-                        Enter the code sent to <span className="text-zinc-300 font-bold">{email}</span> and your new password.
+                    <h1 className="text-2xl font-bold tracking-tight text-text-heading mb-2">Secure Reset</h1>
+                    <p className="text-sm text-text-secondary">
+                        Enter the code sent to <span className="text-text-body-strong font-bold">{email}</span> and your new password.
                     </p>
                 </div>
 
@@ -82,11 +81,11 @@ function ResetPasswordContent() {
 
                     {/* Verification Code */}
                     <div className="space-y-2">
-                        <Label htmlFor="code" className="text-xs uppercase tracking-widest text-zinc-500">Reset Code</Label>
+                        <Label htmlFor="code" className="text-xs uppercase tracking-widest text-text-tertiary font-bold">Reset Code</Label>
                         <Input
                             id="code"
                             placeholder="000000"
-                            className="bg-zinc-900 border-zinc-800 text-center text-2xl tracking-[0.5em] font-bold h-14 focus:border-emerald-500/50 transition-all placeholder:tracking-normal placeholder:text-zinc-700"
+                            className="bg-bg-input border-border-input text-text-body text-center text-2xl tracking-[0.5em] font-bold h-14 focus:border-border-focus transition-all placeholder:tracking-normal placeholder:text-text-placeholder"
                             value={code}
                             onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                             maxLength={6}
@@ -94,18 +93,18 @@ function ResetPasswordContent() {
                         />
                     </div>
 
-                    <div className="h-px bg-white/10 my-4" />
+                    <div className="h-px bg-border-default my-4" />
 
                     {/* New Password */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="password">New Password</Label>
+                            <Label htmlFor="password" className="text-text-body-strong font-semibold">New Password</Label>
                             <div className="relative">
-                                <KeyRound className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                <KeyRound className="absolute left-3 top-3.5 w-4 h-4 text-text-tertiary" />
                                 <Input
                                     id="password"
                                     type="password"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800"
+                                    className="pl-10 bg-bg-input border-border-input text-text-body"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
@@ -115,19 +114,19 @@ function ResetPasswordContent() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="confirm">Confirm Password</Label>
+                            <Label htmlFor="confirm" className="text-text-body-strong font-semibold">Confirm Password</Label>
                             <div className="relative">
-                                <KeyRound className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                <KeyRound className="absolute left-3 top-3.5 w-4 h-4 text-text-tertiary" />
                                 <Input
                                     id="confirm"
                                     type="password"
-                                    className="pl-10 bg-zinc-900/50 border-zinc-800"
+                                    className="pl-10 bg-bg-input border-border-input text-text-body"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
                                 />
                                 <div className="absolute left-3 top-2.5 opacity-0">
-                                    <Check className={cn("w-4 h-4", confirmPassword && password === confirmPassword ? "text-green-500 opacity-100" : "opacity-0")} />
+                                    <Check className={cn("w-4 h-4", confirmPassword && password === confirmPassword ? "text-text-success opacity-100" : "opacity-0")} />
                                 </div>
                             </div>
                         </div>
@@ -148,9 +147,8 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
     return (
-        <div className="min-h-screen w-full flex bg-transparent text-white relative">
-            <ParticleBackground />
-            <Suspense fallback={<div className="text-zinc-500 flex items-center justify-center w-full h-full">Loading Secure Environment...</div>}>
+        <div className="min-h-screen w-full flex bg-bg-secondary-panel text-text-body relative">
+            <Suspense fallback={<div className="text-text-secondary flex items-center justify-center w-full h-full">Loading Secure Environment...</div>}>
                 <ResetPasswordContent />
             </Suspense>
         </div>

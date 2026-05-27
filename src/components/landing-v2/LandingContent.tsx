@@ -2,7 +2,7 @@
 
 import { LandingNavbar } from "./LandingNavbar";
 import { LandingHero } from "./LandingHero";
-import { RubricBuilder } from "./RubricBuilder";
+import { ServiceShowcase } from "./ServiceShowcase";
 import { LandingFeatures } from "./LandingFeatures";
 import { LandingHowItWorks } from "./LandingHowItWorks";
 import { LandingPricing } from "./LandingPricing";
@@ -15,7 +15,7 @@ export default function LandingContent() {
       <LandingNavbar />
       <main>
         <LandingHero />
-        <RubricBuilder />
+        <ServiceShowcase />
         <LandingFeatures />
         <LandingHowItWorks />
         <LandingPricing />

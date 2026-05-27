@@ -14,14 +14,6 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
-/* ── V1 DARK DESIGN (Hibernated) ─────────────────────────────────
-   To restore: see src/components/landing-v1-dark/README.md
-   Fonts removed: Cinzel (import + variable "--font-cinzel")
-   ThemeColor was: "#09090b"
-   Html class was: "dark"
-   ParticleBackground was rendered here from landing-v1-dark/
-──────────────────────────────────────────────────────────────── */
-
 export const metadata: Metadata = {
   title: "SkilledCore | Talent Intelligence Platform",
   description: "AI-powered talent intelligence, hiring, and skill analytics. Combines ATS, LMS, and AI-driven skill profiling for modern teams.",

@@ -60,7 +60,7 @@ export default function LoginPageContent() {
     };
 
     return (
-        <div className="min-h-screen w-full flex" style={{ backgroundColor: '#F9FAFB' }}>
+        <div className="min-h-screen w-full flex bg-bg-secondary-panel">
 
             {/* LEFT PANEL — Dark brand panel */}
             <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden"
@@ -80,26 +80,26 @@ export default function LoginPageContent() {
                 <div className="relative z-10 flex items-center gap-3">
                     <Image src="/logo.png" alt="SkilledCore" width={38} height={38} className="drop-shadow-lg" />
                     <div>
-                        <div className="font-bold text-sm tracking-wide" style={{ color: '#FFFFFF' }}>SkilledCore</div>
-                        <div className="text-[10px] font-medium" style={{ color: '#9CA3AF' }}>Talent Intelligence Platform</div>
+                        <div className="font-bold text-sm tracking-wide text-white">SkilledCore</div>
+                        <div className="text-[10px] font-medium text-sc-gray-400">Talent Intelligence Platform</div>
                     </div>
                 </div>
 
                 {/* Headline */}
                 <div className="relative z-10">
-                    <h1 className="text-4xl font-bold leading-tight mb-6" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                    <h1 className="text-4xl font-bold leading-tight mb-6 text-white" style={{ letterSpacing: '-0.02em' }}>
                         Your talent intelligence
                         <br />
-                        <span style={{ color: '#818CF8' }}>command center.</span>
+                        <span className="text-sc-purple-300">command center.</span>
                     </h1>
-                    <p className="text-base leading-relaxed mb-10" style={{ color: '#9CA3AF' }}>
+                    <p className="text-base leading-relaxed mb-10 text-sc-gray-400">
                         Access your hiring pipeline, candidate profiles, skills analytics, and everything you need to build world-class teams.
                     </p>
                     <div className="space-y-3">
                         {FEATURES.map((item) => (
                             <div key={item} className="flex items-center gap-3">
-                                <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#6366F1' }} />
-                                <span className="text-sm" style={{ color: '#D1D5DB' }}>{item}</span>
+                                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-sc-purple-400" />
+                                <span className="text-sm text-sc-gray-200">{item}</span>
                             </div>
                         ))}
                     </div>
@@ -108,25 +108,25 @@ export default function LoginPageContent() {
                 {/* Footer trust */}
                 <div className="relative z-10 flex items-center gap-5">
                     {['SOC 2 Certified', 'GDPR Compliant', '256-bit SSL'].map((t) => (
-                        <span key={t} className="text-xs font-medium" style={{ color: '#6B7280' }}>{t}</span>
+                        <span key={t} className="text-xs font-medium text-sc-gray-500">{t}</span>
                     ))}
                 </div>
             </div>
 
             {/* RIGHT PANEL — Clean Form */}
-            <div className="flex-1 flex items-center justify-center p-6 sm:p-12" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-bg-page text-text-body">
                 <div className="w-full max-w-md">
 
                     {/* Mobile Logo */}
                     <div className="flex items-center gap-2.5 mb-8 lg:hidden">
                         <Image src="/logo.png" alt="SkilledCore" width={32} height={32} className="drop-shadow-lg" />
-                        <span className="font-bold text-sm" style={{ color: '#111827' }}>SkilledCore</span>
+                        <span className="font-bold text-sm text-text-heading">SkilledCore</span>
                     </div>
 
                     {/* Heading */}
                     <div className="mb-8">
-                        <h2 className="text-2xl font-bold mb-1.5" style={{ color: '#111827', letterSpacing: '-0.015em' }}>Welcome back</h2>
-                        <p className="text-sm" style={{ color: '#6B7280' }}>Sign in to your account to continue.</p>
+                        <h2 className="text-2xl font-bold mb-1.5 text-text-heading" style={{ letterSpacing: '-0.015em' }}>Welcome back</h2>
+                        <p className="text-sm text-text-secondary">Sign in to your account to continue.</p>
                     </div>
 
                     {/* Social Buttons */}
@@ -134,10 +134,7 @@ export default function LoginPageContent() {
                         <button
                             onClick={() => handleSocialLogin("google")}
                             disabled={!!isLoading}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', color: '#374151' }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F9FAFB')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-card border border-border-default text-text-body-strong hover:bg-bg-card-hover"
                         >
                             {isLoading === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
                             Google
@@ -145,10 +142,7 @@ export default function LoginPageContent() {
                         <button
                             onClick={() => handleSocialLogin("github")}
                             disabled={!!isLoading}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', color: '#374151' }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F9FAFB')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-card border border-border-default text-text-body-strong hover:bg-bg-card-hover"
                         >
                             {isLoading === "github" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Github className="w-4 h-4" />}
                             GitHub
@@ -158,24 +152,23 @@ export default function LoginPageContent() {
                     {/* Divider */}
                     <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full" style={{ borderTop: '1px solid #E5E7EB' }} />
+                            <span className="w-full border-t border-border-default" />
                         </div>
                         <div className="relative flex justify-center text-xs">
-                            <span className="px-3 text-sm font-medium" style={{ backgroundColor: '#FFFFFF', color: '#9CA3AF' }}>or continue with email</span>
+                            <span className="px-3 text-sm font-medium bg-bg-page text-text-tertiary">or continue with email</span>
                         </div>
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleCredentialsLogin} className="space-y-4">
                         <div>
-                            <Label htmlFor="identifier" className="text-sm font-medium mb-1.5 block" style={{ color: '#374151' }}>
+                            <Label htmlFor="identifier" className="text-sm font-medium mb-1.5 block text-text-body-strong">
                                 Email or username
                             </Label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                                 <Input id="identifier" type="text" placeholder="you@company.com"
-                                    className="pl-9 h-10 text-sm"
-                                    style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB', color: '#111827' }}
+                                    className="pl-9 h-10 text-sm bg-bg-input border-border-input text-text-body"
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
                                     required />
@@ -184,49 +177,43 @@ export default function LoginPageContent() {
 
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <Label htmlFor="password" className="text-sm font-medium" style={{ color: '#374151' }}>Password</Label>
-                                <Link href="/forgot-password" className="text-xs font-medium transition-colors hover:opacity-80" style={{ color: '#6366F1' }}>
+                                <Label htmlFor="password" className="text-sm font-medium text-text-body-strong">Password</Label>
+                                <Link href="/forgot-password" className="text-xs font-medium transition-colors text-text-brand hover:text-text-brand-hover">
                                     Forgot password?
                                 </Link>
                             </div>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                                 <Input id="password" type={showPassword ? "text" : "password"} placeholder="Your password"
-                                    className="pl-9 pr-10 h-10 text-sm"
-                                    style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB', color: '#111827' }}
+                                    className="pl-9 pr-10 h-10 text-sm bg-bg-input border-border-input text-text-body"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors hover:opacity-70"
-                                    style={{ color: '#9CA3AF' }}>
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-text-tertiary hover:text-text-secondary">
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="p-3 rounded-lg text-sm flex items-center gap-2"
-                                style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626' }}>
+                            <div className="p-3 rounded-lg text-sm flex items-center gap-2 bg-bg-error border border-border-error text-text-error">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 {error}
                             </div>
                         )}
 
                         <button type="submit" disabled={!!isLoading}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed group"
-                            style={{ backgroundColor: '#6366F1', color: '#FFFFFF' }}
-                            onMouseEnter={e => !isLoading && (e.currentTarget.style.backgroundColor = '#4F46E5')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#6366F1')}>
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed group bg-btn-primary-bg text-btn-primary-text hover:bg-btn-primary-bg-hover">
                             {isLoading === "credentials"
                                 ? <Loader2 className="w-4 h-4 animate-spin" />
                                 : <><span>Sign in</span><ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>}
                         </button>
                     </form>
 
-                    <p className="text-center text-sm mt-6" style={{ color: '#6B7280' }}>
+                    <p className="text-center text-sm mt-6 text-text-secondary">
                         Don't have an account?{" "}
-                        <Link href="/register" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: '#6366F1' }}>
+                        <Link href="/register" className="font-semibold text-text-brand hover:text-text-brand-hover transition-opacity">
                             Create account
                         </Link>
                     </p>

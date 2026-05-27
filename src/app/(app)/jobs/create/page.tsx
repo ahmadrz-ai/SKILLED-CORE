@@ -31,11 +31,11 @@ const MarkdownToolbar = ({
     onImageUpload: (url: string) => void 
 }) => {
     return (
-        <div className="flex flex-wrap items-center gap-1 bg-zinc-50 border-b border-zinc-200 p-2 rounded-t-lg">
+        <div className="flex flex-wrap items-center gap-1 bg-bg-secondary-panel border-b border-border-default p-2 rounded-t-lg">
             <button 
                 type="button" 
                 onClick={() => onFormat('bold')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Bold"
             >
                 <Bold className="w-4 h-4" />
@@ -43,7 +43,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('italic')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Italic"
             >
                 <Italic className="w-4 h-4" />
@@ -51,7 +51,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('underline')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Underline"
             >
                 <Underline className="w-4 h-4" />
@@ -59,16 +59,16 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('strikethrough')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Strikethrough"
             >
                 <Strikethrough className="w-4 h-4" />
             </button>
-            <div className="w-px h-5 bg-zinc-200 mx-1" />
+            <div className="w-px h-5 bg-border-default mx-1" />
             <button 
                 type="button" 
                 onClick={() => onFormat('bullet')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Bullet List"
             >
                 <List className="w-4 h-4" />
@@ -76,7 +76,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('quote')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Blockquote"
             >
                 <Quote className="w-4 h-4" />
@@ -84,7 +84,7 @@ const MarkdownToolbar = ({
             <button 
                 type="button" 
                 onClick={() => onFormat('link')} 
-                className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" 
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" 
                 title="Insert Link"
             >
                 <Link2 className="w-4 h-4" />
@@ -106,7 +106,7 @@ const MarkdownToolbar = ({
                         }}
                     />
                 </div>
-                <button type="button" className="p-2 hover:bg-zinc-100 text-zinc-650 hover:text-zinc-900 rounded-md transition-colors" title="Upload Image">
+                <button type="button" className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" title="Upload Image">
                     <ImageIcon className="w-4 h-4" />
                 </button>
             </div>
@@ -457,14 +457,14 @@ export default function JobWizardPage() {
 
     return (
         <div 
-            className="w-full min-h-[calc(100vh-120px)] flex flex-col items-center py-6 px-4 relative overflow-hidden font-sans rounded-2xl text-zinc-800"
-            style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}
+            className="w-full min-h-[calc(100vh-120px)] flex flex-col items-center py-6 px-4 relative overflow-hidden font-sans rounded-2xl text-text-body"
+            style={{ background: "linear-gradient(165deg, var(--bg-page) 0%, var(--sc-purple-50) 40%, var(--sc-purple-100) 70%, var(--bg-page) 100%)" }}
         >
             {/* Subtle mesh background */}
             <div
                 className="absolute inset-0 opacity-[0.035] pointer-events-none"
                 style={{
-                    backgroundImage: `radial-gradient(circle at 25% 25%, #6366F1 1px, transparent 1px), radial-gradient(circle at 75% 75%, #6366F1 1px, transparent 1px)`,
+                    backgroundImage: `radial-gradient(circle at 25% 25%, var(--sc-purple-600) 1px, transparent 1px), radial-gradient(circle at 75% 75%, var(--sc-purple-600) 1px, transparent 1px)`,
                     backgroundSize: "48px 48px",
                 }}
             />
@@ -473,21 +473,21 @@ export default function JobWizardPage() {
             <div className="w-full max-w-3xl mb-6 z-10">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-4">
-                        <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+                        <p className="text-xs font-mono text-text-secondary uppercase tracking-widest">
                             Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1].title}
                         </p>
                         {credits !== null && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-zinc-200 rounded-full shadow-sm">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-bg-card border border-border-default rounded-full shadow-sc-xs">
                                 <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                <span className="text-xs font-bold text-zinc-700">{credits} Credits</span>
+                                <span className="text-xs font-bold text-text-body">{credits} Credits</span>
                             </div>
                         )}
                     </div>
-                    <Link href="/jobs" className="text-xs text-zinc-400 hover:text-indigo-600 font-bold transition-colors">Exit Studio</Link>
+                    <Link href="/jobs" className="text-xs text-text-secondary hover:text-text-brand font-bold transition-colors">Exit Studio</Link>
                 </div>
-                <div className="h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-border-default rounded-full overflow-hidden">
                     <motion.div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+                        className="h-full bg-gradient-to-r from-sc-purple-500 to-sc-purple-600 shadow-sc-xs"
                         initial={{ width: 0 }}
                         animate={{ width: `${(currentStep / 4) * 100}%` }}
                         transition={{ duration: 0.5 }}
@@ -496,11 +496,11 @@ export default function JobWizardPage() {
             </div>
 
             {/* MAIN CARD */}
-            <div className="w-full max-w-3xl bg-white border border-zinc-200/85 rounded-2xl p-8 md:p-12 shadow-xl overflow-hidden relative min-h-[600px] flex flex-col z-10">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-650" />
+            <div className="w-full max-w-3xl bg-bg-card border border-border-card rounded-2xl p-8 md:p-12 shadow-sc-modal overflow-hidden relative min-h-[600px] flex flex-col z-10">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sc-purple-500 via-sc-purple-600 to-sc-purple-700" />
 
                 <div className="mb-8">
-                    <h1 className="text-3xl font-heading font-black tracking-wide bg-clip-text text-transparent bg-gradient-to-br from-zinc-900 to-zinc-600">
+                    <h1 className="text-3xl font-heading font-black tracking-wide text-text-heading">
                         {STEPS[currentStep - 1].subtitle}
                     </h1>
                 </div>
@@ -527,15 +527,15 @@ export default function JobWizardPage() {
                                             setTitleSearch(e.target.value);
                                             setShowTitleSuggestions(true);
                                         }}
-                                        className="h-16 text-xl bg-zinc-50 border-zinc-200 focus:border-indigo-500 focus:ring-indigo-100 text-zinc-900"
+                                        className="h-16 text-xl bg-bg-input border-border-input focus:border-border-focus focus:ring-border-focus-shadow text-text-body"
                                     />
                                     {showTitleSuggestions && titleSearch && (
-                                        <div className="absolute top-full left-0 w-full bg-white border border-zinc-200 rounded-xl mt-2 z-50 shadow-2xl overflow-hidden">
+                                        <div className="absolute top-full left-0 w-full bg-bg-dropdown border border-border-dropdown rounded-xl mt-2 z-50 shadow-sc-dropdown overflow-hidden">
                                             {JOB_TITLES.filter(t => t.toLowerCase().includes(titleSearch.toLowerCase())).map(t => (
                                                 <button
                                                     key={t}
                                                     onClick={() => selectTitle(t)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 hover:text-indigo-650 text-zinc-700 text-sm transition-colors"
+                                                    className="w-full text-left px-4 py-3 hover:bg-bg-sidebar-active hover:text-text-sidebar-active text-text-body text-sm transition-colors"
                                                 >
                                                     {t}
                                                 </button>
@@ -548,12 +548,12 @@ export default function JobWizardPage() {
                                     <div className="relative group shrink-0">
                                         <div className={cn(
                                             "w-16 h-16 rounded-xl border flex items-center justify-center overflow-hidden transition-all",
-                                            formData.companyLogo ? "bg-zinc-50 border-zinc-200" : "bg-zinc-50 border-zinc-200 border-dashed"
+                                            formData.companyLogo ? "bg-bg-secondary-panel border-border-default" : "bg-bg-secondary-panel border-border-default border-dashed"
                                         )}>
                                             {formData.companyLogo ? (
                                                 <img src={formData.companyLogo} alt="Logo" className="w-full h-full object-cover" />
                                             ) : (
-                                                <ImageIcon className="w-6 h-6 text-zinc-400" />
+                                                <ImageIcon className="w-6 h-6 text-text-placeholder" />
                                             )}
                                         </div>
                                         {/* Upload Overlay */}
@@ -574,7 +574,7 @@ export default function JobWizardPage() {
                                             />
                                             <PlusCircle className="w-5 h-5 text-white pointer-events-none absolute" />
                                         </div>
-                                        <p className="text-[10px] text-zinc-400 text-center mt-1">Logo</p>
+                                        <p className="text-[10px] text-text-placeholder text-center mt-1">Logo</p>
                                     </div>
 
                                     <div className="flex-1">
@@ -588,7 +588,7 @@ export default function JobWizardPage() {
 
                                 {/* WORKPLACE */}
                                 <div className="space-y-3">
-                                    <Label className="text-zinc-500 font-semibold text-sm">Workplace Type</Label>
+                                    <Label className="text-text-secondary font-semibold text-sm">Workplace Type</Label>
                                     <div className="grid grid-cols-3 gap-4">
                                         {['On-site', 'Hybrid', 'Remote'].map(type => (
                                             <div
@@ -603,8 +603,8 @@ export default function JobWizardPage() {
                                                 className={cn(
                                                     "border rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center justify-center gap-2",
                                                     formData.workplaceType === type
-                                                        ? "border-indigo-600 bg-indigo-50/50 text-indigo-600 font-bold shadow-sm"
-                                                        : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-500"
+                                                        ? "border-border-brand bg-bg-card-selected text-text-brand font-bold shadow-sc-xs"
+                                                        : "border-border-default bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-secondary"
                                                 )}
                                             >
                                                 <Building2 className="w-5 h-5" />
@@ -622,7 +622,7 @@ export default function JobWizardPage() {
 
                                 {/* JOB TYPE */}
                                 <div className="space-y-3">
-                                    <Label className="text-zinc-500 font-semibold text-sm">Job Type (Select all that apply)</Label>
+                                    <Label className="text-text-secondary font-semibold text-sm">Job Type (Select all that apply)</Label>
                                     <div className="flex flex-wrap gap-3">
                                         {['Full-time', 'Part-time', 'Contract', 'Temporary', 'Internship'].map(type => {
                                             const isSelected = formData.jobTypes.includes(type);
@@ -639,8 +639,8 @@ export default function JobWizardPage() {
                                                     className={cn(
                                                         "px-4 py-2 rounded-full border text-sm transition-all",
                                                         isSelected
-                                                            ? "bg-indigo-600 text-white border-indigo-600 font-semibold shadow-sm"
-                                                            : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-700"
+                                                            ? "bg-sc-purple-600 text-text-inverse border-sc-purple-600 font-semibold shadow-sc-xs"
+                                                            : "bg-bg-secondary-panel text-text-secondary border-border-default hover:border-border-input-hover hover:text-text-heading"
                                                     )}
                                                 >
                                                     {type}
@@ -663,15 +663,15 @@ export default function JobWizardPage() {
                             >
                                 {/* SKILLS */}
                                 <div className="space-y-3">
-                                    <Label className="text-zinc-500 font-semibold text-sm">Skills (Press Enter to add)</Label>
-                                    <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3 flex flex-wrap gap-2 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
+                                    <Label className="text-text-secondary font-semibold text-sm">Skills (Press Enter to add)</Label>
+                                    <div className="bg-bg-secondary-panel border border-border-default rounded-xl p-3 flex flex-wrap gap-2 focus-within:ring-1 focus-within:ring-border-focus-shadow focus-within:border-border-focus transition-all">
                                         {formData.skills.map(skill => (
-                                            <div key={skill} className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-3 py-1 rounded-lg text-sm flex items-center gap-1.5 font-semibold">
+                                            <div key={skill} className="bg-sc-purple-50 text-sc-purple-700 border border-sc-purple-200 px-3 py-1 rounded-lg text-sm flex items-center gap-1.5 font-semibold">
                                                 {skill}
                                                 <button 
                                                     type="button"
                                                     onClick={() => setFormData(p => ({ ...p, skills: p.skills.filter(s => s !== skill) }))}
-                                                    className="hover:text-red-500 transition-colors"
+                                                    className="hover:text-text-error transition-colors"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -690,7 +690,7 @@ export default function JobWizardPage() {
                                                 }
                                             }}
                                             placeholder={formData.skills.length ? "" : "e.g. React, TypeScript..."}
-                                            className="bg-transparent outline-none flex-1 min-w-[120px] text-zinc-800 placeholder:text-zinc-400 text-sm"
+                                            className="bg-transparent outline-none flex-1 min-w-[120px] text-text-body placeholder:text-text-placeholder text-sm"
                                         />
                                     </div>
                                 </div>
@@ -698,9 +698,9 @@ export default function JobWizardPage() {
                                 {/* DESCRIPTION */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
-                                        <Label className="text-zinc-500 font-semibold text-sm">Description</Label>
+                                        <Label className="text-text-secondary font-semibold text-sm">Description</Label>
                                         <div className="flex items-center gap-4">
-                                            <span className={cn("text-xs font-mono", wordCount > 1000 ? "text-red-500" : "text-zinc-450")}>
+                                            <span className={cn("text-xs font-mono", wordCount > 1000 ? "text-text-error" : "text-text-secondary")}>
                                                 {wordCount}/1000 words
                                             </span>
                                             <Button
@@ -709,10 +709,10 @@ export default function JobWizardPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 className={cn(
-                                                    "transition-colors font-bold text-xs rounded-lg px-3 py-1.5 flex items-center gap-1.5 border border-indigo-100 shadow-sm",
+                                                    "transition-colors font-bold text-xs rounded-lg px-3 py-1.5 flex items-center gap-1.5 border shadow-sc-xs",
                                                     isPremium 
-                                                        ? "text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 hover:text-indigo-700" 
-                                                        : "text-zinc-400 bg-zinc-50 hover:text-zinc-600 cursor-not-allowed"
+                                                        ? "text-text-brand border-sc-purple-200 bg-bg-card-selected hover:bg-sc-purple-100 hover:text-sc-purple-800" 
+                                                        : "text-text-disabled bg-bg-input-disabled cursor-not-allowed border-border-default"
                                                 )}
                                             >
                                                 {isPremium ? <Sparkles className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
@@ -721,7 +721,7 @@ export default function JobWizardPage() {
                                         </div>
                                     </div>
 
-                                    <div className="border border-zinc-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-500 transition-all bg-white shadow-inner">
+                                    <div className="border border-border-input rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-border-focus-shadow focus-within:border-border-focus transition-all bg-bg-input shadow-inner">
                                         <MarkdownToolbar onFormat={handleFormat} onImageUpload={handleImageInsert} />
                                         <div
                                             id="job-description-editor"
@@ -731,18 +731,19 @@ export default function JobWizardPage() {
                                             onKeyDown={handleKeyDown}
                                             data-placeholder="Enter job responsibilities..."
                                             className={cn(
-                                                "min-h-[300px] bg-white border-none font-sans text-sm leading-relaxed p-4 outline-none text-zinc-800",
+                                                "min-h-[300px] bg-bg-input border-none font-sans text-sm leading-relaxed p-4 outline-none text-text-body",
                                                 "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
-                                                "[&_a]:text-indigo-650 [&_a]:underline [&_a]:cursor-pointer",
+                                                "[&_a]:text-text-link [&_a]:underline [&_a]:cursor-pointer",
                                                 "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1",
-                                                "[&_blockquote]:border-l-4 [&_blockquote]:border-indigo-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-zinc-500 [&_blockquote]:my-1",
-                                                "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-zinc-400 [&:empty]:before:pointer-events-none"
+                                                "[&_blockquote]:border-l-4 [&_blockquote]:border-border-brand [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-text-secondary [&_blockquote]:my-1",
+                                                "[&_p]:my-1",
+                                                "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-text-placeholder [&:empty]:before:pointer-events-none"
                                             )}
                                             style={{ whiteSpace: "pre-wrap" }}
                                         />
                                     </div>
                                     {wordCount > 1000 && (
-                                        <p className="text-xs text-red-500 flex items-center gap-1">
+                                        <p className="text-xs text-text-error flex items-center gap-1">
                                             <AlertCircle className="w-3 h-3" /> Description exceeds 1000 words limit.
                                         </p>
                                     )}
@@ -761,21 +762,21 @@ export default function JobWizardPage() {
                             >
                                 {/* APPLY METHOD */}
                                 <div className="space-y-4">
-                                    <Label className="text-zinc-500 font-semibold text-sm">How should people apply?</Label>
+                                    <Label className="text-text-secondary font-semibold text-sm">How should people apply?</Label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div
                                             onClick={() => setFormData({ ...formData, applyMethod: 'easy' })}
-                                            className={cn("p-4 border rounded-xl cursor-pointer transition-all", formData.applyMethod === 'easy' ? "border-indigo-600 bg-indigo-50/50" : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100")}
+                                            className={cn("p-4 border rounded-xl cursor-pointer transition-all", formData.applyMethod === 'easy' ? "border-border-brand bg-bg-card-selected shadow-sc-xs" : "border-border-default bg-bg-secondary-panel hover:bg-bg-sidebar-hover")}
                                         >
-                                            <div className="flex items-center gap-3 font-bold text-zinc-800 mb-1"><Zap className="w-4 h-4 text-indigo-650 fill-indigo-100" /> Easy Apply</div>
-                                            <p className="text-xs text-zinc-500">Candidates apply directly on SkilledCore.</p>
+                                            <div className="flex items-center gap-3 font-bold text-text-heading mb-1"><Zap className="w-4 h-4 text-text-brand fill-sc-purple-100" /> Easy Apply</div>
+                                            <p className="text-xs text-text-secondary">Candidates apply directly on SkilledCore.</p>
                                         </div>
                                         <div
                                             onClick={() => setFormData({ ...formData, applyMethod: 'external' })}
-                                            className={cn("p-4 border rounded-xl cursor-pointer transition-all", formData.applyMethod === 'external' ? "border-indigo-600 bg-indigo-50/50" : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100")}
+                                            className={cn("p-4 border rounded-xl cursor-pointer transition-all", formData.applyMethod === 'external' ? "border-border-brand bg-bg-card-selected shadow-sc-xs" : "border-border-default bg-bg-secondary-panel hover:bg-bg-sidebar-hover")}
                                         >
-                                            <div className="flex items-center gap-3 font-bold text-zinc-800 mb-1"><Globe className="w-4 h-4 text-indigo-655" /> External Link</div>
-                                            <p className="text-xs text-zinc-500">Redirect candidates to your career site.</p>
+                                            <div className="flex items-center gap-3 font-bold text-text-heading mb-1"><Globe className="w-4 h-4 text-text-brand" /> External Link</div>
+                                            <p className="text-xs text-text-secondary">Redirect candidates to your career site.</p>
                                         </div>
                                     </div>
 
@@ -785,28 +786,28 @@ export default function JobWizardPage() {
                                 </div>
 
                                 {/* SCREENING */}
-                                <div className="space-y-4 pt-6 border-t border-zinc-100">
+                                <div className="space-y-4 pt-6 border-t border-border-subtle">
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-zinc-500 font-semibold text-sm">Screening Questions (Deal Breakers)</Label>
-                                        <Button type="button" onClick={addQuestion} size="sm" variant="ghost" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"><PlusCircle className="w-4 h-4 mr-2" /> Add</Button>
+                                        <Label className="text-text-secondary font-semibold text-sm">Screening Questions (Deal Breakers)</Label>
+                                        <Button type="button" onClick={addQuestion} size="sm" variant="ghost" className="text-text-brand hover:text-text-brand-hover hover:bg-sc-purple-50"><PlusCircle className="w-4 h-4 mr-2" /> Add</Button>
                                     </div>
 
                                     {formData.questions.map((q, idx) => (
-                                        <div key={q.id} className="flex gap-4 items-start bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 shadow-sm">
-                                            <span className="text-zinc-400 pt-3 font-mono font-bold">{idx + 1}.</span>
+                                        <div key={q.id} className="flex gap-4 items-start bg-bg-secondary-panel p-4 rounded-xl border border-border-default shadow-sc-xs">
+                                            <span className="text-text-tertiary pt-3 font-mono font-bold">{idx + 1}.</span>
                                             <div className="flex-1 space-y-3">
                                                 <Input
                                                     value={q.text}
                                                     onChange={(e) => updateQuestion(q.id, 'text', e.target.value)}
                                                     placeholder="e.g. Do you have a valid working visa?"
-                                                    className="bg-white border-zinc-200 text-zinc-800"
+                                                    className="bg-bg-input border-border-input text-text-body focus:border-border-focus focus:ring-border-focus-shadow"
                                                 />
                                                 <div className="flex items-center gap-2">
                                                     <Switch
                                                         checked={q.mustHave}
                                                         onCheckedChange={(c) => updateQuestion(q.id, 'mustHave', c)}
                                                     />
-                                                    <span className={cn("text-xs font-semibold", q.mustHave ? "text-red-650" : "text-zinc-500")}>
+                                                    <span className={cn("text-xs font-semibold", q.mustHave ? "text-text-error" : "text-text-secondary")}>
                                                         {q.mustHave ? "Must-have qualification (Deal Breaker)" : "Nice to have"}
                                                     </span>
                                                 </div>
@@ -814,7 +815,7 @@ export default function JobWizardPage() {
                                             <button 
                                                 type="button" 
                                                 onClick={() => setFormData(p => ({ ...p, questions: p.questions.filter(qi => qi.id !== q.id) }))} 
-                                                className="text-zinc-450 hover:text-red-500 p-1.5 transition-colors"
+                                                className="text-text-secondary hover:text-text-error p-1.5 transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
@@ -835,22 +836,22 @@ export default function JobWizardPage() {
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
-                                        <Label className="text-zinc-500 font-semibold text-sm">Pay Range</Label>
+                                        <Label className="text-text-secondary font-semibold text-sm">Pay Range</Label>
                                         <div className="flex gap-2 items-center">
                                             <FloatingInput label="Min" value={formData.minPay} onChange={e => setFormData({ ...formData, minPay: e.target.value })} type="number" />
-                                            <span className="text-zinc-400 font-bold">-</span>
+                                            <span className="text-text-tertiary font-bold">-</span>
                                             <FloatingInput label="Max" value={formData.maxPay} onChange={e => setFormData({ ...formData, maxPay: e.target.value })} type="number" />
                                         </div>
                                     </div>
                                     <div className="space-y-4">
-                                        <Label className="text-zinc-500 font-semibold text-sm">Pay Period</Label>
-                                        <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200 h-14 items-center">
+                                        <Label className="text-text-secondary font-semibold text-sm">Pay Period</Label>
+                                        <div className="flex bg-bg-secondary-panel p-1 rounded-xl border border-border-default h-14 items-center">
                                             {['Hourly', 'Yearly'].map(p => (
                                                 <button
                                                     key={p}
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, payPeriod: p })}
-                                                    className={cn("flex-1 h-full rounded-lg text-sm font-bold transition-all", formData.payPeriod === p ? "bg-white text-indigo-600 shadow-sm border border-zinc-200/50" : "text-zinc-500 hover:text-zinc-700")}
+                                                    className={cn("flex-1 h-full rounded-lg text-sm font-bold transition-all", formData.payPeriod === p ? "bg-bg-card text-text-brand shadow-sc-xs border border-border-default" : "text-text-secondary hover:text-text-body")}
                                                 >
                                                     {p}
                                                 </button>
@@ -859,8 +860,8 @@ export default function JobWizardPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-200/80 shadow-inner">
-                                    <Label className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold mb-4 block">Feed Preview</Label>
+                                <div className="bg-bg-secondary-panel p-6 rounded-2xl border border-border-default shadow-inner">
+                                    <Label className="text-text-tertiary uppercase tracking-widest text-[10px] font-bold mb-4 block">Feed Preview</Label>
                                     <JobCard job={previewJob} index={0} />
                                 </div>
                             </motion.div>
@@ -872,24 +873,24 @@ export default function JobWizardPage() {
                 {/* CONFIRMATION MODAL */}
                 <AnimatePresence>
                     {showConfirmRewrite && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-overlay backdrop-blur-sm">
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white border border-zinc-200/80 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+                                className="bg-bg-modal border border-border-modal rounded-2xl p-6 max-w-sm w-full shadow-sc-modal"
                             >
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-indigo-50 rounded-full">
-                                        <Sparkles className="w-6 h-6 text-indigo-600" />
+                                    <div className="p-3 bg-sc-purple-50 rounded-full">
+                                        <Sparkles className="w-6 h-6 text-text-brand" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-zinc-950">Neural Rewrite</h3>
-                                        <p className="text-xs text-zinc-500">AI Enhancement</p>
+                                        <h3 className="text-lg font-bold text-text-heading">Neural Rewrite</h3>
+                                        <p className="text-xs text-text-secondary">AI Enhancement</p>
                                     </div>
                                 </div>
 
-                                <p className="text-zinc-600 text-sm mb-6 leading-relaxed">
+                                <p className="text-text-secondary text-sm mb-6 leading-relaxed">
                                     {userPlan === 'ULTRA' 
                                         ? "This action will rewrite and optimize your job description using advanced AI models. (Free with Ultra Plan)"
                                         : "This action will consume 1 Credit to rewrite and optimize your job description using advanced AI models."
@@ -900,13 +901,13 @@ export default function JobWizardPage() {
                                     <Button
                                         onClick={() => setShowConfirmRewrite(false)}
                                         variant="ghost"
-                                        className="flex-1 hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950"
+                                        className="flex-1 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading"
                                     >
                                         Cancel
                                     </Button>
                                     <Button
                                         onClick={confirmAIRewrite}
-                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                                        className="flex-1 bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse font-bold"
                                     >
                                         {userPlan === 'ULTRA' ? "Confirm (Free)" : "Confirm (-1 Credit)"}
                                     </Button>
@@ -917,13 +918,13 @@ export default function JobWizardPage() {
                 </AnimatePresence>
 
                 {/* FOOTER ACTIONS */}
-                <div className="mt-12 flex justify-between items-center border-t border-zinc-100 pt-6">
+                <div className="mt-12 flex justify-between items-center border-t border-border-subtle pt-6">
                     <Button
                         type="button"
                         onClick={prevStep}
                         variant="ghost"
                         disabled={currentStep === 1}
-                        className="text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 font-semibold"
+                        className="text-text-secondary hover:text-text-heading hover:bg-bg-sidebar-hover font-semibold"
                     >
                         <ChevronLeft className="w-4 h-4 mr-2" /> Back
                     </Button>
@@ -932,7 +933,7 @@ export default function JobWizardPage() {
                         <Button 
                             type="button"
                             onClick={nextStep} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md hover:shadow-lg active:scale-95 duration-100 px-8 rounded-xl border-none"
+                            className="bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse font-bold shadow-sc-md hover:shadow-sc-lg active:scale-95 duration-100 px-8 rounded-xl border-none"
                         >
                             Next Step <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
@@ -941,7 +942,7 @@ export default function JobWizardPage() {
                             type="button"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-[0_4px_14px_rgba(99,102,241,0.3)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.4)] px-8 rounded-xl border-none active:scale-95 duration-100"
+                            className="bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse font-bold tracking-wide shadow-sc-md hover:shadow-sc-lg px-8 rounded-xl border-none active:scale-95 duration-100"
                         >
                             {isSubmitting ? "Launching..." : "Post Job (1 Credit)"}
                         </Button>

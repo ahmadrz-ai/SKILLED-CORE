@@ -53,24 +53,24 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
 
             {/* Left Sidebar: Filters/Tabs */}
             <div className="space-y-4">
-                <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 sticky top-24">
-                    <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-3">Filters</h3>
+                <div className="bg-bg-secondary-panel border border-border-default rounded-xl p-4 sticky top-24">
+                    <h3 className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-3">Filters</h3>
                     <div className="space-y-1">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-bg-sidebar-active text-text-sidebar-active border border-border-selected' : 'text-text-secondary hover:bg-bg-sidebar-hover hover:text-text-heading'}`}
                         >
                             All Results
                         </button>
                         <button
                             onClick={() => setActiveTab('people')}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'people' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'people' ? 'bg-bg-sidebar-active text-text-sidebar-active border border-border-selected' : 'text-text-secondary hover:bg-bg-sidebar-hover hover:text-text-heading'}`}
                         >
                             People
                         </button>
                         <button
                             onClick={() => setActiveTab('posts')}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'posts' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'posts' ? 'bg-bg-sidebar-active text-text-sidebar-active border border-border-selected' : 'text-text-secondary hover:bg-bg-sidebar-hover hover:text-text-heading'}`}
                         >
                             Posts
                         </button>
@@ -84,26 +84,26 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
                 {/* People Section */}
                 {(activeTab === 'all' || activeTab === 'people') && localPeople.length > 0 && (
                     <div className="space-y-4">
-                        {activeTab === 'all' && <h2 className="text-white font-bold text-lg">People</h2>}
+                        {activeTab === 'all' && <h2 className="text-text-heading font-bold text-lg">People</h2>}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {localPeople.map((person) => (
-                                <div key={person.id} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 flex items-center gap-4 hover:bg-zinc-900 transition-colors">
+                                <div key={person.id} className="bg-bg-card border border-border-card rounded-xl p-4 flex items-center gap-4 hover:bg-bg-card-hover transition-colors shadow-sc-card">
                                     <Link href={`/profile/${person.username || person.id}`}>
-                                        <Avatar className="w-16 h-16 border border-white/10">
+                                        <Avatar className="w-16 h-16 border border-border-default">
                                             <AvatarImage src={person.image || ""} />
                                             <AvatarFallback>{person.name?.charAt(0) || 'U'}</AvatarFallback>
                                         </Avatar>
                                     </Link>
                                     <div className="flex-1 min-w-0">
                                         <Link href={`/profile/${person.username || person.id}`} className="hover:underline">
-                                            <h3 className="font-bold text-white truncate flex items-center gap-2">
+                                            <h3 className="font-bold text-text-heading truncate flex items-center gap-2">
                                                 {person.name}
                                                 {person.plan === 'ULTRA' && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
                                             </h3>
                                         </Link>
-                                        <p className="text-zinc-500 text-xs truncate">{person.headline || "No headline"}</p>
+                                        <p className="text-text-secondary text-xs truncate">{person.headline || "No headline"}</p>
                                         {person.role === 'RECRUITER' && (
-                                            <span className="inline-block mt-1 text-[10px] bg-violet-500/10 text-violet-400 px-1.5 py-0.5 rounded border border-violet-500/20 uppercase font-bold tracking-wider">
+                                            <span className="inline-block mt-1 text-[10px] bg-bg-badge-new text-text-badge-new px-1.5 py-0.5 rounded border border-border-selected uppercase font-bold tracking-wider">
                                                 Recruiter
                                             </span>
                                         )}
@@ -113,8 +113,8 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
                                             size="sm"
                                             variant={person.isFollowing ? "outline" : "default"}
                                             className={person.isFollowing
-                                                ? "border-white/10 text-zinc-400 hover:text-white hover:bg-white/5"
-                                                : "bg-violet-600 hover:bg-violet-500 text-white"
+                                                ? "border-border-default text-text-secondary hover:text-text-heading hover:bg-bg-card-hover"
+                                                : "bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse"
                                             }
                                             onClick={() => handleFollow(person.id, person.isFollowing || false)}
                                         >
@@ -130,7 +130,7 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
                 {/* Posts Section */}
                 {(activeTab === 'all' || activeTab === 'posts') && posts.length > 0 && (
                     <div className="space-y-4">
-                        {activeTab === 'all' && <h2 className="text-white font-bold text-lg mt-4">Posts</h2>}
+                        {activeTab === 'all' && <h2 className="text-text-heading font-bold text-lg mt-4">Posts</h2>}
                         <div className="space-y-4">
                             {posts.map((post) => (
                                 <PostCard key={post.id} post={post} />
@@ -141,19 +141,19 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
 
                 {/* Empty States */}
                 {activeTab === 'people' && localPeople.length === 0 && (
-                    <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-zinc-900/30">
-                        <p className="text-zinc-500">No people found matching "{query}"</p>
+                    <div className="text-center py-12 border border-dashed border-border-default rounded-xl bg-bg-secondary-panel">
+                        <p className="text-text-secondary">No people found matching "{query}"</p>
                     </div>
                 )}
                 {activeTab === 'posts' && posts.length === 0 && (
-                    <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-zinc-900/30">
-                        <p className="text-zinc-500">No posts found matching "{query}"</p>
+                    <div className="text-center py-12 border border-dashed border-border-default rounded-xl bg-bg-secondary-panel">
+                        <p className="text-text-secondary">No posts found matching "{query}"</p>
                     </div>
                 )}
                 {activeTab === 'all' && posts.length === 0 && localPeople.length === 0 && (
                     <div className="text-center py-20">
-                        <h2 className="text-xl font-bold text-white mb-2">No Results Found</h2>
-                        <p className="text-zinc-500">We couldn't find anything for "{query}". Try a different keyword.</p>
+                        <h2 className="text-xl font-bold text-text-heading mb-2">No Results Found</h2>
+                        <p className="text-text-secondary">We couldn't find anything for "{query}". Try a different keyword.</p>
                     </div>
                 )}
 

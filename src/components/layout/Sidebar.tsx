@@ -11,7 +11,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   Home, Users, Briefcase, MessageSquare, BarChart, CreditCard,
   MoreHorizontal, LogOut, Settings, PlusCircle, Sparkles, DollarSign,
-  BookOpen, MessageSquarePlus, Bell
+  BookOpen, MessageSquarePlus, Bell, LifeBuoy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +36,7 @@ const NAV_ITEMS = [
   { label: "Messages", icon: MessageSquare, path: "/messages" },
   { label: "Analytics", icon: BarChart, path: "/analytics-dashboard" },
   { label: "Credits", icon: CreditCard, path: "/credits" },
+  { label: "Support", icon: LifeBuoy, path: "/help" },
 ];
 
 interface SidebarProps {
@@ -73,10 +74,10 @@ export function Sidebar({ counts, plan }: SidebarProps) {
   };
 
   return (
-    <aside className="hidden lg:flex w-64 h-screen flex-col bg-white border-r border-[#E5E7EB] fixed left-0 top-0 z-50">
+    <aside className="hidden lg:flex w-64 h-screen flex-col bg-bg-sidebar border-r border-border-sidebar fixed left-0 top-0 z-50">
 
       {/* BRAND */}
-      <div className="h-16 flex items-center px-5 border-b border-[#E5E7EB] flex-shrink-0">
+      <div className="h-16 flex items-center px-5 border-b border-border-sidebar flex-shrink-0">
         <Link href="/feed" className="flex items-center gap-2.5 group">
           <Image
             src="/logo.png"
@@ -86,8 +87,8 @@ export function Sidebar({ counts, plan }: SidebarProps) {
             className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
           />
           <div className="flex flex-col leading-none">
-            <span className="text-[#111827] font-bold text-sm tracking-tight">SkilledCore</span>
-            <span className="text-[#9CA3AF] text-[10px] font-medium">Talent Intelligence</span>
+            <span className="text-text-heading font-bold text-sm tracking-tight">SkilledCore</span>
+            <span className="text-text-secondary text-[10px] font-medium">Talent Intelligence</span>
           </div>
         </Link>
       </div>
@@ -131,20 +132,20 @@ export function Sidebar({ counts, plan }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative",
                 isActive
-                  ? "bg-[#EEF2FF] text-[#4F46E5]"
-                  : "text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
+                  ? "bg-bg-sidebar-active text-text-sidebar-active"
+                  : "text-text-sidebar-inactive hover:bg-bg-sidebar-hover hover:text-text-sidebar-hover"
               )}
             >
               {/* Active indicator bar */}
               {isActive && (
-                <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-[#6366F1]" />
+                <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-sc-purple-600" />
               )}
 
               <div className="relative flex-shrink-0">
                 <item.icon
                   className={cn(
                     "w-4 h-4 transition-colors",
-                    isActive ? "text-[#6366F1]" : "text-[#9CA3AF] group-hover:text-[#6B7280]"
+                    isActive ? "text-sc-purple-600" : "text-sc-gray-400 group-hover:text-sc-gray-600"
                   )}
                 />
                 {showHighlight && (
@@ -156,28 +157,28 @@ export function Sidebar({ counts, plan }: SidebarProps) {
 
               {/* BADGES */}
               {(item.label === "Network" || item.label === "Messages" || item.label === "Notifications") && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#EF4444] px-1 text-[10px] font-bold text-white">
+                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-red-650 px-1 text-[10px] font-bold text-white">
                   {badgeValue}
                 </span>
               )}
               {item.label === "Jobs" && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#6366F1] px-1 text-[10px] font-bold text-white">
+                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[10px] font-bold text-white">
                   {badgeValue}
                 </span>
               )}
               {item.label === "Learning" && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#8B5CF6] px-1 text-[10px] font-bold text-white">
+                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-500 px-1 text-[10px] font-bold text-white">
                   {badgeValue}
                 </span>
               )}
               {item.label === "Salary" && badgeValue && (
-                <span className="h-2 w-2 rounded-full bg-[#10B981] flex-shrink-0" />
+                <span className="h-2 w-2 rounded-full bg-sc-green-600 flex-shrink-0" />
               )}
               {item.label === "Analytics" && badgeValue && (
-                <span className="h-2 w-2 rounded-full bg-[#3B82F6] flex-shrink-0" />
+                <span className="h-2 w-2 rounded-full bg-sc-blue-500 flex-shrink-0" />
               )}
               {item.label === "Credits" && badgeValue === "low" && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#7C3AED] px-1 text-[10px] font-bold text-white">
+                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[10px] font-bold text-white">
                   !
                 </span>
               )}
@@ -187,50 +188,50 @@ export function Sidebar({ counts, plan }: SidebarProps) {
       </nav>
 
       {/* USER PROFILE */}
-      <div className="p-3 border-t border-[#E5E7EB] flex-shrink-0">
+      <div className="p-3 border-t border-border-sidebar flex-shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-[#F3F4F6] transition-colors group">
-              <Avatar className="h-8 w-8 border border-[#E5E7EB] flex-shrink-0">
+            <button className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-bg-sidebar-hover transition-colors group">
+              <Avatar className="h-8 w-8 border border-border-sidebar flex-shrink-0">
                 <AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
-                <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-xs font-bold">
+                <AvatarFallback className="bg-bg-sidebar-active text-text-brand text-xs font-bold">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-semibold text-[#111827] truncate">{user?.name || "User"}</p>
+                <p className="text-sm font-semibold text-text-heading truncate">{user?.name || "User"}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {(user as any)?.role && (
-                    <span className="text-[10px] font-medium text-[#9CA3AF] uppercase tracking-wide">
+                    <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wide">
                       {(user as any).role}
                     </span>
                   )}
                   <PlanBadge plan={plan} />
                 </div>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
+              <MoreHorizontal className="w-4 h-4 text-icon-default flex-shrink-0" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
             side="top"
-            className="w-52 bg-white border-[#E5E7EB] text-[#374151] shadow-lg"
+            className="w-52 bg-bg-dropdown border-border-dropdown text-text-body shadow-sc-dropdown"
           >
-            <DropdownMenuLabel className="text-[#111827] font-semibold">My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#E5E7EB]" />
-            <DropdownMenuItem asChild className="hover:bg-[#F3F4F6] focus:bg-[#F3F4F6] cursor-pointer text-[#374151]">
+            <DropdownMenuLabel className="text-text-heading font-semibold">My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border-subtle" />
+            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body">
               <Link href="/profile/me">
-                <Users className="w-4 h-4 mr-2 text-[#9CA3AF]" /> Profile
+                <Users className="w-4 h-4 mr-2 text-icon-default" /> Profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="hover:bg-[#F3F4F6] focus:bg-[#F3F4F6] cursor-pointer text-[#374151]">
+            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body">
               <Link href="/settings">
-                <Settings className="w-4 h-4 mr-2 text-[#9CA3AF]" /> Settings
+                <Settings className="w-4 h-4 mr-2 text-icon-default" /> Settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#E5E7EB]" />
+            <DropdownMenuSeparator className="bg-border-subtle" />
             <DropdownMenuItem
-              className="text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] cursor-pointer"
+              className="text-text-error hover:text-text-error hover:bg-sc-red-50 focus:bg-sc-red-50 cursor-pointer"
               onClick={() => logout()}
             >
               <LogOut className="w-4 h-4 mr-2" /> Log out

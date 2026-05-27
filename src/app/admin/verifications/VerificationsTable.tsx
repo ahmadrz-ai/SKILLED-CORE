@@ -74,16 +74,27 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                                     </span>
                                 </td>
                                 <td className="p-4">
-                                    <a
-                                        href={req.documentUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-violet-400 hover:text-violet-300 hover:underline"
-                                    >
-                                        <FileText className="w-4 h-4" />
-                                        View Document
-                                        <ExternalLink className="w-3 h-3" />
-                                    </a>
+                                    {req.type === 'ROLE_CHANGE' ? (
+                                        <a
+                                            href={`mailto:${req.documentUrl}`}
+                                            className="flex items-center gap-2 text-violet-400 hover:text-violet-300 hover:underline font-mono text-xs"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            <span>Work Email: {req.documentUrl}</span>
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    ) : (
+                                        <a
+                                            href={req.user.username ? `/profile/${req.user.username}` : '#'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-violet-400 hover:text-violet-300 hover:underline"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            <span>View Profile</span>
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    )}
                                 </td>
                                 <td className="p-4 text-right space-x-2">
                                     <button

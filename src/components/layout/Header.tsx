@@ -57,8 +57,8 @@ export function Header({ credits = 0 }: HeaderProps) {
 
     return (
       <div key={segment + index} className="flex items-center gap-1.5">
-        {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#D1D5DB] flex-shrink-0" />}
-        <span className={cn("text-sm", isLast ? "text-[#111827] font-semibold" : "text-[#9CA3AF]")}>
+        {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-sc-gray-300 flex-shrink-0" />}
+        <span className={cn("text-sm", isLast ? "text-text-heading font-semibold" : "text-text-secondary")}>
           {label}
         </span>
       </div>
@@ -66,24 +66,24 @@ export function Header({ credits = 0 }: HeaderProps) {
   });
 
   return (
-    <header className="sticky top-0 z-40 h-16 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-4 lg:px-6">
+    <header className="sticky top-0 z-40 h-16 bg-bg-topbar border-b border-border-topbar flex items-center justify-between px-4 lg:px-6">
 
       {/* Left: Mobile Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3">
-        <button className="lg:hidden p-2 -ml-1 text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] rounded-md transition-colors">
+        <button className="lg:hidden p-2 -ml-1 text-text-secondary hover:text-text-sidebar-hover hover:bg-bg-sidebar-hover rounded-md transition-colors">
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Breadcrumbs — desktop */}
         <div className="hidden md:flex items-center gap-1.5">
           {breadcrumbs.length > 0 ? breadcrumbs : (
-            <span className="text-sm font-semibold text-[#111827]">Home</span>
+            <span className="text-sm font-semibold text-text-heading">Home</span>
           )}
         </div>
 
         {/* Page title — mobile */}
         <div className="md:hidden">
-          <span className="text-sm font-bold text-[#111827]">
+          <span className="text-sm font-bold text-text-heading">
             {PAGE_NAMES[segments[segments.length - 1]] ||
               segments[segments.length - 1]?.replace(/-/g, " ") ||
               "Home"}
@@ -100,7 +100,7 @@ export function Header({ credits = 0 }: HeaderProps) {
       <div className="flex items-center gap-2">
         <a
           href="/feedback"
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#6B7280] hover:text-[#374151] transition-colors text-xs font-medium border border-[#E5E7EB]"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-body transition-colors text-xs font-medium border border-border-default"
         >
           <MessageSquarePlus className="w-3.5 h-3.5" />
           Feedback
@@ -109,9 +109,9 @@ export function Header({ credits = 0 }: HeaderProps) {
         <NotificationBell />
 
         {/* Credits */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#F3F4F6] border border-[#E5E7EB]">
-          <div className="w-2 h-2 rounded-full bg-[#6366F1] flex-shrink-0" />
-          <span className="text-xs font-semibold text-[#374151]">{credits} Credits</span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-bg-secondary-panel border border-border-default">
+          <div className="w-2 h-2 rounded-full bg-sc-purple-600 flex-shrink-0" />
+          <span className="text-xs font-semibold text-text-body-strong">{credits} Credits</span>
           <PaymentModal />
         </div>
       </div>
@@ -173,36 +173,36 @@ function SearchInput() {
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => { if (suggestions.users.length > 0 || suggestions.tags.length > 0) setIsOpen(true); }}
         placeholder="Search candidates, jobs, skills..."
-        className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg py-2 pl-9 pr-16 text-sm text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1] transition-all hover:bg-[#F3F4F6]"
+        className="w-full bg-bg-input border border-border-input rounded-lg py-2 pl-9 pr-16 text-sm text-text-body placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-border-focus/20 focus:border-border-focus transition-all hover:bg-bg-sidebar-hover"
         onKeyDown={(e) => { if (e.key === "Enter" && query.trim()) handleSearch(query); }}
       />
       <button
         onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-        className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5 items-center bg-white border border-[#E5E7EB] px-1.5 py-0.5 rounded text-[10px] text-[#9CA3AF] cursor-pointer hover:border-[#D1D5DB] transition-colors"
+        className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5 items-center bg-bg-card border border-border-default px-1.5 py-0.5 rounded text-[10px] text-text-secondary cursor-pointer hover:border-border-input-hover transition-colors"
       >
         <span>Ctrl</span>
         <span>K</span>
       </button>
 
       {isOpen && (suggestions.users.length > 0 || suggestions.tags.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#E5E7EB] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] overflow-hidden z-50 divide-y divide-[#F3F4F6]">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-bg-dropdown border border-border-dropdown rounded-xl shadow-sc-dropdown overflow-hidden z-50 divide-y divide-border-subtle">
 
           {suggestions.users.length > 0 && (
             <div className="p-2">
-              <h3 className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider px-2 mb-1">People</h3>
+              <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2 mb-1">People</h3>
               {suggestions.users.map((user) => (
                 <button
                   key={user.id}
                   onClick={() => { router.push(`/profile/${user.username || user.id}`); setIsOpen(false); }}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bg-sidebar-hover transition-colors text-left"
                 >
-                  <Avatar className="w-7 h-7 border border-[#E5E7EB]">
+                  <Avatar className="w-7 h-7 border border-border-default">
                     <AvatarImage src={user.image} />
-                    <AvatarFallback className="text-xs bg-[#EEF2FF] text-[#6366F1]">{user.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-bg-sidebar-active text-text-brand">{user.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#111827] truncate">{user.name}</p>
-                    <p className="text-[10px] text-[#9CA3AF] truncate">@{user.username}</p>
+                    <p className="text-xs font-semibold text-text-heading truncate">{user.name}</p>
+                    <p className="text-[10px] text-text-secondary truncate">@{user.username}</p>
                   </div>
                 </button>
               ))}
@@ -211,17 +211,17 @@ function SearchInput() {
 
           {suggestions.tags.length > 0 && (
             <div className="p-2">
-              <h3 className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider px-2 mb-1">Skills & Tags</h3>
+              <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2 mb-1">Skills & Tags</h3>
               {suggestions.tags.map((tag) => (
                 <button
                   key={tag}
                   onClick={() => handleSearch(`#${tag}`)}
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors text-left group"
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bg-sidebar-hover transition-colors text-left group"
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[#6366F1]">
+                  <div className="w-7 h-7 rounded-full bg-bg-sidebar-active flex items-center justify-center text-text-brand">
                     <Hash className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-sm text-[#374151] group-hover:text-[#111827]">#{tag}</span>
+                  <span className="text-sm text-text-body group-hover:text-text-heading">#{tag}</span>
                 </button>
               ))}
             </div>

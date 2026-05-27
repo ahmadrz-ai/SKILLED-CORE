@@ -87,13 +87,13 @@ export default function FeedbackPage() {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 pt-24 px-4 pb-20">
+        <div className="min-h-screen bg-slate-50 pt-24 px-4 pb-20">
             <div className="max-w-2xl mx-auto space-y-8">
                 <div className="text-center space-y-2">
-                    <h1 className="text-3xl font-heading font-black text-white tracking-tight">
-                        PROTOCOL <span className="text-violet-500">FEEDBACK</span>
+                    <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tight">
+                        PROTOCOL <span className="text-indigo-600">FEEDBACK</span>
                     </h1>
-                    <p className="text-zinc-500 font-mono text-sm max-w-md mx-auto">
+                    <p className="text-slate-500 font-medium text-sm max-w-md mx-auto">
                         Report anomalies or propose system upgrades. Your input optimizes the matrix.
                     </p>
                 </div>
@@ -101,20 +101,20 @@ export default function FeedbackPage() {
                 <motion.form
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 md:p-8 space-y-6 backdrop-blur-xl relative overflow-hidden"
+                    className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 space-y-6 shadow-sm relative overflow-hidden"
                     onSubmit={handleSubmit}
                 >
                     {/* Background Grid */}
                     <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
 
                     {/* Type Selector */}
-                    <div className="grid grid-cols-2 gap-4 p-1 bg-zinc-950/50 rounded-xl border border-white/5">
+                    <div className="grid grid-cols-2 gap-4 p-1 bg-slate-100 rounded-xl border border-slate-200">
                         <button
                             type="button"
                             onClick={() => setType('BUG')}
                             className={cn(
-                                "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all",
-                                type === 'BUG' ? "bg-red-500/10 text-red-500 border border-red-500/20" : "text-zinc-500 hover:text-white"
+                                "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all border",
+                                type === 'BUG' ? "bg-red-50 text-red-600 border-red-200" : "text-slate-500 border-transparent hover:text-slate-800"
                             )}
                         >
                             <Bug className="w-4 h-4" /> BUG REPORT
@@ -123,8 +123,8 @@ export default function FeedbackPage() {
                             type="button"
                             onClick={() => setType('SUGGESTION')}
                             className={cn(
-                                "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all",
-                                type === 'SUGGESTION' ? "bg-violet-500/10 text-violet-500 border border-violet-500/20" : "text-zinc-500 hover:text-white"
+                                "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all border",
+                                type === 'SUGGESTION' ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "text-slate-500 border-transparent hover:text-slate-800"
                             )}
                         >
                             <Lightbulb className="w-4 h-4" /> SUGGESTION
@@ -134,7 +134,7 @@ export default function FeedbackPage() {
                     {/* Severity (Only for Bugs) */}
                     {type === 'BUG' && (
                         <div className="space-y-3">
-                            <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Severity Level</label>
+                            <label className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">Severity Level</label>
                             <div className="grid grid-cols-4 gap-2">
                                     {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((level) => (
                                         <button
@@ -144,9 +144,11 @@ export default function FeedbackPage() {
                                             className={cn(
                                                 "py-2 text-xs font-bold rounded border transition-all",
                                                 severity === level
-                                                    ? level === 'CRITICAL' ? "bg-red-600 text-white border-red-600"
-                                                        : "bg-zinc-800 text-white border-white/20"
-                                                    : "bg-transparent text-zinc-600 border-zinc-800 hover:border-zinc-700"
+                                                    ? level === 'CRITICAL' ? "bg-red-600 text-white border-red-600 shadow-sm"
+                                                      : level === 'HIGH' ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                                      : level === 'MEDIUM' ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                                      : "bg-slate-800 text-white border-slate-800 shadow-sm"
+                                                    : "bg-transparent text-slate-600 border-slate-200 hover:border-slate-400"
                                             )}
                                         >
                                             {level}
@@ -163,20 +165,20 @@ export default function FeedbackPage() {
                             placeholder="Brief Title (e.g. Navigation Glitch on Mobile)"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-zinc-950/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 transition-colors"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors shadow-sm"
                         />
                         <textarea
                             rows={5}
                             placeholder="Detailed description... Steps to reproduce..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full bg-zinc-950/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none shadow-sm"
                         />
                     </div>
 
                     {/* Media Upload Section */}
                     <div className="space-y-3">
-                        <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Attach Media (Optional)</label>
+                        <label className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest">Attach Media (Optional)</label>
 
                         <input
                             type="file"
@@ -189,27 +191,27 @@ export default function FeedbackPage() {
                         {!uploadedFile ? (
                             <label
                                 htmlFor="media-upload"
-                                className="border border-dashed border-white/10 rounded-xl p-6 text-center text-zinc-600 hover:bg-white/5 hover:border-violet-500/30 transition-all cursor-pointer group block"
+                                className="border border-dashed border-slate-300 rounded-xl p-6 text-center text-slate-500 hover:bg-slate-50 hover:border-indigo-500/30 transition-all cursor-pointer group block"
                             >
-                                <Paperclip className="w-5 h-5 mx-auto mb-2 opacity-50 group-hover:opacity-100 group-hover:text-violet-400 transition-all" />
-                                <span className="text-xs font-mono block">ATTACH SCREENSHOT OR VIDEO</span>
-                                <span className="text-[10px] text-zinc-700 mt-1 block">Max 4MB • PNG, JPG, GIF, WebP, MP4, WebM</span>
+                                <Paperclip className="w-5 h-5 mx-auto mb-2 text-slate-400 group-hover:text-indigo-600 transition-all opacity-70 group-hover:opacity-100" />
+                                <span className="text-xs font-bold block">ATTACH SCREENSHOT OR VIDEO</span>
+                                <span className="text-[10px] text-slate-400 mt-1 block">Max 4MB • PNG, JPG, GIF, WebP, MP4, WebM</span>
                             </label>
                         ) : (
-                            <div className="border border-white/10 rounded-xl p-4 bg-zinc-950/50 flex items-center justify-between">
+                            <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-violet-500/10 rounded-lg flex items-center justify-center">
-                                        <Paperclip className="w-5 h-5 text-violet-400" />
+                                    <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-center">
+                                        <Paperclip className="w-5 h-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-white font-medium">{uploadedFile.name}</p>
-                                        <p className="text-xs text-zinc-500">{(uploadedFile.size / 1024).toFixed(2)} KB</p>
+                                        <p className="text-sm text-slate-900 font-bold">{uploadedFile.name}</p>
+                                        <p className="text-xs text-slate-500 font-medium">{(uploadedFile.size / 1024).toFixed(2)} KB</p>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={handleRemoveFile}
-                                    className="text-zinc-500 hover:text-red-400 transition-colors"
+                                    className="text-slate-400 hover:text-red-500 transition-colors"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -222,11 +224,11 @@ export default function FeedbackPage() {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? "SUBMITTING..." : (
                             <>
-                                SUBMIT FEEDBACK <Send className="w-4 h-4" />
+                                SUBMIT FEEDBACK <Send className="w-4 h-4 text-white" />
                             </>
                         )}
                     </button>
