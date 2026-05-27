@@ -33,6 +33,7 @@ import {
 import { InstagramPoll } from "./InstagramPoll";
 import { ReportPostModal } from "./ReportPostModal";
 import { SharePostModal } from "./SharePostModal";
+import { Tag as SharedTag } from "@/components/ui/tag";
 
 export interface PostProps {
     id: string;
@@ -1006,9 +1007,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3 mb-2">
                         {post.tags.map((tag, i) => (
-                            <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}
-                                className="text-[#6366F1] hover:text-[#4F46E5] hover:underline text-sm font-medium transition-colors">
-                                #{tag.replace('#', '')}
+                            <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}>
+                                <SharedTag className="hover:bg-sc-purple-100 transition-colors cursor-pointer">
+                                    #{tag.replace('#', '')}
+                                </SharedTag>
                             </Link>
                         ))}
                     </div>

@@ -5,8 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { FollowListDialog } from "@/components/profile/FollowListDialog";
+import { Tag as SharedTag } from "@/components/ui/tag";
 import ProfileEditModals from '@/components/profile/ProfileEditModals';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleFollow } from '@/app/(app)/feed/actions';
@@ -646,15 +649,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     const isVerified = skill.includes("(Verified)");
                                                     const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "");
                                                     return (
-                                                        <div key={i} className={cn(
-                                                            "px-3 py-1.5 rounded-md text-xs font-mono font-semibold border flex items-center gap-2",
-                                                            isVerified
-                                                                ? "bg-indigo-50 text-indigo-755 border-indigo-200 shadow-[0_0_10px_rgba(99,102,241,0.05)]"
-                                                                : "bg-slate-100 text-slate-700 border-slate-200"
-                                                        )}>
+                                                        <SharedTag 
+                                                            key={i} 
+                                                            variant={isVerified ? "branded" : "neutral"}
+                                                            className="flex items-center gap-2"
+                                                        >
                                                             {cleanSkill}
-                                                            {isVerified && <CheckCircle2 className="w-3 h-3 text-indigo-500" />}
-                                                        </div>
+                                                            {isVerified && <CheckCircle2 className="w-3 h-3" />}
+                                                        </SharedTag>
                                                     );
                                                 })}
                                                 {parsedSkills.length === 0 && <p className="text-slate-400 text-xs italic">No skills listed.</p>}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { User, MapPin, GraduationCap, DollarSign, Star, MessageSquare, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tag as SharedTag } from '@/components/ui/tag';
 
 export interface TalentProps {
     id: string;
@@ -77,9 +78,9 @@ export default function TalentCard({ talent, index }: { talent: TalentProps; ind
                 <div className="p-6 flex-1">
                     <div className="flex flex-wrap gap-2">
                         {talent.skills.map((skill, i) => (
-                            <Badge key={i} variant="outline" className="bg-zinc-900/50 border-white/10 text-zinc-400 hover:text-teal-400 hover:border-teal-500/30 transition-colors">
+                            <SharedTag key={i} className="hover:bg-sc-purple-100 transition-colors cursor-pointer">
                                 {skill}
-                            </Badge>
+                            </SharedTag>
                         ))}
                     </div>
                 </div>

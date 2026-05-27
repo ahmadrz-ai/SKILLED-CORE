@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Clock, Building2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tag as SharedTag } from '@/components/ui/tag';
 
 export interface JobProps {
     id: string;
@@ -69,9 +70,9 @@ export default function JobCard({ job, index, onApply }: JobCardProps) {
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2">
                         {job.tags.map((tag, i) => (
-                            <div key={i} className="px-2 py-1 rounded-md text-xs font-mono font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                            <SharedTag key={i} className="hover:bg-sc-purple-100 transition-colors cursor-pointer">
                                 {tag}
-                            </div>
+                            </SharedTag>
                         ))}
                     </div>
                 </div>
