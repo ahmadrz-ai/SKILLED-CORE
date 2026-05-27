@@ -2,17 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function LandingHero() {
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
     <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}>
       {/* Subtle mesh background */}
@@ -88,7 +81,7 @@ export function LandingHero() {
             </p>
           </motion.div>
 
-          {/* CTAs */}
+          {/* CTAs — Left: Hire Talent (outlined secondary) | Right: Find Opportunities (primary, white on blue) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -96,20 +89,20 @@ export function LandingHero() {
             className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6"
           >
             <Link
-              href="/register?role=candidate"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95 duration-100"
-              style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)" }}
+              href="/register?role=recruiter"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl border-2 text-base transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+              style={{ borderColor: "#4F46E5", color: "#4F46E5", background: "transparent" }}
             >
-              Create Your Profile — It's Free
+              Hire Talent
+            </Link>
+            <Link
+              href="/register?role=candidate"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95"
+              style={{ background: "#4F46E5", color: "#FFFFFF" }}
+            >
+              Find Opportunities
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <button
-              onClick={() => scrollToSection("apply-pilot")}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl border border-zinc-200 text-base bg-white hover:bg-zinc-50 transition-all shadow-sm active:scale-95 duration-100 text-zinc-700"
-            >
-              Apply as Design Partner
-              <ChevronDown className="w-4 h-4" />
-            </button>
           </motion.div>
 
           <motion.p

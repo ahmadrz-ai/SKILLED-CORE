@@ -122,8 +122,8 @@ export function RubricBuilder() {
         return () => clearInterval(interval);
     }, [selectedCategory]);
 
-    const scrollToApply = () => {
-        const el = document.getElementById("apply-pilot");
+    const scrollToFeatures = () => {
+        const el = document.getElementById("features");
         if (el) el.scrollIntoView({ behavior: "smooth" });
     };
 
@@ -197,10 +197,10 @@ export function RubricBuilder() {
                                 This live scorecard telemetry is independent and 100% free of demographic bias proxies, fully GDPR Article 22 compliant.
                             </p>
                             <button
-                                onClick={scrollToApply}
+                                onClick={scrollToFeatures}
                                 className="w-full bg-indigo-600 hover:bg-indigo-750 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1.5 text-xs shadow-sm hover:shadow active:scale-95 duration-100 border-none transition-all"
                             >
-                                See how your full team would evaluate
+                                Explore Platform Features
                                 <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                         </div>
@@ -270,7 +270,7 @@ export function RubricBuilder() {
                                         >
                                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Observable Inferences & Evidences</p>
                                             <div className="space-y-1.5 pl-2 border-l border-indigo-500/20">
-                                                {currentTrace.inferences.map((inf, idx) => (
+                                                {currentTrace?.inferences?.map((inf, idx) => (
                                                     <p key={idx} className="text-zinc-400 text-xs flex items-start gap-2">
                                                         <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
                                                         <span>{inf}</span>
@@ -286,12 +286,12 @@ export function RubricBuilder() {
                             <div className="bg-zinc-900 border-t border-zinc-800 p-4 shrink-0 flex items-center justify-between">
                                 <div>
                                     <p className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest font-bold">Verification Index</p>
-                                    <p className="text-xs font-bold text-white mt-0.5">{currentTrace.metric}</p>
+                                    <p className="text-xs font-bold text-white mt-0.5">{currentTrace?.metric}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest font-bold">Trace Score</p>
                                     <div className="flex items-baseline gap-1.5 justify-end">
-                                        <span className="text-2xl font-black text-white font-mono">{currentTrace.score}%</span>
+                                        <span className="text-2xl font-black text-white font-mono">{currentTrace?.score ?? 0}%</span>
                                         <span className="text-[10px] text-emerald-450 font-bold font-mono">PASS</span>
                                     </div>
                                 </div>

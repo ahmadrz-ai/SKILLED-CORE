@@ -3,12 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { label: "Interactive Demo", href: "#rubric-builder" },
-  { label: "Apply for Pilot", href: "#apply-pilot" },
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#solutions" },
   { label: "Pricing", href: "#pricing" },
@@ -71,14 +70,14 @@ export function LandingNavbar() {
               Sign in
             </Link>
             <Link
-              href="#apply-pilot"
+              href="/register"
               className="px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
               style={{
-                background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                color: "#fff",
+                background: "#4F46E5",
+                color: "#FFFFFF",
               }}
             >
-              Apply for Pilot
+              Get Started
             </Link>
           </div>
 
@@ -112,12 +111,12 @@ export function LandingNavbar() {
                 Sign in
               </Link>
               <Link
-                href="#apply-pilot"
+                href="/register"
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-semibold text-white text-center rounded-lg transition-colors"
-                style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                className="block px-3 py-2.5 text-sm font-semibold text-center rounded-lg transition-colors"
+                style={{ background: "#4F46E5", color: "#FFFFFF" }}
               >
-                Apply for Pilot
+                Get Started
               </Link>
             </div>
           </div>

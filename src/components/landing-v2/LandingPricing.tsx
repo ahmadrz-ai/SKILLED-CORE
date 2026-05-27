@@ -6,53 +6,53 @@ import { Check, Zap } from "lucide-react";
 
 const PLANS = [
   {
-    name: "Developer Seat",
-    price: "Zero Cost",
-    period: "during pilot",
-    description: "For individual engineering managers looking to evaluate sandboxed execution rubrics.",
+    name: "Basic",
+    price: "Free",
+    period: "forever",
+    description: "For individual candidates looking to build their verified execution profile.",
     features: [
-      "1 custom sandbox rubric builder",
-      "Up to 5 active candidate traces",
-      "Direct EM telemetry metrics",
-      "Basic ATS pattern diagnostic",
+      "10 credits per month",
+      "Basic job search & applications",
+      "Standard candidate profile",
+      "Community feed access",
       "Standard support channels",
     ],
-    cta: "Apply for Pilot",
-    href: "#apply-pilot",
+    cta: "Get Started Free",
+    href: "/register?role=candidate",
     popular: false,
   },
   {
-    name: "Team Scale Pilot",
-    price: "Zero Cost",
-    period: "during pilot",
-    description: "For growing engineering teams looking to co-define precision hiring benchmarks.",
+    name: "Pro",
+    price: "$5",
+    period: "/month",
+    description: "For serious professionals who want to stand out and get discovered faster.",
     features: [
-      "Full team sandbox environments",
-      "Unlimited candidate execution traces",
-      "100% EM control over evaluation rubrics",
-      "Cognitive audio & transcript parsing",
-      "2-Hour Priority SLA Response Guarantee",
-      "Dedicated Slack collaborative channel",
+      "50 credits per month",
+      "Verified profile badge",
+      "Promoted feed visibility",
+      "InMail messaging",
+      "Profile analytics dashboard",
+      "Priority support",
     ],
-    cta: "Apply for Pilot",
-    href: "#apply-pilot",
+    cta: "Upgrade to Pro",
+    href: "/register",
     popular: true,
   },
   {
-    name: "Enterprise Calibration",
-    price: "Custom",
-    period: "enterprise SLA",
-    description: "For large engineering organizations requiring custom security sandboxes and integrations.",
+    name: "Ultra",
+    price: "$10",
+    period: "/month",
+    description: "For power users and recruiters who need full access to all platform features.",
     features: [
-      "Everything in Team Scale Pilot",
-      "Custom developer API access & webhooks",
-      "Evolutionary conservation & TFBS maps",
-      "Demographic bias audit compliance logs",
-      "Dedicated TAM advisory & SOC2 isolation",
-      "Custom legal terms & custom SLA priority",
+      "100 credits per month",
+      "Everything in Pro",
+      "Salary Insights access",
+      "Learning Academy courses",
+      "Unlimited talent search",
+      "Custom legal terms & priority SLA",
     ],
-    cta: "Apply for Pilot",
-    href: "#apply-pilot",
+    cta: "Go Ultra",
+    href: "/register",
     popular: false,
   },
 ];
@@ -81,7 +81,7 @@ export function LandingPricing() {
             className="text-3xl md:text-4xl font-bold mb-4"
             style={{ letterSpacing: "-0.02em", color: "#1E1B4B" }}
           >
-            SaaS & Pilot Pricing Options
+            Simple, transparent pricing
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -91,7 +91,7 @@ export function LandingPricing() {
             className="text-lg font-medium"
             style={{ color: "#64748B" }}
           >
-            Start building your verified execution profile for free, or upgrade to recruit.
+            Start building your verified execution profile for free, or upgrade for premium features.
           </motion.p>
         </div>
 
@@ -154,9 +154,9 @@ export function LandingPricing() {
                   className="block w-full text-center py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-150"
                   style={
                     plan.popular
-                      ? { background: "linear-gradient(135deg, #7C3AED, #6D28D9)", color: "#fff", boxShadow: "0 2px 8px rgba(124,58,237,0.25)" }
-                      : plan.name === "Enterprise Calibration"
-                      ? { background: "#1E1B4B", color: "#fff" }
+                      ? { background: "#4F46E5", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(79,70,229,0.25)" }
+                      : plan.name === "Ultra"
+                      ? { background: "#1E1B4B", color: "#FFFFFF" }
                       : { background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0" }
                   }
                 >
