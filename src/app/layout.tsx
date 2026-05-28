@@ -4,6 +4,8 @@ import { Toaster } from "sonner";
 import Script from "next/script";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
