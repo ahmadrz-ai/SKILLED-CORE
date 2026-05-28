@@ -80,9 +80,9 @@ export function SinglePostClient({ post: initialPost, currentUserId }: SinglePos
             <div className="flex items-center gap-2 mb-2">
                 <Link 
                     href="/feed" 
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#6B7280] hover:text-black hover:bg-[#F3F4F6] transition-colors bg-white border border-[#E5E7EB] px-3.5 py-2 rounded-xl shadow-sm select-none"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] transition-colors bg-[var(--bg-card)] border border-[var(--border-card)] px-3.5 py-2 rounded-xl shadow-sm select-none"
                 >
-                    <ArrowLeft className="w-3.5 h-3.5 text-[#6B7280]" />
+                    <ArrowLeft className="w-3.5 h-3.5 text-[var(--icon-default)]" />
                     Back to Feed
                 </Link>
             </div>

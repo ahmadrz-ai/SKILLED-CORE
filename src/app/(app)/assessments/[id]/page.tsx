@@ -12,30 +12,28 @@ export default async function QuizPage(props: { params: Promise<{ id: string }> 
 
     if (!assessment) {
         return (
-            <div className="min-h-screen bg-transparent text-white flex items-center justify-center">
-                <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold mb-4">Assessment Not Found</h1>
-                    <p className="text-zinc-500">The neural data for this assessment is corrupted or missing.</p>
+            <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-body)] flex items-center justify-center p-6">
+                <div className="p-8 text-center max-w-md bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-sm">
+                    <h1 className="text-xl font-bold text-[var(--text-heading)] mb-2 font-heading uppercase">Assessment Not Found</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">The skill verification database was unable to resolve this assessment protocol.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
-            <div className="max-w-4xl mx-auto space-y-8">
-                {/* Header */}
-                <div className="text-center space-y-3 mb-12">
-                    <div className="inline-block p-4 bg-zinc-900 rounded-full mb-4 ring-1 ring-white/10">
-                        <span className="text-4xl">🧠</span>
-                    </div>
-                    <h1 className="text-3xl font-bold font-heading">{assessment.title}</h1>
-                    <p className="text-zinc-400 max-w-lg mx-auto">{assessment.description}</p>
+        <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 font-sans text-[var(--text-body)]">
+            {/* Header Showcase */}
+            <div className="text-center space-y-3 pb-6 border-b border-[var(--border-strong)]">
+                <div className="inline-flex p-3 bg-[var(--sc-purple-50)] rounded-2xl border border-[var(--sc-purple-200)] mb-2 shadow-inner">
+                    <span className="text-3xl">🧠</span>
                 </div>
-
-                {/* Interface */}
-                <QuizInterface assessment={assessment} />
+                <h1 className="text-2xl font-bold tracking-tight text-[var(--text-heading)] font-heading">{assessment.title}</h1>
+                <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed font-semibold uppercase tracking-wide">{assessment.description}</p>
             </div>
+
+            {/* Quiz Interface component */}
+            <QuizInterface assessment={assessment} />
         </div>
     );
 }

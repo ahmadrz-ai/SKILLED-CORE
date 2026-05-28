@@ -89,48 +89,48 @@ export function ResumeUploader() {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-zinc-900/50 border border-emerald-500/30 rounded-xl p-6 relative overflow-hidden"
+                className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-6 relative overflow-hidden text-[var(--text-body)]"
             >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-cyan-500" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--sc-purple-500)] to-[var(--sc-purple-700)]" />
                 <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
-                            <FileCheck className="w-5 h-5 text-emerald-400" />
+                        <div className="w-10 h-10 rounded-full bg-[var(--sc-purple-50)] flex items-center justify-center border border-[var(--sc-purple-200)]">
+                            <FileCheck className="w-5 h-5 text-[var(--text-brand)]" />
                         </div>
                         <div>
-                            <h3 className="text-white font-bold">Analysis Complete</h3>
-                            <p className="text-xs text-zinc-400">Data ready for review</p>
+                            <h3 className="text-[var(--text-heading)] font-bold">Analysis Complete</h3>
+                            <p className="text-xs text-[var(--text-secondary)]">Data ready for review</p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => { setParsedData(null); setFile(null); }}>
-                        <X className="w-4 h-4 text-zinc-500 hover:text-white" />
+                    <Button variant="ghost" size="icon" className="hover:bg-[var(--bg-sidebar-hover)]" onClick={() => { setParsedData(null); setFile(null); }}>
+                        <X className="w-4 h-4 text-[var(--text-secondary)] hover:text-[var(--text-heading)]" />
                     </Button>
                 </div>
 
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-black/40 rounded-lg border border-white/5">
-                            <span className="text-xs text-zinc-500 block mb-1">HEADLINE</span>
-                            <p className="text-sm text-white font-medium">{parsedData.headline}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-3.5 bg-[var(--bg-secondary-panel)] rounded-xl border border-[var(--border-default)]">
+                            <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider block mb-1">Headline</span>
+                            <p className="text-xs text-[var(--text-heading)] font-semibold leading-relaxed">{parsedData.headline}</p>
                         </div>
-                        <div className="p-3 bg-black/40 rounded-lg border border-white/5">
-                            <span className="text-xs text-zinc-500 block mb-1">SKILLS DETECTED</span>
+                        <div className="p-3.5 bg-[var(--bg-secondary-panel)] rounded-xl border border-[var(--border-default)]">
+                            <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider block mb-1.5">Skills Detected</span>
                             <div className="flex flex-wrap gap-1">
                                 {parsedData.skills.slice(0, 3).map((skill, i) => (
-                                    <span key={i} className="text-[10px] bg-cyan-900/20 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                                    <span key={i} className="text-[10px] bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] px-2 py-0.5 rounded-md border border-[var(--sc-purple-200)] font-medium">
                                         {skill}
                                     </span>
                                 ))}
                                 {parsedData.skills.length > 3 && (
-                                    <span className="text-[10px] text-zinc-500 py-0.5">+{parsedData.skills.length - 3} more</span>
+                                    <span className="text-[10px] text-[var(--text-secondary)] font-bold self-center ml-1">+{parsedData.skills.length - 3} more</span>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-3 bg-violet-500/5 rounded-lg border border-violet-500/20 flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-                        <p className="text-xs text-violet-200">
+                    <div className="p-3 bg-[var(--sc-purple-50)] rounded-xl border border-[var(--sc-purple-100)] flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--sc-purple-500)] animate-pulse" />
+                        <p className="text-xs text-[var(--text-brand)] font-semibold leading-normal">
                             "Strong match for Senior roles. Recommendation: Highlight performance optimization."
                         </p>
                     </div>
@@ -138,7 +138,7 @@ export function ResumeUploader() {
                     <Button
                         onClick={handleConfirm}
                         disabled={isSaving}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wide"
+                        className="w-full h-11 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg-hover)] text-[var(--btn-primary-text)] font-bold tracking-wide rounded-xl cursor-pointer"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "CONFIRM & INITIALIZE PROTOCOL"}
                     </Button>
@@ -153,8 +153,8 @@ export function ResumeUploader() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={cn(
-                "relative h-64 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden",
-                isDragging ? "border-violet-500 bg-violet-500/5" : "border-white/10 bg-zinc-900/20 hover:border-violet-500/50 hover:bg-zinc-900/40"
+                "relative h-64 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-[var(--bg-card)]",
+                isDragging ? "border-[var(--border-focus)] bg-[var(--sc-purple-50)]/50" : "border-[var(--border-input)] hover:border-[var(--border-focus)] hover:bg-[var(--bg-sidebar-hover)]"
             )}
         >
             <input
@@ -174,40 +174,40 @@ export function ResumeUploader() {
                         className="text-center z-20 pointer-events-none"
                     >
                         <div className="relative w-16 h-16 mx-auto mb-4">
-                            <div className="absolute inset-0 border-4 border-zinc-800 rounded-full" />
-                            <div className="absolute inset-0 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                            <div className="absolute inset-0 border-4 border-[var(--border-subtle)] rounded-full" />
+                            <div className="absolute inset-0 border-4 border-[var(--sc-purple-650)] border-t-transparent rounded-full animate-spin" />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
+                                <Loader2 className="w-6 h-6 text-[var(--sc-purple-650)] animate-spin" />
                             </div>
                         </div>
-                        <h3 className="text-lg font-bold text-white mb-1">Scanning Neural Pattern...</h3>
-                        <p className="text-sm text-cyan-400 font-mono animate-pulse">{progress}</p>
+                        <h3 className="text-base font-bold text-[var(--text-heading)] mb-1">Scanning Neural Pattern...</h3>
+                        <p className="text-xs text-[var(--text-brand)] font-mono animate-pulse">{progress}</p>
                     </motion.div>
                 ) : (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
-                        className="text-center space-y-4 pointer-events-none text-zinc-400 group-hover:text-zinc-200"
+                        className="text-center space-y-4 pointer-events-none text-[var(--text-secondary)] group-hover:text-[var(--text-heading)]"
                     >
                         <div className={cn(
-                            "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center transition-colors duration-300",
-                            isDragging ? "bg-violet-500 text-white shadow-[0_0_20px_#8b5cf6]" : "bg-zinc-800 text-zinc-500 group-hover:bg-zinc-700 group-hover:text-white"
+                            "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center transition-colors duration-300 border border-[var(--border-default)]",
+                            isDragging ? "bg-[var(--sc-purple-600)] text-white shadow-md shadow-[var(--sc-purple-200)]" : "bg-[var(--bg-secondary-panel)] text-[var(--icon-default)] group-hover:bg-[var(--bg-sidebar-hover)] group-hover:text-[var(--text-heading)]"
                         )}>
                             <CloudUpload className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium">Drag & Drop Resume (PDF)</p>
-                            <p className="text-xs text-zinc-500 mt-1">or click to browse local files</p>
+                            <p className="text-sm font-bold text-[var(--text-heading)]">Drag & Drop Resume (PDF)</p>
+                            <p className="text-xs text-[var(--text-secondary)] mt-1 font-medium">or click to browse local files</p>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {/* Background Grid Decoration */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            <div className="absolute inset-0 opacity-[0.035] pointer-events-none"
                 style={{
-                    backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+                    backgroundImage: 'linear-gradient(var(--border-default) 1px, transparent 1px), linear-gradient(90deg, var(--border-default) 1px, transparent 1px)',
                     backgroundSize: '20px 20px'
                 }}
             />
