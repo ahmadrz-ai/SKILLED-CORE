@@ -10,6 +10,9 @@ async function parseHeuristically(buffer: Buffer) {
     // Simple fallback when AI is unavailable
     // Returns placeholder data so user can proceed with onboarding
     return {
+        name: "Professional Candidate",
+        email: "",
+        phone: "",
         headline: "Professional",
         summary: "Experienced professional. Please update your profile with specific details.",
         location: "Location",
@@ -27,12 +30,13 @@ async function parseHeuristically(buffer: Buffer) {
             startDate: "2016",
             endDate: "2020"
         }],
-        contact: {
-            email: "",
-            phone: "",
-            linkedin: "",
-            github: ""
-        }
+        projects: [{
+            title: "Sample Project",
+            description: "A professional project showcasing skilled expertise, modern design architecture, clean coding practices, and thorough testing.",
+            link: "",
+            technologies: ["React"]
+        }],
+        socials: []
     };
 }
 
@@ -57,22 +61,65 @@ export async function POST(request: Request) {
         }
 
         try {
-            const apiKey = process.env.RESUME_PARSER;
-            if (!apiKey) throw new Error("No API Key");
+            const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
+            if (!apiKey) throw new Error("No API Key configured");
 
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
             const base64Data = buffer.toString('base64');
 
-            const prompt = `You are an expert Resume Parser. Analyze the attached PDF and extract structured data in JSON:
-            {
-                "headline": "Title",
-                "summary": "Summary",
-                "skills": ["Skill1"],
-                "experience": [{"position": "", "company": "", "startDate": "", "endDate": "", "description": ""}],
-                "education": [{"school": "", "degree": "", "startDate": "", "endDate": ""}],
-                "location": "City"
-            }`;
+            const prompt = `
+                You are an expert Resume Parser. 
+                Analyze the attached resume file and extract structured data in strict JSON format.
+                
+                Crucial Project Rule:
+                For each project in "projects", read the description. If it is short (1-3 lines), ELABORATE it into 4-6 technically rich, highly professional, accurate sentences that detail the technical challenges, technologies used, and outcomes. If there are no projects, extract them from the experience or other sections if appropriate.
+                
+                Target Schema:
+                {
+                    "name": "Candidate's full name",
+                    "email": "Email address",
+                    "phone": "Phone number",
+                    "location": "City, Country or Location",
+                    "headline": "Current professional title (e.g. Senior Frontend Engineer)",
+                    "summary": "Professional summary or bio",
+                    "skills": ["Skill 1", "Skill 2"],
+                    "experience": [
+                        { 
+                            "position": "Job Title", 
+                            "company": "Company Name", 
+                            "startDate": "Start Date or Year",
+                            "endDate": "End Date or Year or Present",
+                            "description": "Elaborated summary of responsibilities and achievements"
+                        }
+                    ],
+                    "education": [
+                        { 
+                            "school": "University/School Name", 
+                            "degree": "Degree/Certification", 
+                            "startDate": "Start Date or Year",
+                            "endDate": "End Date or Year or Present"
+                        }
+                    ],
+                    "projects": [
+                        {
+                            "title": "Project Title",
+                            "description": "Elaborated 4-6 sentences technical description of the project challenges, implementations, and results",
+                            "link": "Project URL if any",
+                            "technologies": ["React", "TypeScript"]
+                        }
+                    ],
+                    "socials": [
+                        {
+                            "title": "Platform Name (e.g. LinkedIn, GitHub, Behance, Dribbble, Twitter, Portfolio)",
+                            "url": "Profile URL"
+                        }
+                    ]
+                }
+
+                If fields are missing, leave them empty or empty arrays. 
+                Do NOT hallucinate. Only extract what is there in the document.
+            `;
 
             const result = await model.generateContent({
                 contents: [{ role: "user", parts: [{ inlineData: { data: base64Data, mimeType: "application/pdf" } }, { text: prompt }] }],

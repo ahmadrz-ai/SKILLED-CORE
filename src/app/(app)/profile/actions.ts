@@ -119,6 +119,22 @@ export async function updateUserProfile(data: any) {
             }
         }
 
+        // 4. Update Projects (Atomic: Delete All & Re-create)
+        if (data.projects && Array.isArray(data.projects)) {
+            await prisma.project.deleteMany({ where: { userId: session.user.id } });
+            if (data.projects.length > 0) {
+                await prisma.project.createMany({
+                    data: data.projects.map((proj: any) => ({
+                        userId: session.user.id!,
+                        title: proj.title || proj.name || "Unknown Project",
+                        description: proj.description || "",
+                        link: proj.link || proj.url || "",
+                        imageUrl: proj.imageUrl || ""
+                    }))
+                });
+            }
+        }
+
         revalidatePath('/profile');
         revalidatePath(`/profile/${session.user.id}`);
         revalidatePath('/profile/me');

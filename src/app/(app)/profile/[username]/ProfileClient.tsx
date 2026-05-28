@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2 } from "lucide-react";
+import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSession } from "next-auth/react";
@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { FollowListDialog } from "@/components/profile/FollowListDialog";
 import { Tag as SharedTag } from "@/components/ui/tag";
 import ProfileEditModals from '@/components/profile/ProfileEditModals';
+import { ResumeProfileBuilder } from '@/components/profile/ResumeProfileBuilder';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleFollow } from '@/app/(app)/feed/actions';
 import { sendConnectionRequest, updateConnectionStatus } from '@/app/(app)/network/actions';
@@ -84,6 +85,8 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     // Modal State
     const [editSection, setEditSection] = useState<'identity' | 'about' | 'experience' | 'education' | 'skills' | 'projects' | 'links' | 'banner' | 'resume' | 'share' | null>(null);
     const [projectToEdit, setProjectToEdit] = useState<any | null>(null);
+    const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
+    const [isBannerDismissed, setIsBannerDismissed] = useState(false);
 
     // Parse Data
     let parsedSkills: string[] = [];
@@ -220,18 +223,28 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         ? [...user.education].sort((a, b) => new Date(b.startDate || 0).getTime() - new Date(a.startDate || 0).getTime())
         : [];
 
+    const isProfileIncomplete = isOwner && user.role !== 'RECRUITER' && (!user.bio || experienceData.length === 0 || parsedSkills.length < 3);
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 font-sans">
 
             {/* --- Modals Manager --- */}
             {isOwner && (
-                <ProfileEditModals
-                    user={user}
-                    isOpen={!!editSection}
-                    section={editSection}
-                    onClose={() => setEditSection(null)}
-                    projectToEdit={projectToEdit}
-                />
+                <>
+                    <ProfileEditModals
+                        user={user}
+                        isOpen={!!editSection}
+                        section={editSection}
+                        onClose={() => setEditSection(null)}
+                        projectToEdit={projectToEdit}
+                    />
+                    <ResumeProfileBuilder
+                        user={user}
+                        isOpen={isResumeBuilderOpen}
+                        onClose={() => setIsResumeBuilderOpen(false)}
+                        context="profile"
+                    />
+                </>
             )}
 
             <FollowListDialog
@@ -371,6 +384,13 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         {user.role !== 'RECRUITER' && (
                                             <>
                                                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 mt-2 w-full text-center">Resume</h3>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setIsResumeBuilderOpen(true)}
+                                                    className="w-full border-[var(--sc-purple-300)] text-[var(--sc-purple-700)] bg-white hover:bg-[var(--sc-purple-50)] hover:text-[var(--sc-purple-800)] hover:border-[var(--sc-purple-400)] shadow-sm font-semibold py-2 transition-all flex items-center justify-center gap-2 mb-3 text-xs rounded-xl"
+                                                >
+                                                    <Sparkles className="w-4 h-4 text-[var(--sc-purple-600)]" /> Build Profile with AI Resume
+                                                </Button>
                                                 <div className="flex gap-2 w-full">
                                                     {user.resumeUrl ? (
                                                         <Button
@@ -572,6 +592,35 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                     {/* --- RIGHT COLUMN: MAIN CONTENT --- */}
                     <div className="flex-1 space-y-8 pb-12">
+                        {isProfileIncomplete && !isBannerDismissed && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="bg-[var(--sc-purple-50)] border border-[var(--sc-purple-200)] rounded-xl p-4 flex items-start gap-3 relative shadow-sm"
+                            >
+                                <Sparkles className="w-5 h-5 text-[var(--sc-purple-600)] shrink-0 mt-0.5" />
+                                <div className="flex-1 pr-6">
+                                    <h4 className="text-sm font-bold text-[var(--sc-purple-900)] mb-1">Complete your SkilledCore identity</h4>
+                                    <p className="text-xs text-[var(--sc-purple-700)] leading-relaxed font-medium mb-2">
+                                        Having an elaborated bio, experience records, and at least 3 skills makes your profile significantly more discoverable to recruiters and unlocks deep talent analysis.
+                                    </p>
+                                    <button
+                                        onClick={() => setIsResumeBuilderOpen(true)}
+                                        className="text-xs font-bold text-[var(--sc-purple-600)] hover:text-[var(--sc-purple-800)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+                                    >
+                                        Upload resume to build profile with AI in seconds →
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setIsBannerDismissed(true)}
+                                    className="absolute top-3 right-3 text-[var(--sc-purple-400)] hover:text-[var(--sc-purple-650)] transition-colors cursor-pointer bg-transparent border-none"
+                                    title="Dismiss"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </motion.div>
+                        )}
 
                         {/* Tabs */}
                         <div className="flex items-center gap-8 border-b border-slate-200 px-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-40 pt-4">

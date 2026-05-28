@@ -243,18 +243,23 @@ export default function ProfileEditModals({ user, section, isOpen, onClose, proj
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-[var(--bg-modal)] border border-[var(--border-modal)] text-[var(--text-body)] sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-xl shadow-[var(--shadow-modal)] p-6 font-sans">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold font-cinzel">
+                    <DialogTitle className="text-xl font-bold font-sans text-[var(--text-heading)] uppercase">
                         {section === 'identity' && 'Edit Identity'}
                         {section === 'about' && 'Edit About'}
                         {section === 'banner' && 'Update Banner'}
                         {section === 'projects' && (projectToEdit ? 'Edit Project' : 'Add Project')}
-                        {section === 'links' && 'Manage Custom Links'}
+                        {section === 'links' && 'Social Links'}
                         {section === 'skills' && 'Update Skills'}
                         {section === 'experience' && 'Update Experience'}
                         {section === 'education' && 'Update Education'}
                     </DialogTitle>
+                    {section === 'links' && (
+                        <p className="text-sm text-[var(--text-secondary)] mt-1 font-medium text-left">
+                            Add your profiles and websites
+                        </p>
+                    )}
                 </DialogHeader>
 
                 {section === 'identity' && <IdentityForm user={user} onSave={handleSave} />}
@@ -698,37 +703,34 @@ function CustomLinksForm({ user, onSave }: any) {
     return (
         <>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-4">
+                <div className="space-y-4 text-left">
                     {fields.map((field, index) => (
-                        <div key={field.id} className="flex items-center gap-3 animate-in slide-in-from-left-2 bg-zinc-900/30 p-4 rounded-xl border border-white/5 hover:border-violet-500/20 transition-all group">
+                        <div key={field.id} className="flex items-center gap-3 p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-subtle)] rounded-xl mb-3 group">
                             {/* Icon Selector - No Label */}
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-14 w-14 p-0 bg-gradient-to-br from-zinc-800 to-zinc-900 border-violet-500/30 hover:border-violet-500/60 hover:from-violet-500/10 hover:to-fuchsia-500/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/20 relative group/icon"
+                                className="w-10 h-10 p-0 bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] rounded-lg text-white flex items-center justify-center cursor-pointer shrink-0 border-none relative"
                                 onClick={() => setIconPickerIndex(index)}
                                 title="Click to change icon"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-fuchsia-500/0 group-hover/icon:from-violet-500/20 group-hover/icon:to-fuchsia-500/20 rounded-lg transition-all duration-300" />
-                                <div className="relative text-zinc-400 group-hover/icon:text-white transition-colors duration-200">
+                                <div className="relative text-white">
                                     {renderIcon(form.watch(`customLinks.${index}.icon`))}
                                 </div>
                             </Button>
 
-                            <div className="flex-1 space-y-2">
-                                <Label className="text-xs uppercase text-zinc-500 tracking-wider">Label</Label>
+                            <div className="w-32 flex-shrink-0">
                                 <Input
                                     {...form.register(`customLinks.${index}.title` as const)}
-                                    placeholder="e.g., LinkedIn, Portfolio..."
-                                    className="bg-black/50 border-white/10 focus:border-violet-500/50 transition-colors"
+                                    placeholder="Label"
+                                    className="h-9 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-body)] placeholder:text-[var(--text-placeholder)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-0 transition-colors"
                                 />
                             </div>
-                            <div className="flex-1 space-y-2">
-                                <Label className="text-xs uppercase text-zinc-500 tracking-wider">URL</Label>
+                            <div className="flex-1">
                                 <Input
                                     {...form.register(`customLinks.${index}.url` as const)}
                                     placeholder="https://..."
-                                    className="bg-black/50 border-white/10 focus:border-violet-500/50 transition-colors font-mono text-sm"
+                                    className="h-9 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-body)] placeholder:text-[var(--text-placeholder)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-0 transition-colors font-mono"
                                 />
                             </div>
                             <Button
@@ -736,20 +738,29 @@ function CustomLinksForm({ user, onSave }: any) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => remove(index)}
-                                className="hover:bg-red-500/10 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 mt-auto mb-2"
+                                className="w-8 h-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sc-red-500)] hover:bg-[var(--sc-red-50)] rounded-lg transition-colors mt-0"
                                 title="Remove link"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 shrink-0" />
                             </Button>
                         </div>
                     ))}
                 </div>
 
-                <Button type="button" variant="outline" onClick={() => append({ title: '', url: '', icon: '' })} className="w-full border-dashed border-white/10 text-zinc-400 hover:text-white">
-                    <Plus className="w-4 h-4 mr-2" /> Add Link
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => append({ title: '', url: '', icon: '' })} 
+                    className="w-full h-10 border-2 border-dashed border-[var(--border-default)] bg-transparent rounded-xl text-sm text-[var(--text-secondary)] font-medium hover:border-[var(--sc-purple-400)] hover:text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-50)] transition-colors flex items-center justify-center gap-2"
+                >
+                    <Plus className="w-4 h-4" /> Add Link
                 </Button>
 
-                <Button type="submit" disabled={isLoading} className="w-full bg-violet-600 hover:bg-violet-500">
+                <Button 
+                    type="submit" 
+                    disabled={isLoading} 
+                    className="w-full h-10 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg-hover)] text-[var(--btn-primary-text)] border-none rounded-lg text-sm font-semibold cursor-pointer shadow-sm"
+                >
                     {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Links
                 </Button>
             </form>

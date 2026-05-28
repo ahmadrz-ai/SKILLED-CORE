@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         }
 
         // Initialize Gemini
-        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
         if (!apiKey) {
             return NextResponse.json({ error: "AI Configuration missing" }, { status: 500 });
         }
@@ -50,32 +50,53 @@ export async function POST(req: Request) {
             You are an expert Resume Parser. 
             Analyze the following resume text and extract structured data in strict JSON format.
             
+            Crucial Project Rule:
+            For each project in "projects", read the description. If it is short (1-3 lines), ELABORATE it into 4-6 technically rich, highly professional, accurate sentences that detail the technical challenges, technologies used, and outcomes. If there are no projects, extract them from the experience or other sections if appropriate.
+            
             Target Schema:
             {
+                "name": "Candidate's full name",
+                "email": "Email address",
+                "phone": "Phone number",
+                "location": "City, Country or Location",
                 "headline": "Current professional title (e.g. Senior Frontend Engineer)",
-                "summary": "A professional summary (max 300 chars)",
+                "summary": "Professional summary or bio",
                 "skills": ["Skill 1", "Skill 2"],
                 "experience": [
                     { 
                         "position": "Job Title", 
                         "company": "Company Name", 
-                        "startDate": "2020",
-                        "endDate": "Present",
-                        "description": "Short summary of responsibilities"
+                        "startDate": "Start Date or Year",
+                        "endDate": "End Date or Year or Present",
+                        "description": "Elaborated summary of responsibilities and achievements"
                     }
                 ],
                 "education": [
                     { 
-                        "school": "University Name", 
-                        "degree": "Degree Name", 
-                        "startDate": "2015",
-                        "endDate": "2019"
+                        "school": "University/School Name", 
+                        "degree": "Degree/Certification", 
+                        "startDate": "Start Date or Year",
+                        "endDate": "End Date or Year or Present"
+                    }
+                ],
+                "projects": [
+                    {
+                        "title": "Project Title",
+                        "description": "Elaborated 4-6 sentences technical description of the project challenges, implementations, and results",
+                        "link": "Project URL if any",
+                        "technologies": ["React", "TypeScript"]
+                    }
+                ],
+                "socials": [
+                    {
+                        "title": "Platform Name (e.g. LinkedIn, GitHub, Behance, Dribbble, Twitter, Portfolio)",
+                        "url": "Profile URL"
                     }
                 ]
             }
 
             If fields are missing, leave them empty or empty arrays. 
-            Do NOT hallucinate. Only extract what is there.
+            Do NOT hallucinate. Only extract what is there in the text.
             
             RESUME TEXT:
             ${text.substring(0, 10000)} 

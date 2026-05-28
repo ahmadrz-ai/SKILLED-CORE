@@ -171,9 +171,18 @@ export default function DojoPage() {
                 {/* Session Controls */}
                 <div className="flex items-center gap-4">
                     {!sessionActive && (
-                        <Link href="/feed" className="text-xs font-mono text-text-secondary hover:text-text-heading transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0">
-                            <LogOut className="w-3 h-3" /> EXIT
-                        </Link>
+                        <>
+                            <button
+                                disabled
+                                title="Coming soon"
+                                className="opacity-50 cursor-not-allowed border border-[var(--border-default)] bg-[var(--bg-secondary-panel)] text-[var(--text-secondary)] rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm min-h-[36px]"
+                            >
+                                <FileText className="w-3.5 h-3.5" /> Use Resume for Context
+                            </button>
+                            <Link href="/feed" className="text-xs font-mono text-text-secondary hover:text-text-heading transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0">
+                                <LogOut className="w-3 h-3" /> EXIT
+                            </Link>
+                        </>
                     )}
                     {sessionActive && (
                         <div className="flex items-center gap-2">

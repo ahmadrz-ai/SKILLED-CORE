@@ -23,13 +23,16 @@ export default function OnboardingResumePage() {
             <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-1 shadow-[var(--shadow-card)]">
                 <ResumeUploader />
             </div>
+            <p className="text-xs text-[var(--text-tertiary)] text-center mt-2">
+                Don't have your resume? Skip and build your profile manually.
+            </p>
 
             <div className="text-center pt-2">
                 <Link 
                     href="/profile/me"
-                    className="text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-brand)] transition-colors underline underline-offset-4 decoration-dashed"
+                    className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-brand)] hover:underline cursor-pointer font-medium"
                 >
-                    Skip and enter data manually
+                    Skip for now
                 </Link>
             </div>
         </div>
