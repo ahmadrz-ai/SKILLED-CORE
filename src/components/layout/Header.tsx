@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Search, ChevronRight, Menu, MessageSquarePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "../NotificationBell";
@@ -13,6 +14,7 @@ import { Hash } from "lucide-react";
 
 interface HeaderProps {
   credits?: number;
+  onMenuClick?: () => void;
 }
 
 // Page name map for cleaner breadcrumbs
@@ -37,7 +39,7 @@ const PAGE_NAMES: Record<string, string> = {
   applications: "Applications",
 };
 
-export function Header({ credits = 0 }: HeaderProps) {
+export function Header({ credits = 0, onMenuClick }: HeaderProps) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
@@ -58,7 +60,7 @@ export function Header({ credits = 0 }: HeaderProps) {
     return (
       <div key={segment + index} className="flex items-center gap-1.5">
         {index > 0 && <ChevronRight className="w-3.5 h-3.5 text-sc-gray-300 flex-shrink-0" />}
-        <span className={cn("text-sm", isLast ? "text-text-heading font-semibold" : "text-text-secondary")}>
+        <span className={cn("text-xs font-semibold", isLast ? "text-text-heading font-bold" : "text-text-secondary")}>
           {label}
         </span>
       </div>
@@ -66,24 +68,40 @@ export function Header({ credits = 0 }: HeaderProps) {
   });
 
   return (
-    <header className="sticky top-0 z-40 h-16 bg-bg-topbar border-b border-border-topbar flex items-center justify-between px-4 lg:px-6">
+    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-bg-topbar border-b border-border-topbar flex items-center justify-between px-4 lg:px-6">
 
-      {/* Left: Mobile Toggle + Breadcrumbs */}
+      {/* Left: Mobile Toggle + Logo + Breadcrumbs */}
       <div className="flex items-center gap-3">
-        <button className="lg:hidden p-2 -ml-1 text-text-secondary hover:text-text-sidebar-hover hover:bg-bg-sidebar-hover rounded-md transition-colors">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden p-2 -ml-1 text-text-secondary hover:text-text-sidebar-hover hover:bg-bg-sidebar-hover rounded-md transition-colors min-h-[44px]"
+        >
           <Menu className="w-5 h-5" />
         </button>
 
+        {/* SkilledCore logo always visible on topbar */}
+        <Link href="/feed" className="flex items-center gap-2 group mr-2">
+          <img
+            src="/logo.png"
+            alt="SkilledCore"
+            className="w-7 h-7 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
+          />
+          <div className="flex-col leading-none hidden sm:flex">
+            <span className="text-text-heading font-black text-xs tracking-tight">SkilledCore</span>
+            <span className="text-text-secondary text-[8px] font-bold mt-0.5">Talent Intelligence</span>
+          </div>
+        </Link>
+
         {/* Breadcrumbs — desktop */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden lg:flex items-center gap-1.5 border-l border-border-subtle pl-4 ml-2">
           {breadcrumbs.length > 0 ? breadcrumbs : (
-            <span className="text-sm font-semibold text-text-heading">Home</span>
+            <span className="text-xs font-semibold text-text-heading">Home</span>
           )}
         </div>
 
         {/* Page title — mobile */}
-        <div className="md:hidden">
-          <span className="text-sm font-bold text-text-heading">
+        <div className="lg:hidden ml-1">
+          <span className="text-xs font-bold text-text-heading">
             {PAGE_NAMES[segments[segments.length - 1]] ||
               segments[segments.length - 1]?.replace(/-/g, " ") ||
               "Home"}
@@ -100,7 +118,7 @@ export function Header({ credits = 0 }: HeaderProps) {
       <div className="flex items-center gap-2">
         <a
           href="/feedback"
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-body transition-colors text-xs font-medium border border-border-default"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-body transition-colors text-xs font-medium border border-border-default min-h-[32px]"
         >
           <MessageSquarePlus className="w-3.5 h-3.5" />
           Feedback
@@ -109,9 +127,9 @@ export function Header({ credits = 0 }: HeaderProps) {
         <NotificationBell />
 
         {/* Credits */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-bg-secondary-panel border border-border-default">
-          <div className="w-2 h-2 rounded-full bg-sc-purple-600 flex-shrink-0" />
-          <span className="text-xs font-semibold text-text-body-strong">{credits} Credits</span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-md bg-bg-secondary-panel border border-border-default min-h-[32px]">
+          <div className="w-1.5 h-1.5 rounded-full bg-sc-purple-600 flex-shrink-0" />
+          <span className="text-[11px] font-bold text-text-body-strong">{credits} Credits</span>
           <PaymentModal />
         </div>
       </div>

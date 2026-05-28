@@ -5,7 +5,12 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminReportsPage() {
     const reports = await prisma.report.findMany({
-        where: { status: 'PENDING' },
+        where: {
+            OR: [
+                { status: 'PENDING' },
+                { status: 'UNDER_REVIEW' }
+            ]
+        },
         include: {
             reporter: true,
             reportedUser: true

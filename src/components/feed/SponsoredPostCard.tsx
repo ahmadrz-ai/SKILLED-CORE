@@ -126,7 +126,7 @@ export function SponsoredPostCard({
                     {title || ctaText}
                   </span>
                 </div>
-                <button className="flex-shrink-0 h-8 px-4 text-xs font-bold text-[#6366F1] hover:text-white hover:bg-[#6366F1] border border-[#6366F1] rounded-full transition-all duration-200 flex items-center gap-1">
+                <button className="cta-ad-btn compact-btn flex-shrink-0 h-8 px-4 text-xs font-bold rounded-full transition-all duration-200 flex items-center gap-1">
                   <span>{ctaText}</span>
                 </button>
               </div>

@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PostCard, type PostProps } from '@/components/feed/PostCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Star } from 'lucide-react';
+import { UserPlus, Star, Search } from 'lucide-react';
 import Link from 'next/link';
 import { toggleFollow } from '../feed/actions';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface SearchClientProps {
     user: any;
@@ -141,20 +142,25 @@ export default function SearchClient({ user, query, posts, people }: SearchClien
 
                 {/* Empty States */}
                 {activeTab === 'people' && localPeople.length === 0 && (
-                    <div className="text-center py-12 border border-dashed border-border-default rounded-xl bg-bg-secondary-panel">
-                        <p className="text-text-secondary">No people found matching "{query}"</p>
-                    </div>
+                    <EmptyState
+                        icon={Search}
+                        title="No people found"
+                        description={`We couldn't find any members matching "${query}". Try checking for typos or searching a more generic term.`}
+                    />
                 )}
                 {activeTab === 'posts' && posts.length === 0 && (
-                    <div className="text-center py-12 border border-dashed border-border-default rounded-xl bg-bg-secondary-panel">
-                        <p className="text-text-secondary">No posts found matching "{query}"</p>
-                    </div>
+                    <EmptyState
+                        icon={Search}
+                        title="No posts found"
+                        description={`We couldn't find any posts matching "${query}". Try checking for typos or searching a different keyword.`}
+                    />
                 )}
                 {activeTab === 'all' && posts.length === 0 && localPeople.length === 0 && (
-                    <div className="text-center py-20">
-                        <h2 className="text-xl font-bold text-text-heading mb-2">No Results Found</h2>
-                        <p className="text-text-secondary">We couldn't find anything for "{query}". Try a different keyword.</p>
-                    </div>
+                    <EmptyState
+                        icon={Search}
+                        title="No results for this query"
+                        description={`We couldn't find any results matching "${query}". Try checking for typos, using different keywords, or searching a more generic term.`}
+                    />
                 )}
 
             </div>

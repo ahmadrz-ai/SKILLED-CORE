@@ -2,6 +2,8 @@
 
 import { Resend } from 'resend';
 import * as React from 'react';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/auth';
 
 // Setup Resend client safely
 const resend = new Resend(process.env.RESEND_API_KEY || 'MOCK_KEY');
@@ -26,6 +28,47 @@ export async function submitSupportTicket(input: SupportTicketInput) {
 
     try {
         console.log(`[Support Ticket] Initializing Ticket ${ticketId} for ${name} (${email})`);
+
+        const session = await auth();
+        let reporterId = session?.user?.id;
+
+        if (!reporterId) {
+            // Find existing user by email to prevent foreign-key violations
+            const existingUser = await prisma.user.findFirst({
+                where: { email: { equals: email, mode: 'insensitive' } }
+            });
+            if (existingUser) {
+                reporterId = existingUser.id;
+            } else {
+                // Get any fallback user in the database
+                const fallbackUser = await prisma.user.findFirst();
+                if (fallbackUser) {
+                    reporterId = fallbackUser.id;
+                } else {
+                    return { success: false, error: 'No active user found to associate the ticket' };
+                }
+            }
+        }
+
+        // Persist support ticket in Database
+        await prisma.report.create({
+            data: {
+                id: ticketId,
+                reporterId,
+                targetType: 'SUPPORT_TICKET',
+                reason: subject,
+                severity,
+                category,
+                status: 'PENDING',
+                adminNotes: JSON.stringify({
+                    name,
+                    email,
+                    description,
+                    category,
+                    ticketId
+                })
+            }
+        });
 
         // 1. Prepare and send email notification using Resend
         let emailSent = false;
@@ -134,3 +177,41 @@ export async function submitSupportTicket(input: SupportTicketInput) {
         return { success: false, error: error.message || 'Support pipeline error' };
     }
 }
+
+export async function getUserSupportTickets() {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, tickets: [] };
+
+    try {
+        const tickets = await prisma.report.findMany({
+            where: {
+                reporterId: session.user.id,
+                targetType: 'SUPPORT_TICKET'
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return {
+            success: true,
+            tickets: tickets.map(t => {
+                let details: any = {};
+                try {
+                    details = JSON.parse(t.adminNotes || '{}');
+                } catch (e) {}
+                return {
+                    id: t.id,
+                    subject: t.reason,
+                    category: t.category,
+                    severity: t.severity,
+                    status: t.status,
+                    createdAt: t.createdAt,
+                    details
+                };
+            })
+        };
+    } catch (error) {
+        console.error("[Support Action] Failed to fetch user support tickets:", error);
+        return { success: false, tickets: [] };
+    }
+}
+

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Zap, Users, Shield, Brain, CheckCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
     title: "About SkilledCore | AI-Native Talent Marketplace",
@@ -88,27 +89,19 @@ export default async function AboutPage() {
     const { userCount, jobCount } = await getStats();
 
     return (
-        <div className="min-h-screen bg-bg-page text-text-body">
-            {/* Hero */}
-            <section className="relative py-24 px-4 text-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-sc-purple-50/20 via-transparent to-transparent pointer-events-none" />
-                <div className="max-w-4xl mx-auto relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sc-purple-50 border border-sc-purple-100 text-sc-purple-700 text-sm mb-8">
+        <AppShell>
+            {/* Hero Description */}
+            <div className="space-y-12">
+                <section className="text-center py-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sc-purple-50 border border-sc-purple-100 text-sc-purple-700 text-xs mb-4 font-semibold">
                         <span className="w-2 h-2 rounded-full bg-sc-purple-500 animate-pulse" />
                         Building the future of hiring
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-heading font-black text-text-heading tracking-tight mb-6 leading-tight">
-                        Where Talent Meets{" "}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-sc-purple-600 to-sc-purple-400">
-                            Opportunity
-                        </span>
-                    </h1>
-                    <p className="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-sm text-text-secondary max-w-xl mx-auto leading-relaxed font-medium">
                         SkilledCore is an AI-powered recruitment and talent marketplace built to eliminate the noise in hiring.
                         We connect exceptional professionals with companies that deserve them — with privacy, speed, and intelligence at the core.
                     </p>
-                </div>
-            </section>
+                </section>
 
             {/* Real stats — no fabricated numbers */}
             {(userCount > 0 || jobCount > 0) && (
@@ -231,16 +224,15 @@ export default async function AboutPage() {
                         <Mail className="w-4 h-4" />
                         support@skilledcore.com
                     </a>
-                    <div className="pt-4">
                         <Link href="/register">
                             <Button className="bg-btn-primary-bg hover:bg-btn-primary-bg-hover text-btn-primary-text font-bold px-8 h-12">
                                 Join SkilledCore
                                 <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
                         </Link>
-                    </div>
                 </div>
             </section>
-        </div>
+            </div>
+        </AppShell>
     );
 }

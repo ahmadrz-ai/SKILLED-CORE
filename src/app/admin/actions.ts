@@ -400,3 +400,44 @@ export async function getDashboardData() {
     }
 }
 
+export async function startReviewingReport(reportId: string) {
+    try {
+        const session = await ensureAdmin();
+
+        const report = await prisma.report.findUnique({
+            where: { id: reportId }
+        });
+
+        if (!report) {
+            return { success: false, message: "Report not found" };
+        }
+
+        if (report.status === 'PENDING') {
+            await prisma.report.update({
+                where: { id: reportId },
+                data: {
+                    status: 'UNDER_REVIEW',
+                    resolvedBy: session.user?.id
+                }
+            });
+
+            // Create notification for the reporter
+            await prisma.notification.create({
+                data: {
+                    userId: report.reporterId,
+                    type: 'SYSTEM',
+                    message: `🔍 Inquiry #${reportId.substring(0, 8)}: A team member is actively reviewing your request. We'll update you soon!`,
+                    read: false
+                }
+            });
+
+            revalidatePath('/admin/reports');
+            return { success: true, message: "Report status updated to Under Review" };
+        }
+
+        return { success: true, message: "Report already under review or processed" };
+    } catch (error) {
+        console.error("Failed to start reviewing report:", error);
+        return { success: false, message: "Failed to update review status" };
+    }
+}

@@ -119,7 +119,7 @@ export function CommandPalette() {
                             <CommandItem icon={MessageSquare} onSelect={() => runCommand(() => router.push('/messages'))}>
                                 Messages
                             </CommandItem>
-                            <CommandItem icon={BarChart} onSelect={() => runCommand(() => router.push('/analytics-dashboard'))}>
+                            <CommandItem icon={BarChart} onSelect={() => runCommand(() => router.push('/analytics'))}>
                                 Analytics
                             </CommandItem>
                             <CommandItem icon={CreditCard} onSelect={() => runCommand(() => router.push('/credits'))}>

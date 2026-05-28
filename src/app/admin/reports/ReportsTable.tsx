@@ -7,7 +7,7 @@ import {
     AlertTriangle, CheckCircle, XCircle, Shield, MessageSquare,
     ChevronDown, ChevronUp, Bug, Lightbulb, FileText
 } from 'lucide-react';
-import { updateReportStatus } from '../actions';
+import { updateReportStatus, startReviewingReport } from '../actions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,11 +26,25 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-    const toggleExpand = (id: string) => {
+    const toggleExpand = async (id: string) => {
         const newSet = new Set(expandedIds);
+        const willExpand = !newSet.has(id);
         if (newSet.has(id)) newSet.delete(id);
         else newSet.add(id);
         setExpandedIds(newSet);
+
+        if (willExpand) {
+            const report = reports.find(r => r.id === id);
+            if (report && report.status === 'PENDING') {
+                try {
+                    report.status = 'UNDER_REVIEW';
+                    await startReviewingReport(id);
+                    toast.info(`Inquiry #${id.substring(0, 8)} is now marked as UNDER REVIEW`);
+                } catch (e) {
+                    console.error("Failed to mark under review:", e);
+                }
+            }
+        }
     };
 
     const handleAction = async (reportId: string, status: 'RESOLVED' | 'DISMISSED') => {
@@ -111,6 +125,11 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 <div className="flex items-center gap-2 text-zinc-300">
                                                     {getTypeIcon(report.targetType)}
                                                     <span className="capitalize">{report.targetType.replace(/_/g, ' ').toLowerCase()}</span>
+                                                    {report.status === 'UNDER_REVIEW' && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold border text-yellow-500 bg-yellow-500/10 border-yellow-500/20 uppercase tracking-widest font-mono animate-pulse">
+                                                            Reviewing
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-4">

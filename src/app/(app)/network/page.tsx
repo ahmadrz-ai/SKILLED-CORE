@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getNetworkData, sendConnectionRequest, updateConnectionStatus } from './actions';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function NetworkPage() {
     const router = useRouter();
@@ -319,9 +320,13 @@ export default function NetworkPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-8 text-center border border-dashed border-border-default rounded-xl bg-bg-card shadow-sc-card">
-                                    <p className="text-text-secondary font-medium">You don't have any connections yet.</p>
-                                </div>
+                                <EmptyState
+                                    icon={Users}
+                                    title="Your network is empty"
+                                    description="Start connecting with colleagues, peers, and industry leaders to build your professional network."
+                                    ctaText="Find People"
+                                    ctaHref="/search"
+                                />
                             )}
                         </section>
                     </div>

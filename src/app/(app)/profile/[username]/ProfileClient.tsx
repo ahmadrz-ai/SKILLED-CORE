@@ -24,7 +24,6 @@ import {
 
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FollowListDialog } from '@/components/profile/FollowListDialog';
 import { deleteInterview } from '@/app/actions/interview';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 

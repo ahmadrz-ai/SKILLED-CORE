@@ -9,6 +9,7 @@ import { toggleSaveJob } from "@/app/actions/jobs";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Job {
     id: string;
@@ -39,11 +40,13 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
 
     if (initialJobs.length === 0) {
         return (
-            <div className="text-center py-20 bg-white rounded-2xl border border-[#E5E7EB] border-dashed shadow-sm">
-                <Briefcase className="w-10 h-10 mx-auto text-[#9CA3AF] mb-4" />
-                <h3 className="text-lg font-semibold text-[#111827] mb-1">No Jobs Found</h3>
-                <p className="text-sm text-[#6B7280]">Adjust your filter parameters to locate new postings.</p>
-            </div>
+            <EmptyState
+                icon={Briefcase}
+                title="No jobs match your filters"
+                description="Try broadening your search query or removing selected filters to locate new active postings."
+                ctaText="Clear Filters"
+                ctaHref="/jobs"
+            />
         );
     }
 

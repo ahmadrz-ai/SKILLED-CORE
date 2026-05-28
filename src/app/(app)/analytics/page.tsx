@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, User, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, User, Loader2, LifeBuoy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAnalytics, AnalyticsData } from "@/app/actions/analytics";
 import { toast } from "sonner";
@@ -167,6 +167,10 @@ export default function AnalyticsPage() {
                                         <stop offset="5%" stopColor="var(--sc-purple-600)" stopOpacity={0.2} />
                                         <stop offset="95%" stopColor="var(--sc-purple-600)" stopOpacity={0} />
                                     </linearGradient>
+                                    <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#16A34A" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#16A34A" stopOpacity={0} />
+                                    </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
                                 <XAxis dataKey="date" stroke="var(--text-tertiary)" fontSize={10} tickLine={false} axisLine={false} />
@@ -175,10 +179,20 @@ export default function AnalyticsPage() {
                                 <Area
                                     type="monotone"
                                     dataKey="views"
+                                    name="Views"
                                     stroke="var(--sc-purple-600)"
                                     strokeWidth={2.5}
                                     fillOpacity={1}
                                     fill="url(#colorViews)"
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="clicks"
+                                    name="Clicks"
+                                    stroke="#16A34A"
+                                    strokeWidth={2.5}
+                                    fillOpacity={1}
+                                    fill="url(#colorClicks)"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -280,6 +294,157 @@ export default function AnalyticsPage() {
                         <div className="text-text-placeholder italic text-sm py-4 font-medium">No recent signals detected.</div>
                     )}
                 </div>
+            </div>
+
+            {/* PREMIUM EXTRA METRICS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Left Panel: Profile Strength & Active Support Tickets */}
+                <div className="space-y-6 flex flex-col justify-between">
+                    
+                    {/* Profile Resonance Strength Card */}
+                    <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-sc-card flex-1 flex flex-col justify-center">
+                        <h3 className="font-heading font-bold text-text-heading flex items-center gap-2 mb-6">
+                            <Sparkles className="w-5 h-5 text-text-brand" />
+                            Profile Resonance Strength
+                        </h3>
+                        <div className="flex flex-col sm:flex-row items-center gap-8">
+                            {/* Radial SVG Gauge */}
+                            <div className="relative w-28 h-28 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle cx="56" cy="56" r="48" stroke="var(--border-subtle)" strokeWidth="8" fill="transparent" />
+                                    <circle cx="56" cy="56" r="48" stroke="var(--sc-purple-600)" strokeWidth="8" fill="transparent"
+                                        strokeDasharray={301.6}
+                                        strokeDashoffset={301.6 - (301.6 * (data.profileStrength || 0)) / 100}
+                                        strokeLinecap="round"
+                                        className="transition-all duration-1000 ease-out"
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-2xl font-black text-text-heading">{data.profileStrength}%</span>
+                                    <span className="text-[10px] font-mono text-text-secondary uppercase font-bold">Resonance</span>
+                                </div>
+                            </div>
+
+                            {/* Completeness Checklist */}
+                            <div className="flex-1 space-y-2.5 w-full">
+                                {data.profileCompleteness?.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-xs">
+                                        <span className={cn("font-medium", item.completed ? "text-text-body font-semibold" : "text-text-secondary")}>
+                                            {item.name}
+                                        </span>
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded-full font-mono text-[9px] font-bold border",
+                                            item.completed 
+                                                ? "bg-[#DCFCE7] text-[#15803D] border-[#DCFCE7]/20" 
+                                                : "bg-[#F3F4F6] text-[#6B7280] border-border-default"
+                                        )}>
+                                            {item.completed ? "COMPLETED" : "MISSING"}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Active Support Tickets */}
+                    {data.activeTickets && data.activeTickets.length > 0 && (
+                        <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-sc-card space-y-4">
+                            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+                                <h3 className="font-heading font-bold text-text-heading flex items-center gap-2">
+                                    <LifeBuoy className="w-5 h-5 text-text-brand" />
+                                    Active Support Telemetries
+                                </h3>
+                                <span className="text-[10px] font-mono font-bold bg-[#EAE6FD] text-[#5B35D5] px-2 py-0.5 rounded border border-[#EAE6FD]/20 uppercase">
+                                    Live Inquiries
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {data.activeTickets.map((ticket) => {
+                                    const isPending = ticket.status === 'PENDING';
+                                    const isReviewing = ticket.status === 'UNDER_REVIEW';
+
+                                    return (
+                                        <div key={ticket.id} className="border border-border-subtle rounded-xl p-3.5 bg-[#F8F8FA]/50 flex items-center justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-mono font-bold bg-bg-card text-text-secondary border border-border-default px-1.5 py-0.5 rounded">
+                                                        {ticket.id}
+                                                    </span>
+                                                    <span className="text-[10px] text-text-tertiary font-mono font-semibold">
+                                                        {ticket.createdAt}
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-xs font-bold text-text-body-strong truncate max-w-[200px]">{ticket.subject}</h4>
+                                            </div>
+
+                                            <div className={cn(
+                                                "px-2.5 py-1 rounded-lg border text-[10px] font-bold flex items-center gap-1 shadow-sm font-mono",
+                                                isPending ? "bg-[#F3F4F6] text-[#6B7280] border-border-default" :
+                                                isReviewing ? "bg-amber-50 text-amber-600 border-amber-250 animate-pulse" :
+                                                "bg-emerald-50 text-emerald-605 border-emerald-250"
+                                            )}>
+                                                {isPending && "PENDING TRIAGE"}
+                                                {isReviewing && "REVIEW ACTIVE"}
+                                                {ticket.status === 'RESOLVED' && "RESOLVED"}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Panel: Popular Post Resonance Table */}
+                <div className="bg-bg-card border border-border-card rounded-xl p-6 shadow-sc-card flex flex-col h-full justify-center">
+                    <h3 className="font-heading font-bold text-text-heading flex items-center gap-2 mb-6">
+                        <Sparkles className="w-5 h-5 text-text-brand" />
+                        Popular Post Resonance
+                    </h3>
+                    <div className="flex-1 overflow-x-auto">
+                        {data.popularPosts && data.popularPosts.length > 0 ? (
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr className="border-b border-border-subtle pb-2 text-text-secondary uppercase font-mono font-bold text-[9px] tracking-wider">
+                                        <th className="pb-3 font-semibold">Post Content</th>
+                                        <th className="pb-3 font-semibold text-center">Impressions</th>
+                                        <th className="pb-3 font-semibold text-center">Likes</th>
+                                        <th className="pb-3 font-semibold text-center">Comments</th>
+                                        <th className="pb-3 font-semibold text-right">Engagement</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.popularPosts.map((post) => (
+                                        <tr key={post.id} className="border-b border-border-subtle/50 hover:bg-bg-secondary-panel/20 transition-colors">
+                                            <td className="py-3 font-medium text-text-body max-w-[200px] truncate">
+                                                {post.content}
+                                            </td>
+                                            <td className="py-3 text-center text-text-secondary font-mono font-semibold">
+                                                {post.impressions}
+                                            </td>
+                                            <td className="py-3 text-center text-text-secondary font-mono font-semibold">
+                                                {post.likes}
+                                            </td>
+                                            <td className="py-3 text-center text-text-secondary font-mono font-semibold">
+                                                {post.comments}
+                                            </td>
+                                            <td className="py-3 text-right font-mono font-bold text-[#16A34A]">
+                                                {post.engagement}%
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-text-placeholder italic font-medium text-xs">
+                                No published posts found to analyze.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
 
         </div>

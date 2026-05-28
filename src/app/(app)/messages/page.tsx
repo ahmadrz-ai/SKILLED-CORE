@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing";
 import { Loader2 } from "lucide-react";
 import InvitationCard from "@/components/chat/InvitationCard";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import ReactMarkdown from 'react-markdown';
@@ -500,12 +501,13 @@ export default function MessagesPage() {
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center bg-bg-secondary-panel">
-                    <div className="w-24 h-24 rounded-full border-2 border-border-default bg-bg-page flex items-center justify-center mb-6 shadow-sm">
-                        <Send className="-rotate-45 w-10 h-10 text-text-brand ml-2 mt-1" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-text-heading">Your Messages</h2>
-                    <p className="text-text-secondary mt-2">Send private messages and connect with talent.</p>
-                    <Button className="mt-6 bg-sc-purple-600 hover:bg-sc-purple-700 text-text-inverse rounded-full px-6 shadow-sm">Send Message</Button>
+                    <EmptyState
+                        icon={MessageSquare}
+                        title="No conversations yet"
+                        description="Start a private conversation with connections, recruiters, or developers on SkilledCore."
+                        ctaText="Start a Conversation"
+                        ctaHref="/network"
+                    />
                 </div>
             )}
         </div>

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
     ArrowLeft, Search, User, Shield, CreditCard, LifeBuoy, FileText, 
-    Send, CheckCircle, Loader2, Sparkles, AlertCircle, PhoneCall
+    Send, CheckCircle, Loader2, Sparkles, AlertCircle, PhoneCall, UserPlus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { submitSupportTicket, SupportTicketInput } from "@/app/actions/support";
+import { submitSupportTicket, SupportTicketInput, getUserSupportTickets } from "@/app/actions/support";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AppShell } from "@/components/layout/AppShell";
 
 const KNOWLEDGE_ARTICLES = [
     {
@@ -65,6 +66,27 @@ export default function HelpPage() {
     const [description, setDescription] = useState("");
     const [severity, setSeverity] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>("LOW");
 
+    // Tickets telemetry states
+    const [myTickets, setMyTickets] = useState<any[]>([]);
+    const [loadingTickets, setLoadingTickets] = useState(true);
+
+    const loadTickets = async () => {
+        try {
+            const res = await getUserSupportTickets();
+            if (res.success) {
+                setMyTickets(res.tickets);
+            }
+        } catch (e) {
+            console.error("[Help Page] Failed to fetch tickets:", e);
+        } finally {
+            setLoadingTickets(false);
+        }
+    };
+
+    useEffect(() => {
+        loadTickets();
+    }, [ticketSubmitted]);
+
     const handleSubmitTicket = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || !email || !subject || !description) {
@@ -114,15 +136,8 @@ export default function HelpPage() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 p-6 lg:p-12 selection:bg-indigo-500/30">
-            <div className="max-w-6xl mx-auto space-y-12">
-                
-                {/* Back Link */}
-                <div className="relative z-10">
-                    <Link href="/feed" className="inline-flex items-center text-slate-500 hover:text-slate-900 transition-colors group text-sm font-semibold">
-                        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
-                    </Link>
-                </div>
+        <AppShell>
+            <div className="space-y-12">
 
                 {/* Hero Header */}
                 <div className="text-center max-w-2xl mx-auto space-y-6">
@@ -360,6 +375,87 @@ export default function HelpPage() {
                     </div>
                 </div>
 
+                {/* YOUR ACTIVE INQUIRIES TERMINAL */}
+                {myTickets.length > 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">Your Active Support Uplinks</h3>
+                                <p className="text-xs text-slate-500 font-medium">Real-time connection telemetry to our Core Operations queue.</p>
+                            </div>
+                            <span className="text-xs font-mono font-bold bg-indigo-50 text-indigo-650 px-2.5 py-1.5 rounded-full border border-indigo-100">
+                                ACTIVE TICKETS: {myTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'DISMISSED').length}
+                            </span>
+                        </div>
+
+                        <div className="space-y-4">
+                            {myTickets.map((ticket) => {
+                                const isPending = ticket.status === 'PENDING';
+                                const isReviewing = ticket.status === 'UNDER_REVIEW';
+                                const isResolved = ticket.status === 'RESOLVED';
+                                
+                                return (
+                                    <div key={ticket.id} className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="space-y-2 max-w-xl">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-xs font-mono font-bold bg-slate-200/60 text-slate-650 px-2 py-0.5 rounded">
+                                                    {ticket.id}
+                                                </span>
+                                                <span className="text-xs font-bold text-slate-500 font-mono">
+                                                    {ticket.category}
+                                                </span>
+                                                <span className={cn(
+                                                    "text-[10px] font-mono font-black px-1.5 py-0.5 rounded border leading-none",
+                                                    ticket.severity === 'CRITICAL' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                    ticket.severity === 'HIGH' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                    ticket.severity === 'MEDIUM' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                    'bg-slate-100 text-slate-500 border-slate-200'
+                                                )}>
+                                                    {ticket.severity}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-bold text-slate-900">{ticket.subject}</h4>
+                                            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                                {ticket.details?.description || "No description provided."}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 self-start md:self-auto">
+                                            <div className="text-right hidden md:block">
+                                                <p className="text-[10px] text-slate-400 font-mono font-bold uppercase">Dispatched</p>
+                                                <p className="text-xs font-semibold text-slate-600">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            
+                                            <div className={cn(
+                                                "px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-sm",
+                                                isPending ? "bg-slate-100 text-slate-650 border-slate-200" :
+                                                isReviewing ? "bg-amber-50 text-amber-600 border-amber-200 animate-pulse" :
+                                                isResolved ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                                                "bg-zinc-100 text-zinc-650 border-zinc-200"
+                                            )}>
+                                                {isPending && (
+                                                    <>
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-450" /> PENDING TRIAGE
+                                                    </>
+                                                )}
+                                                {isReviewing && (
+                                                    <>
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" /> TEAM REVIEWING
+                                                    </>
+                                                )}
+                                                {isResolved && "✅ COMPLETED / RESOLVED"}
+                                                {ticket.status === 'DISMISSED' && "📋 DISMISSED"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+
                 {/* Footer Info */}
                 <div className="text-center pt-8 border-t border-slate-200">
                     <p className="text-slate-400 font-medium">Need immediate system status?</p>
@@ -369,6 +465,6 @@ export default function HelpPage() {
                 </div>
 
             </div>
-        </div>
+        </AppShell>
     );
 }

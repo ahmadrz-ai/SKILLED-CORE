@@ -24,6 +24,40 @@ const nextAuth = NextAuth({
     trustHost: true, // Fix for localhost configuration error
     callbacks: {
         ...authConfig.callbacks,
+        async signIn({ user, account }) {
+            // Check if user is registering/logging in via OAuth
+            if (account?.provider === 'google' || account?.provider === 'github') {
+                try {
+                    const { cookies } = await import("next/headers");
+                    const cookieStore = await cookies();
+                    const signupRole = cookieStore.get("skilledcore_signup_role")?.value;
+
+                    const email = user.email || "";
+                    const cleanEmail = email.toLowerCase().trim();
+                    const emailDomain = cleanEmail.split("@")[1];
+
+                    const PUBLIC_EMAIL_DOMAINS = new Set([
+                        'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
+                        'icloud.com', 'zoho.com', 'protonmail.com', 'mail.com', 'yandex.com',
+                        'gmx.com', 'live.com', 'msn.com', 'rocketmail.com', 'fastmail.com'
+                    ]);
+
+                    if (signupRole === "RECRUITER" && emailDomain && PUBLIC_EMAIL_DOMAINS.has(emailDomain)) {
+                        console.log(`[OAuth Block] Blocked recruiter signup for email: ${cleanEmail} (Public domain not allowed)`);
+                        return "/register?error=RecruiterEmailDomainRequired";
+                    }
+
+                    // Assign role if registering a new OAuth user
+                    if (signupRole) {
+                        // @ts-ignore
+                        user.role = signupRole.toUpperCase();
+                    }
+                } catch (err) {
+                    console.error("Error in signIn callback:", err);
+                }
+            }
+            return true;
+        },
         async session({ session, token }) {
             if (session.user && token.sub) {
                 session.user.id = token.sub;
@@ -147,10 +181,27 @@ const nextAuth = NextAuth({
                     counter++;
                 }
 
+                // Retrieve signup role from cookies
+                let roleToSave = 'CANDIDATE';
+                try {
+                    const { cookies } = await import("next/headers");
+                    const cookieStore = await cookies();
+                    const signupRole = cookieStore.get("skilledcore_signup_role")?.value;
+                    if (signupRole === 'RECRUITER' || signupRole === 'CANDIDATE') {
+                        roleToSave = signupRole;
+                    }
+                } catch (e) {
+                    console.error("Failed to read signup role cookie:", e);
+                }
+
                 await prisma.user.update({
                     where: { id: dbUser.id },
-                    data: { username: uniqueName }
+                    data: { 
+                        username: uniqueName,
+                        role: roleToSave
+                    }
                 });
+                console.log(`[OAuth Registration] Created user: ${dbUser.email} with username: ${uniqueName} and role: ${roleToSave}`);
             }
         }
     },
@@ -222,14 +273,46 @@ const nextAuth = NextAuth({
                 if (!credentials.password) return null;
 
                 try {
-                    const user = await prisma.user.findFirst({
+                    const cleanEmail = identifier.toLowerCase().trim();
+                    const isMockSocial = cleanEmail.includes("mock-google") || cleanEmail.includes("mock-github");
+
+                    let user = await prisma.user.findFirst({
                         where: {
                             OR: [
-                                { email: { equals: identifier, mode: 'insensitive' } },
-                                { username: { equals: identifier, mode: 'insensitive' } }
+                                { email: { equals: cleanEmail, mode: 'insensitive' } },
+                                { username: { equals: cleanEmail, mode: 'insensitive' } }
                             ]
                         }
                     });
+
+                    if (!user && isMockSocial) {
+                        // Create mock social user on the fly in development
+                        const provider = cleanEmail.includes("google") ? "Google" : "GitHub";
+                        const parsedRole = cleanEmail.includes("recruiter") ? "RECRUITER" : "CANDIDATE";
+                        const baseUsername = cleanEmail.split("@")[0].replace(/[^a-z0-9_]/g, "");
+                        
+                        // Ensure unique username
+                        let uniqueUsername = baseUsername;
+                        let counter = 1;
+                        while (await prisma.user.findUnique({ where: { username: uniqueUsername } })) {
+                            uniqueUsername = `${baseUsername}_${counter}`;
+                            counter++;
+                        }
+
+                        const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
+                        user = await prisma.user.create({
+                            data: {
+                                email: cleanEmail,
+                                name: `Mock ${provider} User`,
+                                username: uniqueUsername,
+                                password: hashedPassword,
+                                role: parsedRole,
+                                emailVerified: new Date(),
+                                credits: 100, // Give them plenty of credits
+                            }
+                        });
+                        console.log(`[DEV ONLY] Created mock social user: ${cleanEmail} with role: ${parsedRole}`);
+                    }
 
                     if (!user || !user.password) {
                         return null;

@@ -5,7 +5,7 @@ import LoginAlertEmail from '@/components/emails/LoginAlertEmail';
 import * as React from 'react';
 import { prisma } from '@/lib/prisma';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_123');
 
 interface SendLoginAlertParams {
     email: string;
@@ -72,6 +72,11 @@ export async function sendLoginAlertEmail({
     if (!email) {
         console.error('Error: sendLoginAlertEmail failed because email was missing.');
         return { error: 'Missing target email address' };
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('[Login Alert] Bypassed security alert email because RESEND_API_KEY is not configured in local environment.');
+        return { success: true, message: 'Bypassed due to unconfigured Resend API key' };
     }
 
     try {

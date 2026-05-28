@@ -1,6 +1,4 @@
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { AppShell } from "@/components/layout/AppShell";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -20,6 +18,8 @@ export default async function AppLayout({
 
     let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null } | null = null;
 
+    let shouldRedirectToOnboarding = false;
+
     try {
         if (session?.user?.id) {
             user = await prisma.user.findUnique({
@@ -30,7 +30,7 @@ export default async function AppLayout({
             // Redirect un-onboarded users to the onboarding page
             const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
             if (!isOnboarded) {
-                redirect("/onboarding");
+                shouldRedirectToOnboarding = true;
             }
 
             networkCount = await prisma.connection.count({
@@ -64,36 +64,27 @@ export default async function AppLayout({
         console.error("AppLayout: DB Error fetching stats/user:", dbError);
     }
 
+    if (shouldRedirectToOnboarding) {
+        redirect("/onboarding");
+    }
+
     const plan = user?.plan || "BASIC";
 
     return (
-        <div className="min-h-screen bg-bg-secondary-panel text-text-body font-sans">
-            {/* Desktop Sidebar — Fixed Left */}
-            <Sidebar
-                counts={{
-                    network: networkCount,
-                    notifications: notificationCount,
-                    messages: messagesCount,
-                    jobs: jobsCount,
-                    learning: learningCount,
-                    analytics: hasAnalytics,
-                    salary: false
-                }}
-                plan={plan}
-            />
-
-            <div className="lg:pl-64 flex flex-col min-h-screen">
-                {/* Sticky Header */}
-                <Header credits={user?.credits || 0} />
-
-                {/* Main Scrollable Content */}
-                <main className="flex-1 p-4 lg:p-6">
-                    {children}
-                </main>
-            </div>
-
-            {/* Mobile Bottom Nav */}
-            <MobileNav />
-        </div>
+        <AppShell
+            counts={{
+                network: networkCount,
+                notifications: notificationCount,
+                messages: messagesCount,
+                jobs: jobsCount,
+                learning: learningCount,
+                analytics: hasAnalytics,
+                salary: false
+            }}
+            plan={plan}
+            credits={user?.credits || 0}
+        >
+            {children}
+        </AppShell>
     );
 }

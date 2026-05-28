@@ -90,11 +90,16 @@ export default function RegisterPageContent() {
         confirmPassword: ""
     });
 
-    // Pre-select role from URL param
+    // Pre-select role from URL param & handle recruiter domain error
     useEffect(() => {
         const roleParam = searchParams.get('role');
         if (roleParam === 'recruiter') setRole('RECRUITER');
         if (roleParam === 'candidate') setRole('CANDIDATE');
+
+        const error = searchParams.get('error');
+        if (error === 'RecruiterEmailDomainRequired') {
+            toast.error("Recruiter accounts must use a valid company email address (e.g. name@company.com). Public domains like gmail.com are not permitted.");
+        }
     }, [searchParams]);
 
     const handleSocialLogin = (provider: "google" | "github") => {
@@ -103,6 +108,9 @@ export default function RegisterPageContent() {
             if (formData.name) sessionStorage.setItem("skilledcore_pending_name", formData.name.trim());
             if (formData.username) sessionStorage.setItem("skilledcore_pending_username", formData.username.toLowerCase().replace(/[^a-z0-9_]/g, ''));
             sessionStorage.setItem("skilledcore_pending_role", role);
+            
+            // Set cookie for server-side role validation in NextAuth signIn callback
+            document.cookie = `skilledcore_signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
         }
         const callbackUrl = `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}role=${role.toLowerCase()}`;
         signIn(provider, { callbackUrl });

@@ -6,6 +6,8 @@ import { FilterSidebar } from "@/components/hire/FilterSidebar";
 import { CandidateCard } from "@/components/hire/CandidateCard";
 import { useMemo } from "react";
 import type { Candidate } from "./actions";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Search } from "lucide-react";
 
 interface SearchClientProps {
     initialCandidates: Candidate[];
@@ -76,9 +78,13 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                     </div>
 
                     {filteredCandidates.length === 0 ? (
-                        <div className="text-center py-20 text-[#6B7280]">
-                            No candidates found matching your criteria.
-                        </div>
+                        <EmptyState
+                            icon={Search}
+                            title="No candidates match this search"
+                            description="Try adjusting your filters or broadening your search query to locate relevant candidates."
+                            ctaText="Adjust Filters"
+                            onCtaClick={handleClearAll}
+                        />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                             {filteredCandidates.map(candidate => (

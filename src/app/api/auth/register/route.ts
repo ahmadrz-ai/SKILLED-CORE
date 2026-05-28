@@ -110,6 +110,21 @@ export async function POST(req: Request) {
             );
         }
 
+        // B2B: Enforce company email domains for recruiter accounts
+        if (role === 'RECRUITER') {
+            const PUBLIC_EMAIL_DOMAINS = new Set([
+                'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
+                'icloud.com', 'zoho.com', 'protonmail.com', 'mail.com', 'yandex.com',
+                'gmx.com', 'live.com', 'msn.com', 'rocketmail.com', 'fastmail.com'
+            ]);
+            if (emailDomain && PUBLIC_EMAIL_DOMAINS.has(emailDomain)) {
+                return NextResponse.json(
+                    { error: "Recruiter accounts must register with a valid work/company email address (e.g., name@company.com). Public domains like gmail.com are not permitted." },
+                    { status: 400 }
+                );
+            }
+        }
+
         // FIX-004: Block obvious test/bot account names
         if (TEST_NAME_PATTERNS.test(name.trim())) {
             return NextResponse.json(

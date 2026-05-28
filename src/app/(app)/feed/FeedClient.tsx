@@ -12,6 +12,8 @@ import { ProfileSideWidget } from '@/components/feed/ProfileSideWidget';
 import { RecommendationsWidget } from '@/components/feed/RecommendationsWidget';
 import { PromotedWidget } from '@/components/feed/PromotedWidget';
 import { RecommendedJobsWidget } from '@/components/feed/RecommendedJobsWidget';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Newspaper } from 'lucide-react';
 
 
 import Link from 'next/link';
@@ -308,9 +310,13 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                             );
                         })}
                         {posts.length === 0 && (
-                            <div className="text-center py-20 text-zinc-500">
-                                <p>No posts yet. Be the first.</p>
-                            </div>
+                            <EmptyState
+                                icon={Newspaper}
+                                title="Nothing in your feed yet"
+                                description="Follow professionals, connect with recruiters, and explore open jobs to populate your personalized feed."
+                                ctaText="Browse Jobs"
+                                ctaHref="/jobs"
+                            />
                         )}
                     </AnimatePresence>
                 </div>

@@ -8,7 +8,7 @@ const PROTECTED_ROUTES = [
     '/messages',
     '/network',
     '/settings',
-    '/analytics-dashboard',
+    '/analytics',
     '/notifications',
     '/profile',
     '/applications',

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { logout } from "@/app/actions/authActions";
@@ -11,7 +10,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   Home, Users, Briefcase, MessageSquare, BarChart, CreditCard,
   MoreHorizontal, LogOut, Settings, PlusCircle, Sparkles, DollarSign,
-  BookOpen, MessageSquarePlus, Bell, LifeBuoy
+  BookOpen, MessageSquarePlus, LifeBuoy, ChevronLeft, ChevronRight, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,12 +33,16 @@ const NAV_ITEMS = [
   { label: "Salary", icon: DollarSign, path: "/salary" },
   { label: "Learning", icon: BookOpen, path: "/learning" },
   { label: "Messages", icon: MessageSquare, path: "/messages" },
-  { label: "Analytics", icon: BarChart, path: "/analytics-dashboard" },
+  { label: "Analytics", icon: BarChart, path: "/analytics" },
   { label: "Credits", icon: CreditCard, path: "/credits" },
   { label: "Support", icon: LifeBuoy, path: "/help" },
 ];
 
 interface SidebarProps {
+  isCollapsed?: boolean;
+  onToggle?: () => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
   counts?: {
     network?: number;
     messages?: number;
@@ -52,7 +55,7 @@ interface SidebarProps {
   plan?: string;
 }
 
-export function Sidebar({ counts, plan }: SidebarProps) {
+export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileClose, counts, plan }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const user = session?.user;
@@ -74,27 +77,41 @@ export function Sidebar({ counts, plan }: SidebarProps) {
   };
 
   return (
-    <aside className="hidden lg:flex w-64 h-screen flex-col bg-bg-sidebar border-r border-border-sidebar fixed left-0 top-0 z-50">
-
-      {/* BRAND */}
-      <div className="h-16 flex items-center px-5 border-b border-border-sidebar flex-shrink-0">
-        <Link href="/feed" className="flex items-center gap-2.5 group">
-          <Image
+    <aside 
+      className={cn(
+        // General sidebars styling
+        "flex flex-col bg-bg-sidebar border-r border-border-sidebar fixed bottom-0 z-40 transition-all duration-200 ease-in-out font-sans",
+        // Desktop sizing and top positioning (sits below fixed topbar top-14)
+        "lg:top-14 lg:left-0",
+        isCollapsed ? "lg:w-16" : "lg:w-60",
+        // Mobile layout sizing and drawer slide-in positioning (slide drawer z-50)
+        "top-0 w-60 h-full lg:h-auto z-50",
+        isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}
+    >
+      {/* Mobile Top Brand Panel (Hidden on Desktop) */}
+      <div className="h-14 flex items-center justify-between px-5 border-b border-border-sidebar flex-shrink-0 lg:hidden bg-bg-topbar">
+        <Link href="/feed" className="flex items-center gap-2 group min-h-[44px]">
+          <img
             src="/logo.png"
             alt="SkilledCore"
-            width={32}
-            height={32}
-            className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
+            className="w-7 h-7 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
           />
           <div className="flex flex-col leading-none">
-            <span className="text-text-heading font-bold text-sm tracking-tight">SkilledCore</span>
-            <span className="text-text-secondary text-[10px] font-medium">Talent Intelligence</span>
+            <span className="text-text-heading font-black text-xs tracking-tight">SkilledCore</span>
+            <span className="text-text-secondary text-[8px] font-bold mt-0.5">Talent Intelligence</span>
           </div>
         </Link>
+        <button 
+          onClick={onMobileClose}
+          className="p-1.5 rounded-lg text-text-secondary hover:text-text-heading hover:bg-bg-sidebar-hover min-h-[44px]"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
+      <nav className={cn("flex-1 py-4 space-y-0.5 overflow-y-auto custom-scrollbar", isCollapsed ? "px-1.5" : "px-3")}>
         {NAV_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.path);
           const isProtected = ["/jobs/create", "/hire"].includes(item.path);
@@ -128,9 +145,13 @@ export function Sidebar({ counts, plan }: SidebarProps) {
               onClick={(e) => {
                 handleBadgeClick(badgeKey);
                 if (isProtected) handleProtectedNav(e, item.path, "RECRUITER");
+                if (onMobileClose) onMobileClose();
               }}
+              // Correction 8: zero-dependency native HTML title attribute on icon wrapper for tooltips
+              title={isCollapsed ? item.label : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative",
+                "flex items-center gap-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 group relative min-h-[36px]",
+                isCollapsed ? "justify-center px-0" : "px-3",
                 isActive
                   ? "bg-bg-sidebar-active text-text-sidebar-active"
                   : "text-text-sidebar-inactive hover:bg-bg-sidebar-hover hover:text-text-sidebar-hover"
@@ -138,7 +159,7 @@ export function Sidebar({ counts, plan }: SidebarProps) {
             >
               {/* Active indicator bar */}
               {isActive && (
-                <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-sc-purple-600" />
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sc-purple-600" />
               )}
 
               <div className="relative flex-shrink-0">
@@ -153,34 +174,38 @@ export function Sidebar({ counts, plan }: SidebarProps) {
                 )}
               </div>
 
-              <span className="flex-1">{item.label}</span>
+              {!isCollapsed && <span className="flex-1">{item.label}</span>}
 
-              {/* BADGES */}
-              {(item.label === "Network" || item.label === "Messages" || item.label === "Notifications") && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-red-650 px-1 text-[10px] font-bold text-white">
-                  {badgeValue}
-                </span>
-              )}
-              {item.label === "Jobs" && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[10px] font-bold text-white">
-                  {badgeValue}
-                </span>
-              )}
-              {item.label === "Learning" && !!badgeValue && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-500 px-1 text-[10px] font-bold text-white">
-                  {badgeValue}
-                </span>
-              )}
-              {item.label === "Salary" && badgeValue && (
-                <span className="h-2 w-2 rounded-full bg-sc-green-600 flex-shrink-0" />
-              )}
-              {item.label === "Analytics" && badgeValue && (
-                <span className="h-2 w-2 rounded-full bg-sc-blue-500 flex-shrink-0" />
-              )}
-              {item.label === "Credits" && badgeValue === "low" && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[10px] font-bold text-white">
-                  !
-                </span>
+              {/* BADGES (Only visible when expanded) */}
+              {!isCollapsed && (
+                <>
+                  {(item.label === "Network" || item.label === "Messages" || item.label === "Notifications") && !!badgeValue && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-red-650 px-1 text-[9px] font-bold text-white leading-none">
+                      {badgeValue}
+                    </span>
+                  )}
+                  {item.label === "Jobs" && !!badgeValue && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[9px] font-bold text-white leading-none">
+                      {badgeValue}
+                    </span>
+                  )}
+                  {item.label === "Learning" && !!badgeValue && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-purple-500 px-1 text-[9px] font-bold text-white leading-none">
+                      {badgeValue}
+                    </span>
+                  )}
+                  {item.label === "Salary" && badgeValue && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-sc-green-600 flex-shrink-0" />
+                  )}
+                  {item.label === "Analytics" && badgeValue && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-sc-blue-500 flex-shrink-0" />
+                  )}
+                  {item.label === "Credits" && badgeValue === "low" && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-purple-600 px-1 text-[9px] font-bold text-white leading-none">
+                      !
+                    </span>
+                  )}
+                </>
               )}
             </Link>
           );
@@ -188,56 +213,82 @@ export function Sidebar({ counts, plan }: SidebarProps) {
       </nav>
 
       {/* USER PROFILE */}
-      <div className="p-3 border-t border-border-sidebar flex-shrink-0">
+      <div className={cn("border-t border-border-sidebar flex-shrink-0", isCollapsed ? "p-1.5 flex justify-center" : "p-3")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 w-full px-2 py-2 rounded-lg hover:bg-bg-sidebar-hover transition-colors group">
+            <button 
+              title={isCollapsed ? (user?.name || "User") : undefined}
+              className={cn(
+                "flex items-center w-full rounded-lg hover:bg-bg-sidebar-hover transition-colors group cursor-pointer min-h-[44px]", 
+                isCollapsed ? "justify-center p-0.5" : "gap-3 px-2 py-2"
+              )}
+            >
               <Avatar className="h-8 w-8 border border-border-sidebar flex-shrink-0">
                 <AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
                 <AvatarFallback className="bg-bg-sidebar-active text-text-brand text-xs font-bold">
                   {user?.name?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-semibold text-text-heading truncate">{user?.name || "User"}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {(user as any)?.role && (
-                    <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wide">
-                      {(user as any).role}
-                    </span>
-                  )}
-                  <PlanBadge plan={plan} />
-                </div>
-              </div>
-              <MoreHorizontal className="w-4 h-4 text-icon-default flex-shrink-0" />
+
+              {!isCollapsed && (
+                <>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-xs font-bold text-text-heading truncate">{user?.name || "User"}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {(user as any)?.role && (
+                        <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">
+                          {(user as any).role}
+                        </span>
+                      )}
+                      <PlanBadge plan={plan} />
+                    </div>
+                  </div>
+                  <MoreHorizontal className="w-4 h-4 text-icon-default flex-shrink-0" />
+                </>
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            align="end"
+            align={isCollapsed ? "start" : "end"}
             side="top"
             className="w-52 bg-bg-dropdown border-border-dropdown text-text-body shadow-sc-dropdown"
           >
-            <DropdownMenuLabel className="text-text-heading font-semibold">My Account</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-text-heading font-semibold text-xs">My Account</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border-subtle" />
-            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body">
+            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
               <Link href="/profile/me">
                 <Users className="w-4 h-4 mr-2 text-icon-default" /> Profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body">
+            <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
               <Link href="/settings">
                 <Settings className="w-4 h-4 mr-2 text-icon-default" /> Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border-subtle" />
             <DropdownMenuItem
-              className="text-text-error hover:text-text-error hover:bg-sc-red-50 focus:bg-sc-red-50 cursor-pointer"
+              className="text-text-error hover:text-text-error hover:bg-sc-red-50 focus:bg-sc-red-50 cursor-pointer text-xs py-2"
               onClick={() => logout()}
             >
               <LogOut className="w-4 h-4 mr-2" /> Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+
+      {/* SIDEBAR TOGGLE BUTTON (Correction 2: Bottom Chevron Manual Toggle) */}
+      <div className="hidden lg:flex p-2 border-t border-border-sidebar justify-center flex-shrink-0 bg-bg-sidebar">
+        <button 
+          onClick={onToggle}
+          className="p-1 rounded-lg text-text-secondary hover:text-text-heading hover:bg-bg-sidebar-hover transition-colors cursor-pointer min-h-[32px] w-full flex items-center justify-center border-none"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4" /> // → when collapsed (click to expand)
+          ) : (
+            <ChevronLeft className="w-4 h-4" /> // ← when expanded (click to collapse)
+          )}
+        </button>
       </div>
     </aside>
   );
