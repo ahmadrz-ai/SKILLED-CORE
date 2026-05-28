@@ -8,7 +8,8 @@ import { CheckCircle, XCircle, AlertCircle, ChevronRight, Check } from "lucide-r
 import { submitAssessment } from "@/app/actions/assessments";
 import { toast } from "sonner";
 import Link from "next/link";
-import Confetti from "react-confetti"; // Might need to install this or just use simple animation
+import Confetti from "react-confetti"; // Simple animation fallback if needed
+import { cn } from "@/lib/utils";
 
 export default function QuizInterface({ assessment }: { assessment: any }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -55,45 +56,47 @@ export default function QuizInterface({ assessment }: { assessment: any }) {
 
     if (result) {
         return (
-            <div className="max-w-2xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                {result.passed && <Confetti numberOfPieces={200} recycle={false} />}
+            <div className="max-w-2xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 font-sans">
+                {result.passed && typeof window !== "undefined" && (
+                    <Confetti numberOfPieces={200} recycle={false} width={window.innerWidth} height={window.innerHeight} />
+                )}
 
-                <div className="bg-zinc-900 border border-white/10 rounded-2xl p-12 shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-violet-500/10 to-transparent" />
+                <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-10 shadow-[var(--shadow-modal)] relative overflow-hidden text-[var(--text-body)]">
+                    <div className="absolute inset-0 bg-gradient-to-b from-[var(--sc-purple-50)]/30 to-transparent pointer-events-none" />
 
                     <motion.div
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
-                        className="inline-flex p-4 rounded-full bg-black/40 border border-white/10 mb-6"
+                        className="inline-flex p-3 rounded-full bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] mb-6 shadow-inner"
                     >
                         {result.passed ? (
-                            <CheckCircle className="w-16 h-16 text-emerald-500" />
+                            <CheckCircle className="w-14 h-14 text-[var(--sc-green-600)]" />
                         ) : (
-                            <XCircle className="w-16 h-16 text-red-500" />
+                            <XCircle className="w-14 h-14 text-[var(--sc-red-650)]" />
                         )}
                     </motion.div>
 
-                    <h2 className="text-3xl font-bold text-white mb-2">
+                    <h2 className="text-2xl font-bold text-[var(--text-heading)] mb-2 font-heading">
                         {result.passed ? "Assessment Passed!" : "Assessment Failed"}
                     </h2>
-                    <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+                    <p className="text-xs text-[var(--text-secondary)] mb-6 max-w-sm mx-auto leading-relaxed font-medium">
                         {result.passed
                             ? "You have successfully verified this skill. A badge has been added to your profile."
                             : "You didn't meet the passing criteria this time. Brush up on your skills and try again."}
                     </p>
 
-                    <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500 mb-8 font-mono">
+                    <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-heading)] to-[var(--text-secondary)] mb-8 font-mono">
                         {result.score}%
                     </div>
 
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-3">
                         <Link href="/assessments">
-                            <Button variant="outline" className="border-white/10 text-white hover:bg-white/5">
+                            <Button variant="outline" className="border-[var(--btn-secondary-border)] text-[var(--btn-secondary-text)] hover:bg-[var(--btn-secondary-bg-hover)] font-bold text-xs py-2 px-5 rounded-lg select-none">
                                 Back to Assessments
                             </Button>
                         </Link>
                         {!result.passed && (
-                            <Button onClick={() => window.location.reload()} className="bg-white text-black hover:bg-zinc-200">
+                            <Button onClick={() => window.location.reload()} className="bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg-hover)] text-[var(--btn-primary-text)] font-bold text-xs py-2 px-5 rounded-lg border-none shadow-sm cursor-pointer select-none">
                                 Try Again
                             </Button>
                         )}
@@ -104,14 +107,14 @@ export default function QuizInterface({ assessment }: { assessment: any }) {
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-6 font-sans text-[var(--text-body)]">
             {/* Header / Progress */}
-            <div className="mb-8 space-y-4">
-                <div className="flex justify-between items-center text-sm text-zinc-500">
-                    <span>Question {currentIndex + 1} of {questions.length}</span>
-                    <span className="font-mono">{Math.round(progress)}%</span>
+            <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-[var(--text-secondary)] font-mono">
+                    <span>QUESTION {currentIndex + 1} OF {questions.length}</span>
+                    <span>{Math.round(progress)}%</span>
                 </div>
-                <Progress value={progress} className="h-2 bg-zinc-800" indicatorClassName="bg-violet-500" />
+                <Progress value={progress} className="h-1.5 bg-[var(--sc-gray-150)] rounded-full" indicatorClassName="bg-[var(--sc-purple-600)]" />
             </div>
 
             {/* Question Card */}
@@ -121,13 +124,13 @@ export default function QuizInterface({ assessment }: { assessment: any }) {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="bg-zinc-900 border border-white/10 rounded-2xl p-8 min-h-[400px] flex flex-col"
+                    className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-6 sm:p-8 min-h-[360px] flex flex-col justify-between shadow-sm relative"
                 >
-                    <h2 className="text-2xl font-bold text-white mb-8 leading-relaxed">
+                    <h2 className="text-lg font-bold text-[var(--text-heading)] font-heading leading-relaxed mb-6">
                         {currentQuestion.text}
                     </h2>
 
-                    <div className="space-y-3 flex-1">
+                    <div className="space-y-2.5 flex-1">
                         {currentQuestion.options.map((option: string, idx: number) => {
                             const isSelected = answers[currentQuestion.id] === idx;
                             return (
@@ -135,35 +138,37 @@ export default function QuizInterface({ assessment }: { assessment: any }) {
                                     key={idx}
                                     onClick={() => handleSelectOption(idx)}
                                     className={cn(
-                                        "w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-center justify-between group",
+                                        "w-full text-left p-3.5 rounded-xl border transition-all duration-200 flex items-center justify-between group cursor-pointer border-solid",
                                         isSelected
-                                            ? "bg-violet-500/20 border-violet-500 text-white"
-                                            : "bg-black/20 border-white/5 text-zinc-400 hover:bg-white/5 hover:border-white/10 hover:text-white"
+                                            ? "bg-[var(--sc-purple-50)] border-[var(--sc-purple-600)] text-[var(--sc-purple-700)] font-semibold"
+                                            : "bg-[var(--bg-input)] border-[var(--border-input)] text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] hover:border-[var(--border-input-hover)] hover:text-[var(--text-heading)]"
                                     )}
                                 >
-                                    <span className="flex items-center gap-4">
+                                    <span className="flex items-center gap-3">
                                         <span className={cn(
-                                            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-colors",
-                                            isSelected ? "bg-violet-500 border-violet-500 text-white" : "border-white/10 text-zinc-500 group-hover:border-zinc-500"
+                                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-colors",
+                                            isSelected 
+                                                ? "bg-[var(--sc-purple-600)] border-[var(--sc-purple-600)] text-white" 
+                                                : "border-[var(--border-input)] text-[var(--text-secondary)] group-hover:border-[var(--border-input-hover)]"
                                         )}>
                                             {String.fromCharCode(65 + idx)}
                                         </span>
-                                        <span className="text-lg">{option}</span>
+                                        <span className="text-sm">{option}</span>
                                     </span>
-                                    {isSelected && <Check className="w-5 h-5 text-violet-400" />}
+                                    {isSelected && <Check className="w-4 h-4 text-[var(--sc-purple-600)] shrink-0" />}
                                 </button>
                             );
                         })}
                     </div>
 
-                    <div className="flex justify-end pt-8 mt-8 border-t border-white/5">
+                    <div className="flex justify-end pt-5 mt-6 border-t border-[var(--border-subtle)]">
                         <Button
                             onClick={handleNext}
                             disabled={answers[currentQuestion.id] === undefined || isSubmitting}
-                            className="bg-white text-black hover:bg-zinc-200 px-8 font-bold"
+                            className="bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg-hover)] text-[var(--btn-primary-text)] font-bold text-xs uppercase tracking-wider px-6 py-2 rounded-lg border-none shadow-sm cursor-pointer disabled:opacity-50 select-none"
                         >
                             {isSubmitting ? "Submitting..." : isLastQuestion ? "Submit Assessment" : "Next Question"}
-                            {!isSubmitting && <ChevronRight className="w-4 h-4 ml-2" />}
+                            {!isSubmitting && <ChevronRight className="w-4 h-4 ml-1" />}
                         </Button>
                     </div>
 
@@ -171,9 +176,4 @@ export default function QuizInterface({ assessment }: { assessment: any }) {
             </AnimatePresence>
         </div>
     );
-}
-
-// Helper utility for classnames
-function cn(...classes: (string | undefined | null | false)[]) {
-    return classes.filter(Boolean).join(" ");
 }

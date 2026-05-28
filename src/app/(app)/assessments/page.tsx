@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import AssessmentList from "./AssessmentList";
 
 export const metadata = {
-    title: "Skill Assessments | ShadowHire",
+    title: "Skill Assessments | SkilledCore",
     description: "Verify your skills and earn badges.",
 };
 
@@ -15,23 +15,19 @@ export default async function AssessmentsPage() {
     const assessments = await getAssessments();
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-6 lg:p-12 font-sans">
-            <div className="max-w-7xl mx-auto space-y-12">
-
-                {/* Header */}
-                <div className="space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-bold font-heading tracking-tight">
-                        Skill <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">Verification</span>
-                    </h1>
-                    <p className="text-xl text-zinc-400 max-w-2xl">
-                        Prove your expertise to the network. Earn verified badges to boost your visibility and unlock premium opportunities.
-                    </p>
-                </div>
-
-                {/* Content */}
-                <AssessmentList assessments={assessments} />
-
+        <div className="max-w-[1200px] mx-auto space-y-6 font-sans text-[var(--text-body)]">
+            {/* Header */}
+            <div className="space-y-1.5 border-b border-[var(--border-strong)] pb-5">
+                <h1 className="text-2xl font-bold tracking-tight text-[var(--text-heading)] font-heading uppercase">
+                    SKILL <span className="text-[var(--text-brand)]">VERIFICATION</span>
+                </h1>
+                <p className="text-xs text-[var(--text-secondary)] max-w-2xl font-medium leading-relaxed">
+                    Prove your expertise to the network. Earn verified badges to boost your recruiter visibility and unlock premium career opportunities.
+                </p>
             </div>
+
+            {/* Content & Pattern B Two Column Layout */}
+            <AssessmentList assessments={assessments} />
         </div>
     );
 }

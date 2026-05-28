@@ -1077,11 +1077,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             e.preventDefault();
                                             router.push(`/profile/${t.username}`);
                                         }}
-                                        style={{ backgroundColor: '#111827', color: '#ffffff' }}
-                                        className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-zinc-700/50 shadow-2xl flex items-center gap-1 cursor-pointer force-white-text"
+                                        className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-200)] shadow-2xl flex items-center gap-1 cursor-pointer"
                                     >
-                                        <Tag className="w-3 h-3 text-[#10B981]" />
-                                        <span className="force-white-text">{t.name}</span>
+                                        <Tag className="w-3 h-3 text-[var(--sc-purple-600)]" />
+                                        <span>{t.name}</span>
                                     </div>
                                 </div>
                             ))}
@@ -1096,11 +1095,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                             {/* Tag count */}
                             {img.tags && img.tags.length > 0 && (
                                 <div 
-                                    style={{ backgroundColor: 'rgba(17, 24, 39, 0.75)', color: '#ffffff' }}
-                                    className="absolute bottom-2.5 right-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none select-none flex items-center gap-1 force-white-text"
+                                    className="absolute bottom-2.5 right-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--sc-gray-100)] text-[var(--text-body)] border border-[var(--border-default)] backdrop-blur-sm pointer-events-none select-none flex items-center gap-1"
                                 >
-                                    <UserPlus className="w-2.5 h-2.5 text-[#10B981]" />
-                                    <span className="force-white-text">{img.tags.length} tagged</span>
+                                    <UserPlus className="w-2.5 h-2.5 text-[var(--text-secondary)]" />
+                                    <span>{img.tags.length} tagged</span>
                                 </div>
                             )}
                         </div>
@@ -1170,11 +1168,10 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                                     setLightboxIndex(null);
                                                     router.push(`/profile/${t.username}`);
                                                 }}
-                                                style={{ backgroundColor: '#111827', color: '#ffffff' }}
-                                                className="text-xs font-bold px-3.5 py-1.5 rounded-full border border-zinc-700/50 shadow-2xl flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform force-white-text"
+                                                className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-200)] shadow-2xl flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
                                             >
-                                                <Tag className="w-3.5 h-3.5 text-[#10B981]" />
-                                                <span className="force-white-text">{t.name}</span>
+                                                <Tag className="w-3.5 h-3.5 text-[var(--sc-purple-600)]" />
+                                                <span>{t.name}</span>
                                             </div>
                                         </div>
                                     ));

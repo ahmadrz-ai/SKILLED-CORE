@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
-import Image from "next/image";
 import { toast } from "sonner";
 import { sendVerificationCode } from "@/app/actions/auth"; // Keep for resend
 import { signIn } from "next-auth/react";
@@ -51,7 +50,6 @@ function VerifyPageContent() {
 
             if (result?.error) {
                 if (result.error === "Configuration") {
-                    // Sometimes generic error for credentials mismatch
                     setError("Invalid code or server configuration.");
                 } else if (result.error === "CredentialsSignin") {
                     setError("Invalid or expired code.");
@@ -61,7 +59,6 @@ function VerifyPageContent() {
                 }
             } else {
                 toast.success("Identity Verified. Redirecting...");
-                // Success!
                 router.push("/onboarding");
             }
         } catch (err) {
@@ -91,7 +88,7 @@ function VerifyPageContent() {
 
     if (!email) {
         return (
-            <div className="min-h-screen w-full flex bg-transparent text-white items-center justify-center p-6 relative overflow-hidden font-mono">
+            <div className="min-h-screen w-full flex bg-[var(--bg-page)] text-[var(--text-body)] items-center justify-center p-6 relative overflow-hidden font-mono">
                 <p>Invalid Request. Missing email.</p>
             </div>
         );
@@ -100,47 +97,47 @@ function VerifyPageContent() {
     return (
         <div 
             className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans"
-            style={{ background: "linear-gradient(165deg, #FAFAFE 0%, #F1EEFF 40%, #EDE9FE 70%, #FAFAFE 100%)" }}
+            style={{ background: "linear-gradient(165deg, var(--bg-page) 0%, var(--bg-secondary-panel) 100%)" }}
         >
             {/* Subtle mesh background */}
             <div
-                className="absolute inset-0 opacity-[0.035]"
+                className="absolute inset-0 opacity-[0.035] pointer-events-none"
                 style={{
-                    backgroundImage: `radial-gradient(circle at 25% 25%, #6366F1 1px, transparent 1px), radial-gradient(circle at 75% 75%, #6366F1 1px, transparent 1px)`,
+                    backgroundImage: `radial-gradient(circle at 25% 25%, var(--sc-purple-600) 1px, transparent 1px), radial-gradient(circle at 75% 75%, var(--sc-purple-600) 1px, transparent 1px)`,
                     backgroundSize: "48px 48px",
                 }}
             />
 
             {/* Soft gradient orbs */}
-            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-gradient-to-bl from-indigo-200/30 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-[-50px] left-[-100px] w-[300px] h-[300px] bg-gradient-to-tr from-violet-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-gradient-to-bl from-[var(--sc-purple-100)]/30 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-[-50px] left-[-100px] w-[300px] h-[300px] bg-gradient-to-tr from-[var(--sc-purple-100)]/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 max-w-md w-full bg-white border border-zinc-200/80 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative z-10 max-w-md w-full bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-[var(--shadow-modal)] overflow-hidden">
                 {/* Brand top accent bar */}
-                <div className="w-full h-1" style={{ background: "linear-gradient(90deg, #6366F1, #06B6D4)" }} />
+                <div className="w-full h-1 bg-[var(--sc-purple-600)]" />
 
                 <div className="p-8">
                     <div className="flex justify-center mb-6">
-                        <div className="h-14 w-14 bg-indigo-50/50 rounded-full flex items-center justify-center border border-indigo-100 shadow-inner">
-                            <ShieldCheck className="w-7 h-7 text-indigo-600" />
+                        <div className="h-14 w-14 bg-[var(--sc-purple-50)] rounded-full flex items-center justify-center border border-[var(--sc-purple-200)] shadow-inner">
+                            <ShieldCheck className="w-7 h-7 text-[var(--text-brand)]" />
                         </div>
                     </div>
 
                     <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 mb-2">Verify Identity</h1>
-                        <p className="text-sm text-zinc-500 leading-relaxed">
+                        <h1 className="text-2xl font-bold tracking-tight text-[var(--text-heading)] mb-2 font-heading">Verify Identity</h1>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                             Enter the 6-digit secure code sent to <br />
-                            <span className="text-indigo-600 font-bold">{email}</span>
+                            <span className="text-[var(--text-brand)] font-bold">{email}</span>
                         </p>
                     </div>
 
                     <form onSubmit={handleVerify} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="code" className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Secure Code</Label>
+                            <Label htmlFor="code" className="text-xs uppercase tracking-widest text-[var(--text-body-strong)] font-bold">Secure Code</Label>
                             <Input
                                 id="code"
                                 placeholder="000000"
-                                className="bg-white border-zinc-200 text-center text-3xl tracking-[0.5em] font-mono font-black h-16 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all rounded-xl shadow-inner text-zinc-800 placeholder:text-zinc-200"
+                                className="bg-[var(--bg-input)] border-[var(--border-input)] text-center text-3xl tracking-[0.5em] font-mono font-black h-16 focus:border-[var(--border-focus)] focus:shadow-[var(--shadow-input-focus)] focus:outline-none transition-all rounded-xl text-[var(--text-heading)] placeholder:text-[var(--text-placeholder)]"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                                 maxLength={6}
@@ -148,27 +145,26 @@ function VerifyPageContent() {
                         </div>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-600 p-3 rounded-lg text-xs flex items-center gap-2 font-medium">
-                                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                            <div className="bg-[var(--bg-error)] border border-[var(--border-error)] text-[var(--text-error)] p-3 rounded-lg text-xs flex items-center gap-2 font-medium">
+                                <AlertCircle className="w-4 h-4 text-[var(--text-error)] shrink-0" />
                                 {error}
                             </div>
                         )}
 
-                        <Button
+                        <button
                             type="submit"
                             disabled={isLoading || code.length !== 6}
-                            className="w-full h-12 text-white font-bold tracking-widest rounded-xl transition-all shadow-lg hover:shadow-xl force-white-text active:scale-95 duration-150 border-none shrink-0"
-                            style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)" }}
+                            className="w-full h-12 text-[var(--btn-primary-text)] bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-bg-hover)] disabled:bg-[var(--btn-primary-bg-disabled)] font-bold tracking-widest rounded-xl transition-all shadow-md active:scale-95 duration-150 border-none shrink-0 cursor-pointer flex items-center justify-center"
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "AUTHENTICATE"}
-                        </Button>
+                        </button>
                     </form>
 
                     <div className="mt-6 text-center">
                         <button
                             onClick={handleResend}
                             disabled={isResending}
-                            className="text-xs font-semibold text-zinc-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
+                            className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-brand)] transition-colors disabled:opacity-50 border-none bg-transparent cursor-pointer"
                         >
                             {isResending ? "SENDING..." : "RESEND CODE"}
                         </button>
@@ -178,8 +174,8 @@ function VerifyPageContent() {
 
             <div className="absolute bottom-6 left-0 w-full text-center">
                 <div className="flex items-center justify-center gap-2 opacity-50">
-                    <QodeeLogo className="w-3.5 h-3.5 text-zinc-400 grayscale" />
-                    <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">Skilled Core Security Protocol</span>
+                    <QodeeLogo className="w-3.5 h-3.5 text-[var(--text-secondary)] grayscale" />
+                    <span className="text-[9px] font-mono text-[var(--text-secondary)] uppercase tracking-widest">Skilled Core Security Protocol</span>
                 </div>
             </div>
         </div>
@@ -188,7 +184,7 @@ function VerifyPageContent() {
 
 export default function VerifyPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-zinc-500">Loading Secure Environment...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center text-[var(--text-secondary)] font-mono">Loading Secure Environment...</div>}>
             <VerifyPageContent />
         </Suspense>
     );

@@ -62,7 +62,7 @@ export default function LearningPage() {
                             <PlayCircle className="w-12 h-12 text-text-secondary group-hover:text-sc-purple-600 transition-colors" />
                         </div>
                         <div className="p-6 bg-bg-card">
-                            <h3 className="font-bold text-text-heading mb-1 group-hover:text-sc-purple-750 transition-colors">{c.title}</h3>
+                            <h3 className="font-bold text-text-heading mb-1 group-hover:text-sc-purple-700 transition-colors">{c.title}</h3>
                             <div className="flex justify-between text-xs text-text-secondary font-mono uppercase tracking-wider mt-4">
                                 <span>{c.author}</span>
                                 <span>{c.duration}</span>

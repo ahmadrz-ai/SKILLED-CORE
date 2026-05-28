@@ -41,7 +41,8 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
     const isAutoCollapsed =
       autoCollapseRoutes.includes(path) ||
       path.startsWith('/admin') ||
-      path.startsWith('/hire/search');
+      path.startsWith('/hire/search') ||
+      path.startsWith('/assessments/');
 
     if (isAutoCollapsed) return true;
 
@@ -85,6 +86,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
 
   const isStrippedShell =
     strippedShellRoutes.includes(pathname) ||
+    pathname.startsWith('/onboarding') ||
     pathname.startsWith('/legal/');
 
   // MODE 1: NO SHELL AT ALL
