@@ -206,7 +206,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
             {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block space-y-4 sticky top-20 self-start">
+            <div className="hidden lg:block space-y-4 sticky top-[72px] self-start">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -328,22 +328,24 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Right Column: Trending & Jobs */}
-            <motion.div
-                className="hidden lg:block space-y-4 sticky top-20 self-start"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                    visible: {
-                        transition: {
-                            staggerChildren: 0.1
+            <div className="hidden lg:block sticky top-[72px] self-start">
+                <motion.div
+                    className="space-y-4"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                        visible: {
+                            transition: {
+                                staggerChildren: 0.1
+                            }
                         }
-                    }
-                }}
-            >
-                <TrendingWidget topics={trendingTopics} isFolded={isFolded} />
-                <RecommendationsWidget isFolded={isFolded} />
-                <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} />
-            </motion.div>
+                    }}
+                >
+                    <TrendingWidget topics={trendingTopics} isFolded={isFolded} />
+                    <RecommendationsWidget isFolded={isFolded} />
+                    <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} />
+                </motion.div>
+            </div>
 
 
         </div>

@@ -134,7 +134,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         </header>
 
         {/* Stripped Content Area: Padding top 56px (below fixed topbar), Pattern C */}
-        <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-20 pb-12">
+        <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-14 pb-12">
           <div className="space-y-6">
             <div className="border-b border-border-subtle pb-6">
               <h1 className="text-2xl font-bold tracking-tight text-text-heading">{title}</h1>
@@ -186,7 +186,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         />
 
         {/* Main Page Area: Padding top 56px (pt-14) to sit nicely under topbar */}
-        <main className="flex-1 p-4 lg:p-6 pt-20">
+        <main className="flex-1 p-4 lg:p-6 pt-14">
           {children}
         </main>
       </div>
