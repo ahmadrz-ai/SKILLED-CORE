@@ -203,10 +203,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         : '??';
 
     return (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
 
             {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block space-y-4 sticky top-[72px] self-start">
+            <div className="hidden lg:block space-y-4 sticky top-[80px] self-start">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -328,7 +328,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Right Column: Trending & Jobs */}
-            <div className="hidden lg:block sticky top-[72px] self-start">
+            <div className="hidden lg:block sticky top-[80px] self-start">
                 <motion.div
                     className="space-y-4"
                     initial="hidden"

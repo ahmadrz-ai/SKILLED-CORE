@@ -80,9 +80,7 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
     <aside 
       className={cn(
         // General sidebars styling
-        "flex flex-col bg-bg-sidebar border-r border-border-sidebar fixed bottom-0 z-40 transition-all duration-200 ease-in-out font-sans",
-        // Desktop sizing and top positioning (sits below fixed topbar top-14)
-        "lg:top-14 lg:left-0",
+        "flex flex-col bg-bg-sidebar border-r border-border-sidebar fixed left-0 top-14 bottom-0 z-40 transition-all duration-200 ease-in-out font-sans",
         isCollapsed ? "lg:w-16" : "lg:w-60",
         // Mobile layout sizing and drawer slide-in positioning (slide drawer z-50)
         "top-0 w-60 h-full lg:h-auto z-50",
