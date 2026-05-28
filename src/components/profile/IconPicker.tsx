@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import * as SiIcons from 'react-icons/si';
 import * as FaIcons from 'react-icons/fa';
@@ -227,58 +227,65 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 border-violet-500/20 text-white max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl shadow-violet-500/10">
-                <DialogHeader className="pb-4 border-b border-white/5">
-                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+            <DialogContent 
+                className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-6 rounded-xl border font-sans shadow-xl"
+                style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E8ED', color: '#141417' }}
+            >
+                <DialogHeader className="pb-4 border-b" style={{ borderColor: '#F0F0F4' }}>
+                    <DialogTitle className="text-lg font-bold" style={{ color: '#141417' }}>
                         Choose Your Icon
                     </DialogTitle>
-                    <p className="text-sm text-zinc-500 mt-1">Select from {brandIcons.length}+ brand icons</p>
+                    <DialogDescription className="text-xs mt-1" style={{ color: '#6B6B78' }}>
+                        Select from {brandIcons.length}+ premium brand icons
+                    </DialogDescription>
                 </DialogHeader>
 
                 {/* Search Bar */}
-                <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400" />
-                        <Input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by name or category..."
-                            className="pl-12 pr-12 h-12 bg-black/50 border-violet-500/30 focus:border-violet-500/50 text-white placeholder:text-zinc-600 rounded-xl"
-                            autoFocus
-                        />
-                        {search && (
-                            <button
-                                onClick={() => setSearch('')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        )}
-                    </div>
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#909099' }} />
+                    <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search by name or category..."
+                        className="pl-9 pr-9 h-10 rounded-lg text-sm transition-colors w-full"
+                        style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E8ED', color: '#141417' }}
+                        autoFocus
+                    />
+                    {search && (
+                        <button
+                            onClick={() => setSearch('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center"
+                            style={{ color: '#909099' }}
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Categories */}
-                <div className="flex gap-2 overflow-x-auto pb-4 pt-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none mask-linear-fade">
+                <div className="flex gap-1.5 overflow-x-auto pb-3 pt-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none shrink-0">
                     {categories.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={cn(
-                                "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex-shrink-0 border flex items-center justify-center min-w-[80px]",
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center justify-center cursor-pointer"
+                            style={
                                 selectedCategory === cat
-                                    ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/40 scale-100 border-transparent transform cursor-default"
-                                    : "bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-white border-white/5 hover:border-violet-500/30 hover:shadow-md hover:shadow-violet-500/10 active:scale-95"
-                            )}
+                                    ? { backgroundColor: '#5B35D5', color: '#FFFFFF', borderColor: 'transparent', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                                    : { backgroundColor: '#F8F8FA', color: '#6B6B78', borderColor: '#E8E8ED' }
+                            }
                         >
                             {cat}
                         </button>
                     ))}
                 </div>
 
-                {/* Icons Grid */}
-                <div className="flex-1 overflow-y-auto p-4 bg-black/30 rounded-xl border border-white/5 backdrop-blur-sm custom-scrollbar">
-                    <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-14 gap-3">
+                {/* Icons Grid Container */}
+                <div 
+                    className="flex-1 overflow-y-auto p-4 rounded-xl border custom-scrollbar"
+                    style={{ backgroundColor: '#F8F8FA', borderColor: '#E8E8ED' }}
+                >
+                    <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2.5">
                         {filteredIcons.map((icon, index) => (
                             <button
                                 key={`${icon.icon}-${icon.category}-${index}`}
@@ -286,28 +293,25 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
                                     onSelect(icon.icon);
                                     onClose();
                                 }}
-                                className={cn(
-                                    "aspect-square flex items-center justify-center p-3 rounded-xl transition-all duration-200 relative group",
-                                    "hover:bg-gradient-to-br hover:from-violet-500/20 hover:to-fuchsia-500/20 hover:scale-110 hover:shadow-lg hover:shadow-violet-500/30",
+                                className="aspect-square w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer relative group border"
+                                style={
                                     selectedIcon === icon.icon
-                                        ? "bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 border-2 border-violet-500/80 shadow-lg shadow-violet-500/40 scale-105"
-                                        : "bg-zinc-800/30 border border-white/5 hover:border-violet-500/50"
-                                )}
+                                        ? { backgroundColor: '#F5F3FF', borderColor: '#5B35D5', borderWidth: '2px', color: '#4A28C9', boxShadow: '0 1px 3px rgba(91,53,213,0.1)' }
+                                        : { backgroundColor: '#FFFFFF', borderColor: '#E8E8ED', borderWidth: '1px', color: '#6B6B78' }
+                                }
                                 title={icon.name}
                             >
-                                <div className={cn(
-                                    "transition-all duration-200",
-                                    selectedIcon === icon.icon
-                                        ? "text-white scale-110"
-                                        : "text-zinc-400 group-hover:text-white group-hover:scale-110"
-                                )}>
-                                    {renderIcon(icon.icon, 28)}
+                                <div className="transition-transform duration-200 group-hover:scale-110 flex items-center justify-center">
+                                    {renderIcon(icon.icon, 22)}
                                 </div>
 
                                 {/* Tooltip on hover */}
                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                    <div className="bg-zinc-900 border border-violet-500/30 px-2 py-1 rounded-md shadow-xl whitespace-nowrap">
-                                        <span className="text-[10px] font-medium text-violet-300">{icon.name}</span>
+                                    <div 
+                                        className="border px-2 py-0.5 rounded shadow-md whitespace-nowrap"
+                                        style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E8ED' }}
+                                    >
+                                        <span className="text-[10px] font-bold" style={{ color: '#4A28C9' }}>{icon.name}</span>
                                     </div>
                                 </div>
                             </button>
@@ -315,27 +319,25 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
                     </div>
 
                     {filteredIcons.length === 0 && (
-                        <div className="text-center py-20 text-zinc-500">
-                            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800/50 flex items-center justify-center">
-                                <Search className="w-10 h-10 opacity-20" />
-                            </div>
-                            <p className="text-lg font-medium">No icons found</p>
-                            <p className="text-sm text-zinc-600 mt-1">Try different keywords</p>
+                        <div className="text-center py-16" style={{ color: '#909099' }}>
+                            <Search className="w-8 h-8 mx-auto mb-2 opacity-45" />
+                            <p className="text-sm font-bold">No icons found</p>
+                            <p className="text-xs">Try different keywords</p>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-                        <span className="text-xs text-zinc-400 font-mono">{filteredIcons.length} icons</span>
+                <div className="flex items-center justify-between pt-4 border-t shrink-0" style={{ borderColor: '#F0F0F4' }}>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--sc-purple-600)] animate-pulse" />
+                        <span className="text-xs font-mono font-bold" style={{ color: '#6B6B78' }}>{filteredIcons.length} icons</span>
                     </div>
                     <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="outline"
                         onClick={onClose}
-                        className="hover:bg-white/5 text-zinc-400 hover:text-white"
+                        className="font-semibold rounded-lg text-xs px-4 py-2 shrink-0 cursor-pointer border"
+                        style={{ backgroundColor: '#F8F8FA', borderColor: '#E8E8ED', color: '#6B6B78' }}
                     >
                         Close
                     </Button>

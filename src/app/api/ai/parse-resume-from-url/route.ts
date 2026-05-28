@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pdf = require('pdf-parse');
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,16 +65,25 @@ export async function POST(request: Request) {
         }
 
         try {
-            const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
+            const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
             if (!apiKey) throw new Error("No API Key configured");
+
+            // Extract Text from PDF using pdf-parse
+            let text = "";
+            try {
+                const data = await pdf(buffer);
+                text = data.text;
+            } catch (e) {
+                console.error("PDF Parse Error in URL route:", e);
+                throw new Error("Failed to parse PDF document text");
+            }
 
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            const base64Data = buffer.toString('base64');
 
             const prompt = `
                 You are an expert Resume Parser. 
-                Analyze the attached resume file and extract structured data in strict JSON format.
+                Analyze the following resume text and extract structured data in strict JSON format.
                 
                 Crucial Project Rule:
                 For each project in "projects", read the description. If it is short (1-3 lines), ELABORATE it into 4-6 technically rich, highly professional, accurate sentences that detail the technical challenges, technologies used, and outcomes. If there are no projects, extract them from the experience or other sections if appropriate.
@@ -118,18 +131,26 @@ export async function POST(request: Request) {
                 }
 
                 If fields are missing, leave them empty or empty arrays. 
-                Do NOT hallucinate. Only extract what is there in the document.
+                Do NOT hallucinate. Only extract what is there in the text.
+                
+                RESUME TEXT:
+                ${text.substring(0, 10000)}
             `;
 
             const result = await model.generateContent({
-                contents: [{ role: "user", parts: [{ inlineData: { data: base64Data, mimeType: "application/pdf" } }, { text: prompt }] }],
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             });
 
-            const json = JSON.parse(result.response.text());
+            let jsonString = result.response.text();
+            if (jsonString.includes("```")) {
+                jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim();
+            }
+            const json = JSON.parse(jsonString);
             return NextResponse.json({ success: true, aiData: json });
 
         } catch (aiError: any) {
+            console.error("AI Parsing Failed. Full Error:", aiError);
             console.warn("AI Parsing Failed (Rate Limit or Key Error). Switching to Fallback.", aiError.message);
 
             const heuristicData = await parseHeuristically(buffer);

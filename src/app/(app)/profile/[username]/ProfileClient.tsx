@@ -105,12 +105,12 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
     // Helper to render brand icons
     const renderLinkIcon = (iconName?: string) => {
-        if (!iconName) return <Globe className="w-4 h-4 text-violet-400" />;
+        if (!iconName) return <Globe className="w-4 h-4 text-[var(--sc-purple-600)]" />;
         const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
         if (IconComponent) {
-            return <IconComponent className="w-4 h-4 text-violet-400" />;
+            return <IconComponent className="w-4 h-4 text-[var(--sc-purple-600)]" />;
         }
-        return <Globe className="w-4 h-4 text-violet-400" />;
+        return <Globe className="w-4 h-4 text-[var(--sc-purple-600)]" />;
     };
 
     // Helpers
@@ -559,31 +559,31 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 </Button>
                             )}
 
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Connect</h3>
+                            <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">Connect</h3>
                             <div className="space-y-3">
                                 {user.linkedin && (
                                     <Link href={user.linkedin} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
                                             <Linkedin className="w-4 h-4 mr-2 text-[#0077b5]" /> LinkedIn
                                         </Button>
                                     </Link>
                                 )}
                                 {user.github && (
                                     <Link href={user.github} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
-                                            <Github className="w-4 h-4 mr-2 text-slate-955" /> GitHub
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
+                                            <Github className="w-4 h-4 mr-2 text-[#181717]" /> GitHub
                                         </Button>
                                     </Link>
                                 )}
                                 {parsedLinks.map((link, i) => (
                                     <Link key={i} href={link.url} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold shadow-sm">
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
                                             {renderLinkIcon(link.icon)} <span className="ml-2">{link.title}</span>
                                         </Button>
                                     </Link>
                                 ))}
                                 {(!user.linkedin && !user.github && parsedLinks.length === 0) && (
-                                    <p className="text-slate-400 text-xs italic font-medium">No links added.</p>
+                                    <p className="text-[var(--text-secondary)] text-xs italic font-medium">No links added.</p>
                                 )}
                             </div>
                         </div>

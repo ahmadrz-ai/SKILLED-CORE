@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         }
 
         // Initialize Gemini
-        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
+        const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
         if (!apiKey) {
             return NextResponse.json({ error: "AI Configuration missing" }, { status: 500 });
         }
@@ -107,7 +107,10 @@ export async function POST(req: Request) {
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        const jsonString = result.response.text();
+        let jsonString = result.response.text();
+        if (jsonString.includes("```")) {
+            jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim();
+        }
         const parsedData = JSON.parse(jsonString);
 
         return NextResponse.json(parsedData);

@@ -662,6 +662,56 @@ function ProjectForm({ user, project, onSave }: any) {
     );
 }
 
+// Inline Social Icon Detection Helper matching exact comments rules
+function getSocialIconName(urlOrText: string): string {
+    const text = urlOrText.trim().toLowerCase();
+    
+    // @ without http
+    if (text.includes('@') && !text.includes('http') && !text.includes('//')) {
+        return 'FaEnvelope';
+    }
+    
+    // Phone number pattern: starts with +, +92, +1, or standard digits format
+    const phonePattern = /^(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}$/;
+    const looksLikePhone = phonePattern.test(text) || text.startsWith('+92') || text.startsWith('+1') || (text.replace(/[\s-+()]/g, '').length >= 10 && !isNaN(Number(text.replace(/[\s-+()]/g, ''))));
+    if (looksLikePhone) {
+        return 'SiWhatsapp';
+    }
+    
+    if (text.includes('linkedin.com')) {
+        return 'SiLinkedin';
+    }
+    if (text.includes('github.com')) {
+        return 'SiGithub';
+    }
+    if (text.includes('behance.net')) {
+        return 'SiBehance';
+    }
+    if (text.includes('dribbble.com')) {
+        return 'SiDribbble';
+    }
+    if (text.includes('twitter.com') || text.includes('x.com')) {
+        return 'SiX';
+    }
+    if (text.includes('instagram.com')) {
+        return 'SiInstagram';
+    }
+    if (text.includes('facebook.com')) {
+        return 'SiFacebook';
+    }
+    if (text.includes('youtube.com') || text.includes('youtu.be')) {
+        return 'SiYoutube';
+    }
+    if (text.includes('fiverr.com')) {
+        return 'SiFiverr';
+    }
+    if (text.includes('upwork.com')) {
+        return 'SiUpwork';
+    }
+    
+    return 'FaGlobe';
+}
+
 function CustomLinksForm({ user, onSave }: any) {
     const [isLoading, setIsLoading] = useState(false);
     const [iconPickerIndex, setIconPickerIndex] = useState<number | null>(null);
@@ -724,13 +774,21 @@ function CustomLinksForm({ user, onSave }: any) {
                                     {...form.register(`customLinks.${index}.title` as const)}
                                     placeholder="Label"
                                     className="h-9 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-body)] placeholder:text-[var(--text-placeholder)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-0 transition-colors"
+                                    style={{ backgroundColor: '#FFFFFF', color: '#141417', borderColor: '#E8E8ED' }}
                                 />
                             </div>
                             <div className="flex-1">
                                 <Input
-                                    {...form.register(`customLinks.${index}.url` as const)}
+                                    {...form.register(`customLinks.${index}.url` as const, {
+                                        onChange: (e) => {
+                                            const val = e.target.value;
+                                            const detectedIconName = getSocialIconName(val);
+                                            form.setValue(`customLinks.${index}.icon`, detectedIconName);
+                                        }
+                                    })}
                                     placeholder="https://..."
                                     className="h-9 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-body)] placeholder:text-[var(--text-placeholder)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-0 transition-colors font-mono"
+                                    style={{ backgroundColor: '#FFFFFF', color: '#141417', borderColor: '#E8E8ED' }}
                                 />
                             </div>
                             <Button
@@ -738,7 +796,7 @@ function CustomLinksForm({ user, onSave }: any) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => remove(index)}
-                                className="w-8 h-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sc-red-500)] hover:bg-[var(--sc-red-50)] rounded-lg transition-colors mt-0"
+                                className="w-8 h-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--sc-red-500)] hover:bg-[var(--sc-red-50)] rounded-lg transition-colors mt-0 border-none bg-transparent"
                                 title="Remove link"
                             >
                                 <Trash2 className="w-4 h-4 shrink-0" />
