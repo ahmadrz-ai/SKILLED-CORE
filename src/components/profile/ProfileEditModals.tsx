@@ -755,18 +755,16 @@ function CustomLinksForm({ user, onSave }: any) {
                 <div className="space-y-4 text-left">
                     {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-3 p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-subtle)] rounded-xl mb-3 group">
-                            {/* Icon Selector - No Label */}
-                            <Button
+                            <button
                                 type="button"
-                                variant="outline"
                                 className="w-10 h-10 p-0 bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] rounded-lg text-white flex items-center justify-center cursor-pointer shrink-0 border-none relative"
                                 onClick={() => setIconPickerIndex(index)}
                                 title="Click to change icon"
                             >
-                                <div className="relative text-white">
+                                <div className="relative text-white flex items-center justify-center">
                                     {renderIcon(form.watch(`customLinks.${index}.icon`))}
                                 </div>
-                            </Button>
+                            </button>
 
                             <div className="w-32 flex-shrink-0">
                                 <Input
