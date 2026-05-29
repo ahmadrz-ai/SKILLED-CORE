@@ -118,9 +118,18 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     let parsedSkills: string[] = [];
     try {
         if (user.skills) {
-            // Handle both CSV and JSON
-            if (user.skills.startsWith('[')) parsedSkills = JSON.parse(user.skills);
-            else parsedSkills = user.skills.split(',').filter(Boolean);
+            const trimmed = user.skills.trim();
+            if (trimmed.startsWith('[')) {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    parsedSkills = parsed.map((s: any) => {
+                        if (s && typeof s === 'object') return String(s.name || '');
+                        return String(s);
+                    }).map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+                }
+            } else {
+                parsedSkills = trimmed.split(',').map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            }
         }
     } catch { parsedSkills = []; }
 

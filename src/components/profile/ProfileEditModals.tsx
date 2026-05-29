@@ -841,11 +841,19 @@ function SkillsForm({ user, onSave }: any) {
     // Parse initial skills (comma separated in DB, or JSON)
     let initialSkills: string[] = [];
     if (user.skills) {
-        // handle both JSON array string and comma-separated string
-        if (user.skills.startsWith('[')) {
-            try { initialSkills = JSON.parse(user.skills); } catch { initialSkills = []; }
+        const trimmed = user.skills.trim();
+        if (trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    initialSkills = parsed.map((s: any) => {
+                        if (s && typeof s === 'object') return String(s.name || '');
+                        return String(s);
+                    }).map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+                }
+            } catch { initialSkills = []; }
         } else {
-            initialSkills = user.skills.split(',').filter(Boolean);
+            initialSkills = trimmed.split(',').map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
         }
     }
 

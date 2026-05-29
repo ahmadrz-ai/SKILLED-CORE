@@ -77,7 +77,25 @@ interface ParsedResume {
 const getUserProfileAsParsedResume = (u: any): ParsedResume => {
     let parsedSkills: string[] = [];
     try {
-        parsedSkills = u?.skills ? (typeof u.skills === 'string' ? JSON.parse(u.skills) : u.skills) : [];
+        if (u?.skills) {
+            const trimmed = typeof u.skills === 'string' ? u.skills.trim() : '';
+            if (trimmed.startsWith('[')) {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    parsedSkills = parsed.map((s: any) => {
+                        if (s && typeof s === 'object') return String(s.name || '');
+                        return String(s);
+                    }).map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+                }
+            } else if (Array.isArray(u.skills)) {
+                parsedSkills = u.skills.map((s: any) => {
+                    if (s && typeof s === 'object') return String(s.name || '');
+                    return String(s);
+                }).map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            } else {
+                parsedSkills = trimmed.split(',').map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            }
+        }
     } catch (e) {
         parsedSkills = [];
     }
@@ -475,7 +493,14 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         }));
         setEducation(parsedEducation);
         
-        setSkills(data.skills || []);
+        const rawSkills = data.skills || [];
+        const mappedSkills = Array.isArray(rawSkills)
+            ? rawSkills.map((s: any) => {
+                if (s && typeof s === 'object') return String(s.name || '');
+                return String(s);
+              }).map((s: string) => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean)
+            : [];
+        setSkills(mappedSkills);
         
         // Map projects
         const parsedProjects = (data.projects || []).map((proj: any) => ({

@@ -137,7 +137,10 @@ export async function getCandidates(): Promise<Candidate[]> {
                     try {
                         const parsed = JSON.parse(trimmed);
                         if (Array.isArray(parsed)) {
-                            return parsed.map(s => String(s).replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+                            return parsed.map(s => {
+                                if (s && typeof s === 'object') return String(s.name || '');
+                                return String(s);
+                            }).map(s => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
                         }
                     } catch (e) {}
                 }
