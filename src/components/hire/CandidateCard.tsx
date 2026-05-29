@@ -16,6 +16,13 @@ interface SkillDetail {
     details: string;
 }
 
+function cleanSkillName(name: string): string {
+    if (!name) return '';
+    return name
+        .replace(/[\[\]"']/g, '') // Remove [ ] " ' characters
+        .trim();
+}
+
 function parseSkillsWithDetails(skillsData: any): SkillDetail[] {
     if (!skillsData) return [];
     
@@ -30,7 +37,7 @@ function parseSkillsWithDetails(skillsData: any): SkillDetail[] {
                 // fall through to comma separated
             }
         }
-        return trimmed.split(',').map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({
+        return trimmed.split(',').map((s: string) => cleanSkillName(s)).filter(Boolean).map((name: string) => ({
             name,
             type: 'professional',
             details: `Experienced in ${name} based on professional profile.`
@@ -41,20 +48,22 @@ function parseSkillsWithDetails(skillsData: any): SkillDetail[] {
     if (Array.isArray(skillsData)) {
         return skillsData.map((item: any) => {
             if (item && typeof item === 'object' && 'name' in item) {
+                const name = cleanSkillName(item.name || '');
                 return {
-                    name: item.name || '',
+                    name,
                     type: item.type === 'learning' ? 'learning' : 'professional',
-                    details: item.details || `Experienced in ${item.name || ''}.`
+                    details: item.details || `Experienced in ${name}.`
                 };
             } else if (typeof item === 'string') {
+                const name = cleanSkillName(item);
                 return {
-                    name: item,
+                    name,
                     type: 'professional',
-                    details: `Experienced in ${item}.`
+                    details: `Experienced in ${name}.`
                 };
             }
             return null;
-        }).filter((item): item is SkillDetail => item !== null);
+        }).filter((item): item is SkillDetail => item !== null && item.name !== '');
     }
     
     return [];
@@ -272,14 +281,14 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
 
     return (
         <div className={cn(
-            "group relative flex flex-col items-center bg-white border transition-all duration-300 rounded-2xl overflow-hidden p-5 shadow-sm border-[#E5E7EB] hover:border-[#7C3AED]/50 hover:shadow-lg hover:-translate-y-1 w-full"
+            "group relative flex flex-col items-center bg-white border transition-all duration-300 rounded-2xl overflow-hidden p-5 shadow-sm border-[var(--sc-gray-150)] hover:border-[var(--sc-purple-400)] hover:shadow-lg hover:-translate-y-1 w-full"
         )}>
 
             {/* Match Score (Absolute Top Right) */}
             {hasSearched && (
                 <div className="absolute top-4 right-4 flex flex-col items-end">
                     <span className="text-xl font-bold text-[#10B981] font-mono">{candidate.matchScore}%</span>
-                    <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-medium">Match</span>
+                    <span className="text-[10px] text-[var(--sc-gray-500)] uppercase tracking-wider font-medium">Match</span>
                 </div>
             )}
 
@@ -287,7 +296,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
             <div className="mt-4 mb-4 relative">
                 <Avatar className="w-24 h-24 border-4 border-white shadow-md">
                     <AvatarImage src={displayAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.id}`} />
-                    <AvatarFallback className="text-2xl font-bold bg-[#7C3AED]/10 text-[#7C3AED]">
+                    <AvatarFallback className="text-2xl font-bold bg-[var(--sc-purple-100)] text-[var(--sc-purple-600)]">
                         {candidate.name.substring(0, 2)}
                     </AvatarFallback>
                 </Avatar>
@@ -298,46 +307,49 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 <div className="flex items-center justify-center gap-2 mb-1">
                     <h3 
                         onClick={handleViewProfile}
-                        className="text-base font-bold text-[#111827] group-hover:text-[#7C3AED] transition-colors cursor-pointer"
+                        className="text-base font-bold text-[var(--sc-gray-900)] group-hover:text-[var(--sc-purple-600)] transition-colors cursor-pointer"
                     >
                         {candidate.name}
                     </h3>
                     {(candidate.verified || (candidate.verifiedBadges && candidate.verifiedBadges.length > 0)) && (
-                        <CheckCircle2 className="w-4 h-4 text-[#10B981] fill-[#10B981]/10" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--sc-green-600)] fill-[var(--sc-green-100)]" />
                     )}
                 </div>
-                <p className="text-xs text-[#6B7280] font-medium mb-1 truncate px-2" title={`${candidate.role} @ ${displayCompany}`}>
+                <p className="text-xs text-[var(--sc-gray-600)] font-medium mb-1 truncate px-2" title={`${candidate.role} @ ${displayCompany}`}>
                     {candidate.role} @ {displayCompany}
                 </p>
-                <div className="flex items-center justify-center gap-1 text-[10px] text-[#9CA3AF]">
+                <div className="flex items-center justify-center gap-1 text-[10px] text-[var(--sc-gray-400)]">
                     <MapPin className="w-3 h-3" />
                     {candidate.location}
                 </div>
             </div>
 
+            {/* Bio / Description */}
+            <div className="w-full bg-[var(--sc-gray-50)] rounded-xl p-3 mb-3 border border-[var(--sc-gray-150)]">
+                <p className="text-xs text-[var(--sc-gray-600)] leading-relaxed text-center line-clamp-2">
+                    {candidate.bio || candidate.headline}
+                </p>
+            </div>
+
             {/* Structured Skills Container */}
-            <div className="w-full flex flex-col gap-3 mb-4 flex-1">
+            <div className="w-full flex flex-col gap-2.5 mb-3 flex-1">
                 {/* Professional Skills */}
                 {professionalSkills.length > 0 && (
                     <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-left">
+                        <span className="text-[9px] font-bold text-[var(--sc-gray-400)] uppercase tracking-wider text-left">
                             Professional
                         </span>
                         <div className="flex flex-wrap gap-1 justify-start">
                             {professionalSkills.slice(0, 5).map((skill, idx) => (
-                                <div key={idx} className="group/skill relative">
-                                    <span className="inline-block bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-200)] text-[10px] font-medium px-2 py-0.5 rounded hover:bg-[var(--sc-purple-100)] transition-colors cursor-help">
-                                        {skill.name}
-                                    </span>
-                                    {/* Tooltip */}
-                                    <div className="hidden group-hover/skill:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg shadow-xl z-50 pointer-events-none border border-slate-800 text-center">
-                                        <div className="font-bold border-b border-slate-800 pb-1 mb-1 text-[10px] text-[var(--sc-purple-300)]">{skill.name}</div>
-                                        {skill.details}
-                                    </div>
-                                </div>
+                                <span 
+                                    key={idx} 
+                                    className="inline-block bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-200)] text-[10px] font-medium px-2 py-0.5 rounded transition-colors"
+                                >
+                                    {skill.name}
+                                </span>
                             ))}
                             {professionalSkills.length > 5 && (
-                                <span className="bg-slate-100 text-slate-500 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                <span className="bg-[var(--sc-gray-100)] text-[var(--sc-gray-500)] text-[9px] font-semibold px-1.5 py-0.5 rounded">
                                     +{professionalSkills.length - 5} more
                                 </span>
                             )}
@@ -348,24 +360,20 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 {/* Others / Learning Skills */}
                 {learningSkills.length > 0 && (
                     <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-left">
+                        <span className="text-[9px] font-bold text-[var(--sc-gray-400)] uppercase tracking-wider text-left">
                             Others
                         </span>
                         <div className="flex flex-wrap gap-1 justify-start">
                             {learningSkills.slice(0, 5).map((skill, idx) => (
-                                <div key={idx} className="group/skill relative">
-                                    <span className="inline-block bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-medium px-2 py-0.5 rounded hover:bg-slate-100 transition-colors cursor-help">
-                                        {skill.name}
-                                    </span>
-                                    {/* Tooltip */}
-                                    <div className="hidden group-hover/skill:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg shadow-xl z-50 pointer-events-none border border-slate-800 text-center">
-                                        <div className="font-bold border-b border-slate-800 pb-1 mb-1 text-[10px] text-slate-400">{skill.name}</div>
-                                        {skill.details}
-                                    </div>
-                                </div>
+                                <span 
+                                    key={idx} 
+                                    className="inline-block bg-[var(--sc-gray-50)] text-[var(--sc-gray-600)] border border-[var(--sc-gray-200)] text-[10px] font-medium px-2 py-0.5 rounded transition-colors"
+                                >
+                                    {skill.name}
+                                </span>
                             ))}
                             {learningSkills.length > 5 && (
-                                <span className="bg-slate-100 text-slate-500 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                <span className="bg-[var(--sc-gray-100)] text-[var(--sc-gray-500)] text-[9px] font-semibold px-1.5 py-0.5 rounded">
                                     +{learningSkills.length - 5} more
                                 </span>
                             )}
@@ -375,7 +383,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
             </div>
 
             {/* Stats Implementation */}
-            <div className="flex items-center gap-6 mb-4 text-[#9CA3AF]">
+            <div className="flex items-center gap-6 mb-3 text-[var(--sc-gray-400)]">
                 <div className="flex items-center gap-1.5 font-medium text-[10px]">
                     <Users className="w-3.5 h-3.5" />
                     <span>{candidate.connections?.toLocaleString() || 0}</span>
@@ -390,7 +398,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
             <div className="w-full mt-auto">
                 <Button
                     onClick={handleInterview}
-                    className="w-full rounded-xl bg-[#111827] hover:bg-[#7C3AED] !text-white border-transparent transition-all duration-300 group-hover:shadow-md group-hover:shadow-[#7C3AED]/20 flex items-center justify-center gap-2 cursor-pointer animate-none"
+                    className="w-full rounded-xl bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] !text-white border-transparent transition-all duration-300 group-hover:shadow-md group-hover:shadow-[var(--sc-purple-600)]/20 flex items-center justify-center gap-2 cursor-pointer animate-none"
                 >
                     <Lock className="w-4 h-4 opacity-50" /> Book Interview
                 </Button>
@@ -401,7 +409,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm cursor-pointer"
+                    className="h-8 w-8 rounded-lg bg-white border border-[var(--sc-gray-150)] hover:bg-[var(--sc-gray-100)] text-[var(--sc-gray-500)] hover:text-[var(--sc-gray-900)] shadow-sm cursor-pointer"
                     onClick={handleMessage}
                 >
                     <Mail className="w-4 h-4" />
@@ -409,7 +417,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm cursor-pointer"
+                    className="h-8 w-8 rounded-lg bg-white border border-[var(--sc-gray-150)] hover:bg-[var(--sc-gray-100)] text-[var(--sc-gray-500)] hover:text-[var(--sc-gray-900)] shadow-sm cursor-pointer"
                     onClick={() => handleViewProfile()}
                 >
                     <Eye className="w-4 h-4" />

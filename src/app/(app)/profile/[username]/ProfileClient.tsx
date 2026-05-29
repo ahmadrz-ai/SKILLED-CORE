@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import { FollowListDialog } from "@/components/profile/FollowListDialog";
 import { Tag as SharedTag } from "@/components/ui/tag";
@@ -85,8 +85,19 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     // Modal State
     const [editSection, setEditSection] = useState<'identity' | 'about' | 'experience' | 'education' | 'skills' | 'projects' | 'links' | 'banner' | 'resume' | 'share' | null>(null);
     const [projectToEdit, setProjectToEdit] = useState<any | null>(null);
-    const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
+    const searchParams = useSearchParams();
+    const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(() => {
+        return searchParams.get('builder') === 'open';
+    });
     const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+
+    // Sync builder open state from URL search params (Task 6)
+    useEffect(() => {
+        const isOpenParam = searchParams.get('builder') === 'open';
+        if (isOpenParam !== isResumeBuilderOpen) {
+            setIsResumeBuilderOpen(isOpenParam);
+        }
+    }, [searchParams, isResumeBuilderOpen]);
 
     // Parse Data
     let parsedSkills: string[] = [];

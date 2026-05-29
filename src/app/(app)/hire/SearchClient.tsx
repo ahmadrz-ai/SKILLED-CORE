@@ -177,10 +177,10 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
             {/* Redesigned Premium Prominent Search Input Container */}
             <div className="w-full bg-white border-b border-[#E5E7EB] shadow-sm">
                 <div className="w-full max-w-4xl mx-auto px-6 pt-8 pb-5 flex flex-col gap-2 relative">
-                    <div className="relative flex items-center bg-white border border-[#D1D5DB] rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-[#9278EA]/20 focus-within:border-[#5B35D5] transition-all h-14">
+                    <div className="relative flex items-center bg-white border border-[var(--sc-gray-200)] rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-[var(--sc-purple-400)]/20 focus-within:border-[var(--sc-purple-600)] transition-all h-14">
                         
                         {/* Search Icon */}
-                        <Search className="w-6 h-6 text-[#7252E0] absolute left-4" />
+                        <Search className="w-6 h-6 text-[var(--sc-purple-500)] absolute left-4" />
 
                         {/* Input Area */}
                         <input
@@ -189,13 +189,13 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Describe who you're looking for... e.g. 'Experienced React developer with Python skills'"
-                            className="w-full bg-transparent border-none text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0 pl-14 pr-44 text-sm md:text-base font-medium h-full"
+                            className="w-full bg-transparent border-none text-[var(--sc-gray-900)] placeholder:text-[var(--sc-gray-400)] focus:outline-none focus:ring-0 pl-14 pr-44 text-sm md:text-base font-medium h-full"
                         />
 
                         {/* Right inline tools */}
                         <div className="absolute right-2 flex items-center gap-3">
                             {/* AI Powered Badge */}
-                            <span className="hidden sm:inline-flex items-center text-[10px] font-bold text-[#5B35D5] bg-[#F5F3FF] border border-[#D4CCF8] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span className="hidden sm:inline-flex items-center text-[10px] font-bold text-[var(--sc-purple-600)] bg-[var(--sc-purple-50)] border border-[var(--sc-purple-200)] px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 AI Powered
                             </span>
 
@@ -204,7 +204,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                                 id="talent-search-submit"
                                 onClick={handleSearch}
                                 disabled={isSearching}
-                                className="bg-[#5B35D5] hover:bg-[#4A28C9] !text-white h-10 px-4 rounded-lg font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                                className="bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] !text-white h-10 px-4 rounded-lg font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
                             >
                                 <Sparkles className="w-4 h-4" />
                                 <span>Find Talent</span>
@@ -220,7 +220,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                                 <button
                                     key={i}
                                     onClick={() => handleExampleClick(example)}
-                                    className="bg-slate-100 hover:bg-[#EAE6FD] hover:text-[#5B35D5] border border-slate-200 hover:border-[#D4CCF8] px-2.5 py-1 rounded-md text-[#6B7280] font-medium transition-all cursor-pointer"
+                                    className="bg-[var(--sc-gray-50)] hover:bg-[var(--sc-purple-100)] hover:text-[var(--sc-purple-600)] border border-[var(--sc-gray-200)] hover:border-[var(--sc-purple-200)] px-2.5 py-1 rounded-md text-[var(--sc-gray-600)] font-medium transition-all cursor-pointer"
                                 >
                                     {example}
                                 </button>
@@ -230,8 +230,8 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
 
                     {/* Query Intent Summary description under search */}
                     {hasSearched && parsedQuery?.queryIntent && !isSearching && (
-                        <div className="text-xs text-[#9CA3AF] mt-1 ml-1 leading-snug">
-                            Searching for: <span className="text-[#5B35D5] font-semibold">"{parsedQuery.queryIntent}"</span>
+                        <div className="text-xs text-[var(--sc-gray-500)] mt-1 ml-1 leading-snug">
+                            Searching for: <span className="text-[var(--sc-purple-600)] font-semibold">"{parsedQuery.queryIntent}"</span>
                         </div>
                     )}
                 </div>
@@ -253,13 +253,13 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                     {/* Pulsing Sparkles Telemetry Loading State */}
                     {isSearching ? (
                         <div className="flex flex-col items-center justify-center py-24 text-center">
-                            <div className="w-16 h-16 rounded-full bg-[#EAE6FD] flex items-center justify-center mb-4 animate-pulse">
-                                <Sparkles className="w-8 h-8 text-[#5B35D5]" />
+                            <div className="w-16 h-16 rounded-full bg-[var(--sc-purple-100)] flex items-center justify-center mb-4 animate-pulse">
+                                <Sparkles className="w-8 h-8 text-[var(--sc-purple-600)]" />
                             </div>
-                            <h4 className="text-base font-bold text-[#111827] font-sans">
+                            <h4 className="text-base font-bold text-[var(--sc-gray-900)] font-sans">
                                 {searchStatus}
                             </h4>
-                            <p className="text-xs text-[#9CA3AF] mt-1">
+                            <p className="text-xs text-[var(--sc-gray-500)] mt-1">
                                 This usually takes 3–5 seconds
                             </p>
                         </div>
@@ -276,17 +276,17 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
 
                             {/* Renders results based on search active status */}
                             {!hasResults ? (
-                                <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-[#E5E7EB] rounded-xl p-8 shadow-sm">
-                                    <SearchX className="w-12 h-12 text-[#9CA3AF] mb-3" />
-                                    <h3 className="text-base font-bold text-[#111827]">
+                                <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-[var(--sc-gray-150)] rounded-xl p-8 shadow-sm">
+                                    <SearchX className="w-12 h-12 text-[var(--sc-gray-400)] mb-3" />
+                                    <h3 className="text-base font-bold text-[var(--sc-gray-900)]">
                                         No candidates found for this search
                                     </h3>
-                                    <p className="text-xs text-[#6B7280] max-w-xs mt-1 leading-relaxed">
+                                    <p className="text-xs text-[var(--sc-gray-600)] max-w-xs mt-1 leading-relaxed">
                                         Try adjusting your refinement filters or using different keywords in your search description.
                                     </p>
                                     <button 
                                         onClick={handleClearAll}
-                                        className="mt-4 text-xs font-bold text-[#5B35D5] hover:underline cursor-pointer"
+                                        className="mt-4 text-xs font-bold text-[var(--sc-purple-600)] hover:underline cursor-pointer"
                                     >
                                         Clear Search & Filters
                                     </button>

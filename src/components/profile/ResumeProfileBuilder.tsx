@@ -1735,7 +1735,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                     }}
                                                     className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
-                                                    Continue Editing
+                                                    Continue Building
                                                 </button>
                                                 
                                                 <button
@@ -1747,9 +1747,9 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                             router.push('/feed');
                                                         }
                                                     }}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 bg-transparent hover:bg-slate-50 transition-colors duration-150 cursor-pointer"
+                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
-                                                    {summaryData.isFull && context === 'onboarding'
+                                                    {summaryData?.isFull && context === 'onboarding'
                                                         ? 'Go to Feed'
                                                         : 'Close Builder'}
                                                 </button>
@@ -1770,7 +1770,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                         clearOnboardingTimer();
                                                         setShowSummaryPopup(false);
                                                     }}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 bg-transparent hover:bg-slate-50 transition-colors duration-150 cursor-pointer"
+                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     Cancel
                                                 </button>

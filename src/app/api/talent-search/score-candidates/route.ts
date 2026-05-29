@@ -26,6 +26,20 @@ function calcCompleteness(user: {
     return score;
 }
 
+function parseSkillsString(skillsStr: string | null | undefined): string[] {
+    if (!skillsStr) return [];
+    const trimmed = skillsStr.trim();
+    if (trimmed.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.map(s => String(s).replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return trimmed.split(',').map(s => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+}
+
 interface Requirement {
     priority: number;
     label: string;
@@ -131,9 +145,7 @@ export async function POST(req: Request) {
 
         // Scoring algorithm
         const scoredCandidates = filteredCandidates.map(candidate => {
-            const skillsArray = candidate.skills 
-                ? candidate.skills.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) 
-                : [];
+            const skillsArray = parseSkillsString(candidate.skills).map(s => s.toLowerCase());
             
             let totalBaseScore = 0;
             const requirementScores: { requirementLabel: string; score: number }[] = [];
@@ -313,9 +325,10 @@ export async function POST(req: Request) {
                 company = candidate.experience[0].company;
             }
 
-            const parsedSkills = candidate.skills 
-                ? candidate.skills.split(',').map(s => s.trim()).filter(Boolean) 
-                : ['Generalist'];
+            const parsedSkills = parseSkillsString(candidate.skills);
+            if (parsedSkills.length === 0) {
+                parsedSkills.push('Generalist');
+            }
 
             const verifiedBadges = candidate.assessments.map(ass => ass.assessment.title);
 

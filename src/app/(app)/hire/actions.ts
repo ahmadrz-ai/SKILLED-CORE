@@ -130,7 +130,20 @@ export async function getCandidates(): Promise<Candidate[]> {
             return true;
         })
         .map(user => {
-            const skillsArray = user.skills ? user.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const parseSkillsString = (skillsStr: string | null | undefined): string[] => {
+                if (!skillsStr) return [];
+                const trimmed = skillsStr.trim();
+                if (trimmed.startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) {
+                            return parsed.map(s => String(s).replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+                        }
+                    } catch (e) {}
+                }
+                return trimmed.split(',').map(s => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            };
+            const skillsArray = parseSkillsString(user.skills);
             const connectionCount = (user._count.receivedConnections || 0) + (user._count.sentConnections || 0);
 
             // Deterministic match score based on user ID hash (not random — avoids re-render flicker)
