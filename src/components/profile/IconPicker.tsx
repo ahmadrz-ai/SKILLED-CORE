@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import * as SiIcons from 'react-icons/si';
-import * as FaIcons from 'react-icons/fa';
+import { iconMap } from '@/lib/icons';
 import { Globe } from 'lucide-react';
 
 // Brand icons collection (700+ icons)
@@ -218,7 +217,7 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
     });
 
     const renderIcon = (iconName: string, size = 20) => {
-        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        const IconComponent = iconMap[iconName];
         if (IconComponent) {
             return <IconComponent size={size} />;
         }

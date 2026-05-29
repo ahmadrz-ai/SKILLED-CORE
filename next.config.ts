@@ -71,10 +71,10 @@ const nextConfig: NextConfig = {
         ];
     },
 
-    // FIX-015: Reduce bundle size — enable experimental optimizations
     experimental: {
         optimizePackageImports: [
             "lucide-react",
+            "react-icons",
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
             "framer-motion",

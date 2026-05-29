@@ -15,8 +15,7 @@ import { updateUserProfile, addProject, updateProject, deleteProject } from '@/a
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { IconPicker } from './IconPicker';
-import * as SiIcons from 'react-icons/si';
-import * as FaIcons from 'react-icons/fa';
+import { iconMap } from '@/lib/icons';
 
 // --- Types ---
 interface ProfileEditModalsProps {
@@ -742,7 +741,7 @@ function CustomLinksForm({ user, onSave }: any) {
 
     const renderIcon = (iconName?: string) => {
         if (!iconName) return <Globe className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
-        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        const IconComponent = iconMap[iconName];
         if (IconComponent) {
             return <IconComponent className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
         }

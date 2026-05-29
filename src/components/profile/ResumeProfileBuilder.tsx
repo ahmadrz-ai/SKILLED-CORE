@@ -35,8 +35,7 @@ import {
     ArrowLeft,
     CheckCircle
 } from 'lucide-react';
-import * as SiIcons from 'react-icons/si';
-import * as FaIcons from 'react-icons/fa';
+import { iconMap } from '@/lib/icons';
 
 interface ResumeProfileBuilderProps {
     user: any;
@@ -349,7 +348,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
 
     // Render Platform Social Icon
     const renderSocialIcon = (iconName: string) => {
-        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        const IconComponent = iconMap[iconName];
         if (IconComponent) {
             return <IconComponent className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
         }
@@ -497,8 +496,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             const rawIcon = soc.icon || '';
             const detectedIcon = getSocialIconName(url || label);
             
-            // Validate if rawIcon exists in SiIcons or FaIcons
-            const isValidIcon = (SiIcons as any)[rawIcon] || (FaIcons as any)[rawIcon] || rawIcon.startsWith('Si') || rawIcon.startsWith('Fa');
+            // Validate if rawIcon exists in iconMap
+            const isValidIcon = iconMap[rawIcon] !== undefined || rawIcon.startsWith('Si') || rawIcon.startsWith('Fa');
             
             return {
                 title: label,

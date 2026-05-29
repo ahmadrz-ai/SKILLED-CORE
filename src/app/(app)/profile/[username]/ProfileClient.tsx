@@ -10,14 +10,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import { FollowListDialog } from "@/components/profile/FollowListDialog";
 import { Tag as SharedTag } from "@/components/ui/tag";
+import dynamic from 'next/dynamic';
 import ProfileEditModals from '@/components/profile/ProfileEditModals';
-import { ResumeProfileBuilder } from '@/components/profile/ResumeProfileBuilder';
+const ResumeProfileBuilder = dynamic(() => import('@/components/profile/ResumeProfileBuilder').then(m => ({ default: m.ResumeProfileBuilder })), { ssr: false });
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleFollow } from '@/app/(app)/feed/actions';
 import { sendConnectionRequest, updateConnectionStatus } from '@/app/(app)/network/actions';
 import { toast } from 'sonner';
-import * as SiIcons from 'react-icons/si';
-import * as FaIcons from 'react-icons/fa';
+import { iconMap } from '@/lib/icons';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -132,7 +132,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     // Helper to render brand icons
     const renderLinkIcon = (iconName?: string) => {
         if (!iconName) return <Globe className="w-4 h-4 text-[var(--sc-purple-600)]" />;
-        const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
+        const IconComponent = iconMap[iconName];
         if (IconComponent) {
             return <IconComponent className="w-4 h-4 text-[var(--sc-purple-600)]" />;
         }

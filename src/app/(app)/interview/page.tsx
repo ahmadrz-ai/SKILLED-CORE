@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ConfigurationModal } from "@/components/interview/ConfigurationModal";
-import { ChatInterface } from "@/components/interview/ChatInterface";
 import { LiveAnalysisPanel, TelemetryData } from "@/components/interview/LiveAnalysisPanel";
-import { Scorecard } from "@/components/interview/Scorecard";
-import { CodeEditorPanel } from "@/components/interview/CodeEditorPanel";
 import { MessageSquarePlus, Code2, Mic, LogOut, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+// Dynamic imports — these are conditionally rendered and contain heavy deps (Monaco editor)
+const ChatInterface = dynamic(() => import("@/components/interview/ChatInterface").then(m => ({ default: m.ChatInterface })), { ssr: false });
+const Scorecard = dynamic(() => import("@/components/interview/Scorecard").then(m => ({ default: m.Scorecard })), { ssr: false });
+const CodeEditorPanel = dynamic(() => import("@/components/interview/CodeEditorPanel").then(m => ({ default: m.CodeEditorPanel })), { ssr: false });
 
 export default function DojoPage() {
     // FIX-008: Require authentication before rendering interview UI
