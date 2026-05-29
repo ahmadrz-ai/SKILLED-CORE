@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Clock, Building2, Zap } from 'lucide-react';
+import { Clock, Building2, Zap, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tag as SharedTag } from '@/components/ui/tag';
 import { useState, useEffect } from 'react';
@@ -175,14 +175,15 @@ export default function JobCard({ job, index, onApply }: JobCardProps) {
                         {(job.salaryMin !== undefined && job.salaryMin !== null) && (
                             <button
                                 onClick={() => setIsConverted(!isConverted)}
+                                title={`convert currency '${detectedCountry}'`}
                                 className={cn(
-                                    "text-[10px] px-2.5 py-1 rounded-full font-bold uppercase transition-all select-none cursor-pointer border border-violet-500/30",
+                                    "p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm",
                                     isConverted
-                                        ? "bg-violet-600/30 text-violet-300 border-violet-400"
-                                        : "bg-violet-600/10 hover:bg-violet-600/20 text-violet-400"
+                                        ? "bg-teal-500/20 text-teal-400 border-teal-500/40"
+                                        : "bg-white/5 hover:bg-white/10 text-zinc-400 border-white/10"
                                 )}
                             >
-                                convert currency '{detectedCountry}'
+                                <RefreshCw className={cn("w-3.5 h-3.5 transition-transform duration-500", isConverted && "rotate-180")} />
                             </button>
                         )}
                     </div>

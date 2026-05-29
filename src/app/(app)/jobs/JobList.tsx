@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MapPin, DollarSign, Clock, Briefcase, Bookmark, ChevronRight, Globe } from "lucide-react";
+import { MapPin, DollarSign, Clock, Briefcase, Bookmark, ChevronRight, Globe, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -270,14 +270,15 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                             {job.salaryMin && (
                                 <button
                                     onClick={() => toggleConvert(job.id)}
+                                    title={`convert currency '${detectedCountry}'`}
                                     className={cn(
-                                        "text-xs px-2.5 py-1 rounded-full font-bold uppercase transition-all select-none cursor-pointer border border-[#B4A3F3]/40",
+                                        "p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm",
                                         convertedJobs.has(job.id)
                                             ? "bg-[#EAE6FD] text-[#4A28C9] border-[#5B35D5]"
-                                            : "bg-[#F5F3FF] hover:bg-[#EAE6FD] text-[#5B35D5]"
+                                            : "bg-[#F5F3FF] hover:bg-[#EAE6FD] text-[#5B35D5] border-[#B4A3F3]/40"
                                     )}
                                 >
-                                    convert currency '{detectedCountry}'
+                                    <RefreshCw className={cn("w-3 h-3 transition-transform duration-500", convertedJobs.has(job.id) && "rotate-180")} />
                                 </button>
                             )}
                             <Badge variant="secondary" className="bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F3F4F6] gap-1.5 font-normal py-1">
