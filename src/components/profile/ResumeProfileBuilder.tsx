@@ -119,6 +119,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     // Action states
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [parseError, setParseError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials'>('basics');
     const [showSuccessToast, setShowSuccessToast] = useState(false);
 
@@ -136,6 +137,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     useEffect(() => {
         if (isOpen) {
             setSaveError(null);
+            setParseError(null);
             setShowSuccessToast(false);
             setActiveTab('basics');
             if (user?.resumeUrl) {
@@ -150,14 +152,15 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     const renderSocialIcon = (iconName: string) => {
         const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
         if (IconComponent) {
-            return <IconComponent className="w-5 h-5 text-white" />;
+            return <IconComponent className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
         }
-        return <Globe className="w-5 h-5 text-white" />;
+        return <Globe className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
     };
 
     // Parse with AI directly from uploaded File
     const handleParseFile = async (file: File) => {
         try {
+            setParseError(null);
             setIsAnalyzing(true);
             setStep('parsing');
             setProgressText("Uploading file layer...");
@@ -172,17 +175,28 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                 body: formData,
             });
             
-            if (!response.ok) throw new Error("Failed to scan document structure");
+            const data = await response.json().catch(() => ({}));
+            
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to scan document structure");
+            }
             
             setProgressText("Calibrating structured items...");
-            const data = await response.json();
-            
             loadParsedData(data);
             setStep('review');
         } catch (error: any) {
-            console.error(error);
-            toast.error(error.message || "Failed to analyze resume file");
-            setStep('upload');
+            console.error("Option B upload parse failed:", error);
+            const msg = (error.message || "").toLowerCase();
+            let errorMsg = "An unexpected error occurred. Please try again.";
+            if (msg.includes('retrieve') || msg.includes('file')) {
+                errorMsg = "Could not access your resume file. Try uploading a new one.";
+            } else if (msg.includes('parsing') || msg.includes('ai')) {
+                errorMsg = "AI parsing failed. Please try again in a moment.";
+            } else if (msg.includes('json') || msg.includes('read') || msg.includes('format')) {
+                errorMsg = "Resume format not recognized. Try a PDF format.";
+            }
+            setParseError(errorMsg);
+            setStep(user?.resumeUrl ? 'choice' : 'upload');
         } finally {
             setIsAnalyzing(false);
         }
@@ -193,6 +207,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         if (!user?.resumeUrl) return;
         
         try {
+            setParseError(null);
             setIsAnalyzing(true);
             setStep('parsing');
             setProgressText("Accessing existing resume document...");
@@ -203,19 +218,28 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                 body: JSON.stringify({ url: user.resumeUrl })
             });
             
-            if (!response.ok) throw new Error("Failed to retrieve file contents");
+            const resData = await response.json().catch(() => ({}));
+            
+            if (!response.ok) {
+                throw new Error(resData.error || "Failed to scan existing resume");
+            }
             
             setProgressText("Refining profile data layers...");
-            const resData = await response.json();
-            
-            if (!resData.success) throw new Error(resData.error || "Parsing failed");
-            
-            loadParsedData(resData.aiData);
+            loadParsedData(resData);
             setStep('review');
         } catch (error: any) {
-            console.error(error);
-            toast.error(error.message || "Failed to scan existing resume");
-            setStep('choice');
+            console.error("Option A URL parse failed:", error);
+            const msg = (error.message || "").toLowerCase();
+            let errorMsg = "An unexpected error occurred. Please try again.";
+            if (msg.includes('retrieve') || msg.includes('file')) {
+                errorMsg = "Could not access your resume file. Try uploading a new one.";
+            } else if (msg.includes('parsing') || msg.includes('ai')) {
+                errorMsg = "AI parsing failed. Please try again in a moment.";
+            } else if (msg.includes('json') || msg.includes('read') || msg.includes('format')) {
+                errorMsg = "Resume format not recognized. Try a PDF format.";
+            }
+            setParseError(errorMsg);
+            setStep(user?.resumeUrl ? 'choice' : 'upload');
         } finally {
             setIsAnalyzing(false);
         }
@@ -223,24 +247,53 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
 
     // Map AI result fields to UI editor state structures
     const loadParsedData = (data: any) => {
+        const basicsData = data.basics || {};
         setBasics({
-            name: data.name || user?.name || '',
-            headline: data.headline || '',
-            location: data.location || '',
-            summary: data.summary || ''
+            name: basicsData.name || data.name || user?.name || '',
+            headline: basicsData.headline || data.headline || '',
+            location: basicsData.location || data.location || '',
+            summary: basicsData.summary || data.summary || ''
         });
         
-        setExperience(data.experience || []);
-        setEducation(data.education || []);
+        // Map experience
+        const parsedExperience = (data.experience || []).map((exp: any) => ({
+            position: exp.title || exp.position || exp.role || '',
+            company: exp.company || '',
+            startDate: exp.startDate || '',
+            endDate: exp.endDate || '',
+            description: exp.description || ''
+        }));
+        setExperience(parsedExperience);
+        
+        // Map education
+        const parsedEducation = (data.education || []).map((edu: any) => ({
+            school: edu.institution || edu.school || '',
+            degree: edu.degree || '',
+            fieldOfStudy: edu.fieldOfStudy || '',
+            startDate: edu.startYear || edu.startDate || '',
+            endDate: edu.endYear || edu.endDate || ''
+        }));
+        setEducation(parsedEducation);
+        
         setSkills(data.skills || []);
-        setProjects(data.projects || []);
+        
+        // Map projects
+        const parsedProjects = (data.projects || []).map((proj: any) => ({
+            title: proj.name || proj.title || '',
+            description: proj.description || '',
+            link: proj.url || proj.link || '',
+            technologies: proj.technologies || []
+        }));
+        setProjects(parsedProjects);
         
         // Socials map + detect matching commentary rules
         const parsedSocials = (data.socials || []).map((soc: any) => {
-            const detectedIcon = getSocialIconName(soc.url || soc.title || '');
+            const url = soc.url || '';
+            const label = soc.label || soc.title || 'Link';
+            const detectedIcon = getSocialIconName(url || label);
             return {
-                title: soc.title || 'Link',
-                url: soc.url || '',
+                title: label,
+                url: url,
                 icon: detectedIcon
             };
         });
@@ -444,6 +497,22 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                             Parse credentials, elaborate project contexts, and build a cohesive SkilledCore identity in seconds.
                         </DialogDescription>
                     </DialogHeader>
+
+                    {parseError && (
+                        <div className="bg-sc-red-50 border border-sc-red-200 rounded-xl p-4 mt-4 text-sm text-sc-red-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0">
+                            <span className="font-medium">{parseError}</span>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setParseError(null);
+                                    setStep(user?.resumeUrl ? 'choice' : 'upload');
+                                }}
+                                className="h-8 border-sc-red-200 text-sc-red-700 hover:bg-sc-red-100 hover:text-sc-red-800 text-xs rounded-xl font-bold bg-white cursor-pointer transition-all border self-end sm:self-auto px-3 shrink-0"
+                            >
+                                Try Again
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Step 1: Choice view (Only if resume already exists) */}
                     {step === 'choice' && (

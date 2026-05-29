@@ -740,14 +740,13 @@ function CustomLinksForm({ user, onSave }: any) {
         onSave(res);
     };
 
-    //Helper to render icon
     const renderIcon = (iconName?: string) => {
-        if (!iconName) return <Globe className="w-5 h-5" />;
+        if (!iconName) return <Globe className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
         const IconComponent = (SiIcons as any)[iconName] || (FaIcons as any)[iconName];
         if (IconComponent) {
-            return <IconComponent className="w-5 h-5" />;
+            return <IconComponent className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
         }
-        return <Globe className="w-5 h-5" />;
+        return <Globe className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
     };
 
     return (

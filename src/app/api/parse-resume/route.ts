@@ -1,122 +1,140 @@
-import { auth } from "@/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
-
-// Force Node.js runtime for pdf-parse
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
     try {
-        const session = await auth();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        let base64Data = "";
+        let mimeType = "application/pdf";
 
-        const formData = await req.formData();
-        const file = formData.get("file") as File;
-
-        if (!file) {
-            return NextResponse.json({ error: "No file provided" }, { status: 400 });
-        }
-
-        // Convert File to Buffer
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        // Extract Text from PDF
-        let text = "";
         try {
-            const data = await pdf(buffer);
-            text = data.text;
-        } catch (e) {
-            console.error("PDF Parse Error:", e);
-            return NextResponse.json({ error: "Failed to parse PDF" }, { status: 500 });
+            const contentType = req.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                const body = await req.json();
+                const resumeUrl = body.url;
+                if (!resumeUrl) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
+                const response = await fetch(resumeUrl);
+                if (!response.ok) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                base64Data = Buffer.from(arrayBuffer).toString('base64');
+            } else {
+                const formData = await req.formData();
+                const file = formData.get("file") as File;
+
+                if (!file) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
+
+                const arrayBuffer = await file.arrayBuffer();
+                base64Data = Buffer.from(arrayBuffer).toString('base64');
+                mimeType = file.type || "application/pdf";
+            }
+        } catch (fileErr: any) {
+            console.error("Option B File read failed:", fileErr);
+            return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
         }
 
         // Initialize Gemini
         const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
         if (!apiKey) {
-            return NextResponse.json({ error: "AI Configuration missing" }, { status: 500 });
+            return NextResponse.json({ error: "AI parsing failed", details: "No API Key configured" }, { status: 500 });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = `
-            You are an expert Resume Parser. 
-            Analyze the following resume text and extract structured data in strict JSON format.
-            
-            Crucial Project Rule:
-            For each project in "projects", read the description. If it is short (1-3 lines), ELABORATE it into 4-6 technically rich, highly professional, accurate sentences that detail the technical challenges, technologies used, and outcomes. If there are no projects, extract them from the experience or other sections if appropriate.
-            
-            Target Schema:
-            {
-                "name": "Candidate's full name",
-                "email": "Email address",
-                "phone": "Phone number",
-                "location": "City, Country or Location",
-                "headline": "Current professional title (e.g. Senior Frontend Engineer)",
-                "summary": "Professional summary or bio",
-                "skills": ["Skill 1", "Skill 2"],
-                "experience": [
-                    { 
-                        "position": "Job Title", 
-                        "company": "Company Name", 
-                        "startDate": "Start Date or Year",
-                        "endDate": "End Date or Year or Present",
-                        "description": "Elaborated summary of responsibilities and achievements"
+        // STEP 3: Send to Gemini as inlineData
+        let textResult = "";
+        try {
+            const result = await model.generateContent([
+                {
+                    inlineData: {
+                        mimeType: mimeType,
+                        data: base64Data,
                     }
-                ],
-                "education": [
-                    { 
-                        "school": "University/School Name", 
-                        "degree": "Degree/Certification", 
-                        "startDate": "Start Date or Year",
-                        "endDate": "End Date or Year or Present"
-                    }
-                ],
-                "projects": [
-                    {
-                        "title": "Project Title",
-                        "description": "Elaborated 4-6 sentences technical description of the project challenges, implementations, and results",
-                        "link": "Project URL if any",
-                        "technologies": ["React", "TypeScript"]
-                    }
-                ],
-                "socials": [
-                    {
-                        "title": "Platform Name (e.g. LinkedIn, GitHub, Behance, Dribbble, Twitter, Portfolio)",
-                        "url": "Profile URL"
-                    }
-                ]
-            }
+                },
+                {
+                    text: `You are a professional resume parser. Extract all 
+information from this resume and return ONLY valid JSON 
+with no markdown, no backticks, no preamble.
 
-            If fields are missing, leave them empty or empty arrays. 
-            Do NOT hallucinate. Only extract what is there in the text.
-            
-            RESUME TEXT:
-            ${text.substring(0, 10000)} 
-        `;
+Return this exact structure:
+{
+  "basics": {
+    "name": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "headline": "",
+    "summary": ""
+  },
+  "experience": [
+    {
+      "company": "",
+      "title": "",
+      "startDate": "",
+      "endDate": "",
+      "description": ""
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "fieldOfStudy": "",
+      "startYear": "",
+      "endYear": ""
+    }
+  ],
+  "skills": ["skill1", "skill2"],
+  "projects": [
+    {
+      "name": "",
+      "description": "Expand this to 4-6 professional sentences. Never invent details not in the original.",
+      "technologies": ["tech1"],
+      "url": ""
+    }
+  ],
+  "socials": [
+    {
+      "label": "",
+      "url": ""
+    }
+  ]
+}
 
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-        });
+For projects: take the raw description and expand it to 
+4-6 well-written professional sentences. Keep all facts 
+accurate. Never add technologies or features not mentioned.
 
-        let jsonString = result.response.text();
-        if (jsonString.includes("```")) {
-            jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim();
+Return ONLY the JSON object. No other text.`
+                }
+            ]);
+            textResult = result.response.text();
+            console.log("Raw Gemini response text (Option B):", textResult);
+        } catch (geminiErr: any) {
+            console.error("Gemini Content Generation Failed for Option B:", geminiErr);
+            return NextResponse.json({ error: "AI parsing failed", details: geminiErr.message }, { status: 500 });
         }
-        const parsedData = JSON.parse(jsonString);
 
-        return NextResponse.json(parsedData);
+        // STEP 4: Strip markdown fences before parsing:
+        try {
+            let text = textResult;
+            text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const parsed = JSON.parse(text);
+            return NextResponse.json(parsed);
+        } catch (jsonErr: any) {
+            console.error("Option B JSON parse failed. Raw text was:", textResult, jsonErr);
+            return NextResponse.json({ error: "Could not read AI response" }, { status: 500 });
+        }
 
     } catch (error: any) {
         console.error("Resume Analysis Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "AI parsing failed", details: error.message }, { status: 500 });
     }
 }

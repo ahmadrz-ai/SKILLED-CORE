@@ -268,7 +268,7 @@ export function IconPicker({ isOpen, onClose, onSelect, selectedIcon }: IconPick
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center justify-center cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center justify-center cursor-pointer shrink-0"
                             style={
                                 selectedCategory === cat
                                     ? { backgroundColor: '#5B35D5', color: '#FFFFFF', borderColor: 'transparent', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
