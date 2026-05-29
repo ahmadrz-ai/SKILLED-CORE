@@ -18,7 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { deletePost, reportPost, votePoll, updatePost, toggleFollow } from "@/app/(app)/feed/actions";
+import { deletePost, reportPost, votePoll, updatePost, toggleFollow, toggleLike } from "@/app/(app)/feed/actions";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import { CommentSection } from "@/components/feed/CommentSection";
 import {
@@ -143,14 +143,33 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         }
     };
 
-    const handleLike = () => {
+    const handleLike = async () => {
+        const wasLiked = isLiked;
+        const previousCount = likesCount;
         if (isLiked) {
             setLikesCount(prev => prev - 1);
         } else {
             setLikesCount(prev => prev + 1);
         }
         setIsLiked(!isLiked);
-        onLike?.();
+
+        if (onLike) {
+            onLike();
+        } else {
+            try {
+                const res = await toggleLike(post.id);
+                if (!res.success) {
+                    setIsLiked(wasLiked);
+                    setLikesCount(previousCount);
+                    toast.error(res.message || "Failed to like post");
+                }
+            } catch (err) {
+                console.error("Failed to toggle like:", err);
+                setIsLiked(wasLiked);
+                setLikesCount(previousCount);
+                toast.error("Failed to like post");
+            }
+        }
     };
 
     const handleDelete = async () => {
@@ -1255,23 +1274,23 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 {/* Action Bar */}
                 <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">
                     <button onClick={handleLike}
-                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
-                            isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF]")}>
+                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium cursor-pointer",
+                            isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] md:hover:text-[#2563EB] md:hover:bg-[#EFF6FF]")}>
                         <ThumbsUp className={cn("w-3.5 h-3.5", isLiked && "fill-current")} />
                         <span>{likesCount}</span>
                     </button>
                     <button onClick={() => setShowComments(!showComments)}
-                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium",
-                            showComments ? "text-[#059669] bg-[#ECFDF5]" : "text-[#6B7280] hover:text-[#059669] hover:bg-[#ECFDF5]")}>
+                        className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium cursor-pointer",
+                            showComments ? "text-[#059669] bg-[#ECFDF5]" : "text-[#6B7280] md:hover:text-[#059669] md:hover:bg-[#ECFDF5]")}>
                         <MessageCircle className={cn("w-3.5 h-3.5", showComments && "fill-current")} />
                         <span>{post.comments}</span>
                     </button>
                     <button onClick={() => toast.success("Reposted to your network.")}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium">
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#6366F1] md:hover:bg-[#EEF2FF] transition-all font-medium cursor-pointer">
                         <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
                     </button>
                     <button onClick={() => setIsShareModalOpen(true)}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#2563EB] hover:bg-[#EFF6FF] transition-all font-medium">
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#2563EB] md:hover:bg-[#EFF6FF] transition-all font-medium cursor-pointer">
                         <Send className="w-3.5 h-3.5" /><span>Send</span>
                     </button>
                 </div>

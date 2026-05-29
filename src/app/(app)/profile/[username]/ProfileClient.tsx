@@ -94,10 +94,25 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     // Sync builder open state from URL search params (Task 6)
     useEffect(() => {
         const isOpenParam = searchParams.get('builder') === 'open';
-        if (isOpenParam !== isResumeBuilderOpen) {
-            setIsResumeBuilderOpen(isOpenParam);
-        }
-    }, [searchParams, isResumeBuilderOpen]);
+        setIsResumeBuilderOpen(isOpenParam);
+    }, [searchParams]);
+
+    const handleOpenResumeBuilder = () => {
+        setIsResumeBuilderOpen(true);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('builder', 'open');
+        router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+    };
+
+    const handleCloseResumeBuilder = () => {
+        setIsResumeBuilderOpen(false);
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('builder');
+        params.delete('tab');
+        params.delete('popup');
+        params.delete('popupState');
+        router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+    };
 
     // Parse Data
     let parsedSkills: string[] = [];
@@ -252,7 +267,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                     <ResumeProfileBuilder
                         user={user}
                         isOpen={isResumeBuilderOpen}
-                        onClose={() => setIsResumeBuilderOpen(false)}
+                        onClose={handleCloseResumeBuilder}
                         context="profile"
                     />
                 </>
@@ -397,7 +412,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 mt-2 w-full text-center">Resume</h3>
                                                 <Button
                                                     variant="outline"
-                                                    onClick={() => setIsResumeBuilderOpen(true)}
+                                                    onClick={handleOpenResumeBuilder}
                                                     className="w-full border-[var(--sc-purple-300)] text-[var(--sc-purple-700)] bg-white hover:bg-[var(--sc-purple-50)] hover:text-[var(--sc-purple-800)] hover:border-[var(--sc-purple-400)] shadow-sm font-semibold py-2 transition-all flex items-center justify-center gap-2 mb-3 text-xs rounded-xl"
                                                 >
                                                     <Sparkles className="w-4 h-4 text-[var(--sc-purple-600)]" /> Build Profile with AI Resume
@@ -617,7 +632,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         Having an elaborated bio, experience records, and at least 3 skills makes your profile significantly more discoverable to recruiters and unlocks deep talent analysis.
                                     </p>
                                     <button
-                                        onClick={() => setIsResumeBuilderOpen(true)}
+                                        onClick={handleOpenResumeBuilder}
                                         className="text-xs font-bold text-[var(--sc-purple-600)] hover:text-[var(--sc-purple-800)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                                     >
                                         Upload resume to build profile with AI in seconds →
