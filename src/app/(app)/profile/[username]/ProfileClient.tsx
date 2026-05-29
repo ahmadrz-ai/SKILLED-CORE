@@ -422,6 +422,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 <Button
                                                     variant="outline"
                                                     onClick={handleOpenResumeBuilder}
+                                                    style={{ color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: '#FFFFFF' }}
                                                     className="w-full border-[var(--sc-purple-300)] text-[var(--sc-purple-700)] bg-white hover:bg-[var(--sc-purple-50)] hover:text-[var(--sc-purple-800)] hover:border-[var(--sc-purple-400)] shadow-sm font-semibold py-2 transition-all flex items-center justify-center gap-2 mb-3 text-xs rounded-xl"
                                                 >
                                                     <Sparkles className="w-4 h-4 text-[var(--sc-purple-600)]" /> Build Profile with AI Resume

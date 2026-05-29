@@ -46,6 +46,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     // Trigger AI semantic search pipeline
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
+        console.log('Search query being sent:', searchQuery);
         setIsSearching(true);
         setHasSearched(true);
         setResultRows([]);

@@ -33,6 +33,7 @@ import {
     FileText,
     Save,
     ArrowLeft,
+    ChevronLeft,
     CheckCircle
 } from 'lucide-react';
 import { iconMap } from '@/lib/icons';
@@ -701,28 +702,35 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                 payload = { experience: experience };
                 const prevExpCount = originalData?.experience?.length ?? 0;
                 const newExpCount = experience.length;
-                if (newExpCount > prevExpCount)
+                if (newExpCount > prevExpCount) {
+                    const count = newExpCount - prevExpCount;
                     changes.push({
                         type: 'added',
-                        label: `${newExpCount - prevExpCount} experience entry/entries added`
+                        label: `${count} experience ${count === 1 ? 'entry' : 'entries'} added`
                     });
-                else if (newExpCount === prevExpCount)
-                    changes.push({ type: 'updated', label: `${newExpCount} experience entry/entries updated` });
-                else
+                } else if (newExpCount === prevExpCount) {
+                    changes.push({
+                        type: 'updated',
+                        label: `${newExpCount} experience ${newExpCount === 1 ? 'entry' : 'entries'} updated`
+                    });
+                } else {
                     changes.push({ type: 'updated', label: 'Experience section updated' });
+                }
                 break;
 
             case 'education':
                 payload = { education: education };
                 const prevEduCount = originalData?.education?.length ?? 0;
                 const newEduCount = education.length;
-                if (newEduCount > prevEduCount)
+                if (newEduCount > prevEduCount) {
+                    const count = newEduCount - prevEduCount;
                     changes.push({
                         type: 'added',
-                        label: `${newEduCount - prevEduCount} education entry/entries added`
+                        label: `${count} education ${count === 1 ? 'entry' : 'entries'} added`
                     });
-                else
+                } else {
                     changes.push({ type: 'updated', label: 'Education section updated' });
+                }
                 break;
 
             case 'skills':
@@ -730,44 +738,53 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                 const prevSkillCount = originalData?.skills?.length ?? 0;
                 const newSkillCount = skills.length;
                 const addedSkills = newSkillCount - prevSkillCount;
-                if (addedSkills > 0)
+                if (addedSkills > 0) {
                     changes.push({
                         type: 'added',
-                        label: `${addedSkills} skill${addedSkills === 1 ? '' : 's'} added to your Skill Set`
+                        label: `${addedSkills} ${addedSkills === 1 ? 'skill' : 'skills'} added to your Skill Set`
                     });
-                else if (addedSkills < 0)
+                } else if (addedSkills < 0) {
+                    const removed = Math.abs(addedSkills);
                     changes.push({
                         type: 'removed',
-                        label: `${Math.abs(addedSkills)} skill${Math.abs(addedSkills) === 1 ? '' : 's'} removed`
+                        label: `${removed} ${removed === 1 ? 'skill' : 'skills'} removed`
                     });
-                else
+                } else {
                     changes.push({ type: 'updated', label: 'Skills updated' });
+                }
                 break;
 
             case 'projects':
                 payload = { projects: projects };
                 const prevProjCount = originalData?.projects?.length ?? 0;
                 const newProjCount = projects.length;
-                if (newProjCount > prevProjCount)
+                if (newProjCount > prevProjCount) {
+                    const count = newProjCount - prevProjCount;
                     changes.push({
                         type: 'added',
-                        label: `${newProjCount - prevProjCount} project${newProjCount - prevProjCount === 1 ? '' : 's'} added to your portfolio`
+                        label: `${count} ${count === 1 ? 'project' : 'projects'} added to your portfolio`
                     });
-                else
-                    changes.push({ type: 'updated', label: `${newProjCount} project${newProjCount === 1 ? '' : 's'} updated` });
+                } else {
+                    changes.push({
+                        type: 'updated',
+                        label: `${newProjCount} ${newProjCount === 1 ? 'project' : 'projects'} updated`
+                    });
+                }
                 break;
 
             case 'socials':
                 payload = { customLinks: socials.length > 0 ? JSON.stringify(socials) : null };
                 const prevSocialCount = originalData?.socials?.length ?? 0;
                 const newSocialCount = socials.length;
-                if (newSocialCount > prevSocialCount)
+                if (newSocialCount > prevSocialCount) {
+                    const count = newSocialCount - prevSocialCount;
                     changes.push({
                         type: 'added',
-                        label: `${newSocialCount - prevSocialCount} social link${newSocialCount - prevSocialCount === 1 ? '' : 's'} added`
+                        label: `${count} social ${count === 1 ? 'link' : 'links'} added`
                     });
-                else
+                } else {
                     changes.push({ type: 'updated', label: 'Social links updated' });
+                }
                 break;
         }
 
@@ -806,30 +823,40 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             basics.summary !== originalData?.basics?.summary)
             changes.push({ type: 'updated', label: 'Profile basics updated' });
 
-        if (newExp > prevExp)
-            changes.push({ type: 'added', label: `${newExp - prevExp} experience entry/entries added` });
-        else if (newExp === prevExp && newExp > 0)
-            changes.push({ type: 'updated', label: `${newExp} experience entry/entries updated` });
+        if (newExp > prevExp) {
+            const count = newExp - prevExp;
+            changes.push({ type: 'added', label: `${count} experience ${count === 1 ? 'entry' : 'entries'} added` });
+        } else if (newExp === prevExp && newExp > 0) {
+            changes.push({ type: 'updated', label: `${newExp} experience ${newExp === 1 ? 'entry' : 'entries'} updated` });
+        }
 
-        if (newEdu > prevEdu)
-            changes.push({ type: 'added', label: `${newEdu - prevEdu} education entry/entries added` });
-        else if (newEdu > 0)
+        if (newEdu > prevEdu) {
+            const count = newEdu - prevEdu;
+            changes.push({ type: 'added', label: `${count} education ${count === 1 ? 'entry' : 'entries'} added` });
+        } else if (newEdu > 0) {
             changes.push({ type: 'updated', label: 'Education section updated' });
+        }
 
-        if (newSkills > prevSkills)
-            changes.push({ type: 'added', label: `${newSkills - prevSkills} skill${newSkills - prevSkills === 1 ? '' : 's'} added to your Skill Set` });
-        else if (newSkills > 0)
-            changes.push({ type: 'updated', label: `${newSkills} skill${newSkills === 1 ? '' : 's'} in your profile` });
+        if (newSkills > prevSkills) {
+            const count = newSkills - prevSkills;
+            changes.push({ type: 'added', label: `${count} ${count === 1 ? 'skill' : 'skills'} added to your Skill Set` });
+        } else if (newSkills > 0) {
+            changes.push({ type: 'updated', label: `${newSkills} ${newSkills === 1 ? 'skill' : 'skills'} in your profile` });
+        }
 
-        if (newProj > prevProj)
-            changes.push({ type: 'added', label: `${newProj - prevProj} project${newProj - prevProj === 1 ? '' : 's'} added to your portfolio` });
-        else if (newProj > 0)
-            changes.push({ type: 'updated', label: `${newProj} project${newProj === 1 ? '' : 's'} updated` });
+        if (newProj > prevProj) {
+            const count = newProj - prevProj;
+            changes.push({ type: 'added', label: `${count} ${count === 1 ? 'project' : 'projects'} added to your portfolio` });
+        } else if (newProj > 0) {
+            changes.push({ type: 'updated', label: `${newProj} ${newProj === 1 ? 'project' : 'projects'} updated` });
+        }
 
-        if (newSocials > prevSocials)
-            changes.push({ type: 'added', label: `${newSocials - prevSocials} social link${newSocials - prevSocials === 1 ? '' : 's'} connected` });
-        else if (newSocials > 0)
+        if (newSocials > prevSocials) {
+            const count = newSocials - prevSocials;
+            changes.push({ type: 'added', label: `${count} social ${count === 1 ? 'link' : 'links'} connected` });
+        } else if (newSocials > 0) {
             changes.push({ type: 'updated', label: 'Social links updated' });
+        }
 
         const fullPayload = {
             name: basics.name || undefined,
@@ -989,6 +1016,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl px-4">
                                 <button
                                     onClick={handleParseExisting}
+                                    style={{ border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF', color: '#1F2937' }}
                                     className="p-5 border border-[var(--border-default)] hover:border-[var(--sc-purple-300)] hover:bg-[var(--sc-purple-50)]/50 rounded-xl text-left transition-all group flex flex-col gap-2 bg-transparent cursor-pointer"
                                 >
                                     <div className="w-10 h-10 rounded-lg bg-[var(--sc-purple-100)] flex items-center justify-center group-hover:bg-[var(--sc-purple-200)] transition-colors">
@@ -1002,6 +1030,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
 
                                 <button
                                     onClick={() => setStep('upload')}
+                                    style={{ border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF', color: '#1F2937' }}
                                     className="p-5 border border-[var(--border-default)] hover:border-[var(--sc-purple-300)] hover:bg-[var(--sc-purple-50)]/50 rounded-xl text-left transition-all group flex flex-col gap-2 bg-transparent cursor-pointer"
                                 >
                                     <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
@@ -1082,6 +1111,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                     setIsAnalyzing(false);
                                     setStep(user?.resumeUrl ? 'choice' : 'upload');
                                 }}
+                                style={{ color: '#6B6B78', border: '1px solid #D1D5DB', backgroundColor: '#FFFFFF' }}
                                 className="border-[var(--border-default)] hover:bg-[var(--bg-secondary-panel)] text-xs rounded-xl"
                             >
                                 Cancel scanning
@@ -1175,7 +1205,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('basics')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1275,7 +1306,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('experience')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1367,7 +1399,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('education')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1437,7 +1470,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('skills')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1524,7 +1558,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('projects')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1600,7 +1635,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('socials')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={isSavingTab ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { color: '#5B35D5', border: '1px solid #B4A3F3', backgroundColor: 'transparent' }}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
@@ -1641,9 +1677,10 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                     clearOnboardingTimer();
                                                     setShowSummaryPopup(false);
                                                 }}
-                                                className="absolute top-3 left-3 inline-flex items-center gap-1 text-xs text-text-secondary hover:text-text-heading transition-colors duration-150 cursor-pointer border-none bg-transparent"
+                                                style={{ color: '#6B6B78' }}
+                                                className="absolute top-3 left-3 inline-flex items-center gap-1 text-xs text-text-secondary hover:text-text-heading transition-colors duration-150 cursor-pointer bg-transparent border-0 outline-none p-1 rounded"
                                             >
-                                                <ArrowLeft className="w-4 h-4" />
+                                                <ChevronLeft className="w-4 h-4" />
                                                 Back
                                             </button>
                                         )}
@@ -1733,7 +1770,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={handleConfirmedSave}
                                                     disabled={!isConfirmed || isSavingTab || isSavingAll}
-                                                    className="w-full py-2.5 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={(!isConfirmed || isSavingTab || isSavingAll) ? { backgroundColor: '#E8E8ED', color: '#B8B8C0', border: 'none' } : { backgroundColor: '#5B35D5', color: '#FFFFFF', border: 'none' }}
+                                                    className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     Save Changes
                                                 </button>
@@ -1751,15 +1789,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         )}
 
                                         {popupState === 'success' && (
-                                            <div className="flex gap-3 pt-2">
+                                            <div className="flex gap-3 pt-4 mt-2">
                                                 <button
                                                     onClick={() => {
                                                         clearOnboardingTimer();
                                                         setShowSummaryPopup(false);
                                                     }}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={{ backgroundColor: '#5B35D5', color: '#FFFFFF' }}
+                                                    className="flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold bg-sc-purple-600 text-white hover:bg-sc-purple-700 transition-colors duration-150 border-0 outline-none cursor-pointer"
                                                 >
-                                                    Continue Building
+                                                    Continue Editing
                                                 </button>
                                                 
                                                 <button
@@ -1771,7 +1810,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                             router.push('/feed');
                                                         }
                                                     }}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={{ backgroundColor: 'transparent', color: '#5B35D5', border: '1px solid #B4A3F3' }}
+                                                    className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-sc-purple-600 border border-sc-purple-300 hover:bg-sc-purple-50 transition-colors duration-150 cursor-pointer"
                                                 >
                                                     {summaryData?.isFull && context === 'onboarding'
                                                         ? 'Go to Feed'
@@ -1784,7 +1824,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                             <div className="flex gap-3 pt-2">
                                                 <button
                                                     onClick={handleConfirmedSave}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={{ backgroundColor: '#5B35D5', color: '#FFFFFF', border: 'none' }}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     Try Again
                                                 </button>
@@ -1794,7 +1835,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                         clearOnboardingTimer();
                                                         setShowSummaryPopup(false);
                                                     }}
-                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white transition-all duration-150 shadow-sm cursor-pointer"
+                                                    style={{ backgroundColor: 'transparent', color: '#5B35D5', border: '1px solid #B4A3F3' }}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     Cancel
                                                 </button>
@@ -1818,7 +1860,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                             <button
                                 onClick={handleSaveAll}
                                 disabled={isSavingAll}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--sc-purple-600)] border border-[var(--sc-purple-600)] text-white hover:bg-transparent hover:text-[var(--sc-purple-600)] disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                style={isSavingAll ? { backgroundColor: '#E8E8ED', color: '#B8B8C0' } : { backgroundColor: '#5B35D5', color: '#FFFFFF', border: 'none' }}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                             >
                                 {isSavingAll ? (
                                     <>
@@ -1840,6 +1883,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                     variant="outline" 
                                     onClick={onClose} 
                                     disabled={isAnalyzing}
+                                    style={{ color: '#6B6B78', border: '1px solid #D1D5DB', backgroundColor: '#FFFFFF' }}
                                     className="border-[var(--border-default)] hover:bg-[var(--bg-secondary-panel)] h-10 px-4 rounded-xl text-xs font-bold"
                                 >
                                     Cancel
