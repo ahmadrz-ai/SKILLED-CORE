@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, Building2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tag as SharedTag } from '@/components/ui/tag';
+import { useState, useEffect } from 'react';
 
 export interface JobProps {
     id: string;
@@ -18,7 +19,64 @@ export interface JobProps {
     logo?: string;
     contract?: 'Full-Time' | 'Contract' | 'Freelance';
     isApplied?: boolean;
+    salaryMin?: number;
+    salaryMax?: number;
+    currency?: string;
+    payPeriod?: string;
 }
+
+const EXCHANGE_RATES: { [key: string]: number } = {
+    USD: 1.0,
+    PKR: 278.0,
+    EUR: 0.92,
+    GBP: 0.78,
+    INR: 83.3,
+    AED: 3.67,
+    SAR: 3.75,
+    CAD: 1.36,
+    AUD: 1.50,
+    SGD: 1.35,
+    JPY: 156.0,
+    CNY: 7.24,
+    NZD: 1.63,
+    CHF: 0.91,
+    HKD: 7.80,
+    SEK: 10.60,
+    NOK: 10.50,
+    DKK: 6.87,
+    TRY: 32.20,
+    BRL: 5.15,
+    ZAR: 18.40,
+    MXN: 16.70,
+    RUB: 90.0,
+    KRW: 1360.0,
+    IDR: 16000.0,
+    MYR: 4.70,
+    PHP: 58.0,
+    THB: 36.5,
+    VND: 25400.0,
+    EGP: 47.0,
+    NGN: 1450.0,
+    QAR: 3.64,
+    KWD: 0.31,
+    OMR: 0.38,
+    BHD: 0.38,
+    PLN: 3.95,
+    CZK: 22.8,
+    HUF: 358.0,
+    ILS: 3.68,
+    CLP: 915.0,
+    COP: 3860.0,
+    PEN: 3.73,
+    ARS: 890.0
+};
+
+const convertSalary = (amount: number, fromCurrency: string, toCurrency: string): number => {
+    const fromRate = EXCHANGE_RATES[fromCurrency.toUpperCase()] || 1.0;
+    const toRate = EXCHANGE_RATES[toCurrency.toUpperCase()] || 1.0;
+    const inUSD = amount / fromRate;
+    return Math.round(inUSD * toRate);
+};
 
 interface JobCardProps {
     job: JobProps;
@@ -27,6 +85,30 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job, index, onApply }: JobCardProps) {
+    const [detectedCountry, setDetectedCountry] = useState<string>("Pakistan");
+    const [detectedCurrency, setDetectedCurrency] = useState<string>("PKR");
+    const [isConverted, setIsConverted] = useState(false);
+
+    useEffect(() => {
+        const detectGeo = async () => {
+            try {
+                const res = await fetch("https://ipapi.co/json/");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.country_name) setDetectedCountry(data.country_name);
+                    if (data.currency) setDetectedCurrency(data.currency);
+                }
+            } catch (err) {
+                console.error("Failed to detect country/currency from IP in JobCard:", err);
+            }
+        };
+        detectGeo();
+    }, []);
+
+    const displayMin = isConverted && job.salaryMin ? convertSalary(job.salaryMin, job.currency || 'USD', detectedCurrency) : job.salaryMin;
+    const displayMax = isConverted && job.salaryMax ? convertSalary(job.salaryMax, job.currency || 'USD', detectedCurrency) : job.salaryMax;
+    const displayCurrency = isConverted ? detectedCurrency : (job.currency || 'USD');
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -82,8 +164,27 @@ export default function JobCard({ job, index, onApply }: JobCardProps) {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex flex-col">
                             <span className="text-xs text-zinc-500 uppercase tracking-wider">Salary Badge</span>
-                            <span className="text-teal-400 font-bold font-mono text-sm">{job.salary}</span>
+                            <span className="text-teal-400 font-bold font-mono text-sm">
+                                {job.salaryMin !== undefined && job.salaryMin !== null
+                                    ? `${displayCurrency} ${displayMin?.toLocaleString()} - ${displayMax ? displayMax.toLocaleString() : '+'} / ${(job.payPeriod || 'Yearly').toLowerCase()}`
+                                    : job.salary}
+                            </span>
                         </div>
+                        
+                        {/* Interactive Currency Converter Tab */}
+                        {(job.salaryMin !== undefined && job.salaryMin !== null) && (
+                            <button
+                                onClick={() => setIsConverted(!isConverted)}
+                                className={cn(
+                                    "text-[10px] px-2.5 py-1 rounded-full font-bold uppercase transition-all select-none cursor-pointer border border-violet-500/30",
+                                    isConverted
+                                        ? "bg-violet-600/30 text-violet-300 border-violet-400"
+                                        : "bg-violet-600/10 hover:bg-violet-600/20 text-violet-400"
+                                )}
+                            >
+                                convert currency '{detectedCountry}'
+                            </button>
+                        )}
                     </div>
 
                     <Button

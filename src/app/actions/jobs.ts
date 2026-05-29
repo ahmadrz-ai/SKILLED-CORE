@@ -149,7 +149,6 @@ Use HTML formatting tags compatible with standard browser styling (like <b>, <i>
 }
 
 export async function createJob(data: {
-    // ... (same types)
     title: string;
     companyName: string;
     companyLogo?: string;
@@ -159,6 +158,8 @@ export async function createJob(data: {
     experienceLevel: string;
     salaryMin?: number;
     salaryMax?: number;
+    currency?: string;
+    payPeriod?: string;
     description: string;
     skills: string;
     applyMethod: string;
@@ -213,6 +214,8 @@ export async function createJob(data: {
                 experienceLevel: data.experienceLevel,
                 salaryMin: data.salaryMin,
                 salaryMax: data.salaryMax,
+                currency: data.currency || "USD",
+                payPeriod: data.payPeriod || "Yearly",
                 description: data.description,
                 skills: data.skills,
                 applyMethod: data.applyMethod,

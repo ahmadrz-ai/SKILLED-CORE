@@ -401,6 +401,7 @@ model Job {
   salaryMin       Int?
   salaryMax       Int?
   currency        String        @default("USD")
+  payPeriod       String        @default("Yearly")
   description     String
   skills          String // Stored as comma-separated or JSON
   applyMethod     String        @default("easy")

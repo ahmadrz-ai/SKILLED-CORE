@@ -114,6 +114,52 @@ const MarkdownToolbar = ({
     );
 };
 
+const CURRENCIES = [
+    { code: 'USD', name: 'US Dollar', symbol: '$' },
+    { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨' },
+    { code: 'EUR', name: 'Euro', symbol: '€' },
+    { code: 'GBP', name: 'British Pound', symbol: '£' },
+    { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+    { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+    { code: 'SAR', name: 'Saudi Riyal', symbol: 'ر.س' },
+    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+    { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+    { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
+    { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+    { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
+    { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
+    { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
+    { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
+    { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+    { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+    { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+    { code: 'MXN', name: 'Mexican Peso', symbol: '$' },
+    { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
+    { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
+    { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' },
+    { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
+    { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
+    { code: 'THB', name: 'Thai Baht', symbol: '฿' },
+    { code: 'VND', name: 'Vietnamese Dong', symbol: '₫' },
+    { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£' },
+    { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+    { code: 'QAR', name: 'Qatari Riyal', symbol: 'ر.ق' },
+    { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك' },
+    { code: 'OMR', name: 'Omani Rial', symbol: 'ر.ع.' },
+    { code: 'BHD', name: 'Bahraini Dinar', symbol: '.د.ب' },
+    { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+    { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
+    { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft' },
+    { code: 'ILS', name: 'Israeli Shekel', symbol: '₪' },
+    { code: 'CLP', name: 'Chilean Peso', symbol: '$' },
+    { code: 'COP', name: 'Colombian Peso', symbol: '$' },
+    { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/.' },
+    { code: 'ARS', name: 'Argentine Peso', symbol: '$' }
+];
+
 // --- MOCK DATA & TYPES ---
 const JOB_TITLES = [
     "Frontend Engineer", "Backend Developer", "Full Stack Architect",
@@ -135,11 +181,23 @@ export default function JobWizardPage() {
     const [credits, setCredits] = useState<number | null>(null);
     const [userPlan, setUserPlan] = useState<string>('BASIC');
     const [showConfirmRewrite, setShowConfirmRewrite] = useState(false);
+    const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
+    const currencyRef = useRef<HTMLDivElement>(null);
 
     // Initial Telemetry Fetch
     useEffect(() => {
         getCredits().then(setCredits);
         getPlan().then(setUserPlan);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
+                setShowCurrencyDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // FORM STATE
@@ -416,6 +474,8 @@ export default function JobWizardPage() {
                 experienceLevel: formData.experienceLevel,
                 salaryMin: min,
                 salaryMax: max,
+                currency: formData.currency,
+                payPeriod: formData.payPeriod,
                 description: formData.description,
                 skills: formData.skills.join(', '),
                 applyMethod: formData.applyMethod,
@@ -445,9 +505,11 @@ export default function JobWizardPage() {
         company: formData.company || 'Company',
         type: (formData.workplaceType as any) || 'On-Site',
         postedTime: 'Just now',
-        salary: formData.minPay && formData.maxPay
-            ? `$${parseInt(formData.minPay) / 1000}k - $${parseInt(formData.maxPay) / 1000}k`
-            : 'Unspecified',
+        salary: 'Unspecified',
+        salaryMin: formData.minPay ? parseInt(formData.minPay) : undefined,
+        salaryMax: formData.maxPay ? parseInt(formData.maxPay) : undefined,
+        currency: formData.currency,
+        payPeriod: formData.payPeriod,
         experience: 'Mid-Senior',
         contract: 'Full-Time',
         tags: formData.skills,
@@ -836,7 +898,44 @@ export default function JobWizardPage() {
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
-                                        <Label className="text-text-secondary font-semibold text-sm">Pay Range</Label>
+                                        <div className="flex justify-between items-center relative h-6">
+                                            <Label className="text-text-secondary font-semibold text-sm">Pay Range</Label>
+                                            
+                                            {/* Currency Dropdown */}
+                                            <div className="relative" ref={currencyRef}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
+                                                    className="flex items-center gap-1.5 px-3 py-1 bg-white border border-[#D8D8DE] hover:border-[#B8B8C0] text-[#2D2D35] hover:text-[#141417] text-xs font-bold rounded-lg transition-all shadow-sm select-none cursor-pointer"
+                                                >
+                                                    <span>Currency: {formData.currency}</span>
+                                                    <span className="text-[10px] text-[#6B7280]">▼</span>
+                                                </button>
+                                                {showCurrencyDropdown && (
+                                                    <div className="absolute right-0 top-full mt-1.5 w-60 max-h-60 overflow-y-auto bg-white border border-[#D8D8DE] rounded-xl shadow-lg z-50 py-1.5">
+                                                        {CURRENCIES.map(curr => (
+                                                            <button
+                                                                key={curr.code}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData({ ...formData, currency: curr.code });
+                                                                    setShowCurrencyDropdown(false);
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full text-left px-4 py-2 text-xs flex justify-between items-center transition-colors cursor-pointer",
+                                                                    formData.currency === curr.code
+                                                                        ? "bg-[#EAE6FD] text-[#4A28C9] font-bold"
+                                                                        : "text-[#2D2D35] hover:bg-[#F0F0F4]"
+                                                                )}
+                                                            >
+                                                                <span>{curr.name} ({curr.code})</span>
+                                                                <span className="font-mono font-semibold text-[#6B7280]">{curr.symbol}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                         <div className="flex gap-2 items-center">
                                             <FloatingInput label="Min" value={formData.minPay} onChange={e => setFormData({ ...formData, minPay: e.target.value })} type="number" />
                                             <span className="text-text-tertiary font-bold">-</span>
@@ -846,7 +945,7 @@ export default function JobWizardPage() {
                                     <div className="space-y-4">
                                         <Label className="text-text-secondary font-semibold text-sm">Pay Period</Label>
                                         <div className="flex bg-bg-secondary-panel p-1 rounded-xl border border-border-default h-14 items-center">
-                                            {['Hourly', 'Yearly'].map(p => (
+                                            {['Hourly', 'Monthly', 'Yearly'].map(p => (
                                                 <button
                                                     key={p}
                                                     type="button"
