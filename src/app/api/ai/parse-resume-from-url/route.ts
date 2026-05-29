@@ -61,7 +61,10 @@ RULES:
   responsibility. Rewrite bullet points as flowing professional prose.
 - For skills: extract ALL technologies, tools, languages, frameworks,
   and soft skills mentioned anywhere in the resume (job descriptions,
-  projects, education, certifications — everywhere).
+  projects, education, certifications — everywhere). For each skill,
+  categorize it as "professional" (active experience) or "learning"
+  (learning/basic knowledge) and write a concise 1-2 sentence detail
+  about their exact experience level or use case with that skill.
 - For education: capture institution name, degree, field of study,
   start year, and graduation year. Also capture honors, GPA (if stated),
   and relevant coursework (if listed).
@@ -114,7 +117,11 @@ Return exactly this structure:
     }
   ],
   "skills": [
-    "Every distinct skill, technology, tool, language, or framework found anywhere in the document"
+    {
+      "name": "Skill name - e.g. React",
+      "type": "professional | learning",
+      "details": "1-2 sentences detailing their exact experience level or use case based on resume context."
+    }
   ],
   "projects": [
     {

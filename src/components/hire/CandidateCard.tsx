@@ -10,6 +10,56 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { unlockConversation } from "@/app/actions/chatActions";
 import { toast } from "sonner";
 
+interface SkillDetail {
+    name: string;
+    type: 'professional' | 'learning';
+    details: string;
+}
+
+function parseSkillsWithDetails(skillsData: any): SkillDetail[] {
+    if (!skillsData) return [];
+    
+    // If it's a string:
+    if (typeof skillsData === 'string') {
+        const trimmed = skillsData.trim();
+        if (trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                return parseSkillsWithDetails(parsed);
+            } catch (e) {
+                // fall through to comma separated
+            }
+        }
+        return trimmed.split(',').map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({
+            name,
+            type: 'professional',
+            details: `Experienced in ${name} based on professional profile.`
+        }));
+    }
+    
+    // If it's an array:
+    if (Array.isArray(skillsData)) {
+        return skillsData.map((item: any) => {
+            if (item && typeof item === 'object' && 'name' in item) {
+                return {
+                    name: item.name || '',
+                    type: item.type === 'learning' ? 'learning' : 'professional',
+                    details: item.details || `Experienced in ${item.name || ''}.`
+                };
+            } else if (typeof item === 'string') {
+                return {
+                    name: item,
+                    type: 'professional',
+                    details: `Experienced in ${item}.`
+                };
+            }
+            return null;
+        }).filter((item): item is SkillDetail => item !== null);
+    }
+    
+    return [];
+}
+
 interface CandidateCardProps {
     candidate: {
         id: string;
@@ -212,9 +262,17 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
     }
 
     // Default Grid Layout for the standard non-AI filters search
+    const displayCompany = candidate.company === 'Open to opportunities' || !candidate.company
+        ? 'Seeking Opportunities'
+        : candidate.company;
+
+    const parsedSkills = parseSkillsWithDetails(candidate.skills);
+    const professionalSkills = parsedSkills.filter(s => s.type === 'professional');
+    const learningSkills = parsedSkills.filter(s => s.type === 'learning');
+
     return (
         <div className={cn(
-            "group relative flex flex-col items-center bg-white border transition-all duration-300 rounded-[2rem] overflow-hidden p-6 shadow-sm border-[#E5E7EB] hover:border-[#7C3AED]/50 hover:shadow-lg hover:-translate-y-1 w-full"
+            "group relative flex flex-col items-center bg-white border transition-all duration-300 rounded-2xl overflow-hidden p-5 shadow-sm border-[#E5E7EB] hover:border-[#7C3AED]/50 hover:shadow-lg hover:-translate-y-1 w-full"
         )}>
 
             {/* Match Score (Absolute Top Right) */}
@@ -236,39 +294,93 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
             </div>
 
             {/* Identity */}
-            <div className="text-center w-full mb-4">
+            <div className="text-center w-full mb-3">
                 <div className="flex items-center justify-center gap-2 mb-1">
                     <h3 
                         onClick={handleViewProfile}
-                        className="text-lg font-bold text-[#111827] group-hover:text-[#7C3AED] transition-colors cursor-pointer"
+                        className="text-base font-bold text-[#111827] group-hover:text-[#7C3AED] transition-colors cursor-pointer"
                     >
                         {candidate.name}
                     </h3>
                     {(candidate.verified || (candidate.verifiedBadges && candidate.verifiedBadges.length > 0)) && (
-                        <CheckCircle2 className="w-5 h-5 text-[#10B981] fill-[#10B981]/10" />
+                        <CheckCircle2 className="w-4 h-4 text-[#10B981] fill-[#10B981]/10" />
                     )}
                 </div>
-                <p className="text-xs text-[#6B7280] font-medium mb-1">{candidate.role} @ {candidate.company}</p>
+                <p className="text-xs text-[#6B7280] font-medium mb-1 truncate px-2" title={`${candidate.role} @ ${displayCompany}`}>
+                    {candidate.role} @ {displayCompany}
+                </p>
                 <div className="flex items-center justify-center gap-1 text-[10px] text-[#9CA3AF]">
                     <MapPin className="w-3 h-3" />
                     {candidate.location}
                 </div>
             </div>
 
-            {/* Bio / Description */}
-            <div className="w-full bg-[#F9FAFB] rounded-xl p-3 mb-4 flex-1 border border-[#E5E7EB]">
-                <p className="text-xs text-[#6B7280] leading-relaxed text-center line-clamp-3">
-                    {candidate.bio || candidate.headline}
-                </p>
+            {/* Structured Skills Container */}
+            <div className="w-full flex flex-col gap-3 mb-4 flex-1">
+                {/* Professional Skills */}
+                {professionalSkills.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-left">
+                            Professional
+                        </span>
+                        <div className="flex flex-wrap gap-1 justify-start">
+                            {professionalSkills.slice(0, 5).map((skill, idx) => (
+                                <div key={idx} className="group/skill relative">
+                                    <span className="inline-block bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-200)] text-[10px] font-medium px-2 py-0.5 rounded hover:bg-[var(--sc-purple-100)] transition-colors cursor-help">
+                                        {skill.name}
+                                    </span>
+                                    {/* Tooltip */}
+                                    <div className="hidden group-hover/skill:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg shadow-xl z-50 pointer-events-none border border-slate-800 text-center">
+                                        <div className="font-bold border-b border-slate-800 pb-1 mb-1 text-[10px] text-[var(--sc-purple-300)]">{skill.name}</div>
+                                        {skill.details}
+                                    </div>
+                                </div>
+                            ))}
+                            {professionalSkills.length > 5 && (
+                                <span className="bg-slate-100 text-slate-500 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                    +{professionalSkills.length - 5} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Others / Learning Skills */}
+                {learningSkills.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-left">
+                            Others
+                        </span>
+                        <div className="flex flex-wrap gap-1 justify-start">
+                            {learningSkills.slice(0, 5).map((skill, idx) => (
+                                <div key={idx} className="group/skill relative">
+                                    <span className="inline-block bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-medium px-2 py-0.5 rounded hover:bg-slate-100 transition-colors cursor-help">
+                                        {skill.name}
+                                    </span>
+                                    {/* Tooltip */}
+                                    <div className="hidden group-hover/skill:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg shadow-xl z-50 pointer-events-none border border-slate-800 text-center">
+                                        <div className="font-bold border-b border-slate-800 pb-1 mb-1 text-[10px] text-slate-400">{skill.name}</div>
+                                        {skill.details}
+                                    </div>
+                                </div>
+                            ))}
+                            {learningSkills.length > 5 && (
+                                <span className="bg-slate-100 text-slate-500 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                    +{learningSkills.length - 5} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Stats Implementation */}
-            <div className="flex items-center gap-6 mb-6 text-[#9CA3AF]">
-                <div className="flex items-center gap-1.5 font-medium text-xs">
+            <div className="flex items-center gap-6 mb-4 text-[#9CA3AF]">
+                <div className="flex items-center gap-1.5 font-medium text-[10px]">
                     <Users className="w-3.5 h-3.5" />
                     <span>{candidate.connections?.toLocaleString() || 0}</span>
                 </div>
-                <div className="flex items-center gap-1.5 font-medium text-xs">
+                <div className="flex items-center gap-1.5 font-medium text-[10px]">
                     <Briefcase className="w-3.5 h-3.5" />
                     <span>{candidate.yearsOfExperience || 0}y Exp</span>
                 </div>
@@ -278,18 +390,18 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
             <div className="w-full mt-auto">
                 <Button
                     onClick={handleInterview}
-                    className="w-full rounded-xl bg-[#111827] hover:bg-[#7C3AED] !text-white border-transparent transition-all duration-300 group-hover:shadow-md group-hover:shadow-[#7C3AED]/20 flex items-center gap-2"
+                    className="w-full rounded-xl bg-[#111827] hover:bg-[#7C3AED] !text-white border-transparent transition-all duration-300 group-hover:shadow-md group-hover:shadow-[#7C3AED]/20 flex items-center justify-center gap-2 cursor-pointer animate-none"
                 >
                     <Lock className="w-4 h-4 opacity-50" /> Book Interview
                 </Button>
             </div>
 
-            {/* Minimal Hover Actions Overlay */}
-            <div className="absolute top-1/2 -right-12 group-hover:right-2 transition-all duration-300 opacity-0 group-hover:opacity-100 flex flex-col gap-2 z-20">
+            {/* Relocated Hover Actions Overlay */}
+            <div className="absolute top-3 right-3 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 flex items-center gap-1.5 z-20">
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 rounded-full bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm"
+                    className="h-8 w-8 rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm cursor-pointer"
                     onClick={handleMessage}
                 >
                     <Mail className="w-4 h-4" />
@@ -297,7 +409,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 rounded-full bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm"
+                    className="h-8 w-8 rounded-lg bg-white border border-[#E5E7EB] hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] shadow-sm cursor-pointer"
                     onClick={() => handleViewProfile()}
                 >
                     <Eye className="w-4 h-4" />

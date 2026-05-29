@@ -308,7 +308,7 @@ export async function POST(req: Request) {
                 role = candidate.experience[0].position;
             }
 
-            let company = 'Open to opportunities';
+            let company = 'Seeking Opportunities';
             if (candidate.experience && candidate.experience.length > 0) {
                 company = candidate.experience[0].company;
             }

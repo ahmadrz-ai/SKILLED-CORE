@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { 
     Dialog, 
@@ -191,6 +191,22 @@ const TAB_LABELS: Record<string, string> = {
 
 export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeProfileBuilderProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Custom helper to update query params synchronously in the browser address bar
+    const updateUrlParams = (updates: Record<string, string | null>) => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        Object.entries(updates).forEach(([key, val]) => {
+            if (val === null) {
+                params.delete(key);
+            } else {
+                params.set(key, val);
+            }
+        });
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    };
     
     // Parsing states
     const [step, setStep] = useState<'choice' | 'upload' | 'parsing' | 'review'>('choice');
@@ -219,20 +235,54 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [parseError, setParseError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials'>('basics');
+    
+    // Read initial states from URL parameters
+    const [activeTab, setActiveTab] = useState<'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials'>(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['basics', 'experience', 'education', 'skills', 'projects', 'socials'].includes(tab)) {
+            return tab as any;
+        }
+        return 'basics';
+    });
+    
     const [showSuccessToast, setShowSuccessToast] = useState(false);
 
     // Per-tab save states (Task 2 & 9)
     const [isSavingTab, setIsSavingTab] = useState(false);
     const [isSavingAll, setIsSavingAll] = useState(false);
-    const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+    
+    const [showSummaryPopup, setShowSummaryPopup] = useState(() => {
+        return searchParams.get('popup') === 'true';
+    });
+    
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
     const [originalData, setOriginalData] = useState<ParsedResume | null>(null);
     const [tabError, setTabError] = useState<string | null>(null);
     const [isConfirmed, setIsConfirmed] = useState(false);
     const [pendingPayload, setPendingPayload] = useState<any | null>(null);
     const [pendingTabName, setPendingTabName] = useState<string | null>(null);
-    const [popupState, setPopupState] = useState<'preview' | 'saving' | 'success' | 'error'>('preview');
+    
+    const [popupState, setPopupState] = useState<'preview' | 'saving' | 'success' | 'error'>(() => {
+        const state = searchParams.get('popupState');
+        if (state && ['preview', 'saving', 'success', 'error'].includes(state)) {
+            return state as any;
+        }
+        return 'preview';
+    });
+
+    // Synchronize open, active tab, and popup states with the URL
+    useEffect(() => {
+        if (isOpen) {
+            updateUrlParams({ 
+                builder: 'open', 
+                tab: activeTab,
+                popup: showSummaryPopup ? 'true' : null,
+                popupState: showSummaryPopup ? popupState : null
+            });
+        } else {
+            updateUrlParams({ builder: null, tab: null, popup: null, popupState: null });
+        }
+    }, [isOpen, activeTab, showSummaryPopup, popupState]);
     const [popupError, setPopupError] = useState<string | null>(null);
     
     // Certifications & languages from the AI parser (stored in state but not displayed in UI)
@@ -591,6 +641,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     const handleTabChange = (tab: 'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials') => {
         setActiveTab(tab);
         setTabError(null);
+        updateUrlParams({ tab });
     };
 
     const handleTabSave = (tab: string) => {
@@ -1200,16 +1251,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('experience')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
-                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
                                                             Saving...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Save className="w-4 h-4 text-white" />
+                                                            <Save className="w-4 h-4" />
                                                             Save Experience
                                                         </>
                                                     )}
@@ -1292,16 +1343,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('education')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
-                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
                                                             Saving...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Save className="w-4 h-4 text-white" />
+                                                            <Save className="w-4 h-4" />
                                                             Save Education
                                                         </>
                                                     )}
@@ -1362,16 +1413,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('skills')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
-                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
                                                             Saving...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Save className="w-4 h-4 text-white" />
+                                                            <Save className="w-4 h-4" />
                                                             Save Skills
                                                         </>
                                                     )}
@@ -1449,16 +1500,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('projects')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
-                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
                                                             Saving...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Save className="w-4 h-4 text-white" />
+                                                            <Save className="w-4 h-4" />
                                                             Save Projects
                                                         </>
                                                     )}
@@ -1525,16 +1576,16 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 <button
                                                     onClick={() => handleTabSave('socials')}
                                                     disabled={isSavingTab}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                                                 >
                                                     {isSavingTab ? (
                                                         <>
-                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
                                                             Saving...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Save className="w-4 h-4 text-white" />
+                                                            <Save className="w-4 h-4" />
                                                             Save Socials
                                                         </>
                                                     )}
@@ -1743,7 +1794,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                             <button
                                 onClick={handleSaveAll}
                                 disabled={isSavingAll}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white border border-[var(--sc-purple-600)] text-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-600)] hover:text-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--sc-purple-600)] border border-[var(--sc-purple-600)] text-white hover:bg-transparent hover:text-[var(--sc-purple-600)] disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-150 shadow-sm cursor-pointer"
                             >
                                 {isSavingAll ? (
                                     <>

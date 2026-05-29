@@ -150,7 +150,7 @@ export async function getCandidates(): Promise<Candidate[]> {
                 role = user.experience[0].position;
             }
 
-            let company = 'Open to opportunities';
+            let company = 'Seeking Opportunities';
             if (user.experience && user.experience.length > 0) {
                 company = user.experience[0].company;
             } else if (user.company?.name) {
