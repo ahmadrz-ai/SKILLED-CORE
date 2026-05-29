@@ -30,7 +30,10 @@ import {
     Laptop, 
     User, 
     Share2, 
-    FileText 
+    FileText,
+    Save,
+    ArrowLeft,
+    CheckCircle
 } from 'lucide-react';
 import * as SiIcons from 'react-icons/si';
 import * as FaIcons from 'react-icons/fa';
@@ -41,6 +44,91 @@ interface ResumeProfileBuilderProps {
     onClose: () => void;
     context: 'onboarding' | 'profile';
 }
+
+interface SummaryChange {
+    type: 'added' | 'updated' | 'removed';
+    label: string;
+}
+
+interface SummaryData {
+    tabName: string;
+    isFull: boolean;
+    changes: SummaryChange[];
+}
+
+interface ParsedResume {
+    basics: {
+        name: string;
+        headline: string;
+        location: string;
+        summary: string;
+        email?: string;
+        phone?: string;
+    };
+    experience: any[];
+    education: any[];
+    skills: string[];
+    projects: any[];
+    socials: any[];
+    certifications?: any[];
+    languages?: any[];
+}
+
+// Map database user data profile state to ParsedResume structure
+const getUserProfileAsParsedResume = (u: any): ParsedResume => {
+    let parsedSkills: string[] = [];
+    try {
+        parsedSkills = u?.skills ? (typeof u.skills === 'string' ? JSON.parse(u.skills) : u.skills) : [];
+    } catch (e) {
+        parsedSkills = [];
+    }
+    
+    let parsedSocials: any[] = [];
+    try {
+        parsedSocials = u?.customLinks ? (typeof u.customLinks === 'string' ? JSON.parse(u.customLinks) : u.customLinks) : [];
+    } catch (e) {
+        parsedSocials = [];
+    }
+
+    return {
+        basics: {
+            name: u?.name || '',
+            headline: u?.headline || '',
+            location: u?.location || '',
+            summary: u?.bio || '',
+            email: u?.email || '',
+            phone: u?.phone || ''
+        },
+        experience: (u?.experience || []).map((exp: any) => ({
+            position: exp.position || exp.role || exp.title || '',
+            company: exp.company || '',
+            startDate: exp.startDate || '',
+            endDate: exp.endDate || '',
+            description: exp.description || ''
+        })),
+        education: (u?.education || []).map((edu: any) => ({
+            school: edu.school || '',
+            degree: edu.degree || '',
+            fieldOfStudy: edu.fieldOfStudy || '',
+            startDate: edu.startDate || '',
+            endDate: edu.endDate || ''
+        })),
+        skills: parsedSkills,
+        projects: (u?.projects || []).map((proj: any) => ({
+            title: proj.title || proj.name || '',
+            description: proj.description || '',
+            link: proj.link || proj.url || '',
+            technologies: proj.technologies || []
+        })),
+        socials: parsedSocials.map((soc: any) => ({
+            title: soc.title || soc.label || 'Link',
+            url: soc.url || '',
+            icon: soc.icon || getSocialIconName(soc.url || soc.title || '')
+        })),
+        certifications: [],
+        languages: []
+    };
+};
 
 // Inline Social Icon Detection Helper matching exact comments rules
 function getSocialIconName(urlOrText: string): string {
@@ -92,6 +180,15 @@ function getSocialIconName(urlOrText: string): string {
     return 'FaGlobe';
 }
 
+const TAB_LABELS: Record<string, string> = {
+    basics: 'Basics',
+    experience: 'Experience',
+    education: 'Education',
+    skills: 'Skills',
+    projects: 'Projects',
+    socials: 'Socials',
+};
+
 export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeProfileBuilderProps) {
     const router = useRouter();
     
@@ -107,7 +204,9 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         name: '',
         headline: '',
         location: '',
-        summary: ''
+        summary: '',
+        email: '',
+        phone: ''
     });
     const [experience, setExperience] = useState<any[]>([]);
     const [education, setEducation] = useState<any[]>([]);
@@ -123,6 +222,23 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     const [activeTab, setActiveTab] = useState<'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials'>('basics');
     const [showSuccessToast, setShowSuccessToast] = useState(false);
 
+    // Per-tab save states (Task 2 & 9)
+    const [isSavingTab, setIsSavingTab] = useState(false);
+    const [isSavingAll, setIsSavingAll] = useState(false);
+    const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+    const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+    const [originalData, setOriginalData] = useState<ParsedResume | null>(null);
+    const [tabError, setTabError] = useState<string | null>(null);
+    const [isConfirmed, setIsConfirmed] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState<any | null>(null);
+    const [pendingTabName, setPendingTabName] = useState<string | null>(null);
+    const [popupState, setPopupState] = useState<'preview' | 'saving' | 'success' | 'error'>('preview');
+    const [popupError, setPopupError] = useState<string | null>(null);
+    
+    // Certifications & languages from the AI parser (stored in state but not displayed in UI)
+    const [certifications, setCertifications] = useState<any[]>([]);
+    const [languages, setLanguages] = useState<any[]>([]);
+
     // UploadThing integration
     const { startUpload } = useUploadThing("resumeUploader", {
         onClientUploadComplete: () => {
@@ -133,11 +249,19 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         }
     });
 
-    // Reset step based on resumeUrl existence
+    const clearOnboardingTimer = () => {
+        if ((globalThis as any)._onboardingRedirectTimer) {
+            clearTimeout((globalThis as any)._onboardingRedirectTimer);
+            (globalThis as any)._onboardingRedirectTimer = null;
+        }
+    };
+
+    // Reset step based on resumeUrl existence and set baseline originalData
     useEffect(() => {
         if (isOpen) {
             setSaveError(null);
             setParseError(null);
+            setTabError(null);
             setShowSuccessToast(false);
             setActiveTab('basics');
             if (user?.resumeUrl) {
@@ -145,8 +269,33 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             } else {
                 setStep('upload');
             }
+
+            // Set baseline originalData from current user values
+            const currentProfile = getUserProfileAsParsedResume(user);
+            setOriginalData(currentProfile);
         }
     }, [isOpen, user]);
+
+    // Reset isConfirmed and clear onboarding redirect timer when summary popup is closed
+    useEffect(() => {
+        if (!showSummaryPopup) {
+            setIsConfirmed(false);
+            clearOnboardingTimer();
+        }
+    }, [showSummaryPopup]);
+
+    // Auto-dismiss popup after 5 seconds inside success state (Task 4)
+    useEffect(() => {
+        if (!showSummaryPopup || popupState !== 'success') return;
+        const timer = setTimeout(() => {
+            setShowSummaryPopup(false);
+            // If full save and onboarding, redirect immediately when timer expires
+            if (context === 'onboarding' && summaryData?.isFull) {
+                router.push('/feed');
+            }
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, [showSummaryPopup, popupState, context, summaryData]);
 
     // Render Platform Social Icon
     const renderSocialIcon = (iconName: string) => {
@@ -252,7 +401,9 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             name: basicsData.name || data.name || user?.name || '',
             headline: basicsData.headline || data.headline || '',
             location: basicsData.location || data.location || '',
-            summary: basicsData.summary || data.summary || ''
+            summary: basicsData.summary || data.summary || '',
+            email: basicsData.email || '',
+            phone: basicsData.phone || ''
         });
         
         // Map experience
@@ -290,14 +441,26 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         const parsedSocials = (data.socials || []).map((soc: any) => {
             const url = soc.url || '';
             const label = soc.label || soc.title || 'Link';
+            
+            // Clarification 4: Socials tab must render the icon returned by AI parser as matching icon component
+            // If missing or unrecognized, default using getSocialIconName
+            const rawIcon = soc.icon || '';
             const detectedIcon = getSocialIconName(url || label);
+            
+            // Validate if rawIcon exists in SiIcons or FaIcons
+            const isValidIcon = (SiIcons as any)[rawIcon] || (FaIcons as any)[rawIcon] || rawIcon.startsWith('Si') || rawIcon.startsWith('Fa');
+            
             return {
                 title: label,
                 url: url,
-                icon: detectedIcon
+                icon: isValidIcon ? rawIcon : detectedIcon
             };
         });
         setSocials(parsedSocials);
+        
+        // Clarification 5: Store certifications and languages in component state
+        setCertifications(data.certifications || []);
+        setLanguages(data.languages || []);
         
         toast.success("Resume Parsed Successfully!");
     };
@@ -425,62 +588,286 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         setSocials(updated);
     };
 
-    // Atomic DB Save Action
-    const handleSaveProfile = async () => {
-        setIsSaving(true);
-        setSaveError(null);
-        toast.info("Saving profile data...", { duration: 2000 });
+    const handleTabChange = (tab: 'basics' | 'experience' | 'education' | 'skills' | 'projects' | 'socials') => {
+        setActiveTab(tab);
+        setTabError(null);
+    };
+
+    const handleTabSave = (tab: string) => {
+        setTabError(null);
+        const changes: SummaryChange[] = [];
+        let payload: any = {};
+
+        switch (tab) {
+            case 'basics':
+                payload = {
+                    name: basics.name,
+                    headline: basics.headline,
+                    bio: basics.summary,
+                    location: basics.location,
+                    email: basics.email,
+                    phone: basics.phone,
+                };
+                if (basics.name !== originalData?.basics?.name)
+                    changes.push({ type: 'updated', label: 'Name updated' });
+                if (basics.headline !== originalData?.basics?.headline)
+                    changes.push({ type: 'updated', label: 'Headline updated' });
+                if (basics.summary !== originalData?.basics?.summary)
+                    changes.push({ type: 'updated', label: 'Bio/summary updated' });
+                if (basics.location !== originalData?.basics?.location)
+                    changes.push({ type: 'updated', label: 'Location updated' });
+                if (!originalData?.basics?.email && basics.email)
+                    changes.push({ type: 'added', label: 'Email address added' });
+                if (!originalData?.basics?.phone && basics.phone)
+                    changes.push({ type: 'added', label: 'Phone number added' });
+                break;
+
+            case 'experience':
+                payload = { experience: experience };
+                const prevExpCount = originalData?.experience?.length ?? 0;
+                const newExpCount = experience.length;
+                if (newExpCount > prevExpCount)
+                    changes.push({
+                        type: 'added',
+                        label: `${newExpCount - prevExpCount} experience entry/entries added`
+                    });
+                else if (newExpCount === prevExpCount)
+                    changes.push({ type: 'updated', label: `${newExpCount} experience entry/entries updated` });
+                else
+                    changes.push({ type: 'updated', label: 'Experience section updated' });
+                break;
+
+            case 'education':
+                payload = { education: education };
+                const prevEduCount = originalData?.education?.length ?? 0;
+                const newEduCount = education.length;
+                if (newEduCount > prevEduCount)
+                    changes.push({
+                        type: 'added',
+                        label: `${newEduCount - prevEduCount} education entry/entries added`
+                    });
+                else
+                    changes.push({ type: 'updated', label: 'Education section updated' });
+                break;
+
+            case 'skills':
+                payload = { skills: skills };
+                const prevSkillCount = originalData?.skills?.length ?? 0;
+                const newSkillCount = skills.length;
+                const addedSkills = newSkillCount - prevSkillCount;
+                if (addedSkills > 0)
+                    changes.push({
+                        type: 'added',
+                        label: `${addedSkills} skill${addedSkills === 1 ? '' : 's'} added to your Skill Set`
+                    });
+                else if (addedSkills < 0)
+                    changes.push({
+                        type: 'removed',
+                        label: `${Math.abs(addedSkills)} skill${Math.abs(addedSkills) === 1 ? '' : 's'} removed`
+                    });
+                else
+                    changes.push({ type: 'updated', label: 'Skills updated' });
+                break;
+
+            case 'projects':
+                payload = { projects: projects };
+                const prevProjCount = originalData?.projects?.length ?? 0;
+                const newProjCount = projects.length;
+                if (newProjCount > prevProjCount)
+                    changes.push({
+                        type: 'added',
+                        label: `${newProjCount - prevProjCount} project${newProjCount - prevProjCount === 1 ? '' : 's'} added to your portfolio`
+                    });
+                else
+                    changes.push({ type: 'updated', label: `${newProjCount} project${newProjCount === 1 ? '' : 's'} updated` });
+                break;
+
+            case 'socials':
+                payload = { customLinks: socials.length > 0 ? JSON.stringify(socials) : null };
+                const prevSocialCount = originalData?.socials?.length ?? 0;
+                const newSocialCount = socials.length;
+                if (newSocialCount > prevSocialCount)
+                    changes.push({
+                        type: 'added',
+                        label: `${newSocialCount - prevSocialCount} social link${newSocialCount - prevSocialCount === 1 ? '' : 's'} added`
+                    });
+                else
+                    changes.push({ type: 'updated', label: 'Social links updated' });
+                break;
+        }
+
+        setPendingPayload(payload);
+        setPendingTabName(tab);
+        setPopupState('preview');
+        setPopupError(null);
+        setSummaryData({
+            tabName: TAB_LABELS[tab] || tab,
+            isFull: false,
+            changes: changes.length > 0
+                ? changes
+                : [{ type: 'updated', label: `${TAB_LABELS[tab] || tab} section saved successfully` }]
+        });
+        setShowSummaryPopup(true);
+    };
+
+    const handleSaveAll = () => {
+        setTabError(null);
+        const changes: SummaryChange[] = [];
+
+        // Diff all sections
+        const prevSkills = originalData?.skills?.length ?? 0;
+        const newSkills = skills.length;
+        const prevExp = originalData?.experience?.length ?? 0;
+        const newExp = experience.length;
+        const prevEdu = originalData?.education?.length ?? 0;
+        const newEdu = education.length;
+        const prevProj = originalData?.projects?.length ?? 0;
+        const newProj = projects.length;
+        const prevSocials = originalData?.socials?.length ?? 0;
+        const newSocials = socials.length;
+
+        if (basics.name !== originalData?.basics?.name ||
+            basics.headline !== originalData?.basics?.headline ||
+            basics.summary !== originalData?.basics?.summary)
+            changes.push({ type: 'updated', label: 'Profile basics updated' });
+
+        if (newExp > prevExp)
+            changes.push({ type: 'added', label: `${newExp - prevExp} experience entry/entries added` });
+        else if (newExp === prevExp && newExp > 0)
+            changes.push({ type: 'updated', label: `${newExp} experience entry/entries updated` });
+
+        if (newEdu > prevEdu)
+            changes.push({ type: 'added', label: `${newEdu - prevEdu} education entry/entries added` });
+        else if (newEdu > 0)
+            changes.push({ type: 'updated', label: 'Education section updated' });
+
+        if (newSkills > prevSkills)
+            changes.push({ type: 'added', label: `${newSkills - prevSkills} skill${newSkills - prevSkills === 1 ? '' : 's'} added to your Skill Set` });
+        else if (newSkills > 0)
+            changes.push({ type: 'updated', label: `${newSkills} skill${newSkills === 1 ? '' : 's'} in your profile` });
+
+        if (newProj > prevProj)
+            changes.push({ type: 'added', label: `${newProj - prevProj} project${newProj - prevProj === 1 ? '' : 's'} added to your portfolio` });
+        else if (newProj > 0)
+            changes.push({ type: 'updated', label: `${newProj} project${newProj === 1 ? '' : 's'} updated` });
+
+        if (newSocials > prevSocials)
+            changes.push({ type: 'added', label: `${newSocials - prevSocials} social link${newSocials - prevSocials === 1 ? '' : 's'} connected` });
+        else if (newSocials > 0)
+            changes.push({ type: 'updated', label: 'Social links updated' });
+
+        const fullPayload = {
+            name: basics.name || undefined,
+            headline: basics.headline,
+            bio: basics.summary,
+            location: basics.location,
+            email: basics.email,
+            phone: basics.phone,
+            experience: experience,
+            education: education,
+            skills: skills,
+            projects: projects,
+            customLinks: socials.length > 0 ? JSON.stringify(socials) : null
+        };
+
+        setPendingPayload(fullPayload);
+        setPendingTabName('all');
+        setPopupState('preview');
+        setPopupError(null);
+        setSummaryData({
+            tabName: 'All Sections',
+            isFull: true,
+            changes: changes.length > 0
+                ? changes
+                : [{ type: 'updated', label: 'All profile sections saved successfully' }]
+        });
+        setShowSummaryPopup(true);
+    };
+
+    const handleConfirmedSave = async () => {
+        if (!pendingPayload || !pendingTabName) return;
+
+        const isFullSave = pendingTabName === 'all';
+        if (isFullSave) {
+            setIsSavingAll(true);
+        } else {
+            setIsSavingTab(true);
+        }
+        setPopupState('saving');
+        setPopupError(null);
 
         try {
-            let resumeUrl = user?.resumeUrl || undefined;
-
-            // 1. Upload file first if new file is selected
-            if (fileToUpload) {
-                const uploadRes = await startUpload([fileToUpload]);
-                if (uploadRes && uploadRes.length > 0) {
-                    resumeUrl = uploadRes[0].url;
-                } else {
-                    throw new Error("Resume upload failed. Try again.");
-                }
-            }
-
-            // 2. Format and Save atomic data blocks
-            const payload = {
-                name: basics.name || undefined,
-                headline: basics.headline,
-                bio: basics.summary,
-                location: basics.location,
-                skills: skills,
-                experience: experience,
-                education: education,
-                projects: projects,
-                customLinks: socials.length > 0 ? JSON.stringify(socials) : null,
-                resumeUrl: resumeUrl
-            };
-
-            const result = await updateUserProfile(payload);
+            const result = await updateUserProfile(pendingPayload);
             if (!result.success) {
-                throw new Error(result.message || "Failed to update profile values");
+                throw new Error(result.message || "Failed to save profile changes.");
             }
 
-            // 3. Success Trigger
-            setShowSuccessToast(true);
-            setTimeout(() => {
-                setShowSuccessToast(false);
-                onClose();
-                if (context === 'onboarding') {
-                    router.push('/profile/me');
-                } else {
-                    router.refresh();
-                }
-            }, 3000);
+            // Update originalData to match saved state
+            if (isFullSave) {
+                setOriginalData({
+                    basics: {
+                        name: basics.name,
+                        headline: basics.headline,
+                        location: basics.location,
+                        summary: basics.summary,
+                        email: basics.email,
+                        phone: basics.phone
+                    },
+                    experience: [...experience],
+                    education: [...education],
+                    skills: [...skills],
+                    projects: [...projects],
+                    socials: [...socials]
+                });
+            } else {
+                setOriginalData((prev: any) => {
+                    const updated = { ...prev };
+                    if (pendingTabName === 'basics') {
+                        updated.basics = {
+                            name: basics.name,
+                            headline: basics.headline,
+                            location: basics.location,
+                            summary: basics.summary,
+                            email: basics.email,
+                            phone: basics.phone
+                        };
+                    } else if (pendingTabName === 'experience') {
+                        updated.experience = [...experience];
+                    } else if (pendingTabName === 'education') {
+                        updated.education = [...education];
+                    } else if (pendingTabName === 'skills') {
+                        updated.skills = [...skills];
+                    } else if (pendingTabName === 'projects') {
+                        updated.projects = [...projects];
+                    } else if (pendingTabName === 'socials') {
+                        updated.socials = [...socials];
+                    }
+                    return updated;
+                });
+            }
+
+            setPendingPayload(null);
+            setPendingTabName(null);
+            setPopupState('success');
+
+            if (context === 'onboarding') {
+                const timer = setTimeout(() => {
+                    setShowSummaryPopup(false);
+                    router.push('/feed');
+                }, 3000);
+                (globalThis as any)._onboardingRedirectTimer = timer;
+            }
 
         } catch (err: any) {
-            console.error("Save failed:", err);
-            setSaveError(err.message || "Something went wrong. Your data was not saved. Try again.");
-            toast.error("Profile synchronization failed");
+            console.error("Confirmed save failed:", err);
+            setPopupState('error');
+            setPopupError(err.message || "Failed to save changes. Please try again.");
+            if (!isFullSave) {
+                setTabError(`Failed to save ${summaryData?.tabName || 'section'}. Please try again.`);
+            }
         } finally {
-            setIsSaving(false);
+            setIsSavingAll(false);
+            setIsSavingTab(false);
         }
     };
 
@@ -629,9 +1016,9 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
 
                     {/* Step 4: Full Edit Review Modal */}
                     {step === 'review' && (
-                        <div className="flex-1 flex flex-col overflow-hidden min-h-[450px]">
+                        <div className="relative flex-1 flex flex-col overflow-hidden min-h-[450px]">
                             {/* Tab selector */}
-                            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-[var(--border-subtle)] shrink-0">
+                            <div className="flex border-b border-border-default -mb-px overflow-x-auto">
                                 {([
                                     { id: 'basics', label: 'Basics', icon: User },
                                     { id: 'experience', label: 'Experience', icon: Briefcase },
@@ -644,12 +1031,12 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                     return (
                                         <button
                                             key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                                                activeTab === tab.id 
-                                                ? 'border-[var(--sc-purple-650)] text-[var(--sc-purple-700)] font-extrabold' 
-                                                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-body)] hover:border-[var(--border-default)]'
-                                            }`}
+                                            onClick={() => handleTabChange(tab.id)}
+                                            className={
+                                                activeTab === tab.id
+                                                    ? "relative px-4 py-3 text-sm font-medium text-sc-purple-600 border-b-2 border-sc-purple-600 flex items-center gap-1.5 shrink-0"
+                                                    : "relative px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-heading transition-colors duration-150 border-b-2 border-transparent flex items-center gap-1.5 shrink-0"
+                                            }
                                         >
                                             <Icon className="w-3.5 h-3.5" />
                                             {tab.label}
@@ -705,6 +1092,34 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                 placeholder="Brief bio summarising core architectural feats..."
                                                 className="min-h-32 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl text-sm p-3"
                                             />
+                                        </div>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('basics')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Basics
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'basics' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -778,6 +1193,34 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         >
                                             <Plus className="w-4 h-4" /> Add Experience Record
                                         </Button>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('experience')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Experience
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'experience' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -842,6 +1285,34 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         >
                                             <Plus className="w-4 h-4" /> Add Education Record
                                         </Button>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('education')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Education
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'education' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -883,6 +1354,34 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                                     <p className="text-xs text-[var(--text-tertiary)] italic">No skills added yet.</p>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('skills')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Skills
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'skills' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -943,6 +1442,34 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         >
                                             <Plus className="w-4 h-4" /> Add Project Record
                                         </Button>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('projects')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Projects
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'projects' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -991,49 +1518,260 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         >
                                             <Plus className="w-4 h-4" /> Add Social Link
                                         </Button>
+
+                                        {/* Per-tab save button & error banner */}
+                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-[var(--border-subtle)]">
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => handleTabSave('socials')}
+                                                    disabled={isSavingTab}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white text-sm font-medium disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-150 shadow-sm border-none cursor-pointer"
+                                                >
+                                                    {isSavingTab ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                            Saving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4 text-white" />
+                                                            Save Socials
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {tabError && activeTab === 'socials' && (
+                                                <div className="mt-2 px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                    {tabError}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
+
+                            {showSummaryPopup && summaryData && (
+                                <div
+                                    className="absolute inset-0 z-[100] flex items-center justify-center rounded-xl bg-slate-900/40 backdrop-blur-sm"
+                                    onClick={() => popupState !== 'saving' && setShowSummaryPopup(false)}
+                                >
+                                    <div
+                                        className="relative w-full max-w-md mx-6 bg-white rounded-xl border border-slate-200 shadow-xl p-6 flex flex-col gap-4 max-h-[90%] overflow-y-auto"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {/* Back button visible in STATE 1: PREVIEW or STATE 4: ERROR */}
+                                        {(popupState === 'preview' || popupState === 'error') && (
+                                            <button
+                                                onClick={() => {
+                                                    clearOnboardingTimer();
+                                                    setShowSummaryPopup(false);
+                                                }}
+                                                className="absolute top-3 left-3 inline-flex items-center gap-1 text-xs text-text-secondary hover:text-text-heading transition-colors duration-150 cursor-pointer border-none bg-transparent"
+                                            >
+                                                <ArrowLeft className="w-4 h-4" />
+                                                Back
+                                            </button>
+                                        )}
+
+                                        {/* HEADER SECTION */}
+                                        <div className="flex items-start gap-3 mt-4">
+                                            {popupState === 'success' ? (
+                                                <div className="w-10 h-10 rounded-full bg-sc-green-100 flex items-center justify-center flex-shrink-0">
+                                                    <CheckCircle className="w-5 h-5 text-sc-green-600" />
+                                                </div>
+                                            ) : popupState === 'error' ? (
+                                                <div className="w-10 h-10 rounded-full bg-sc-red-100 flex items-center justify-center flex-shrink-0">
+                                                    <X className="w-5 h-5 text-sc-red-650" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-sc-purple-100 flex items-center justify-center flex-shrink-0">
+                                                    <Sparkles className="w-5 h-5 text-sc-purple-600" />
+                                                </div>
+                                            )}
+                                            
+                                            <div>
+                                                <h3 className="text-base font-semibold text-text-heading">
+                                                    {popupState === 'success'
+                                                        ? 'Changes saved successfully'
+                                                        : popupState === 'error'
+                                                        ? 'Something went wrong'
+                                                        : popupState === 'saving'
+                                                        ? 'Saving your changes...'
+                                                        : 'Review your changes'}
+                                                </h3>
+                                                <p className="text-xs text-text-secondary mt-0.5">
+                                                    {popupState === 'success'
+                                                        ? 'Your profile has been updated'
+                                                        : popupState === 'error'
+                                                        ? 'We couldn\'t apply these updates. Please check the error below.'
+                                                        : popupState === 'saving'
+                                                        ? 'Applying updates to your database record...'
+                                                        : 'Here is what will be updated on your profile'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* BODY SECTION */}
+                                        {popupState === 'error' ? (
+                                            <div className="px-3 py-2 rounded-lg bg-sc-red-50 border border-sc-red-200 text-sm text-sc-red-700">
+                                                {popupError}
+                                            </div>
+                                        ) : (
+                                            <ul className="flex flex-col gap-2 border-t border-b border-border-subtle py-3 my-1">
+                                                {summaryData.changes.map((change, i) => (
+                                                    <li key={i} className="flex items-center gap-2.5">
+                                                        <span className={`
+                                                            w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold
+                                                            ${change.type === 'added'
+                                                                ? 'bg-sc-purple-100 text-sc-purple-700'
+                                                                : change.type === 'removed'
+                                                                ? 'bg-sc-red-100 text-sc-red-700'
+                                                                : 'bg-sc-blue-100 text-sc-blue-700'}
+                                                        `}>
+                                                            {change.type === 'added' ? '+' : change.type === 'removed' ? '−' : '✓'}
+                                                        </span>
+                                                        <span className="text-sm text-text-body">{change.label}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        {/* FOOTER / CONTROLS SECTION */}
+                                        {popupState === 'preview' && (
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex items-center gap-3 pt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="confirm-save"
+                                                        checked={isConfirmed}
+                                                        onChange={(e) => setIsConfirmed(e.target.checked)}
+                                                        className="w-4 h-4 rounded accent-sc-purple-600 cursor-pointer"
+                                                    />
+                                                    <label
+                                                        htmlFor="confirm-save"
+                                                        className="text-sm text-text-body cursor-pointer select-none font-medium"
+                                                    >
+                                                        Are you sure you want these changes?
+                                                    </label>
+                                                </div>
+
+                                                <button
+                                                    onClick={handleConfirmedSave}
+                                                    disabled={!isConfirmed || isSavingTab || isSavingAll}
+                                                    className="w-full py-2.5 rounded-lg text-sm font-semibold bg-btn-primary-bg text-btn-primary-text hover:bg-btn-primary-bg-hover disabled:bg-btn-primary-bg-disabled disabled:text-btn-primary-text-disabled disabled:cursor-not-allowed transition-colors duration-150 border-none cursor-pointer"
+                                                >
+                                                    Save Changes
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {popupState === 'saving' && (
+                                            <button
+                                                disabled
+                                                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-btn-primary-bg-disabled text-btn-primary-text-disabled cursor-not-allowed transition-colors duration-150 border-none flex items-center justify-center gap-2"
+                                            >
+                                                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                Saving...
+                                            </button>
+                                        )}
+
+                                        {popupState === 'success' && (
+                                            <div className="flex gap-3 pt-2">
+                                                <button
+                                                    onClick={() => {
+                                                        clearOnboardingTimer();
+                                                        setShowSummaryPopup(false);
+                                                    }}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-sc-purple-600 hover:bg-sc-purple-750 text-white transition-colors duration-150 border-none cursor-pointer"
+                                                >
+                                                    Continue Editing
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={() => {
+                                                        clearOnboardingTimer();
+                                                        setShowSummaryPopup(false);
+                                                        onClose();
+                                                        if (context === 'onboarding') {
+                                                            router.push('/feed');
+                                                        }
+                                                    }}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 bg-transparent hover:bg-slate-50 transition-colors duration-150 cursor-pointer"
+                                                >
+                                                    {summaryData.isFull && context === 'onboarding'
+                                                        ? 'Go to Feed'
+                                                        : 'Close Builder'}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {popupState === 'error' && (
+                                            <div className="flex gap-3 pt-2">
+                                                <button
+                                                    onClick={handleConfirmedSave}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-sc-purple-600 hover:bg-sc-purple-750 text-white transition-colors duration-150 border-none cursor-pointer"
+                                                >
+                                                    Try Again
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={() => {
+                                                        clearOnboardingTimer();
+                                                        setShowSummaryPopup(false);
+                                                    }}
+                                                    className="flex-1 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 bg-transparent hover:bg-slate-50 transition-colors duration-150 cursor-pointer"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* Modal Footer */}
-                    <div className="border-t border-[var(--border-subtle)] pt-4 flex flex-col gap-2 shrink-0">
-                        {saveError && (
-                            <p className="text-sm text-sc-red-650 font-semibold">{saveError}</p>
-                        )}
-                        
-                        <div className="flex items-center justify-end gap-3">
-                            <Button 
-                                variant="outline" 
-                                onClick={onClose} 
-                                disabled={isSaving || isAnalyzing}
-                                className="border-[var(--border-default)] hover:bg-[var(--bg-secondary-panel)] h-10 px-4 rounded-xl text-xs font-bold"
+                    {step === 'review' ? (
+                        <div className="flex items-center justify-between px-6 py-4 border-t border-border-subtle bg-bg-secondary-panel rounded-b-xl flex-shrink-0">
+                            {/* Left: info text */}
+                            <p className="text-xs text-text-tertiary">
+                                Use tab save buttons to update individual sections
+                            </p>
+
+                            {/* Right: Save All button */}
+                            <button
+                                onClick={handleSaveAll}
+                                disabled={isSavingAll}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-btn-primary-bg text-btn-primary-text text-sm font-semibold hover:bg-btn-primary-bg-hover shadow-btn-primary disabled:bg-btn-primary-bg-disabled disabled:text-btn-primary-text-disabled transition-colors duration-150 border-none cursor-pointer"
                             >
-                                Cancel
-                            </Button>
-                            
-                            {step === 'review' ? (
-                                <Button 
-                                    onClick={handleSaveProfile} 
-                                    disabled={isSaving}
-                                    className="bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-750)] text-white shadow-md shadow-[var(--sc-purple-100)] border-none h-10 px-5 rounded-xl text-xs font-bold cursor-pointer"
-                                >
-                                    {isSaving ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin text-white" />
-                                            Saving profile...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CheckCircle2 className="w-4 h-4 mr-2 text-white" />
-                                            Save SkilledCore Profile
-                                        </>
-                                    )}
-                                </Button>
-                            ) : null}
+                                {isSavingAll ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                        Saving everything...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="w-4 h-4 text-white" />
+                                        Save All Changes
+                                    </>
+                                )}
+                            </button>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="border-t border-[var(--border-subtle)] pt-4 flex flex-col gap-2 shrink-0">
+                            <div className="flex items-center justify-end gap-3">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={onClose} 
+                                    disabled={isAnalyzing}
+                                    className="border-[var(--border-default)] hover:bg-[var(--bg-secondary-panel)] h-10 px-4 rounded-xl text-xs font-bold"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

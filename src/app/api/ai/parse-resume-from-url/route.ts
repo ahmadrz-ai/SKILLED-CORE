@@ -47,60 +47,107 @@ export async function POST(request: Request) {
                     }
                 },
                 {
-                    text: `You are a professional resume parser. Extract all 
-information from this resume and return ONLY valid JSON 
-with no markdown, no backticks, no preamble.
+                    text: `You are an expert resume parser and professional profile writer.
+Your job is to extract every piece of information from this resume
+and structure it perfectly.
 
-Return this exact structure:
+RULES:
+- Extract EVERY piece of data you can find. Miss nothing.
+- For projects: expand 1-3 line descriptions into 4-6 professional
+  sentences that explain what was built, what problem it solved, what
+  technologies were used, and what the outcome or impact was.
+  Never invent facts. Only elaborate on what is stated.
+- For experience: capture every role, company, date range, and
+  responsibility. Rewrite bullet points as flowing professional prose.
+- For skills: extract ALL technologies, tools, languages, frameworks,
+  and soft skills mentioned anywhere in the resume (job descriptions,
+  projects, education, certifications — everywhere).
+- For education: capture institution name, degree, field of study,
+  start year, and graduation year. Also capture honors, GPA (if stated),
+  and relevant coursework (if listed).
+- For socials: look for LinkedIn, GitHub, portfolio URLs, email addresses,
+  phone numbers, Twitter/X, Behance, Dribbble, personal websites,
+  or any other contact information stated anywhere in the document.
+- For the summary: if a summary or objective section exists, use it.
+  If not, write a compelling 3-4 sentence professional summary based
+  on the candidate's most impressive experiences and skills.
+  Write it in first person. Make it specific to their actual background.
+- Clean up typos, inconsistent capitalization, and formatting issues.
+- Standardize date formats to "Month Year" (e.g. "June 2022").
+  If only a year is given, use "January YEAR" as start and "December YEAR" as end.
+- If a field is genuinely missing from the resume, return an empty
+  string or empty array — never invent data.
+
+Return ONLY valid JSON. No markdown fences. No backticks. No explanation.
+No preamble. Start directly with the opening brace.
+
+Return exactly this structure:
+
 {
   "basics": {
-    "name": "",
-    "email": "",
-    "phone": "",
-    "location": "",
-    "headline": "",
-    "summary": ""
+    "name": "Full name as written on resume",
+    "email": "email address or empty string",
+    "phone": "phone number with country code if present, or empty string",
+    "location": "City, Country or City, State format",
+    "headline": "A punchy 1-line professional title — e.g. Senior Full Stack Engineer | React & Node.js",
+    "summary": "3-4 sentence professional bio written in first person based on their background"
   },
   "experience": [
     {
-      "company": "",
-      "title": "",
-      "startDate": "",
-      "endDate": "",
-      "description": ""
+      "company": "Company name",
+      "title": "Job title",
+      "location": "City, Country or Remote",
+      "startDate": "Month Year",
+      "endDate": "Month Year or Present",
+      "description": "2-4 professional sentences describing responsibilities, achievements, and impact. Convert bullet points to prose. Quantify achievements if numbers are present."
     }
   ],
   "education": [
     {
-      "institution": "",
-      "degree": "",
-      "fieldOfStudy": "",
-      "startYear": "",
-      "endYear": ""
+      "institution": "University or school name",
+      "degree": "Bachelor's | Master's | PhD | Associate's | Diploma | Certificate",
+      "fieldOfStudy": "Field of study or major",
+      "startYear": "YYYY",
+      "endYear": "YYYY or Present",
+      "honors": "GPA, honors, or distinctions if mentioned, else empty string",
+      "relevantCourses": ["Course 1", "Course 2"]
     }
   ],
-  "skills": ["skill1", "skill2"],
+  "skills": [
+    "Every distinct skill, technology, tool, language, or framework found anywhere in the document"
+  ],
   "projects": [
     {
-      "name": "",
-      "description": "Expand this to 4-6 professional sentences. Never invent details not in the original.",
-      "technologies": ["tech1"],
-      "url": ""
+      "name": "Project name",
+      "description": "4-6 professional sentences. Explain: what was built, what problem it solved, key technical decisions, technologies used, and outcome or impact. Elaborate from any short description given. Never invent specifics.",
+      "technologies": ["tech1", "tech2"],
+      "url": "Project URL or GitHub link if present, else empty string",
+      "startDate": "Month Year or empty string",
+      "endDate": "Month Year or Present or empty string"
     }
   ],
   "socials": [
     {
-      "label": "",
-      "url": ""
+      "label": "Platform name — e.g. LinkedIn, GitHub, Email, Phone, Portfolio, Twitter",
+      "url": "Full URL or value — email as mailto:, phone as tel:, URLs as full https://",
+      "icon": "linkedin | github | email | whatsapp | behance | dribbble | twitter | instagram | facebook | youtube | fiverr | upwork | globe"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Certification name",
+      "issuer": "Issuing organization",
+      "date": "Month Year or Year",
+      "url": "Credential URL if present, else empty string"
+    }
+  ],
+  "languages": [
+    {
+      "language": "Language name",
+      "proficiency": "Native | Fluent | Professional | Conversational | Basic"
     }
   ]
-}
-
-For projects: take the raw description and expand it to 
-4-6 well-written professional sentences. Keep all facts 
-accurate. Never add technologies or features not mentioned.
-
-Return ONLY the JSON object. No other text.`
+}`
                 }
             ]);
             textResult = result.response.text();
@@ -113,12 +160,12 @@ Return ONLY the JSON object. No other text.`
         // STEP 4: Strip markdown fences before parsing:
         try {
             let text = textResult;
-            text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const parsed = JSON.parse(text);
             return NextResponse.json(parsed);
         } catch (jsonErr: any) {
             console.error("JSON parse failed. Raw text was:", textResult, jsonErr);
-            return NextResponse.json({ error: "Could not read AI response" }, { status: 500 });
+            return NextResponse.json({ error: "Could not parse AI response", raw: textResult }, { status: 500 });
         }
 
     } catch (error: any) {
