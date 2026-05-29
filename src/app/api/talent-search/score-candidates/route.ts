@@ -156,7 +156,16 @@ export async function POST(req: Request) {
 
             // Calculate score for each requirement
             requirements.forEach(req => {
-                const searchTermsLower = req.searchTerms.map(t => t.toLowerCase());
+                const rawSearchTerms = req.searchTerms.map(t => t.toLowerCase());
+                const tokenSearchTerms = rawSearchTerms.flatMap(t => {
+                    const STOP_WORDS = new Set(['with', 'experience', 'of', 'years', 'year', 'and', 'or', 'the', 'a', 'for', 'in', 'to', 'on', 'at', 'about', 'who', 'knows', 'who', 'know', 'has', 'have', 'with', 'skills', 'skill']);
+                    return t
+                        .split(/[\s,\-\/]+/)
+                        .filter(Boolean)
+                        .map(s => s.trim().toLowerCase())
+                        .filter(s => s.length >= 2 && !STOP_WORDS.has(s));
+                });
+                const searchTermsLower = Array.from(new Set([...rawSearchTerms, ...tokenSearchTerms]));
                 
                 // 1. Skills Match (20 points max)
                 let skillScore = 0;
@@ -360,15 +369,16 @@ export async function POST(req: Request) {
 
         // Row Classification Logic
         const perfectMatches = scoredCandidates.filter(c => {
-            // scored > 50 points on EVERY requirement
-            return c.requirementScores.every(reqScore => reqScore.score > 50);
+            // Relaxed threshold: scored >= 30 points on EVERY requirement (meaning it matches at least skill, title or bio)
+            return c.requirementScores.every(reqScore => reqScore.score >= 30);
         });
 
         const slightMatches = scoredCandidates.filter(c => {
-            // scored > 50 points on at least 2 requirements (but not all) AND total score is above 80
-            const metReqsCount = c.requirementScores.filter(reqScore => reqScore.score > 50).length;
+            // Relaxed: scored >= 20 points on at least 2 requirements (or at least 1 if only 1 requirement in query) AND total score is >= 30
+            const metReqsCount = c.requirementScores.filter(reqScore => reqScore.score >= 20).length;
             const isNotPerfect = !perfectMatches.some(p => p.id === c.id);
-            return isNotPerfect && metReqsCount >= 2 && c.totalScore > 80;
+            const minReqsToMeet = requirements.length === 1 ? 1 : 2;
+            return isNotPerfect && metReqsCount >= minReqsToMeet && c.totalScore >= 30;
         });
 
         // Specific requirement rows (up to 6 requirements maximum)
@@ -381,9 +391,9 @@ export async function POST(req: Request) {
 
             const reqCandidates = scoredCandidates
                 .filter(c => {
-                    // candidate scored > 40 points on THAT specific requirement
+                    // Relaxed: candidate scored >= 25 points on THAT specific requirement
                     const reqScoreObj = c.requirementScores.find(r => r.requirementLabel === req.label);
-                    return reqScoreObj && reqScoreObj.score > 40;
+                    return reqScoreObj && reqScoreObj.score >= 25;
                 })
                 .sort((a, b) => {
                     const scoreA = a.requirementScores.find(r => r.requirementLabel === req.label)?.score || 0;

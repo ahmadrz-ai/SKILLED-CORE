@@ -59,62 +59,62 @@ const getBaseUrl = () => {
 };
 
 async function executeDatabaseSearch(searchQuery: string): Promise<ResultRow[]> {
-    const users = await prisma.user.findMany({
-        where: {
-            AND: [
-                { role: { in: ['CANDIDATE', 'OPEN_TO_WORK'] } },
-                {
-                    email: {
-                        not: { endsWith: '@test.com' }
+    const STOP_WORDS = new Set(['with', 'experience', 'of', 'years', 'year', 'and', 'or', 'the', 'a', 'for', 'in', 'to', 'on', 'at', 'about', 'who', 'knows', 'who', 'know', 'has', 'have', 'with', 'skills', 'skill']);
+    const searchTerms = searchQuery
+        .split(/[\s,]+/)
+        .filter(Boolean)
+        .map(s => s.trim().toLowerCase())
+        .filter(s => s.length >= 2 && !STOP_WORDS.has(s));
+
+    let whereClause: any = {
+        role: { in: ['CANDIDATE', 'OPEN_TO_WORK'] },
+        email: {
+            not: { endsWith: '@test.com' }
+        }
+    };
+
+    if (searchTerms.length > 0) {
+        whereClause.OR = searchTerms.flatMap(term => [
+            { name: { contains: term, mode: 'insensitive' } },
+            { bio: { contains: term, mode: 'insensitive' } },
+            { headline: { contains: term, mode: 'insensitive' } },
+            { skills: { contains: term, mode: 'insensitive' } },
+            {
+                experience: {
+                    some: {
+                        OR: [
+                            { position: { contains: term, mode: 'insensitive' } },
+                            { company: { contains: term, mode: 'insensitive' } },
+                            { description: { contains: term, mode: 'insensitive' } }
+                        ]
                     }
-                },
-                {
-                    OR: [
-                        {
-                            name: {
-                                contains: searchQuery,
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            bio: {
-                                contains: searchQuery,
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            headline: {
-                                contains: searchQuery,
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            skills: {
-                                contains: searchQuery,
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            experience: {
-                                some: {
-                                    OR: [
-                                        { position: { contains: searchQuery, mode: 'insensitive' } },
-                                        { company: { contains: searchQuery, mode: 'insensitive' } },
-                                        { description: { contains: searchQuery, mode: 'insensitive' } }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            location: {
-                                contains: searchQuery,
-                                mode: 'insensitive'
-                            }
-                        }
-                    ]
                 }
-            ]
-        },
+            },
+            { location: { contains: term, mode: 'insensitive' } }
+        ]);
+    } else {
+        whereClause.OR = [
+            { name: { contains: searchQuery, mode: 'insensitive' } },
+            { bio: { contains: searchQuery, mode: 'insensitive' } },
+            { headline: { contains: searchQuery, mode: 'insensitive' } },
+            { skills: { contains: searchQuery, mode: 'insensitive' } },
+            {
+                experience: {
+                    some: {
+                        OR: [
+                            { position: { contains: searchQuery, mode: 'insensitive' } },
+                            { company: { contains: searchQuery, mode: 'insensitive' } },
+                            { description: { contains: searchQuery, mode: 'insensitive' } }
+                        ]
+                    }
+                }
+            },
+            { location: { contains: searchQuery, mode: 'insensitive' } }
+        ];
+    }
+
+    const users = await prisma.user.findMany({
+        where: whereClause,
         select: {
             id: true,
             name: true,
@@ -130,10 +130,10 @@ async function executeDatabaseSearch(searchQuery: string): Promise<ResultRow[]> 
                     position: true,
                     company: true,
                     startDate: true,
-                    endDate: true
+                    endDate: true,
+                    description: true
                 },
-                orderBy: { startDate: 'desc' },
-                take: 2
+                orderBy: { startDate: 'desc' }
             },
             projects: {
                 select: {
@@ -158,7 +158,44 @@ async function executeDatabaseSearch(searchQuery: string): Promise<ResultRow[]> 
         return true;
     });
 
-    const mappedCandidates: ScoredCandidate[] = filteredUsers.map(user => {
+    const scoredUsers = filteredUsers.map(user => {
+        let matchCount = 0;
+        const skillsStr = user.skills?.toLowerCase() || '';
+        const nameStr = user.name?.toLowerCase() || '';
+        const bioStr = user.bio?.toLowerCase() || '';
+        const headlineStr = user.headline?.toLowerCase() || '';
+        const locationStr = user.location?.toLowerCase() || '';
+
+        const termsToTest = searchTerms.length > 0 ? searchTerms : [searchQuery.toLowerCase()];
+
+        termsToTest.forEach(term => {
+            let matched = false;
+            if (nameStr.includes(term)) matched = true;
+            else if (bioStr.includes(term)) matched = true;
+            else if (headlineStr.includes(term)) matched = true;
+            else if (skillsStr.includes(term)) matched = true;
+            else if (locationStr.includes(term)) matched = true;
+            else if (user.experience.some(exp => 
+                (exp.position || '').toLowerCase().includes(term) ||
+                (exp.company || '').toLowerCase().includes(term) ||
+                (exp.description || '').toLowerCase().includes(term)
+            )) matched = true;
+
+            if (matched) {
+                matchCount++;
+            }
+        });
+
+        return {
+            user,
+            matchCount
+        };
+    });
+
+    // Sort by matchCount descending
+    scoredUsers.sort((a, b) => b.matchCount - a.matchCount);
+
+    const mappedCandidates: ScoredCandidate[] = scoredUsers.map(({ user }) => {
         const parseSkillsString = (skillsStr: string | null | undefined): string[] => {
             if (!skillsStr) return [];
             const trimmed = skillsStr.trim();

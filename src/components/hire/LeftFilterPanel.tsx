@@ -137,16 +137,12 @@ export function LeftFilterPanel({ filters, onFiltersChange, onClearAll }: LeftFi
                 {/* Toggle switch */}
                 <button
                     onClick={handleVerifiedToggle}
-                    className={cn(
-                        "w-11 h-6 rounded-full relative flex items-center p-0.5 transition-colors cursor-pointer",
-                        filters.verifiedOnly ? "bg-[#5B35D5]" : "bg-[#D1D5DB]"
-                    )}
+                    className="w-11 h-6 rounded-full relative flex items-center p-0.5 transition-colors cursor-pointer border border-[#E5E7EB] outline-none"
+                    style={{ backgroundColor: filters.verifiedOnly ? "var(--sc-purple-600)" : "var(--sc-gray-300)" }}
                 >
                     <div 
-                        className={cn(
-                            "w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out",
-                            filters.verifiedOnly ? "translate-x-5" : "translate-x-0"
-                        )}
+                        className="w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+                        style={{ transform: filters.verifiedOnly ? "translateX(20px)" : "translateX(0)" }}
                     />
                 </button>
             </div>
