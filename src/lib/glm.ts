@@ -23,6 +23,7 @@ interface GLMOptions {
   temperature?: number
   maxTokens?: number
   enableThinking?: boolean
+  model?: string
 }
 
 /**
@@ -37,6 +38,7 @@ export async function callGLM(
     temperature = 0.3,
     maxTokens = 4096,
     enableThinking = false,
+    model = NVIDIA_MODEL,
   } = options
 
   const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
@@ -47,14 +49,14 @@ export async function callGLM(
       Accept: 'application/json',
     },
     body: JSON.stringify({
-      model: NVIDIA_MODEL,
+      model,
       messages,
       temperature,
       top_p: 0.9,
       max_tokens: maxTokens,
       stream: false,
       // Enable deep reasoning for complex analysis tasks (GLM only)
-      ...(enableThinking && NVIDIA_MODEL.includes("glm") && {
+      ...(enableThinking && model.includes("glm") && {
         chat_template_kwargs: {
           enable_thinking: true,
           clear_thinking: true, // strip reasoning from final output
@@ -88,6 +90,7 @@ export async function callGLMStream(
     temperature = 0.7,
     maxTokens = 8192,
     enableThinking = false,
+    model = NVIDIA_MODEL,
   } = options
 
   const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
@@ -98,13 +101,13 @@ export async function callGLMStream(
       Accept: 'text/event-stream',
     },
     body: JSON.stringify({
-      model: NVIDIA_MODEL,
+      model,
       messages,
       temperature,
       top_p: 0.9,
       max_tokens: maxTokens,
       stream: true,
-      ...(enableThinking && NVIDIA_MODEL.includes("glm") && {
+      ...(enableThinking && model.includes("glm") && {
         chat_template_kwargs: {
           enable_thinking: true,
           clear_thinking: false,

@@ -204,19 +204,20 @@ export async function POST(req: Request) {
              const lastMessage = messages[messages.length - 1].content;
  
              try {
-               console.log("SERVER: Trying Suggester via GLM-5.1");
+               console.log("SERVER: Trying Suggester via Llama-4 Maverick");
                const suggesterResponseText = await callGLM([
                  { role: 'system', content: suggesterSystemPrompt },
                  { role: 'user', content: `Analyze this candidate response: "${lastMessage}"` }
                ], {
                  temperature: 0.7,
                  maxTokens: 1024,
-                 enableThinking: false
+                 enableThinking: false,
+                 model: process.env.NVIDIA_INTERVIEW_MODEL || "meta/llama-4-maverick-17b-128e-instruct"
                });
-               console.log("SERVER: Suggester generation succeeded via GLM-5.1");
+               console.log("SERVER: Suggester generation succeeded via Llama-4 Maverick");
                suggesterText = suggesterResponseText || "Good response.";
              } catch (e) {
-               console.error("Suggester Error via GLM-5.1:", e);
+               console.error("Suggester Error via Llama-4 Maverick:", e);
                suggesterText = "Good response.";
              }
  
@@ -240,10 +241,11 @@ export async function POST(req: Request) {
              { role: 'user' as const, content: interviewerPrompt }
            ];
  
-           console.log("SERVER: Starting Interviewer stream via GLM-5.1");
+           console.log("SERVER: Starting Interviewer stream via Llama-4 Maverick");
            const glmResponse = await callGLMStream(interviewerMessages, {
              temperature: 0.7,
              maxTokens: 8192,
+             model: process.env.NVIDIA_INTERVIEW_MODEL || "meta/llama-4-maverick-17b-128e-instruct"
            });
 
            const reader = glmResponse.body?.getReader();
@@ -292,7 +294,7 @@ export async function POST(req: Request) {
              }
            }
 
-           console.log("SERVER: Interviewer chat stream successfully read to completion with GLM-5.1");
+           console.log("SERVER: Interviewer chat stream successfully read to completion with Llama-4 Maverick");
            controller.close();
  
          } catch (error: any) {
