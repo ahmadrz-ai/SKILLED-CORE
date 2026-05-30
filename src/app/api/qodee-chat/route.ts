@@ -1,5 +1,4 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamGLMText } from "@/lib/glm";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -7,19 +6,10 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
     const { messages } = await req.json();
 
-    // Use the specific API key provided for Qodee
-    const apiKey = process.env.QODEE_API_KEY;
-
-    console.log("Qodee API Request:", {
+    console.log("Qodee API Request via GLM-5.1:", {
         messagesCount: messages?.length,
-        hasApiKey: !!apiKey,
         firstMessage: messages?.[0]
     });
-
-    if (!apiKey) {
-        console.error("Qodee API Error: Missing API Key");
-        return new Response("Configuration Error: Missing QODEE_API_KEY", { status: 500 });
-    }
 
     // Define the Gentle Professional Persona and SkilledCore Platform Knowledge Base
     const systemPrompt = `You are Qodee, the official AI Assistant for SkilledCore.
@@ -70,20 +60,23 @@ export async function POST(req: Request) {
   - Keep your tone friendly, encouraging, and highly professional. You are a reassuring guide.
   `;
 
-    // Create custom Google provider instance with the specific API key
-    const google = createGoogleGenerativeAI({
-        apiKey: apiKey
-    });
-
     try {
-        const result = await streamText({
-            model: google('gemini-2.5-flash'), // User requested specific model
-            system: systemPrompt,
-            messages,
+        const glmMessages = [
+            { role: 'system' as const, content: systemPrompt },
+            ...messages.map((m: any) => ({
+                role: m.role as 'user' | 'assistant',
+                content: typeof m.content === 'string'
+                    ? m.content
+                    : m.content.map((c: any) => c.text || '').join(''),
+            })),
+        ];
+
+        const textStreamResponse = await streamGLMText(glmMessages, {
+            temperature: 0.7,
+            maxTokens: 4096,
         });
 
-        // Manually implement Vercel AI Data Stream Protocol v1
-        return result.toTextStreamResponse();
+        return textStreamResponse;
     } catch (error: any) {
         console.error("Qodee Generation Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {

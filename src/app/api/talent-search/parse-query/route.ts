@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { callGLM, parseGLMJson } from "@/lib/glm";
 import { NextResponse } from "next/server";
 
 export const runtime = 'nodejs';
@@ -11,14 +11,6 @@ export async function POST(req: Request) {
         if (!query || typeof query !== "string" || !query.trim()) {
             return NextResponse.json({ error: "Query is required" }, { status: 400 });
         }
-
-        const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json({ error: "AI parser not configured", details: "No API Key found" }, { status: 500 });
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `You are an expert technical recruiter assistant.
 A recruiter has typed this search query:
@@ -54,20 +46,29 @@ Rules:
 - Never invent requirements not mentioned in the query
 - Return ONLY JSON`;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-
-        // Clean up markdown fences if present
-        let cleanedText = responseText.trim();
-        if (cleanedText.startsWith("```")) {
-            cleanedText = cleanedText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-        }
+        const rawResponse = await callGLM(
+            [
+                {
+                    role: 'system',
+                    content: 'You are a talent search query parser. Return ONLY valid JSON. No markdown. No backticks.',
+                },
+                {
+                    role: 'user',
+                    content: prompt,
+                },
+            ],
+            {
+                temperature: 0.1,  // Very low — needs consistent structured output
+                maxTokens: 2048,
+                enableThinking: false,  // Fast, no deep reasoning needed
+            }
+        );
 
         try {
-            const parsed = JSON.parse(cleanedText);
+            const parsed = parseGLMJson<any>(rawResponse);
             return NextResponse.json(parsed);
         } catch (parseError) {
-            console.error("JSON parsing of query parser failed:", parseError, "Raw output:", responseText);
+            console.error("JSON parsing of query parser failed:", parseError, "Raw output:", rawResponse);
             return NextResponse.json({ error: "Could not parse query", details: "Failed to parse AI JSON response" }, { status: 500 });
         }
 

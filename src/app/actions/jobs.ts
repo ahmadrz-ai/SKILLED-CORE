@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { callGLM } from "@/lib/glm";
 
 export async function getJobs(searchParams: any) {
     const { query, type, remote, minSalary, experience } = searchParams;
@@ -109,26 +110,24 @@ export async function rewriteJobDescription(currentDescription: string) {
     }
 
     // Real AI Logic
-    const apiKey = process.env.QODEE_API_KEY;
-    if (!apiKey) {
-        console.error("Missing QODEE_API_KEY");
-        return { success: false, message: "AI Service Unavailable (Config Error)" };
-    }
-
     try {
-        const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
-        const { generateText } = await import('ai');
-
-        const google = createGoogleGenerativeAI({ apiKey });
-
-        const { text } = await generateText({
-            model: google('gemini-1.5-flash'),
-            system: `You are an expert technical recruiter and copywriter. 
-Your task is to rewrite and improve the following job description.
-Make it professional, engaging, and structured with clear sections (Role, Responsibilities, Requirements).
-Use HTML formatting tags compatible with standard browser styling (like <b>, <i>, <ul>, <li>, <blockquote>, <p>). Keep the tone exciting but professional.`,
-            prompt: currentDescription,
-        });
+        const text = await callGLM(
+            [
+                {
+                    role: 'system',
+                    content: 'You are an expert technical recruiter and copywriter. Make it professional, engaging, and structured with clear sections (Role, Responsibilities, Requirements). Use HTML formatting tags compatible with standard browser styling (like <b>, <i>, <ul>, <li>, <blockquote>, <p>). Keep the tone exciting but professional.',
+                },
+                {
+                    role: 'user',
+                    content: currentDescription,
+                }
+            ],
+            {
+                temperature: 0.5,
+                maxTokens: 3000,
+                enableThinking: false,
+            }
+        );
 
         return { 
             success: true, 

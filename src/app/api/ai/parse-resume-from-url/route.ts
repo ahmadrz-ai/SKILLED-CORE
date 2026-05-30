@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { callGeminiWithRotation } from "@/lib/gemini-rotate";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,27 +27,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
         }
 
-        // Initialize Gemini
-        const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.RESUME_PARSER;
-        if (!apiKey) {
-            return NextResponse.json({ error: "AI parsing failed", details: "No API Key configured" }, { status: 500 });
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        // STEP 3: Send to Gemini as inline_data — NOT as a URL
+        // STEP 3: Send to Gemini with fallback rotation
         let textResult = "";
         try {
-            const result = await model.generateContent([
-                {
-                    inlineData: {
-                        mimeType: mimeType,
-                        data: base64Data,
-                    }
-                },
-                {
-                    text: `You are an expert resume parser and professional profile writer.
+            textResult = await callGeminiWithRotation(async (client) => {
+                const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
+                const result = await model.generateContent([
+                    {
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: base64Data,
+                        }
+                    },
+                    {
+                        text: `You are an expert resume parser and professional profile writer.
 Your job is to extract every piece of information from this resume
 and structure it perfectly.
 
@@ -77,7 +70,7 @@ RULES:
   Write it in first person. Make it specific to their actual background.
 - Clean up typos, inconsistent capitalization, and formatting issues.
 - Standardize date formats to "Month Year" (e.g. "June 2022").
-  If only a year is given, use "January YEAR" as start and "December YEAR" as end.
+- If only a year is given, use "January YEAR" as start and "December YEAR" as end.
 - If a field is genuinely missing from the resume, return an empty
   string or empty array — never invent data.
 
@@ -155,9 +148,10 @@ Return exactly this structure:
     }
   ]
 }`
-                }
-            ]);
-            textResult = result.response.text();
+                    }
+                ]);
+                return result.response.text();
+            });
             console.log("Raw Gemini response text (Option A):", textResult);
         } catch (geminiErr: any) {
             console.error("Gemini Content Generation Failed:", geminiErr);

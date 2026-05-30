@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { callGLM, callGLMStream } from "@/lib/glm";
 import { getSystemResumeContext } from "@/lib/userContext";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -72,26 +72,7 @@ export async function POST(req: Request) {
     const { messages, user_role, is_grill_mode, intensity = 3 } = await req.json();
     console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity });
 
-    const apiKey1 = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-    const apiKey2 = process.env.GOOGLE_API_KEY2 || apiKey1;
-
-    if (!apiKey1) {
-      return new Response("Configuration Error: Missing API Key", { status: 500 });
-    }
-
-    const genAI_Interviewer = new GoogleGenerativeAI(apiKey1);
-    const genAI_Suggester = new GoogleGenerativeAI(apiKey2!);
-
-    const safetySettings = [
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
-
-    const MODELS = ["gemini-2.5-flash", "gemini-1.5-flash"];
- 
-     const role = user_role || "Candidate";
+    const role = user_role || "Candidate";
      let resumeContext = "";
      if (is_grill_mode) {
        const session = await auth();
@@ -214,30 +195,19 @@ export async function POST(req: Request) {
              const lastMessage = messages[messages.length - 1].content;
  
              try {
-               let suggesterResponseText = "";
-               let suggesterErr = null;
-               for (const modelName of MODELS) {
-                 try {
-                   console.log(`SERVER: Trying Suggester with model ${modelName}`);
-                   const modelSuggester = genAI_Suggester.getGenerativeModel({ model: modelName, safetySettings });
-                   const result = await modelSuggester.generateContent({
-                     contents: [{ role: 'user', parts: [{ text: `Analyze this candidate response: "${lastMessage}"` }] }],
-                     systemInstruction: { role: 'system', parts: [{ text: suggesterSystemPrompt }] }
-                   });
-                   suggesterResponseText = result.response.text();
-                   console.log(`SERVER: Suggester generation succeeded with ${modelName}`);
-                   break;
-                 } catch (err) {
-                   console.warn(`SERVER: Suggester model ${modelName} failed, trying next... Error:`, err);
-                   suggesterErr = err;
-                 }
-               }
-               if (!suggesterResponseText && lastMessage) {
-                 throw suggesterErr;
-               }
+               console.log("SERVER: Trying Suggester via GLM-5.1");
+               const suggesterResponseText = await callGLM([
+                 { role: 'system', content: suggesterSystemPrompt },
+                 { role: 'user', content: `Analyze this candidate response: "${lastMessage}"` }
+               ], {
+                 temperature: 0.7,
+                 maxTokens: 1024,
+                 enableThinking: false
+               });
+               console.log("SERVER: Suggester generation succeeded via GLM-5.1");
                suggesterText = suggesterResponseText || "Good response.";
              } catch (e) {
-               console.error("Suggester Error (All models failed):", e);
+               console.error("Suggester Error via GLM-5.1:", e);
                suggesterText = "Good response.";
              }
  
@@ -249,52 +219,71 @@ export async function POST(req: Request) {
            }
            controller.enqueue(encoder.encode(" ||| "));
  
-           // Fix: Ensure history starts with 'user' role
-           let history = messages.slice(0, -1).map((m: any) => ({
-             role: m.role === 'assistant' ? 'model' : 'user',
-             parts: [{ text: m.content }]
+           // Build interviewer messages array
+           const history = messages.slice(0, -1).map((m: any) => ({
+             role: m.role as 'user' | 'assistant',
+             content: m.content
            }));
+
+           const interviewerMessages = [
+             { role: 'system' as const, content: interviewerSystemPrompt },
+             ...history,
+             { role: 'user' as const, content: interviewerPrompt }
+           ];
  
-           if (history.length > 0 && history[0].role === 'model') {
-             history = [{ role: 'user', parts: [{ text: 'Start Interview' }] }, ...history];
+           console.log("SERVER: Starting Interviewer stream via GLM-5.1");
+           const glmResponse = await callGLMStream(interviewerMessages, {
+             temperature: 0.7,
+             maxTokens: 8192,
+           });
+
+           const reader = glmResponse.body?.getReader();
+           const decoder = new TextDecoder();
+           if (!reader) {
+             controller.close();
+             return;
            }
- 
-            let activeModelName = "";
-            let streamReadSuccess = false;
-            let lastChatError = null;
 
-            for (const modelName of MODELS) {
-              try {
-                console.log(`SERVER: Trying Interviewer chat stream with model ${modelName}`);
-                const modelInterviewer = genAI_Interviewer.getGenerativeModel({ model: modelName, safetySettings });
-                const chat = modelInterviewer.startChat({
-                  history: history,
-                  systemInstruction: { role: 'system', parts: [{ text: interviewerSystemPrompt }] }
-                });
+           let buffer = "";
+           while (true) {
+             const { done, value } = await reader.read();
+             if (done) break;
 
-                const chatResult = await chat.sendMessageStream([{ text: interviewerPrompt }]);
-                
-                // Read from the stream immediately inside the model selection try-catch block!
-                for await (const chunk of chatResult.stream) {
-                  const text = chunk.text();
-                  controller.enqueue(encoder.encode(text));
-                }
-                
-                // If we successfully read the entire stream without throwing, we mark success and break!
-                activeModelName = modelName;
-                streamReadSuccess = true;
-                console.log(`SERVER: Interviewer chat stream successfully read to completion with model ${modelName}`);
-                break;
-              } catch (e) {
-                console.warn(`SERVER: Interviewer model ${modelName} failed during stream initialization or reading, trying next... Error:`, e);
-                lastChatError = e;
-              }
-            }
+             buffer += decoder.decode(value, { stream: true });
+             const lines = buffer.split("\n");
+             buffer = lines.pop() || "";
 
-            if (!streamReadSuccess) {
-              throw lastChatError || new Error("All interview models failed");
-            }
- 
+             for (const line of lines) {
+               const trimmed = line.trim();
+               if (!trimmed || trimmed === "data: [DONE]") continue;
+               if (trimmed.startsWith("data: ")) {
+                 const jsonStr = trimmed.slice(6);
+                 try {
+                   const parsed = JSON.parse(jsonStr);
+                   const content = parsed.choices?.[0]?.delta?.content;
+                   if (content) {
+                     controller.enqueue(encoder.encode(content));
+                   }
+                 } catch {}
+               }
+             }
+           }
+
+           if (buffer.trim().startsWith("data: ")) {
+             const trimmed = buffer.trim();
+             if (trimmed !== "data: [DONE]") {
+               const jsonStr = trimmed.slice(6);
+               try {
+                 const parsed = JSON.parse(jsonStr);
+                 const content = parsed.choices?.[0]?.delta?.content;
+                 if (content) {
+                   controller.enqueue(encoder.encode(content));
+                 }
+               } catch {}
+             }
+           }
+
+           console.log("SERVER: Interviewer chat stream successfully read to completion with GLM-5.1");
            controller.close();
  
          } catch (error: any) {

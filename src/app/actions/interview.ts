@@ -1,6 +1,6 @@
 "use server";
 
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { callGLM, parseGLMJson } from "@/lib/glm";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -46,78 +46,63 @@ export async function generateAnalysis(messages: any[], role: string, difficulty
     // Filter out system messages, only keep user/assistant exchange
     const transcript = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
 
-    const safetySettings = [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
-
     try {
-        const apiKey = process.env.QODEE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-        if (!apiKey) throw new Error("API Key missing");
+        console.log("SERVER ACTION: Generating analysis for role using GLM-5.1:", role);
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        console.log("SERVER ACTION: Generating analysis for role:", role);
-
-        const MODELS = ["gemini-2.5-flash", "gemini-1.5-flash"];
-        let analysisResultText = "";
-        let lastError = null;
-
-        for (const modelName of MODELS) {
-            try {
-                console.log(`SERVER ACTION: Generating analysis with model ${modelName} for role: ${role}`);
-                const model = genAI.getGenerativeModel({ model: modelName, safetySettings });
-
-                const prompt = `
-                    You are an Expert Technical Interviewer.
-                    Analyze this transcript for a ${role} position (Level ${difficulty}).
-                    
-                    TRANSCRIPT:
-                    ${transcript}
-                    
-                    Perform an extremely thorough, truth-based assessment of the candidate based on their responses.
-                    
-                    You must evaluate them on these 5 key parameters:
-                    1. Communication (overall clarity, flow, responsiveness)
-                    2. Grammar (proper language usage, spelling, correctness)
-                    3. Technical (technical depth, familiarity with concepts, correctness of answers)
-                    4. Problem Solving (reasoning, ability to handle challenges or code questions)
-                    5. Cultural Fit (professionalism, attitude, alignment with platform standards)
-                    
-                    Generate JSON in this EXACT schema:
-                    {
-                        "score": number (0-100 overall score),
-                        "feedback": "string (A detailed, 3-4 sentence professional executive summary)",
-                        "radarData": {
-                            "technical": number (0-100),
-                            "communication": number (0-100),
-                            "grammar": number (0-100),
-                            "problemSolving": number (0-100),
-                            "culturalFit": number (0-100)
-                        },
-                        "strengths": ["string", "string", "string"],
-                        "weaknesses": ["string", "string", "string"]
-                    }
-                    
-                    Strict JSON only. Do not include markdown code block formatting (e.g. no \`\`\`json).
-                    `;
-
-                const result = await model.generateContent(prompt);
-                analysisResultText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-                console.log(`SERVER ACTION: Analysis successfully generated with model ${modelName}`);
-                break;
-            } catch (e) {
-                console.warn(`SERVER ACTION: Model ${modelName} failed during analysis generation, trying next... Error:`, e);
-                lastError = e;
+        const prompt = `
+            You are an Expert Technical Interviewer.
+            Analyze this transcript for a ${role} position (Level ${difficulty}).
+            
+            TRANSCRIPT:
+            ${transcript}
+            
+            Perform an extremely thorough, truth-based assessment of the candidate based on their responses.
+            
+            You must evaluate them on these 5 key parameters:
+            1. Communication (overall clarity, flow, responsiveness)
+            2. Grammar (proper language usage, spelling, correctness)
+            3. Technical (technical depth, familiarity with concepts, correctness of answers)
+            4. Problem Solving (reasoning, ability to handle challenges or code questions)
+            5. Cultural Fit (professionalism, attitude, alignment with platform standards)
+            
+            Generate JSON in this EXACT schema:
+            {
+                "score": number (0-100 overall score),
+                "feedback": "string (A detailed, 3-4 sentence professional executive summary)",
+                "radarData": {
+                    "technical": number (0-100),
+                    "communication": number (0-100),
+                    "grammar": number (0-100),
+                    "problemSolving": number (0-100),
+                    "culturalFit": number (0-100)
+                },
+                "strengths": ["string", "string", "string"],
+                "weaknesses": ["string", "string", "string"]
             }
-        }
+            
+            Strict JSON only. Do not include markdown code block formatting (e.g. no \`\`\`json).
+            `;
 
-        if (!analysisResultText) {
-            throw lastError || new Error("All analysis models failed");
-        }
+        const rawResponse = await callGLM(
+            [
+                {
+                    role: 'system',
+                    content: 'You are an expert technical interview evaluator. Return ONLY valid JSON. No markdown.',
+                },
+                {
+                    role: 'user',
+                    content: prompt,
+                },
+            ],
+            {
+                temperature: 0.2,
+                maxTokens: 4096,
+                enableThinking: true,  // Enable deep reasoning for accurate scoring
+            }
+        );
 
-        const analysis: AnalysisResult = JSON.parse(analysisResultText);
+        console.log("SERVER ACTION: Analysis successfully generated with GLM-5.1");
+        const analysis = parseGLMJson<AnalysisResult>(rawResponse);
         return { success: true, data: analysis };
 
     } catch (error: any) {
