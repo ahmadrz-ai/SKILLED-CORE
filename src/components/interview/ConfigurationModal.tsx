@@ -79,126 +79,225 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-md">
-                    <DialogHeader>
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck className="w-6 h-6 text-cyan-500" />
-                                <DialogTitle className="text-xl tracking-wide font-heading">CONFIGURE INTERVIEW</DialogTitle>
-                            </div>
-                            {/* Credit Badge */}
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-white/10 rounded-full">
-                                <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                                <span className="text-xs font-bold font-mono text-zinc-300">
-                                    {isLoadingCredits ? "..." : credits ?? "-"} CR
-                                </span>
-                            </div>
-                        </div>
-                        <DialogDescription className="text-zinc-400">
-                            Initialize neural link parameters. Cost: 1 Credit/Session.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-6 py-4">
-                        {/* Role Input */}
-                        <div className="space-y-2">
-                            <Label>Target Role Protocol</Label>
-                            <Input
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                                className="bg-zinc-900 border-white/10 focus:border-cyan-500"
-                                placeholder="e.g. Senior AI Engineer"
-                            />
-                        </div>
-
-                        {/* Difficulty Slider */}
-                        <div className="space-y-4">
-                            <div className="flex justify-between">
-                                <Label>Intensity Level</Label>
-                                <span className="text-xs font-mono text-cyan-400">
-                                    {difficulty[0] === 1 && "INTERN SENSITIVITY"}
-                                    {difficulty[0] === 2 && "STANDARD HR"}
-                                    {difficulty[0] === 3 && "TEAM LEAD"}
-                                    {difficulty[0] === 4 && "STAFF ENGINEER"}
-                                    {difficulty[0] === 5 && "FOUNDER MODE"}
-                                </span>
-                            </div>
-                            <Slider
-                                value={difficulty}
-                                onValueChange={setDifficulty}
-                                max={5}
-                                min={1}
-                                step={1}
-                                className="py-4"
-                            />
-                            <p className="text-xs text-zinc-500 italic">
-                                {difficulty[0] === 1 && "Kind, forgiving. Walk in the park."}
-                                {difficulty[0] === 2 && "Professional and balanced."}
-                                {difficulty[0] === 3 && "High standards. Strict but fair."}
-                                {difficulty[0] === 4 && "Arrogant. Challenges assumptions. Nitpicky."}
-                                {difficulty[0] === 5 && "God Complex. Extremely Angry. Impossible Standards."}
-                            </p>
-                        </div>
-
-                        {/* Persona Selection */}
-                        <div className="space-y-2">
-                            <Label>Interviewer Persona</Label>
-                            <div className="grid grid-cols-1 gap-2">
-                                <div
-                                    onClick={() => setPersona("technologist")}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${persona === "technologist" ? "bg-cyan-900/20 border-cyan-500/50" : "bg-zinc-900/50 border-white/5 hover:bg-zinc-900"}`}
-                                >
-                                    <div className="p-2 rounded bg-blue-500/10"><Target className="w-4 h-4 text-blue-400" /></div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-white">The Technologist</h4>
-                                        <p className="text-xs text-zinc-500">Drills into implementation details.</p>
-                                    </div>
+                <DialogContent showCloseButton={true} className="sm:max-w-4xl bg-bg-modal text-text-body border-border-modal p-0 rounded-2xl overflow-hidden shadow-sc-modal max-h-[95vh] flex flex-col md:flex-row [&_button[data-slot=dialog-close]]:z-50 [&_button[data-slot=dialog-close]]:text-text-secondary [&_button[data-slot=dialog-close]]:hover:text-text-heading">
+                    <div className="grid grid-cols-1 md:grid-cols-12 w-full">
+                        
+                        {/* Left Side: Compliance Protocol & Instructions */}
+                        <div className="md:col-span-5 bg-sc-gray-50 p-6 border-r border-border-default flex flex-col justify-between select-none">
+                            <div className="space-y-6">
+                                <div className="space-y-1">
+                                    <span className="text-[10px] font-mono tracking-widest uppercase font-extrabold text-sc-purple-650 block">
+                                        DOJO COMPLIANCE PROTOCOL
+                                    </span>
+                                    <h3 className="text-xl font-heading font-black text-text-heading tracking-tight leading-tight">
+                                        Before You Begin
+                                    </h3>
                                 </div>
 
-                                <div
-                                    onClick={() => setPersona("visionary")}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${persona === "visionary" ? "bg-cyan-900/20 border-cyan-500/50" : "bg-zinc-900/50 border-white/5 hover:bg-zinc-900"}`}
-                                >
-                                    <div className="p-2 rounded bg-purple-500/10"><Zap className="w-4 h-4 text-purple-400" /></div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-white">The Visionary</h4>
-                                        <p className="text-xs text-zinc-500">Focuses on high-level architecture & product.</p>
+                                <div className="space-y-4">
+                                    {/* Voice Intro Rule */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-text-brand" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-text-heading">Mandatory Voice Intro</h4>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                At session startup, you must complete a voice introduction between **45 seconds** and **90 seconds** to calibrate acoustic assessment models.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Cheating Warning */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-text-error" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-text-error">Tab Switching Warning</h4>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                Losing window focus, switching tabs, or changing screens will trigger an automatic compliance flag. **One warning is granted;** a second infraction permanently records a **"Cheated / Non-Compliant"** status on your profile.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Copy Paste Restrictions */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-lg bg-sc-amber-100 flex items-center justify-center shrink-0 border border-sc-amber-200 mt-0.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-sc-amber-700" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-text-warning">Revoked Interactions</h4>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                Copy and paste actions are **strictly disabled** within both the chat input field and the Monaco coding sandbox.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Coding Sandbox */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-text-brand" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-text-heading">Interactive Sandbox</h4>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                The AI will grill you with hands-on algorithm challenges. You will be required to open the integrated code sandbox, write clean solutions, and execute compilations.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Context Injection - Add Resume */}
-                        <div className="space-y-3 pt-4 border-t border-zinc-800">
-                            <Label className="text-xs font-mono tracking-wider text-zinc-550 uppercase">Context Injection</Label>
-                            <div className="flex items-start space-x-3 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800 hover:border-cyan-500/30 transition-all duration-300">
-                                <Switch
-                                    id="resume-mode"
-                                    checked={useResume}
-                                    onCheckedChange={setUseResume}
-                                    className="data-[state=checked]:bg-cyan-600 mt-0.5"
-                                />
-                                <div className="flex-1 space-y-1">
-                                    <Label htmlFor="resume-mode" className="text-sm font-bold text-white cursor-pointer hover:text-cyan-455 transition-colors">
-                                        Add Resume
-                                    </Label>
-                                    <p className="text-xs text-zinc-400 leading-normal">
-                                        Enable Grill Mode: The AI will fetch your profile resume and challenge you on your skills, demanding you open the integrated **Sandbox** to write live code for real-time assessment.
-                                    </p>
+                            {/* Verification Attestation */}
+                            <div className="pt-4 border-t border-border-subtle flex items-center gap-2.5">
+                                <div className="w-2 h-2 bg-sc-green-600 rounded-full animate-pulse shrink-0" />
+                                <div className="text-[10px] text-text-secondary font-mono leading-tight">
+                                    <span className="font-bold text-text-success uppercase">SECURE SANDBOX LINK ACTIVE</span>
+                                    <p className="text-text-tertiary">Enterprise Grade Integrity Guard v3.2</p>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Right Side: Configurations */}
+                        <div className="md:col-span-7 p-6 flex flex-col justify-between bg-bg-modal">
+                            <div>
+                                <DialogHeader className="mb-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <DialogTitle className="text-xl font-heading font-black text-text-heading tracking-tight">
+                                                CONFIGURE INTERVIEW
+                                            </DialogTitle>
+                                        </div>
+                                        
+                                        {/* Credit Badge (Shifted left to prevent close-button collision!) */}
+                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-sc-purple-50 border border-sc-purple-150 rounded-full mr-12 shrink-0">
+                                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                                            <span className="text-xs font-bold font-mono text-sc-purple-700 leading-none">
+                                                {isLoadingCredits ? "..." : credits ?? "-"} CR
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <DialogDescription className="text-text-secondary text-xs mt-1">
+                                        Calibrate the neural evaluator parameters for your assessment session. Cost: 1 Credit.
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="space-y-5">
+                                    {/* Role Protocol */}
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold text-text-heading uppercase tracking-wide">Target Role Protocol</Label>
+                                        <Input
+                                            value={role}
+                                            onChange={(e) => setRole(e.target.value)}
+                                            className="bg-bg-input border-border-input hover:border-border-input-hover focus:border-border-focus focus:ring-1 focus:ring-border-focus text-sm"
+                                            placeholder="e.g. FrontEnd Engineer"
+                                        />
+                                    </div>
+
+                                    {/* Difficulty Slider */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <Label className="text-xs font-bold text-text-heading uppercase tracking-wide">Intensity Level</Label>
+                                            <span className="text-[10px] font-mono font-bold text-sc-purple-650 bg-sc-purple-50 border border-sc-purple-200 px-2 py-0.5 rounded uppercase">
+                                                {difficulty[0] === 1 && "INTERN SENSITIVITY"}
+                                                {difficulty[0] === 2 && "STANDARD HR"}
+                                                {difficulty[0] === 3 && "TEAM LEAD"}
+                                                {difficulty[0] === 4 && "STAFF ENGINEER"}
+                                                {difficulty[0] === 5 && "FOUNDER MODE"}
+                                            </span>
+                                        </div>
+                                        <Slider
+                                            value={difficulty}
+                                            onValueChange={setDifficulty}
+                                            max={5}
+                                            min={1}
+                                            step={1}
+                                            className="py-2 cursor-pointer [&_[data-slot=slider-range]]:bg-sc-purple-600 [&_[data-slot=slider-thumb]]:bg-sc-purple-600 [&_[data-slot=slider-thumb]]:border-sc-purple-700"
+                                        />
+                                        <p className="text-[11px] text-text-secondary italic pl-1 leading-relaxed">
+                                            {difficulty[0] === 1 && "Kind, forgiving. A gentle walk in the park."}
+                                            {difficulty[0] === 2 && "Balanced, professional corporate behavioral evaluation."}
+                                            {difficulty[0] === 3 && "High standards. Strict, direct, and production-driven assessment."}
+                                            {difficulty[0] === 4 && "Arrogant and nitpicky. Challenges every software design pattern."}
+                                            {difficulty[0] === 5 && "God Complex. Savagely blunt. zero tolerance for mediocre logic."}
+                                        </p>
+                                    </div>
+
+                                    {/* Persona Selector */}
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-text-heading uppercase tracking-wide block">Interviewer Persona</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div
+                                                onClick={() => setPersona("technologist")}
+                                                className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 select-none ${
+                                                    persona === "technologist"
+                                                        ? "bg-sc-purple-50 border-sc-purple-200 shadow-sm"
+                                                        : "bg-sc-gray-50 border-border-default hover:bg-sc-gray-100"
+                                                }`}
+                                            >
+                                                <div className="p-2 rounded-lg bg-sc-purple-100 shrink-0 border border-sc-purple-200">
+                                                    <Target className="w-4 h-4 text-text-brand" />
+                                                </div>
+                                                <div className="text-left min-w-0">
+                                                    <h4 className="text-xs font-extrabold text-text-heading leading-tight">The Technologist</h4>
+                                                    <p className="text-[10px] text-text-secondary truncate mt-0.5">Drills into codebase execution details.</p>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                onClick={() => setPersona("visionary")}
+                                                className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 select-none ${
+                                                    persona === "visionary"
+                                                        ? "bg-sc-purple-50 border-sc-purple-200 shadow-sm"
+                                                        : "bg-sc-gray-50 border-border-default hover:bg-sc-gray-100"
+                                                }`}
+                                            >
+                                                <div className="p-2 rounded-lg bg-sc-purple-100 shrink-0 border border-sc-purple-200">
+                                                    <Zap className="w-4 h-4 text-text-brand" />
+                                                </div>
+                                                <div className="text-left min-w-0">
+                                                    <h4 className="text-xs font-extrabold text-text-heading leading-tight">The Visionary</h4>
+                                                    <p className="text-[10px] text-text-secondary truncate mt-0.5">Focuses on high-level design & scale.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Context Switch */}
+                                    <div className="space-y-1.5 pt-3 border-t border-border-subtle">
+                                        <div className="flex items-start space-x-3 bg-sc-gray-50/70 p-3.5 rounded-xl border border-border-default hover:border-sc-purple-200/50 transition-all duration-300">
+                                            <Switch
+                                                id="resume-mode"
+                                                checked={useResume}
+                                                onCheckedChange={setUseResume}
+                                                className="data-[state=checked]:bg-sc-purple-600 mt-0.5 shrink-0"
+                                            />
+                                            <div className="flex-1 space-y-0.5">
+                                                <Label htmlFor="resume-mode" className="text-xs font-extrabold text-text-heading cursor-pointer hover:text-sc-purple-650 transition-colors">
+                                                    Add Resume context
+                                                </Label>
+                                                <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                    Enable Grill Mode: The AI will fetch your profile resume and challenge you on your skills, demanding you write code inside the integrated **Sandbox**.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={handleStart}
+                                disabled={isStarting}
+                                className="w-full h-11 bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 rounded-xl mt-6 shadow-md shadow-sc-purple-500/10 cursor-pointer"
+                            >
+                                {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                {credits !== null && credits < 1 ? "Purchase Credits" : "Start Interview"}
+                                {credits !== null && credits >= 1 && <span className="text-[10px] opacity-75 font-normal lowercase">(1 credit required)</span>}
+                            </Button>
+                        </div>
+
                     </div>
-
-                    <Button
-                        onClick={handleStart}
-                        disabled={isStarting}
-                        className="w-full h-10 bg-cyan-600 hover:bg-cyan-500 text-white font-bold tracking-widest text-sm flex items-center justify-center gap-2"
-                    >
-                        {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        {credits !== null && credits < 1 ? "Purchase Credits" : "Start Interview"}
-                        {credits !== null && credits >= 1 && <span className="text-xs opacity-70 font-normal">(1 Credit)</span>}
-                    </Button>
                 </DialogContent>
             </Dialog>
 

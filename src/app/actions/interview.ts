@@ -42,12 +42,36 @@ export async function getUserProfile() {
     }
 }
 
-export async function generateAnalysis(messages: any[], role: string, difficulty: number) {
+export async function generateAnalysis(
+    messages: any[], 
+    role: string, 
+    difficulty: number,
+    sandboxCode?: string,
+    sandboxOutput?: string[]
+) {
     // Filter out system messages, only keep user/assistant exchange
     const transcript = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
 
     try {
         console.log("SERVER ACTION: Generating analysis for role using GLM-5.1:", role);
+
+        let codeSection = "";
+        if (sandboxCode) {
+            codeSection = `
+            CODELAB / SANDBOX STATE:
+            The candidate had access to an interactive Monaco coding editor during this session.
+            
+            FINAL SOLUTION CODE IN SANDBOX:
+            \`\`\`javascript
+            ${sandboxCode}
+            \`\`\`
+            
+            COMPILER / CONSOLE RUN OUTPUTS:
+            ${Array.isArray(sandboxOutput) && sandboxOutput.length > 0 ? sandboxOutput.join("\n") : "No output was captured (code was not executed, or generated no console logs)."}
+            
+            Evaluate this code's time/space complexity, modularity, readability, and correct fulfillment of standard constraints. Factor these observations heavily into the Technical and Problem Solving scores.
+            `;
+        }
 
         const prompt = `
             You are an Expert Technical Interviewer.
@@ -56,13 +80,15 @@ export async function generateAnalysis(messages: any[], role: string, difficulty
             TRANSCRIPT:
             ${transcript}
             
+            ${codeSection}
+            
             Perform an extremely thorough, truth-based assessment of the candidate based on their responses.
             
             You must evaluate them on these 5 key parameters:
             1. Communication (overall clarity, flow, responsiveness)
             2. Grammar (proper language usage, spelling, correctness)
-            3. Technical (technical depth, familiarity with concepts, correctness of answers)
-            4. Problem Solving (reasoning, ability to handle challenges or code questions)
+            3. Technical (technical depth, familiarity with concepts, correctness of answers, sandbox code quality)
+            4. Problem Solving (reasoning, ability to handle challenges, code solution correctness)
             5. Cultural Fit (professionalism, attitude, alignment with platform standards)
             
             Generate JSON in this EXACT schema:
@@ -133,7 +159,8 @@ export async function saveInterview(
     difficulty: number,
     analysis: AnalysisResult,
     transcript: any[],
-    durationSeconds?: number
+    durationSeconds?: number,
+    cheated?: boolean
 ) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
@@ -145,13 +172,14 @@ export async function saveInterview(
                 userId: session.user.id,
                 role,
                 difficulty,
-                score: analysis.score,
+                score: cheated ? 0 : analysis.score,
                 feedback: analysis.feedback,
                 radarData: {
                     ...analysis.radarData,
                     strengths: analysis.strengths,
                     weaknesses: analysis.weaknesses,
-                    duration: durationSeconds
+                    duration: durationSeconds,
+                    cheated: cheated || false
                 } as any,
                 transcript: transcript as any,
                 isPublic: true

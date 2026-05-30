@@ -32,6 +32,19 @@ export default function DojoPage() {
     const [savedId, setSavedId] = useState<string | null>(null);
     const [authResolved, setAuthResolved] = useState(false);
 
+    // Sandbox and Anti-Cheat states
+    const [sandboxCode, setSandboxCode] = useState<string>(`// Write a function to analyze the data structure
+// Time Complexity Target: O(n)
+
+function analyze(data) {
+  // Your code here
+  return data;
+}
+
+console.log(analyze([1, 2, 3]));`);
+    const [sandboxOutput, setSandboxOutput] = useState<string[]>([]);
+    const [sessionCheated, setSessionCheated] = useState(false);
+
     const [telemetry, setTelemetry] = useState<TelemetryData>({
         confidence: 50,
         topics: [],
@@ -63,14 +76,29 @@ export default function DojoPage() {
         setInterviewMessages([]);
         setTelemetry({ confidence: 50, topics: [], feedback: "Waiting for analysis..." });
         setSessionSaved(false);
+        // Reset states
+        setSandboxCode(`// Write a function to analyze the data structure
+// Time Complexity Target: O(n)
+
+function analyze(data) {
+  // Your code here
+  return data;
+}
+
+console.log(analyze([1, 2, 3]));`);
+        setSandboxOutput([]);
+        setSessionCheated(false);
     };
 
-    const handleEndSession = (sessionMessages?: any[], durationSeconds?: number) => {
+    const handleEndSession = (sessionMessages?: any[], durationSeconds?: number, cheated?: boolean) => {
         if (Array.isArray(sessionMessages)) {
             setInterviewMessages(sessionMessages);
         }
         if (typeof durationSeconds === "number") {
             setInterviewDuration(durationSeconds);
+        }
+        if (typeof cheated === "boolean") {
+            setSessionCheated(cheated);
         }
         setSessionActive(false);
         setScorecardOpen(true);
@@ -89,6 +117,17 @@ export default function DojoPage() {
         setSessionSaved(false);
         setAnalysisData(null);
         setSavedId(null);
+        setSandboxCode(`// Write a function to analyze the data structure
+// Time Complexity Target: O(n)
+
+function analyze(data) {
+  // Your code here
+  return data;
+}
+
+console.log(analyze([1, 2, 3]));`);
+        setSandboxOutput([]);
+        setSessionCheated(false);
     };
 
     const toggleCodingMode = () => setIsCoding(!isCoding);
@@ -230,7 +269,7 @@ export default function DojoPage() {
 
                     {/* Chat Column */}
                     <div className={cn(
-                        "h-full flex flex-col transition-all duration-500",
+                        "h-[55vh] lg:h-full flex flex-col transition-all duration-500",
                         isCoding ? "lg:col-span-4" : "lg:col-span-2"
                     )}>
                         <ChatInterface
@@ -242,15 +281,23 @@ export default function DojoPage() {
                             compactMode={isCoding}
                             onCodeTrigger={() => setIsCoding(true)}
                             onTelemetryUpdate={setTelemetry}
+                            sandboxCode={sandboxCode}
+                            sandboxOutput={sandboxOutput}
                         />
                     </div>
 
                     {/* Editor Column */}
                     {isCoding && (
-                        <div className="lg:col-span-8 h-full animate-in fade-in slide-in-from-right-10 duration-500">
+                        <div className="lg:col-span-8 h-[35vh] lg:h-full animate-in fade-in slide-in-from-right-10 duration-500">
                             <CodeEditorPanel
                                 language="javascript"
-                                onRun={(code) => console.log("Run:", code)}
+                                code={sandboxCode}
+                                onChange={setSandboxCode}
+                                output={sandboxOutput}
+                                onRun={(code, out) => {
+                                    setSandboxCode(code);
+                                    setSandboxOutput(out);
+                                }}
                             />
                         </div>
                     )}
@@ -283,6 +330,9 @@ export default function DojoPage() {
                 savedId={savedId}
                 setSavedId={setSavedId}
                 durationSeconds={interviewDuration}
+                sandboxCode={sandboxCode}
+                sandboxOutput={sandboxOutput}
+                cheated={sessionCheated}
             />
         </div>
     );

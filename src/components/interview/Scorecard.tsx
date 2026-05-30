@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Star, StarHalf, X, FileText, ArrowRight, Brain, MessageSquare, BookOpen, UserCheck, Sparkles, CheckCircle2, Shield, Fingerprint, Sliders } from "lucide-react";
+import { Loader2, Star, StarHalf, X, FileText, ArrowRight, Brain, MessageSquare, BookOpen, UserCheck, Sparkles, CheckCircle2, Shield, Fingerprint } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { generateAnalysis, saveInterview } from "@/app/actions/interview";
@@ -21,6 +21,9 @@ interface ScorecardProps {
     savedId: string | null;
     setSavedId: (val: string | null) => void;
     durationSeconds?: number;
+    sandboxCode?: string;
+    sandboxOutput?: string[];
+    cheated?: boolean;
 }
 
 // Utility: Title Case formatting for Role
@@ -54,15 +57,15 @@ function StarRating({ rating, size = 18 }: { rating: number; size?: number }) {
     for (let i = 1; i <= 5; i++) {
         if (i <= roundedFull) {
             stars.push(
-                <Star key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+                <Star key={i} size={size} className="fill-sc-purple-500 text-sc-purple-500 stroke-sc-purple-600" />
             );
         } else if (i === roundedFull + 1 && hasHalf) {
             stars.push(
-                <StarHalf key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+                <StarHalf key={i} size={size} className="fill-sc-purple-500 text-sc-purple-500 stroke-sc-purple-600" />
             );
         } else {
             stars.push(
-                <Star key={i} size={size} className="text-zinc-700 fill-zinc-800/40 stroke-zinc-700" />
+                <Star key={i} size={size} className="text-sc-gray-300 fill-sc-gray-100 stroke-sc-gray-200" />
             );
         }
     }
@@ -80,19 +83,15 @@ export function Scorecard({
     setAnalysisData,
     savedId,
     setSavedId,
-    durationSeconds
+    durationSeconds,
+    sandboxCode = "",
+    sandboxOutput = [],
+    cheated = false
 }: ScorecardProps) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [scanStep, setScanStep] = useState(0);
     const hasTriggeredRef = useRef(false);
-
-    // Human-in-the-Loop Override states
-    const [showOverride, setShowOverride] = useState(false);
-    const [overrideText, setOverrideText] = useState("");
-    const [isSyncingAts, setIsSyncingAts] = useState(false);
-    const [atsSynced, setAtsSynced] = useState(false);
-    const [overrideScore, setOverrideScore] = useState<number | null>(null);
 
     const roleName = formatRoleName(config?.role || "General");
 
@@ -140,19 +139,20 @@ export function Scorecard({
         setIsSaving(true);
         setScanStep(0);
 
-        // Generate analysis from transcript
-        generateAnalysis(actualMessages, config?.role || "General", config?.difficulty || 3)
+        // Generate analysis from transcript, passing sandbox code and run outputs!
+        generateAnalysis(actualMessages, config?.role || "General", config?.difficulty || 3, sandboxCode, sandboxOutput)
             .then(async (result) => {
                 if (result.success) {
                     setAnalysisData(result.data);
 
-                    // Auto-save generated report to profile DB
+                    // Auto-save generated report to profile DB, passing cheated flag!
                     const saveResult = await saveInterview(
                         config?.role || "General",
                         config?.difficulty || 3,
                         result.data,
                         actualMessages,
-                        durationSeconds
+                        durationSeconds,
+                        cheated
                     );
                     if (saveResult.success && saveResult.id) {
                         setSavedId(saveResult.id);
@@ -184,31 +184,31 @@ export function Scorecard({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent showCloseButton={false} className="bg-zinc-950/95 border border-white/10 text-white sm:max-w-2xl overflow-hidden p-0 rounded-2xl shadow-[0_0_50px_rgba(139,92,246,0.15)] backdrop-blur-2xl [&_[data-slot=dialog-close]]:hidden">
+            <DialogContent showCloseButton={false} className="bg-bg-modal text-text-body border-border-modal sm:max-w-2xl overflow-hidden p-0 rounded-2xl shadow-sc-modal backdrop-blur-2xl [&_[data-slot=dialog-close]]:hidden">
                 <DialogTitle className="sr-only">{roleName} Assessment Report</DialogTitle>
 
                 <div className="flex flex-col h-full max-h-[90vh]">
-                    {/* Header Banner Block */}
-                    <div className="p-6 border-b border-white/5 bg-gradient-to-r from-purple-950/20 via-zinc-950 to-cyan-950/20 relative overflow-hidden flex justify-between items-start">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+                    {/* Header Banner Block - Upgraded to Light Theme */}
+                    <div className="p-6 border-b border-border-subtle bg-gradient-to-r from-sc-purple-50/40 via-white to-sc-blue-50/40 relative overflow-hidden flex justify-between items-start">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-sc-purple-100/10 rounded-full blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-sc-blue-100/10 rounded-full blur-3xl pointer-events-none" />
                         
                         <div className="space-y-1 z-10">
                             <div className="flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-violet-400 animate-pulse" />
-                                <span className="text-xs font-mono uppercase tracking-widest text-violet-400 font-bold bg-violet-500/10 px-2 py-0.5 rounded">
+                                <Sparkles className="w-5 h-5 text-sc-purple-600 animate-pulse" />
+                                <span className="text-xs font-mono uppercase tracking-widest text-sc-purple-750 font-bold bg-sc-purple-100 border border-sc-purple-200/50 px-2 py-0.5 rounded">
                                     Assessments
                                 </span>
                             </div>
-                            <h2 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                            <h2 className="text-2xl font-extrabold tracking-tight text-text-heading">
                                 {roleName}
                             </h2>
                             
                             {analysisData && (
                                 <div className="flex items-center gap-2 mt-1">
-                                    <StarRating rating={overallStars} size={16} />
-                                    <span className="text-sm font-bold text-violet-400 font-mono">
-                                        {(analysisData.score / 20).toFixed(1)} / 5.0
+                                    <StarRating rating={cheated ? 0 : overallStars} size={16} />
+                                    <span className="text-sm font-bold text-sc-purple-650 font-mono">
+                                        {cheated ? "0.0" : (analysisData.score / 20).toFixed(1)} <span className="text-text-secondary text-xs font-normal">/ 5.0 {cheated && "(VOIDED)"}</span>
                                     </span>
                                 </div>
                             )}
@@ -216,7 +216,7 @@ export function Scorecard({
 
                         <button
                             onClick={onClose}
-                            className="z-10 p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-all duration-200 compact-btn self-start"
+                            className="z-10 p-2 rounded-xl text-text-secondary hover:text-text-heading hover:bg-bg-secondary-panel bg-transparent border-none cursor-pointer transition-all duration-200"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -235,15 +235,18 @@ export function Scorecard({
                                     className="flex flex-col items-center justify-center py-12 space-y-6"
                                 >
                                     <div className="relative">
-                                        <div className="w-20 h-20 rounded-full border-2 border-violet-500/10 border-t-violet-400 animate-spin flex items-center justify-center" />
-                                        <div className="absolute inset-0 w-20 h-20 rounded-full border border-dashed border-cyan-500/20 animate-reverse-spin" />
-                                        <Brain className="w-8 h-8 text-violet-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                                        <div className="w-20 h-20 rounded-full border-2 border-sc-purple-200 border-t-sc-purple-600 animate-spin flex items-center justify-center" />
+                                        <div className="absolute inset-0 w-20 h-20 rounded-full border border-dashed border-sc-blue-300 animate-reverse-spin" />
+                                        <Brain className="w-8 h-8 text-sc-purple-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                                     </div>
                                     
-                                    <div className="text-center space-y-2">
-                                        <h3 className="font-bold text-base text-zinc-200">Evaluating Transcript & Archiving Report</h3>
-                                        <div className="flex items-center justify-center gap-2 text-xs font-mono text-zinc-500 min-h-[1.5rem]">
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                                    <div className="text-center space-y-3 px-4">
+                                        <h3 className="font-bold text-base text-text-heading">Evaluating Transcript & Archiving Report</h3>
+                                        <p className="text-xs text-sc-amber-700 bg-sc-amber-50 border border-sc-amber-100 rounded-lg p-2 max-w-sm mx-auto font-medium">
+                                            Generating comprehensive feedback using GLM-5.1. This may take up to a minute — please do not close or refresh this screen.
+                                        </p>
+                                        <div className="flex items-center justify-center gap-2 text-xs font-mono text-text-secondary min-h-[1.5rem] mt-2">
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-sc-purple-600" />
                                             <span>{scanMessages[scanStep]}</span>
                                         </div>
                                     </div>
@@ -261,14 +264,27 @@ export function Scorecard({
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-6"
                                 >
+                                    {/* Integrity Warning Block */}
+                                    {cheated && (
+                                        <div className="p-4 rounded-xl bg-sc-red-50 border border-sc-red-200 text-text-error flex items-start gap-2.5 shadow-sm">
+                                            <Shield className="w-5 h-5 text-text-error shrink-0 mt-0.5 animate-pulse" />
+                                            <div className="space-y-0.5 text-left select-none">
+                                                <h4 className="text-xs font-extrabold uppercase tracking-wide">COMPLIANCE PROTOCOL VOIDED</h4>
+                                                <p className="text-[11px] text-text-error font-medium leading-relaxed">
+                                                    This session was flagged for non-compliant behaviors (repeated screen/tab swapping or copy-paste actions). Integrity has failed. The final grade is permanently marked as **VOID**.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Executive Summary Quote Panel */}
                                     {analysisData?.feedback && (
-                                        <div className="p-4 rounded-xl bg-zinc-900/40 border border-white/5 relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-violet-500" />
-                                            <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-violet-400 mb-1 flex items-center gap-1.5">
-                                                <Sparkles className="w-3.5 h-3.5 text-yellow-500" /> Truth-Based Executive Summary
+                                        <div className="p-4 rounded-xl bg-sc-purple-50/30 border border-sc-purple-100/50 relative overflow-hidden select-text text-left">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-sc-purple-500" />
+                                            <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-sc-purple-750 mb-1 flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-sc-purple-650" /> Truth-Based Executive Summary
                                             </h4>
-                                            <p className="text-zinc-300 text-sm italic leading-relaxed pl-1">
+                                            <p className="text-text-body text-sm italic leading-relaxed pl-1">
                                                 "{analysisData.feedback}"
                                             </p>
                                         </div>
@@ -276,7 +292,7 @@ export function Scorecard({
 
                                     {/* 5 key parameters Rating System breakdown */}
                                     <div className="space-y-3.5">
-                                        <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-zinc-500 mb-3">
+                                        <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-text-secondary mb-3 text-left">
                                             Detailed Parameters Breakdown
                                         </h4>
                                         
@@ -287,26 +303,26 @@ export function Scorecard({
                                             { label: "Problem Solving", key: "problemSolving", icon: Sparkles },
                                             { label: "Cultural Alignment", key: "culturalFit", icon: UserCheck }
                                         ].map((param, index) => {
-                                            const scoreVal = analysisData?.radarData?.[param.key] || 0;
+                                            const scoreVal = (analysisData?.radarData?.[param.key] || 0);
                                             const starVal = scoreVal / 20;
                                             const ParamIcon = param.icon;
                                             
                                             return (
                                                 <div 
                                                     key={index} 
-                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-zinc-900/20 border border-white/[0.03] gap-2 hover:border-violet-500/10 transition-all hover:bg-zinc-900/30"
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-sc-gray-50 border border-sc-gray-150 gap-2 hover:border-sc-purple-200/50 hover:bg-sc-purple-50/20 transition-all duration-200"
                                                 >
                                                     <div className="flex items-center gap-2.5">
-                                                        <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/25">
-                                                            <ParamIcon className="w-4 h-4 text-violet-400" />
+                                                        <div className="w-8 h-8 rounded-lg bg-sc-purple-50 flex items-center justify-center border border-sc-purple-150">
+                                                            <ParamIcon className="w-4 h-4 text-text-brand" />
                                                         </div>
-                                                        <span className="text-sm font-semibold text-zinc-200">{param.label}</span>
+                                                        <span className="text-sm font-bold text-text-body">{param.label}</span>
                                                     </div>
 
                                                     <div className="flex items-center gap-3">
-                                                        <StarRating rating={starVal} size={15} />
-                                                        <span className="text-xs font-mono font-bold text-violet-400 min-w-[3.5rem] text-right">
-                                                            {starVal.toFixed(1)} / 5.0
+                                                        <StarRating rating={cheated ? 0 : starVal} size={15} />
+                                                        <span className="text-xs font-mono font-bold text-sc-purple-750 min-w-[3.5rem] text-right">
+                                                            {cheated ? "0.0" : starVal.toFixed(1)} / 5.0
                                                         </span>
                                                     </div>
                                                 </div>
@@ -315,26 +331,26 @@ export function Scorecard({
                                     </div>
 
                                     {/* Explainable AI (XAI) Reasoning Audit Trail */}
-                                    <div className="p-5 rounded-xl bg-zinc-950 border border-violet-500/10 space-y-4">
-                                        <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-                                            <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
-                                                <Fingerprint className="w-4 h-4 text-violet-400" />
+                                    <div className="p-5 rounded-xl bg-sc-gray-50 border border-border-default space-y-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-border-subtle">
+                                            <div className="w-8 h-8 rounded-lg bg-sc-purple-50 flex items-center justify-center border border-sc-purple-150">
+                                                <Fingerprint className="w-4 h-4 text-text-brand" />
                                             </div>
-                                            <div>
-                                                <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-violet-400">
+                                            <div className="text-left">
+                                                <h4 className="text-xs uppercase font-mono font-bold tracking-widest text-text-brand">
                                                     Reasoning Chain Audit Trail
                                                 </h4>
-                                                <p className="text-[10px] text-zinc-500 font-mono">Explainable AI (XAI) Diagnostic Telemetry</p>
+                                                <p className="text-[10px] text-text-secondary font-mono">Explainable AI (XAI) Diagnostic Telemetry</p>
                                             </div>
                                         </div>
                                         
-                                        <div className="space-y-3 font-sans text-xs">
+                                        <div className="space-y-3 font-sans text-xs select-text text-left">
                                             <div className="space-y-1">
-                                                <div className="text-zinc-400 font-semibold flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                                                <div className="text-text-body-strong font-semibold flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-sc-purple-500 animate-pulse" />
                                                     Observable Evidence
                                                 </div>
-                                                <div className="text-zinc-300 pl-3 leading-relaxed">
+                                                <div className="text-text-body pl-3 leading-relaxed">
                                                     {analysisData?.strengths && analysisData.strengths.length > 0 ? (
                                                         <ul className="list-disc pl-4 space-y-1">
                                                             {analysisData.strengths.map((str: string, i: number) => (
@@ -348,18 +364,18 @@ export function Scorecard({
                                             </div>
 
                                             <div className="space-y-1">
-                                                <div className="text-zinc-400 font-semibold flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                                                <div className="text-text-body-strong font-semibold flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-sc-purple-400" />
                                                     Expert Inference & Assessment Logic
                                                 </div>
-                                                <p className="text-zinc-300 pl-3 leading-relaxed">
+                                                <p className="text-text-body pl-3 leading-relaxed">
                                                     Candidate's problem solving style indicates clean encapsulation, strong dry-running capabilities, and fast self-correction loops when prompted. Evaluated performance correlates precisely with {roleName.toLowerCase()} execution requirements.
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-2 border-t border-white/5 font-mono text-[10px]">
-                                                <span className="text-zinc-500">Telemetry Accuracy Confidence Interval:</span>
-                                                <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                                            <div className="flex items-center justify-between pt-2 border-t border-border-subtle font-mono text-[10px]">
+                                                <span className="text-text-secondary">Telemetry Accuracy Confidence Interval:</span>
+                                                <span className="text-text-success font-bold px-2 py-0.5 rounded bg-bg-badge-success border border-border-success/30">
                                                     94% (Calibrated Cohort Blind Audit)
                                                 </span>
                                             </div>
@@ -367,116 +383,19 @@ export function Scorecard({
                                     </div>
 
                                     {/* Bias & Fairness Compliance Attestation Badge */}
-                                    <div className="p-4 rounded-xl bg-zinc-900/40 border border-white/5 flex items-center justify-between gap-4">
+                                    <div className="p-4 rounded-xl bg-sc-gray-50 border border-border-default flex items-center justify-between gap-4 select-none">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                                                <Shield className="w-4 h-4 text-emerald-400" />
+                                            <div className="w-9 h-9 rounded-full bg-sc-green-50 flex items-center justify-center shrink-0 border border-sc-green-100">
+                                                <Shield className="w-4 h-4 text-text-success" />
                                             </div>
-                                            <div>
-                                                <div className="text-xs font-bold text-zinc-200">Independent Bias Audit Compliant</div>
-                                                <div className="text-[10px] text-zinc-500 font-mono">GDPR Article 13/22 · Demographic Parity Audited · 100% Behavioral-Proxy Free</div>
+                                            <div className="text-left">
+                                                <div className="text-xs font-extrabold text-text-heading">Independent Bias Audit Compliant</div>
+                                                <div className="text-[10px] text-text-secondary font-mono">GDPR Article 13/22 · Demographic Parity Audited · 100% Behavioral-Proxy Free</div>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider border border-emerald-500/25">
+                                        <span className="text-[10px] font-mono font-bold text-text-success bg-bg-badge-success px-2.5 py-1 rounded-full uppercase tracking-wider border border-border-success/30">
                                             Compliant
                                         </span>
-                                    </div>
-
-                                    {/* Human-in-the-Loop Override Controller */}
-                                    <div className="p-5 rounded-xl bg-zinc-900/30 border border-white/5 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-lg bg-zinc-800/80 flex items-center justify-center border border-white/5">
-                                                    <Sliders className="w-4 h-4 text-zinc-400" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-xs font-bold text-zinc-200">Human-in-the-Loop Calibration</h4>
-                                                    <p className="text-[10px] text-zinc-500 font-mono">Augment reasoning & override AI verdicts</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setShowOverride(!showOverride)}
-                                                className="text-[10px] uppercase font-mono h-8 border-white/10 hover:bg-white/5 hover:text-white"
-                                            >
-                                                {showOverride ? "Close Editor" : "Override Verdict"}
-                                            </Button>
-                                        </div>
-
-                                        <AnimatePresence>
-                                            {showOverride && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: "auto" }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    className="space-y-4 overflow-hidden pt-2 border-t border-white/5"
-                                                >
-                                                    <div className="space-y-2">
-                                                        <label className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider block">Calibrate Score Override</label>
-                                                        <div className="flex items-center gap-4">
-                                                            <input
-                                                                type="range"
-                                                                min="0"
-                                                                max="100"
-                                                                value={overrideScore !== null ? overrideScore : (analysisData?.score || 85)}
-                                                                onChange={(e) => setOverrideScore(Number(e.target.value))}
-                                                                className="flex-1 accent-violet-500 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
-                                                            />
-                                                            <span className="text-xs font-mono font-black text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20 shrink-0">
-                                                                {overrideScore !== null ? overrideScore : (analysisData?.score || 85)}/100
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-2">
-                                                        <label className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider block">Annotate Reasoning / Challenge Verdict</label>
-                                                        <textarea
-                                                            value={overrideText}
-                                                            onChange={(e) => setOverrideText(e.target.value)}
-                                                            placeholder="Annotate reasoning, challenge verdict, or adjust parameters for this local cohort instance..."
-                                                            className="w-full p-2.5 bg-zinc-950 border border-white/10 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-20 resize-none font-sans"
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex justify-end pt-2">
-                                                        <Button
-                                                            size="sm"
-                                                            disabled={isSyncingAts}
-                                                            onClick={async () => {
-                                                                setIsSyncingAts(true);
-                                                                // Simulate enterprise bidirectional webhook execution
-                                                                setTimeout(() => {
-                                                                    setIsSyncingAts(false);
-                                                                    setAtsSynced(true);
-                                                                    toast.success("Local model calibrated. Synced with your ATS (Greenhouse)!");
-                                                                    if (analysisData) {
-                                                                        setAnalysisData({
-                                                                            ...analysisData,
-                                                                            score: overrideScore !== null ? overrideScore : analysisData.score,
-                                                                            feedback: overrideText.trim() ? overrideText : analysisData.feedback
-                                                                        });
-                                                                    }
-                                                                }, 1500);
-                                                            }}
-                                                            className="bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-bold uppercase tracking-widest px-4 h-9 shadow-lg shadow-violet-600/20"
-                                                        >
-                                                            {isSyncingAts ? (
-                                                                <>
-                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5 animate-spin" />
-                                                                    Syncing Webhooks...
-                                                                </>
-                                                            ) : atsSynced ? (
-                                                                "Synced with ATS ✓"
-                                                            ) : (
-                                                                "Save Annotation & Sync ATS"
-                                                            )}
-                                                        </Button>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
                                     </div>
                                 </motion.div>
                             )}
@@ -484,14 +403,14 @@ export function Scorecard({
                     </div>
 
                     {/* Bottom Sticky Action Footer */}
-                    <div className="p-6 border-t border-white/5 bg-zinc-950 flex flex-col sm:flex-row gap-3 z-10">
+                    <div className="p-6 border-t border-border-subtle bg-bg-modal flex flex-col sm:flex-row gap-3 z-10">
                         {sessionSaved && savedId && (
                             <Button
                                 onClick={() => {
                                     onClose();
                                     router.push(`/interview/${savedId}`);
                                 }}
-                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl"
+                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-950 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl cursor-pointer"
                             >
                                 <FileText className="w-4 h-4" />
                                 Open Interview Details
@@ -506,7 +425,7 @@ export function Scorecard({
                                 }
                             }}
                             disabled={isSaving}
-                            className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl shadow-lg shadow-violet-500/15"
+                            className="flex-1 bg-sc-purple-600 hover:bg-sc-purple-700 disabled:bg-sc-purple-200 disabled:text-text-disabled text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl cursor-pointer shadow-sm shadow-sc-purple-500/10"
                         >
                             {isSaving ? (
                                 <>

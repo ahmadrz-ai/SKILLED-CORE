@@ -83,9 +83,10 @@ export default async function InterviewDetailPage(props: PageProps) {
     const strengths = radar.strengths || [];
     const weaknesses = radar.weaknesses || [];
     const transcript = (interview.transcript as any) || [];
+    const isCheated = !!radar.cheated;
 
-    const starRating = interview.score / 20;
-    const grade = getGrade(interview.score);
+    const starRating = isCheated ? 0 : interview.score / 20;
+    const grade = isCheated ? "VOID" : getGrade(interview.score);
 
     // Format role title casing
     const roleTitle = (() => {
@@ -145,6 +146,17 @@ export default async function InterviewDetailPage(props: PageProps) {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in duration-500">
+            {isCheated && (
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-3 shadow-xs">
+                    <ShieldCheck className="w-5 h-5 text-red-600 shrink-0 mt-0.5 animate-pulse" />
+                    <div className="space-y-1 text-left select-none">
+                        <h4 className="text-sm font-extrabold uppercase tracking-wide">NON-COMPLIANT SESSION FLAGGED</h4>
+                        <p className="text-xs font-semibold leading-relaxed">
+                            This session has been flagged for cheating (repeated screen/tab swapping or copy-paste actions). The integrity of these results is void. The overall grade has been voided.
+                        </p>
+                    </div>
+                </div>
+            )}
             {/* Breadcrumb Header Nav */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <Link
@@ -244,14 +256,14 @@ export default async function InterviewDetailPage(props: PageProps) {
                     
                     {/* Left: Score Card / Grade Box */}
                     <div className="lg:col-span-5 space-y-6">
-                        <div className="bg-gradient-to-b from-violet-50/50 to-zinc-50 border border-zinc-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center relative overflow-hidden h-full min-h-[300px]">
+                        <div className={cn("bg-gradient-to-b border rounded-2xl p-6 text-center flex flex-col items-center justify-center relative overflow-hidden h-full min-h-[300px]", isCheated ? "from-red-50/50 to-zinc-50 border-red-200" : "from-violet-50/50 to-zinc-50 border-zinc-200")}>
                             
                             {/* Giant Grade block */}
                             <div className="relative mb-6">
-                                <div className="absolute inset-0 bg-violet-100 rounded-2xl blur-xl" />
-                                <div className="w-28 h-28 rounded-3xl bg-violet-600 border border-violet-500 flex flex-col items-center justify-center shadow-lg relative z-10">
-                                    <span className="text-[10px] font-mono tracking-widest uppercase font-bold text-violet-200 opacity-80">GRADE</span>
-                                    <span className="text-5xl font-black tracking-tighter leading-none mt-1" style={{ color: '#ffffff' }}>{grade}</span>
+                                <div className={cn("absolute inset-0 rounded-2xl blur-xl", isCheated ? "bg-red-100" : "bg-violet-100")} />
+                                <div className={cn("w-28 h-28 rounded-3xl flex flex-col items-center justify-center shadow-lg relative z-10", isCheated ? "bg-red-600 border border-red-500" : "bg-violet-600 border border-violet-500")}>
+                                    <span className={cn("text-[10px] font-mono tracking-widest uppercase font-bold opacity-80", isCheated ? "text-red-200" : "text-violet-200")}>GRADE</span>
+                                    <span className={cn("font-black tracking-tighter leading-none mt-1", isCheated ? "text-2xl" : "text-5xl")} style={{ color: '#ffffff' }}>{grade}</span>
                                 </div>
                             </div>
 
@@ -264,7 +276,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                             </div>
 
                             <div className="text-xs font-mono text-zinc-500">
-                                COMPLETED WITH SCORE {interview.score} / 100 • DIFFICULTY LEVEL {interview.difficulty}
+                                COMPLETED WITH SCORE {isCheated ? "0 (Non-Compliant)" : interview.score} / 100 • DIFFICULTY LEVEL {interview.difficulty}
                             </div>
                         </div>
                     </div>
@@ -315,9 +327,9 @@ export default async function InterviewDetailPage(props: PageProps) {
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <ServerStarRating rating={starVal} size={15} />
+                                            <ServerStarRating rating={isCheated ? 0 : starVal} size={15} />
                                             <span className="text-xs font-mono font-bold text-violet-600 w-12 text-right">
-                                                {starVal.toFixed(1)} / 5.0
+                                                {isCheated ? "0.0" : starVal.toFixed(1)} / 5.0
                                             </span>
                                         </div>
                                     </div>

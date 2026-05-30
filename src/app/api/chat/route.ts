@@ -69,7 +69,7 @@ export const maxDuration = 45;
 
 export async function POST(req: Request) {
   try {
-    const { messages, user_role, is_grill_mode, intensity = 3 } = await req.json();
+    const { messages, user_role, is_grill_mode, intensity = 3, sandbox_code, sandbox_output } = await req.json();
     console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity });
 
     const role = user_role || "Candidate";
@@ -149,6 +149,14 @@ export async function POST(req: Request) {
           default: return "";
         }
       };
+
+      let codeContext = "";
+      if (sandbox_code) {
+        codeContext = `\nCURRENT CODE SANDBOX STATE:\n\`\`\`javascript\n${sandbox_code}\n\`\`\`\n`;
+        if (sandbox_output && sandbox_output.length > 0) {
+          codeContext += `\nCURRENT TERMINAL RUN OUTPUT:\n${sandbox_output.join("\n")}\n`;
+        }
+      }
  
      const interviewerSystemPrompt = `You are a Technical Interviewer.
      Intensity Level: ${intensity} / 5.
@@ -166,6 +174,7 @@ export async function POST(req: Request) {
      - If Level < 4, be more lenient.
      
      Current Role Context: ${role}
+     ${codeContext}
      ${resumeContext ? `Candidate Background (Resume Context active):
  ${resumeContext}
  

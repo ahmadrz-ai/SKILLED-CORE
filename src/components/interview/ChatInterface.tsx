@@ -19,11 +19,13 @@ interface Message {
 interface ChatInterfaceProps {
     sessionActive: boolean;
     config: any;
-    onEndSession: (messages: Message[], durationSeconds: number) => void;
+    onEndSession: (messages: Message[], durationSeconds: number, cheated?: boolean) => void;
     isVoiceMode?: boolean;
     compactMode?: boolean;
     onCodeTrigger?: () => void;
     onTelemetryUpdate?: (data: any) => void;
+    sandboxCode?: string;
+    sandboxOutput?: string[];
 }
 
 export function ChatInterface({
@@ -33,7 +35,9 @@ export function ChatInterface({
     isVoiceMode = false,
     compactMode = false,
     onCodeTrigger,
-    onTelemetryUpdate
+    onTelemetryUpdate,
+    sandboxCode = "",
+    sandboxOutput = []
 }: ChatInterfaceProps) {
     const { data: session } = useSession();
     const [dbUser, setDbUser] = useState<any>(null);
@@ -43,6 +47,14 @@ export function ChatInterface({
     const [timer, setTimer] = useState(0);
     const [isListening, setIsListening] = useState(false);
     const initializedRef = useRef(false);
+
+    // Anti-Cheat and Compliance tracking states
+    const [warningsCount, setWarningsCount] = useState(0);
+    const [cheated, setCheated] = useState(false);
+
+    // Voice introduction constraints states
+    const [isVoiceIntroStep, setIsVoiceIntroStep] = useState(false);
+    const [voiceIntroTime, setVoiceIntroTime] = useState(0);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -64,8 +76,85 @@ export function ChatInterface({
         }
     }, [sessionActive, config]);
 
+    // Track active speaking time for the voice introduction
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isListening && isVoiceIntroStep && sessionActive) {
+            interval = setInterval(() => {
+                setVoiceIntroTime(prev => {
+                    const nextTime = prev + 1;
+                    if (nextTime >= 90) {
+                        if (recognitionRef.current) {
+                            recognitionRef.current.stop();
+                        }
+                        setIsListening(false);
+                        toast.success("Voice introduction complete (90s limit reached). Click send to submit!");
+                    }
+                    return nextTime;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isListening, isVoiceIntroStep, sessionActive]);
+
+    const handleCheatAttempt = (type: 'tab' | 'copy' | 'paste') => {
+        if (!sessionActive) return;
+
+        setWarningsCount(prev => {
+            const nextWarnings = prev + 1;
+            if (nextWarnings === 1) {
+                // First Infraction: Warning toast + optimistic warning bubble in active stream
+                toast.warning("First Warning: Tab switching and copy-pasting is strictly forbidden during the interview. Further attempts will void your compliance.", { duration: 6000 });
+                setMessages(m => [...m, {
+                    id: `warning-${Date.now()}`,
+                    role: 'assistant',
+                    persona: 'interviewer',
+                    content: "***[SYSTEM WARNING]*** You have attempted to copy-paste or switch tabs/windows. This interview is strictly monitored. Further infractions will void your results."
+                }]);
+            } else if (nextWarnings >= 2) {
+                // Second Infraction: Set cheated status + void compliance + append permanent voided bubble
+                setCheated(true);
+                toast.error("Compliance Voided: Repeated tab switching or copy-pasting has voided this interview's compliance. Your report will reflect a cheated status.", { duration: 8000 });
+                setMessages(m => [...m, {
+                    id: `cheated-${Date.now()}`,
+                    role: 'assistant',
+                    persona: 'interviewer',
+                    content: "***[INTEGRITY VOIDED]*** This session has been flagged for cheating due to repeated violations. Your final results will reflect non-compliance."
+                }]);
+            }
+            return nextWarnings;
+        });
+    };
+
+    // Tab visibility and window blur interception hooks
+    useEffect(() => {
+        if (!sessionActive) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                handleCheatAttempt('tab');
+            }
+        };
+
+        const handleWindowBlur = () => {
+            handleCheatAttempt('tab');
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleWindowBlur);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+        };
+    }, [sessionActive]);
+
     const fetchInitialGreeting = async () => {
         setIsLoading(true);
+        if (isVoiceMode) {
+            setIsVoiceIntroStep(true);
+            setVoiceIntroTime(0);
+        }
         try {
             // Send empty messages array to trigger opening generation on backend
             // For turn 0, we expect "||| Introduce yourself" -> Suggester empty, Interviewer speaks.
@@ -285,6 +374,16 @@ export function ChatInterface({
         if (e) e.preventDefault();
         if (!input.trim() || isLoading) return;
 
+        // Mandate voice introduction duration rules
+        if (isVoiceMode && isVoiceIntroStep) {
+            if (voiceIntroTime < 45) {
+                toast.warning(`Compliance Check: Your voice introduction is too brief (${voiceIntroTime}s). Please speak for at least 45 seconds to introduce yourself fully.`, { duration: 6000 });
+                return;
+            } else {
+                setIsVoiceIntroStep(false);
+            }
+        }
+
         const userText = input;
         setInput("");
         setIsLoading(true);
@@ -307,7 +406,9 @@ export function ChatInterface({
                     messages: updatedMessages,
                     user_role: config.role,
                     is_grill_mode: config.useResume,
-                    intensity: config.difficulty || 3
+                    intensity: config.difficulty || 3,
+                    sandbox_code: sandboxCode,
+                    sandbox_output: sandboxOutput
                 })
             });
 
@@ -379,8 +480,8 @@ export function ChatInterface({
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => onEndSession(messages, timer)} 
-                            className="h-8 text-xs font-bold text-red-650 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-all px-4 border border-red-200 dark:border-red-900/30"
+                            onClick={() => onEndSession(messages, timer, cheated)} 
+                            className="h-8 text-xs font-bold text-red-655 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-all px-4 border border-red-200 dark:border-red-900/30"
                         >
                             End Session
                         </Button>
@@ -493,57 +594,84 @@ export function ChatInterface({
             {/* Input Area */}
             <div className="p-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
                 {isVoiceMode && (
-                    <div className="flex justify-center items-center h-12 mb-3 gap-1.5 px-4 py-2 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent rounded-lg">
+                    <div className="flex justify-between items-center h-12 mb-3 px-4 py-2 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent rounded-lg">
                         {isListening ? (
-                            [...Array(20)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="w-1 bg-cyan-500 rounded-full animate-pulse"
-                                    style={{
-                                        height: Math.random() * 24 + 8 + 'px',
-                                        animationDuration: Math.random() * 0.2 + 0.1 + 's'
-                                    }}
-                                />
-                            ))
+                            <div className="flex gap-1.5 items-center">
+                                {[...Array(12)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="w-1 bg-cyan-500 rounded-full animate-pulse"
+                                        style={{
+                                            height: Math.random() * 20 + 8 + 'px',
+                                            animationDuration: Math.random() * 0.2 + 0.1 + 's'
+                                        }}
+                                    />
+                                ))}
+                            </div>
                         ) : (
                             <div className="flex items-center gap-2 text-xs text-zinc-500 animate-pulse">
                                 <Mic className="w-3.5 h-3.5" /> Waiting for voice...
                             </div>
                         )}
+                        
+                        {isVoiceIntroStep && (
+                            <span className={cn(
+                                "text-[10px] font-mono font-bold px-2 py-0.5 rounded border tracking-wider",
+                                voiceIntroTime < 45
+                                    ? "bg-sc-red-50 border-sc-red-200 text-text-error animate-pulse"
+                                    : "bg-sc-green-50 border-sc-green-200 text-text-success font-black"
+                            )}>
+                                {voiceIntroTime < 45 
+                                    ? `Voice Intro: ${voiceIntroTime}s / 90s (Min: 45s Required)` 
+                                    : `Voice Intro: ${voiceIntroTime}s / 90s (Success ✓)`}
+                            </span>
+                        )}
                     </div>
                 )}
 
-                <div className="relative flex gap-3.5 items-center">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleFormSubmit(e)}
-                        placeholder={isListening ? "Listening..." : "Type your answer..."}
-                        className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3.5 pl-4 pr-12 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner"
-                    />
+                <div className="flex gap-3.5 items-center w-full">
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleFormSubmit(e)}
+                            onCopy={(e) => {
+                                e.preventDefault();
+                                toast.error("Copying is disabled during the interview.");
+                                handleCheatAttempt("copy");
+                            }}
+                            onPaste={(e) => {
+                                e.preventDefault();
+                                toast.error("Pasting is disabled during the interview.");
+                                handleCheatAttempt("paste");
+                            }}
+                            placeholder={isListening ? "Listening..." : "Type your answer..."}
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3.5 pl-4 pr-12 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner"
+                        />
 
-                    {isVoiceMode && (
-                        <div className="absolute right-16 top-2">
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={toggleListening}
-                                className={cn(
-                                    "h-9 w-9 transition-all rounded-lg",
-                                    isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-zinc-400 hover:text-white"
-                                )}
-                            >
-                                {isListening ? <StopCircle className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                            </Button>
-                        </div>
-                    )}
+                        {isVoiceMode && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={toggleListening}
+                                    className={cn(
+                                        "h-9 w-9 transition-all rounded-lg cursor-pointer",
+                                        isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-zinc-400 hover:text-white"
+                                    )}
+                                >
+                                    {isListening ? <StopCircle className="w-4 h-4 animate-pulse" /> : <Mic className="w-4 h-4" />}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
 
                     <Button 
                         size="icon" 
                         onClick={(e) => handleFormSubmit(e)} 
                         disabled={isLoading || !input.trim()} 
-                        className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0"
                     >
                         <Send className="w-4 h-4" />
                     </Button>
