@@ -153,7 +153,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
 
   // MODE 3: FULL SHELL (full topbar + sidebar)
   return (
-    <div className="min-h-screen bg-bg-secondary-panel text-text-body font-sans flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-bg-secondary-panel text-text-body font-sans flex relative">
       
       {/* Desktop Sidebar — Fixed Left */}
       <Sidebar
@@ -188,7 +188,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         />
 
         {/* Main Page Area: Padding top 56px (pt-14) to sit nicely under topbar */}
-        <main className="flex-1 px-4 pb-4 pt-14 lg:px-6 lg:pb-6">
+        <main className="flex-1 px-4 pb-4 pt-14 lg:px-6 lg:pb-6 overflow-x-hidden">
           {children}
         </main>
       </div>
