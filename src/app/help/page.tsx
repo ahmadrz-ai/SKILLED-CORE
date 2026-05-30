@@ -23,7 +23,7 @@ const KNOWLEDGE_ARTICLES = [
         ]
     },
     {
-        category: "AI Interview Dojo",
+        category: "AI Interview",
         icon: Sparkles,
         color: "bg-violet-50 text-violet-600 border-violet-100",
         articles: [
@@ -263,7 +263,7 @@ export default function HelpPage() {
                                                 className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             >
                                                 <option>Account & Profile</option>
-                                                <option>AI Interview Dojo</option>
+                                                <option>AI Interview</option>
                                                 <option>Billing & Credits</option>
                                                 <option>Security & Privacy</option>
                                                 <option>General Support</option>

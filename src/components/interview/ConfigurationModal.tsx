@@ -79,30 +79,30 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DialogContent showCloseButton={true} className="sm:max-w-4xl bg-bg-modal text-text-body border-border-modal p-0 rounded-2xl overflow-hidden shadow-sc-modal max-h-[95vh] flex flex-col md:flex-row [&_button[data-slot=dialog-close]]:z-50 [&_button[data-slot=dialog-close]]:text-text-secondary [&_button[data-slot=dialog-close]]:hover:text-text-heading">
-                    <div className="grid grid-cols-1 md:grid-cols-12 w-full">
+                <DialogContent showCloseButton={true} className="md:max-w-5xl lg:max-w-6xl w-[95vw] md:w-full bg-bg-modal text-text-body border-border-modal p-0 rounded-2xl overflow-y-auto md:overflow-hidden shadow-sc-modal max-h-[95vh] flex flex-col md:flex-row [&_button[data-slot=dialog-close]]:z-50 [&_button[data-slot=dialog-close]]:text-text-secondary [&_button[data-slot=dialog-close]]:hover:text-text-heading">
+                    <div className="grid grid-cols-1 md:grid-cols-12 w-full max-h-[95vh] overflow-y-auto md:overflow-visible">
                         
                         {/* Left Side: Compliance Protocol & Instructions */}
                         <div className="md:col-span-5 bg-sc-gray-50 p-6 border-r border-border-default flex flex-col justify-between select-none">
                             <div className="space-y-6">
                                 <div className="space-y-1">
-                                    <span className="text-[10px] font-mono tracking-widest uppercase font-extrabold text-sc-purple-650 block">
-                                        DOJO COMPLIANCE PROTOCOL
+                                    <span className="text-xs font-mono tracking-widest uppercase font-extrabold text-sc-purple-650 block">
+                                        INTERVIEW COMPLIANCE PROTOCOL
                                     </span>
-                                    <h3 className="text-xl font-heading font-black text-text-heading tracking-tight leading-tight">
+                                    <h3 className="text-2xl font-heading font-black text-text-heading tracking-tight leading-tight">
                                         Before You Begin
                                     </h3>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {/* Voice Intro Rule */}
                                     <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
-                                            <ShieldCheck className="w-3.5 h-3.5 text-text-brand" />
+                                        <div className="w-7 h-7 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
+                                            <ShieldCheck className="w-4 h-4 text-text-brand" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-text-heading">Mandatory Voice Intro</h4>
-                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                            <h4 className="text-sm font-bold text-text-heading">Mandatory Voice Intro</h4>
+                                            <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
                                                 At session startup, you must complete a voice introduction between **45 seconds** and **90 seconds** to calibrate acoustic assessment models.
                                             </p>
                                         </div>
@@ -110,15 +110,15 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
 
                                     {/* Cheating Warning */}
                                     <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
-                                            <ShieldCheck className="w-3.5 h-3.5 text-text-error" />
+                                        <div className="w-7 h-7 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
+                                            <ShieldCheck className="w-4 h-4 text-text-error" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-text-error">Tab Switching Warning</h4>
-                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                            <h4 className="text-sm font-bold text-text-error">Tab Switching Warning</h4>
+                                            <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
                                                 Losing window focus, switching tabs, or changing screens will trigger an automatic compliance flag. **One warning is granted;** a second infraction permanently records a **"Cheated / Non-Compliant"** status on your profile.
                                             </p>
-                                            <p className="text-[10px] text-sc-red-700 font-extrabold mt-1 select-none leading-normal">
+                                            <p className="text-[11px] md:text-xs text-sc-red-700 font-extrabold mt-1 select-none leading-normal">
                                                 ⚠ CRITICAL WARNING: If your interview session is voided due to non-compliant behavior, the 1 credit used to start the interview will be permanently lost.
                                             </p>
                                         </div>
@@ -126,12 +126,12 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
 
                                     {/* Copy Paste Restrictions */}
                                     <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-lg bg-sc-amber-100 flex items-center justify-center shrink-0 border border-sc-amber-200 mt-0.5">
-                                            <ShieldCheck className="w-3.5 h-3.5 text-sc-amber-700" />
+                                        <div className="w-7 h-7 rounded-lg bg-sc-amber-100 flex items-center justify-center shrink-0 border border-sc-amber-200 mt-0.5">
+                                            <ShieldCheck className="w-4 h-4 text-sc-amber-700" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-text-warning">Revoked Interactions</h4>
-                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                            <h4 className="text-sm font-bold text-text-warning">Revoked Interactions</h4>
+                                            <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
                                                 Copy and paste actions are **strictly disabled** within both the chat input field and the Monaco coding sandbox.
                                             </p>
                                         </div>
@@ -139,12 +139,12 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
 
                                     {/* Screenshot Restriction */}
                                     <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
-                                            <ShieldCheck className="w-3.5 h-3.5 text-text-error" />
+                                        <div className="w-7 h-7 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
+                                            <ShieldCheck className="w-4 h-4 text-text-error" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-text-error">Screenshot Prohibited</h4>
-                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                            <h4 className="text-sm font-bold text-text-error">Screenshot Prohibited</h4>
+                                            <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
                                                 Don't try to take a screenshot during the interview. Screen capture and print screen triggers are strictly monitored and will void your session.
                                             </p>
                                         </div>
@@ -152,12 +152,12 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
 
                                     {/* Coding Sandbox */}
                                     <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
-                                            <ShieldCheck className="w-3.5 h-3.5 text-text-brand" />
+                                        <div className="w-7 h-7 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">
+                                            <ShieldCheck className="w-4 h-4 text-text-brand" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-xs font-bold text-text-heading">Interactive Sandbox</h4>
-                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                            <h4 className="text-sm font-bold text-text-heading">Interactive Sandbox</h4>
+                                            <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
                                                 The AI will grill you with hands-on algorithm challenges. You will be required to open the integrated code sandbox, write clean solutions, and execute compilations.
                                             </p>
                                         </div>

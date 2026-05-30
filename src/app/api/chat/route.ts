@@ -173,18 +173,26 @@ export async function POST(req: Request) {
      - If Level is 4 or 5, terminate after 5 strikes.
      - If Level < 4, be more lenient.
      
+     ROLE ADAPTATION REQUIREMENT:
+     - You MUST adapt all questions, technical challenges, and sandbox tasks EXACTLY to the target role: "${role}".
+     - If the target role is a NON-CODING or specialized role (e.g., "Prompt Engineer", "Product Manager", "UI/UX Designer", "Behavioral Interviewee"), do NOT ask them to write traditional programming algorithms (like time-complexity O(n) math or standard JavaScript arrays) in the sandbox or chat.
+     - Instead, ask them domain-specific questions (e.g., for a Prompt Engineer, ask about prompt design, system instructions, few-shot prompting, and tell them to design a system prompt or optimize a prompt template in the sandbox).
+     
      Current Role Context: ${role}
      ${codeContext}
      ${resumeContext ? `Candidate Background (Resume Context active):
- ${resumeContext}
- 
- GRILLING INSTRUCTIONS:
- - You must actively ask questions about their specific skills, projects, and experiences listed in the resume.
- - Periodically (e.g., after 2-3 turns, or when they mention a technical skill), challenge them to prove their claims by performing a hands-on live-coding assessment.
- - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution to..."
- - Give them a concrete, relevant coding problem (e.g., in JavaScript/TypeScript).
- - Challenge their assumptions, verify implementation details, and keep the grilling intensely professional.
- - If they write code in the chat or state they solved it in the Sandbox, analyze their code or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.` : ""}
+  ${resumeContext}
+  
+  GRILLING INSTRUCTIONS:
+  - You must actively ask questions about their specific skills, projects, and experiences listed in the resume.
+  - Periodically (e.g., after 2-3 turns, or when they mention a technical skill), challenge them to prove their claims by performing a hands-on live assessment using the sandbox.
+  - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution/prompt/spec to..."
+  - Challenge their assumptions, verify implementation details, and keep the grilling intensely professional.
+  - If they write code/text in the chat or state they solved it in the Sandbox, analyze their code/text or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.` : `
+  GRILLING INSTRUCTIONS:
+  - Periodically (e.g., after 2-3 turns), challenge them to prove their skills by performing a hands-on live assessment using the sandbox.
+  - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution/prompt/spec to..."
+  - If they write code/text in the chat or state they solved it in the Sandbox, analyze their code/text or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.`}
      `;
  
      const stream = new ReadableStream({

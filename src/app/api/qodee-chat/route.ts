@@ -31,7 +31,7 @@ export async function POST(req: Request) {
      - Definition: Ghost Mode is an anonymous discovery privacy mode.
      - Function: When Ghost Mode is enabled, users can browse other candidate profiles and job listings completely anonymously. No view telemetries or profile view activities are dispatched or logged.
      
-  3. AI INTERVIEW DOJO:
+  3. AI INTERVIEW:
      - Grading Criteria: The AI grades developer/candidate interviews based on four key metrics: code correctness, runtime efficiency, communication skills, and architectural reasoning.
      - Scorecards: A complete feedback scorecard is generated immediately after completing a session.
      - Retakes & History: Users can retake active interview sessions. The dashboard preserves the highest scorecard, but users can review transcripts of all historical runs.
