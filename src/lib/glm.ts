@@ -53,8 +53,8 @@ export async function callGLM(
       top_p: 0.9,
       max_tokens: maxTokens,
       stream: false,
-      // Enable deep reasoning for complex analysis tasks
-      ...(enableThinking && {
+      // Enable deep reasoning for complex analysis tasks (GLM only)
+      ...(enableThinking && NVIDIA_MODEL.includes("glm") && {
         chat_template_kwargs: {
           enable_thinking: true,
           clear_thinking: true, // strip reasoning from final output
@@ -104,7 +104,7 @@ export async function callGLMStream(
       top_p: 0.9,
       max_tokens: maxTokens,
       stream: true,
-      ...(enableThinking && {
+      ...(enableThinking && NVIDIA_MODEL.includes("glm") && {
         chat_template_kwargs: {
           enable_thinking: true,
           clear_thinking: false,

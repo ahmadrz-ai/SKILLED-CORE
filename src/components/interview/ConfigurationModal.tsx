@@ -137,6 +137,19 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                         </div>
                                     </div>
 
+                                    {/* Screenshot Restriction */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-lg bg-sc-red-100 flex items-center justify-center shrink-0 border border-sc-red-200 mt-0.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-text-error" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-text-error">Screenshot Prohibited</h4>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                                                Don't try to take a screenshot during the interview. Screen capture and print screen triggers are strictly monitored and will void your session.
+                                            </p>
+                                        </div>
+                                    </div>
+
                                     {/* Coding Sandbox */}
                                     <div className="flex items-start gap-3">
                                         <div className="w-6 h-6 rounded-lg bg-sc-purple-100 flex items-center justify-center shrink-0 border border-sc-purple-200 mt-0.5">

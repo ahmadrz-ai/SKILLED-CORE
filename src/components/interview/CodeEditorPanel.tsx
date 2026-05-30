@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
 import { Play, Terminal, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// Configure Monaco Editor to load from highly available, unblocked Cloudflare CDNjs
+if (typeof window !== 'undefined') {
+    loader.config({
+        paths: {
+            vs: '/vs'
+        }
+    });
+}
 
 interface CodeEditorPanelProps {
     language?: string;
@@ -88,13 +97,12 @@ export function CodeEditorPanel({
                     <span className="text-[10px] text-zinc-500">Monaco Editor</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
+                    <button
                         onClick={() => handleCodeChange(DEFAULT_CODE)}
-                        size="sm"
-                        className="h-7 text-xs text-white hover:bg-white/10 bg-transparent border border-zinc-700 rounded-lg shadow-none cursor-pointer focus-visible:ring-0 px-3"
+                        className="h-7 text-xs text-black hover:bg-zinc-100 bg-white border border-zinc-300 rounded-lg shadow-none cursor-pointer focus-visible:ring-0 px-3 font-semibold flex items-center gap-1"
                     >
-                        <RotateCcw className="w-3 h-3 mr-1" /> Reset
-                    </Button>
+                        <RotateCcw className="w-3 h-3 text-black" /> Reset
+                    </button>
                     <Button
                         onClick={handleRun}
                         disabled={isRunning}

@@ -7,7 +7,7 @@
     "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && node -e \"const fs = require('fs'); const path = require('path'); const src = path.join('node_modules', 'monaco-editor', 'min', 'vs'); const dest = path.join('public', 'vs'); if (fs.existsSync(src)) { fs.cpSync(src, dest, { recursive: true }); console.log('Monaco files copied'); }\""
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.46",
