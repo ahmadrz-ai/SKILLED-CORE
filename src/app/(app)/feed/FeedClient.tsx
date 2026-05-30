@@ -133,9 +133,11 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
     const searchParams = useSearchParams();
     const [posts, setPosts] = useState<PostProps[]>(initialPosts.map(mapPost));
     const [isFolded, setIsFolded] = useState(false);
+    const [scrollY, setScrollY] = useState(0);
 
     useEffect(() => {
         const handleScroll = () => {
+            setScrollY(window.scrollY);
             setIsFolded(window.scrollY > 120);
         };
         handleScroll(); // Evaluate synchronously on mount to capture browser scroll restoration!
@@ -328,7 +330,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Right Column: Trending & Jobs */}
-            <div className="hidden lg:block sticky top-[80px] self-start">
+            <div className="hidden lg:block w-80 shrink-0 sticky top-[80px] self-start flex flex-col gap-4">
                 <motion.div
                     className="space-y-4"
                     initial="hidden"
@@ -341,9 +343,9 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                         }
                     }}
                 >
-                    <TrendingWidget topics={trendingTopics} isFolded={isFolded} />
-                    <RecommendationsWidget isFolded={isFolded} />
-                    <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} />
+                    <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
+                    <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />
+                    <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} isCollapsed={scrollY > 450} />
                 </motion.div>
             </div>
 
