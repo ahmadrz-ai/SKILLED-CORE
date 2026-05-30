@@ -243,7 +243,7 @@ export function Scorecard({
                                     <div className="text-center space-y-3 px-4">
                                         <h3 className="font-bold text-base text-text-heading">Evaluating Transcript & Archiving Report</h3>
                                         <p className="text-xs text-sc-amber-700 bg-sc-amber-50 border border-sc-amber-100 rounded-lg p-2 max-w-sm mx-auto font-medium">
-                                            Generating comprehensive feedback using GLM-5.1. This may take up to a minute — please do not close or refresh this screen.
+                                            Generating comprehensive feedback. This may take up to a minute — please do not close or refresh this screen.
                                         </p>
                                         <div className="flex items-center justify-center gap-2 text-xs font-mono text-text-secondary min-h-[1.5rem] mt-2">
                                             <Loader2 className="w-3.5 h-3.5 animate-spin text-sc-purple-600" />
@@ -410,11 +410,11 @@ export function Scorecard({
                                     onClose();
                                     router.push(`/interview/${savedId}`);
                                 }}
-                                className="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-950 text-white font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl cursor-pointer"
+                                className="flex-1 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-950 font-semibold flex items-center justify-center gap-2 h-11 transition-all rounded-xl cursor-pointer shadow-xs"
                             >
-                                <FileText className="w-4 h-4" />
-                                Open Interview Details
-                                <ArrowRight className="w-4 h-4" />
+                                <FileText className="w-4 h-4 text-zinc-600" />
+                                <span className="text-zinc-950">Open Interview Details</span>
+                                <ArrowRight className="w-4 h-4 text-zinc-600" />
                             </Button>
                         )}
                         

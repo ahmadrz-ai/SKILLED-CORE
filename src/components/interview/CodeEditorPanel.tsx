@@ -91,7 +91,7 @@ export function CodeEditorPanel({
                     <Button
                         onClick={() => handleCodeChange(DEFAULT_CODE)}
                         size="sm"
-                        className="h-7 text-xs text-zinc-400 hover:bg-white/10 hover:text-white bg-transparent border-transparent border-0 shadow-none cursor-pointer focus-visible:ring-0"
+                        className="h-7 text-xs text-white hover:bg-white/10 bg-transparent border border-zinc-700 rounded-lg shadow-none cursor-pointer focus-visible:ring-0 px-3"
                     >
                         <RotateCcw className="w-3 h-3 mr-1" /> Reset
                     </Button>

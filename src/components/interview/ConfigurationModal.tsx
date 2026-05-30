@@ -118,6 +118,9 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                             <p className="text-[11px] text-text-secondary leading-relaxed">
                                                 Losing window focus, switching tabs, or changing screens will trigger an automatic compliance flag. **One warning is granted;** a second infraction permanently records a **"Cheated / Non-Compliant"** status on your profile.
                                             </p>
+                                            <p className="text-[10px] text-sc-red-700 font-extrabold mt-1 select-none leading-normal">
+                                                ⚠ CRITICAL WARNING: If your interview session is voided due to non-compliant behavior, the 1 credit used to start the interview will be permanently lost.
+                                            </p>
                                         </div>
                                     </div>
 

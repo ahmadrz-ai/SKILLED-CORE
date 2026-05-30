@@ -44,6 +44,25 @@ function ServerStarRating({ rating, size = 18 }: { rating: number; size?: number
     return <div className="flex items-center gap-0.5">{stars}</div>;
 }
 
+// Helper to render markdown bold/italic colors cleanly on Light Theme
+function renderStyledText(text: string) {
+    if (!text) return null;
+    const parts = text.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/g);
+
+    return parts.map((part, index) => {
+        if (part.startsWith('***') && part.endsWith('***')) {
+            return <span key={index} className="text-red-650 font-black">{part.slice(3, -3)}</span>;
+        }
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <span key={index} className="text-amber-600 font-bold">{part.slice(2, -2)}</span>;
+        }
+        if (part.startsWith('*') && part.endsWith('*')) {
+            return <span key={index} className="text-emerald-600 font-bold">{part.slice(1, -1)}</span>;
+        }
+        return <span key={index}>{part}</span>;
+    });
+}
+
 export default async function InterviewDetailPage(props: PageProps) {
     const params = await props.params;
     const { id } = params;
@@ -292,7 +311,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                                     <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" /> Truth-Based Executive Summary
                                 </h4>
                                 <p className="text-zinc-700 text-sm italic leading-relaxed pl-1">
-                                    "{interview.feedback}"
+                                    "{renderStyledText(interview.feedback)}"
                                 </p>
                             </div>
                         )}
@@ -457,7 +476,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                                                             : "bg-violet-50 border border-violet-100 text-zinc-800 shadow-xs"
                                                 )}
                                             >
-                                                {msg.content}
+                                                {renderStyledText(msg.content)}
                                             </div>
                                         </div>
                                     </div>

@@ -259,9 +259,9 @@ console.log(analyze([1, 2, 3]));`);
             </header>
 
             {/* Main Grid */}
-            <div className="flex-1 min-h-0 container mx-auto">
+            <div className="flex-1 min-h-0 container mx-auto flex flex-col pb-4">
                 <div className={cn(
-                    "grid gap-4 h-full transition-all duration-500 ease-in-out",
+                    "grid gap-4 flex-1 min-h-0 transition-all duration-500 ease-in-out",
                     isCoding
                         ? "grid-cols-1 lg:grid-cols-12"
                         : "grid-cols-1 lg:grid-cols-3"
@@ -269,7 +269,7 @@ console.log(analyze([1, 2, 3]));`);
 
                     {/* Chat Column */}
                     <div className={cn(
-                        "h-[55vh] lg:h-full flex flex-col transition-all duration-500",
+                        "h-[55vh] lg:h-full flex flex-col min-h-0 transition-all duration-500",
                         isCoding ? "lg:col-span-4" : "lg:col-span-2"
                     )}>
                         <ChatInterface
@@ -288,7 +288,7 @@ console.log(analyze([1, 2, 3]));`);
 
                     {/* Editor Column */}
                     {isCoding && (
-                        <div className="lg:col-span-8 h-[35vh] lg:h-full animate-in fade-in slide-in-from-right-10 duration-500">
+                        <div className="lg:col-span-8 h-[35vh] lg:h-full flex flex-col min-h-0 animate-in fade-in slide-in-from-right-10 duration-500">
                             <CodeEditorPanel
                                 language="javascript"
                                 code={sandboxCode}
@@ -304,7 +304,7 @@ console.log(analyze([1, 2, 3]));`);
 
                     {/* Analysis Column */}
                     {!isCoding && (
-                        <div className="lg:col-span-1 h-full hidden lg:block">
+                        <div className="lg:col-span-1 h-full min-h-0 flex flex-col hidden lg:block">
                             <LiveAnalysisPanel sessionActive={sessionActive} data={telemetry} />
                         </div>
                     )}

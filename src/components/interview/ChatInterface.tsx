@@ -280,17 +280,41 @@ export function ChatInterface({
                 fullStreamContent += chunk;
                 chunkCount++;
 
-                // TELEMETRY PARSING - Updated regex to handle spaces around braces
-                const telemetryMatch = fullStreamContent.match(/%%%\s*(\{[\s\S]*?\})\s*%%%/);
-                if (telemetryMatch && telemetryMatch[1] && onTelemetryUpdate) {
-                    try {
-                        const data = JSON.parse(telemetryMatch[1]);
-                        onTelemetryUpdate(data);
-                        // Clean the stream content by removing the JSON block
-                        fullStreamContent = fullStreamContent.replace(telemetryMatch[0], "").trim();
-                    } catch (e) {
-                        console.error("Telemetry Parse Error", e);
+                // BULLETPROOF TELEMETRY EXTRACTOR
+                const telemetryRegex = /%%%+\s*(\{[\s\S]*?\})\s*%%%+/;
+                const telemetryMatch = fullStreamContent.match(telemetryRegex);
+                if (telemetryMatch) {
+                    const rawJson = telemetryMatch[1];
+                    const fullMatchText = telemetryMatch[0];
+                    
+                    if (onTelemetryUpdate) {
+                        try {
+                            const data = JSON.parse(rawJson);
+                            onTelemetryUpdate(data);
+                        } catch (e) {
+                            console.error("Telemetry JSON Parse Error:", e);
+                            try {
+                                // Fallback looser parser: regex matches key values directly
+                                const confidenceMatch = rawJson.match(/"confidence"\s*:\s*(\d+)/);
+                                const feedbackMatch = rawJson.match(/"feedback"\s*:\s*"([^"]+)"/);
+                                const topicsMatch = rawJson.match(/"topics"\s*:\s*\[\s*([^\]]*)\s*\]/);
+                                
+                                const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 50;
+                                const feedback = feedbackMatch ? feedbackMatch[1] : "Analyzing candidate response...";
+                                const topics = topicsMatch 
+                                    ? topicsMatch[1].split(",").map(t => t.replace(/"/g, "").trim()).filter(Boolean) 
+                                    : [];
+                                    
+                                onTelemetryUpdate({ confidence, feedback, topics });
+                            } catch (looseErr) {
+                                console.error("Loose telemetry recovery failed:", looseErr);
+                            }
+                        }
                     }
+                    
+                    // ALWAYS scrub telemetry from content so candidate never sees raw JSON in chat bubble
+                    fullStreamContent = fullStreamContent.replace(fullMatchText, "").trim();
+                    fullStreamContent = fullStreamContent.replace(/^%+/, "").trim();
                 }
 
                 // ATOMIC UPDATE
@@ -459,7 +483,7 @@ export function ChatInterface({
     };
 
     return (
-        <div className={cn("flex flex-col bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl shadow-zinc-100/40 dark:shadow-none overflow-hidden relative mx-auto w-full transition-all duration-500", compactMode ? "h-full" : "h-[calc(100vh-140px)]")}>
+        <div className="flex flex-col bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl shadow-zinc-100/40 dark:shadow-none overflow-hidden relative mx-auto w-full transition-all duration-500 h-full">
 
             {/* Header */}
             <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-950">
