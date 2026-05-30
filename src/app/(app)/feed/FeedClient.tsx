@@ -205,10 +205,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         : '??';
 
     return (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+        <div className="flex flex-row gap-6 items-start max-w-[1200px] mx-auto px-6 py-6">
 
             {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block space-y-4 sticky top-[80px] self-start">
+            <div className="hidden lg:block w-64 shrink-0 sticky top-[80px] self-start space-y-4">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -238,7 +238,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Center Column: Feed */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="flex-1 min-w-0 flex flex-col gap-3">
                 <StartPostWidget onPostCreated={handleAddPost} />
 
                 {/* Self Promotion Preview if Pro/Ultra */}
@@ -331,22 +331,11 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
 
             {/* Right Column: Trending & Jobs */}
             <div className="hidden lg:block w-80 shrink-0 sticky top-[80px] self-start flex flex-col gap-4">
-                <motion.div
-                    className="space-y-4"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                        visible: {
-                            transition: {
-                                staggerChildren: 0.1
-                            }
-                        }
-                    }}
-                >
+                <div className="space-y-4">
                     <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
                     <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />
                     <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} isCollapsed={scrollY > 450} />
-                </motion.div>
+                </div>
             </div>
 
 
