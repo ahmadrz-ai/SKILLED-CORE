@@ -205,10 +205,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         : '??';
 
     return (
-        <div className="flex flex-row gap-8 items-start max-w-[1380px] mx-auto px-4 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-8 items-start max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
 
-            {/* Left Column: Identity Card (Sticky & Scrollless) */}
-            <div className="hidden lg:block w-72 shrink-0 sticky top-20 self-start space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {/* Left Column: Identity Card (Sticky & Scroll-less) */}
+            <div className="hidden lg:block lg:sticky lg:top-24 h-[calc(100vh-120px)] overflow-hidden space-y-4">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -237,8 +237,8 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                 </div>
             </div>
 
-            {/* Center Column: Feed */}
-            <div className="flex-1 min-w-0 flex flex-col gap-3">
+            {/* Center Column: Feed (Spans 1fr cleanly) */}
+            <div className="w-full min-w-0 flex flex-col gap-4">
                 <StartPostWidget onPostCreated={handleAddPost} />
 
                 {/* Self Promotion Preview if Pro/Ultra */}
@@ -322,22 +322,16 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                         )}
                     </AnimatePresence>
                 </div>
-
-                {/* Loader */}
-                {/* <div className="flex justify-center py-8">
-                    <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                </div> */}
             </div>
 
-            {/* Right Column: Trending & Jobs (Sticky & Scrollless) */}
-            <div className="hidden lg:block w-[340px] shrink-0 sticky top-20 self-start flex flex-col gap-4 max-h-[calc(100vh-100px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {/* Right Column: Trending & Jobs (Sticky & Scroll-less) */}
+            <div className="hidden lg:block lg:sticky lg:top-24 h-[calc(100vh-120px)] overflow-hidden flex flex-col gap-4">
                 <div className="space-y-4">
                     <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
                     <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />
                     <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} isCollapsed={scrollY > 450} />
                 </div>
             </div>
-
 
         </div>
     );
