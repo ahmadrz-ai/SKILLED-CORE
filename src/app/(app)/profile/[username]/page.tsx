@@ -3,11 +3,69 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient";
+import { Metadata } from 'next';
 
 interface PageProps {
     params: Promise<{
         username: string;
     }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { username } = await params;
+    
+    let targetUserId: string | null = null;
+    try {
+        if (username === 'me') {
+            const session = await auth();
+            targetUserId = session?.user?.id || null;
+        } else {
+            const resolvedUserByUsername = await prisma.user.findFirst({
+                where: { username },
+                select: { id: true }
+            });
+            if (resolvedUserByUsername) {
+                targetUserId = resolvedUserByUsername.id;
+            } else {
+                const resolvedUserById = await prisma.user.findUnique({
+                    where: { id: username },
+                    select: { id: true }
+                }).catch(() => null);
+                if (resolvedUserById) {
+                    targetUserId = resolvedUserById.id;
+                }
+            }
+        }
+
+        if (targetUserId) {
+            const user = await prisma.user.findUnique({
+                where: { id: targetUserId },
+                select: { name: true, searchIndexable: true }
+            });
+
+            if (user && user.searchIndexable === false) {
+                return {
+                    title: `${user.name}'s Profile | SkilledCore`,
+                    robots: {
+                        index: false,
+                        follow: false,
+                    }
+                };
+            }
+            if (user) {
+                return {
+                    title: `${user.name}'s Profile | SkilledCore`,
+                    description: `Explore ${user.name}'s verified professional portfolio, skills assessments, and timeline on SkilledCore.`
+                };
+            }
+        }
+    } catch (e) {
+        console.error("Failed to generate profile metadata:", e);
+    }
+
+    return {
+        title: 'Profile | SkilledCore',
+    };
 }
 
 export default async function ProfilePage({ params }: PageProps) {
