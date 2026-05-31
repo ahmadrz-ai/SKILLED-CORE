@@ -205,10 +205,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         : '??';
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-8 items-start max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
+        <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-6 items-start pt-6">
 
             {/* Left Column: Identity Card (Sticky & Scroll-less) */}
-            <div className="hidden lg:block lg:sticky lg:top-24 h-[calc(100vh-120px)] overflow-hidden space-y-4">
+            <div className="hidden lg:block lg:sticky lg:top-[88px] w-full self-start space-y-4">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -238,7 +238,7 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Center Column: Feed (Spans 1fr cleanly) */}
-            <div className="w-full min-w-0 flex flex-col gap-4">
+            <div className="w-full min-w-0 flex flex-col gap-6">
                 <StartPostWidget onPostCreated={handleAddPost} />
 
                 {/* Self Promotion Preview if Pro/Ultra */}
@@ -325,12 +325,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
             </div>
 
             {/* Right Column: Trending & Jobs (Sticky & Scroll-less) */}
-            <div className="hidden lg:block lg:sticky lg:top-24 h-[calc(100vh-120px)] overflow-hidden flex flex-col gap-4">
-                <div className="space-y-4">
-                    <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
-                    <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />
-                    <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} isCollapsed={scrollY > 450} />
-                </div>
+            <div className="hidden lg:flex lg:flex-col lg:gap-6 lg:sticky lg:top-[88px] w-full self-start">
+                <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
+                <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />
+                <RecommendedJobsWidget jobs={latestJobs} isFolded={isFolded} isCollapsed={scrollY > 450} />
             </div>
 
         </div>
