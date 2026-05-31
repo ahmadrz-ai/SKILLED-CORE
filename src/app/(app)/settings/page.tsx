@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User as UserIcon, Shield, ShieldCheck, Mail, Lock, Key, Bell, Briefcase, Eye, EyeOff,
   Database, RefreshCw, AlertTriangle, Monitor, Smartphone, Check, HelpCircle, ChevronRight,
-  Loader2, Trash2, ArrowRight
+  Loader2, Trash2, ArrowRight, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import ResumeExportModal from '@/components/settings/ResumeExportModal';
 
 // Actions
 import {
@@ -130,6 +131,7 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showResumeExport, setShowResumeExport] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -846,9 +848,18 @@ export default function SettingsPage() {
             Download a structured JSON package containing your career details, project records, skills, comments, and assessed ratings.
           </p>
         </div>
-        <Button onClick={handleRequestExport} className="shrink-0 bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-body border border-border-default h-9 text-xs font-bold">
-          Request Data Export
-        </Button>
+        <div className="flex gap-2 flex-wrap shrink-0">
+          <Button onClick={handleRequestExport} className="bg-bg-secondary-panel hover:bg-bg-sidebar-hover text-text-body border border-border-default h-9 text-xs font-bold">
+            Request Data Export
+          </Button>
+          <Button
+            onClick={() => setShowResumeExport(true)}
+            className="bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold h-9 text-xs shadow-sm flex items-center gap-1.5"
+          >
+            <FileText className="w-4 h-4" />
+            Export as Resume
+          </Button>
+        </div>
       </div>
     </motion.div>
   );
@@ -1237,6 +1248,10 @@ export default function SettingsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {showResumeExport && (
+        <ResumeExportModal onClose={() => setShowResumeExport(false)} />
+      )}
 
     </div>
   );
