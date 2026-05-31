@@ -4,26 +4,47 @@ import { callGeminiWithRotation } from "@/lib/gemini-rotate";
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
     try {
-        const body = await request.json();
-        const resumeUrl = body.url;
-        if (!resumeUrl) {
-            return NextResponse.json({ error: "No URL provided" }, { status: 400 });
-        }
+        let base64Data = "";
+        let mimeType = "application/pdf";
 
-        // STEP 2: Fetch the file SERVER-SIDE inside the API route:
-        let base64Data: string;
-        let mimeType = 'application/pdf';
         try {
-            const response = await fetch(resumeUrl);
-            if (!response.ok) {
-                return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
+            const contentType = req.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                const body = await req.json();
+                const resumeUrl = body.url;
+                if (!resumeUrl) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
+                const response = await fetch(resumeUrl);
+                if (!response.ok) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                base64Data = Buffer.from(arrayBuffer).toString('base64');
+            } else {
+                const formData = await req.formData();
+                const file = formData.get("file") as File;
+                const resumeUrl = formData.get("url") as string;
+
+                if (file) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    base64Data = Buffer.from(arrayBuffer).toString('base64');
+                    mimeType = file.type || "application/pdf";
+                } else if (resumeUrl) {
+                    const response = await fetch(resumeUrl);
+                    if (!response.ok) {
+                        return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
+                    }
+                    const arrayBuffer = await response.arrayBuffer();
+                    base64Data = Buffer.from(arrayBuffer).toString('base64');
+                } else {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
             }
-            const arrayBuffer = await response.arrayBuffer();
-            base64Data = Buffer.from(arrayBuffer).toString('base64');
-        } catch (fetchErr: any) {
-            console.error("Fetch Resume URL Failed:", fetchErr);
+        } catch (fileErr: any) {
+            console.error("Option A File read failed:", fileErr);
             return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
         }
 
@@ -163,7 +184,8 @@ Return exactly this structure:
             let text = textResult;
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const parsed = JSON.parse(text);
-            return NextResponse.json(parsed);
+            const mapped = mapToClientFormat(parsed);
+            return NextResponse.json({ success: true, aiData: mapped });
         } catch (jsonErr: any) {
             console.error("JSON parse failed. Raw text was:", textResult, jsonErr);
             return NextResponse.json({ error: "Could not parse AI response", raw: textResult }, { status: 500 });
@@ -174,3 +196,55 @@ Return exactly this structure:
         return NextResponse.json({ error: "AI parsing failed", details: error.message }, { status: 500 });
     }
 }
+
+const mapToClientFormat = (parsed: any) => {
+    const basics = parsed.basics || {};
+    
+    // Extract flat string array of skills:
+    let skillsList: string[] = [];
+    if (Array.isArray(parsed.skills)) {
+        skillsList = parsed.skills.map((s: any) => {
+            if (typeof s === 'string') return s;
+            if (s && typeof s === 'object' && s.name) return s.name;
+            return '';
+        }).filter(Boolean);
+    }
+
+    // Map experience: position -> Title/Role, company, startDate -> start, endDate -> end, description -> desc
+    const experience = (parsed.experience || []).map((exp: any) => ({
+        position: exp.title || exp.position || "",
+        company: exp.company || "",
+        startDate: exp.startDate || "",
+        endDate: exp.endDate || "",
+        description: exp.description || ""
+    }));
+
+    // Map education: school -> institution/school, degree, startDate -> startYear/startDate, endDate -> endYear/endDate
+    const education = (parsed.education || []).map((edu: any) => ({
+        school: edu.institution || edu.school || "",
+        degree: edu.degree || "",
+        startDate: edu.startDate || edu.startYear || "",
+        endDate: edu.endDate || edu.endYear || ""
+    }));
+
+    // Map projects
+    const projects = (parsed.projects || []).map((proj: any) => ({
+        title: proj.name || proj.title || "",
+        description: proj.description || "",
+        link: proj.url || proj.link || "",
+        technologies: proj.technologies || []
+    }));
+
+    return {
+        name: basics.name || parsed.name || "",
+        email: basics.email || parsed.email || "",
+        phone: basics.phone || parsed.phone || "",
+        location: basics.location || parsed.location || "",
+        headline: basics.headline || parsed.headline || "",
+        summary: basics.summary || parsed.summary || "",
+        skills: skillsList,
+        experience,
+        education,
+        projects
+    };
+};

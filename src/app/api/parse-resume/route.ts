@@ -175,7 +175,8 @@ Return exactly this structure:
             let text = textResult;
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const parsed = JSON.parse(text);
-            return NextResponse.json(parsed);
+            const mapped = mapToClientFormat(parsed);
+            return NextResponse.json(mapped);
         } catch (jsonErr: any) {
             console.error("Option B JSON parse failed. Raw text was:", textResult, jsonErr);
             return NextResponse.json({ error: "Could not parse AI response", raw: textResult }, { status: 500 });
@@ -186,3 +187,55 @@ Return exactly this structure:
         return NextResponse.json({ error: "AI parsing failed", details: error.message }, { status: 500 });
     }
 }
+
+const mapToClientFormat = (parsed: any) => {
+    const basics = parsed.basics || {};
+    
+    // Extract flat string array of skills:
+    let skillsList: string[] = [];
+    if (Array.isArray(parsed.skills)) {
+        skillsList = parsed.skills.map((s: any) => {
+            if (typeof s === 'string') return s;
+            if (s && typeof s === 'object' && s.name) return s.name;
+            return '';
+        }).filter(Boolean);
+    }
+
+    // Map experience: position -> Title/Role, company, startDate -> start, endDate -> end, description -> desc
+    const experience = (parsed.experience || []).map((exp: any) => ({
+        position: exp.title || exp.position || "",
+        company: exp.company || "",
+        startDate: exp.startDate || "",
+        endDate: exp.endDate || "",
+        description: exp.description || ""
+    }));
+
+    // Map education: school -> institution/school, degree, startDate -> startYear/startDate, endDate -> endYear/endDate
+    const education = (parsed.education || []).map((edu: any) => ({
+        school: edu.institution || edu.school || "",
+        degree: edu.degree || "",
+        startDate: edu.startDate || edu.startYear || "",
+        endDate: edu.endDate || edu.endYear || ""
+    }));
+
+    // Map projects
+    const projects = (parsed.projects || []).map((proj: any) => ({
+        title: proj.name || proj.title || "",
+        description: proj.description || "",
+        link: proj.url || proj.link || "",
+        technologies: proj.technologies || []
+    }));
+
+    return {
+        name: basics.name || parsed.name || "",
+        email: basics.email || parsed.email || "",
+        phone: basics.phone || parsed.phone || "",
+        location: basics.location || parsed.location || "",
+        headline: basics.headline || parsed.headline || "",
+        summary: basics.summary || parsed.summary || "",
+        skills: skillsList,
+        experience,
+        education,
+        projects
+    };
+};
