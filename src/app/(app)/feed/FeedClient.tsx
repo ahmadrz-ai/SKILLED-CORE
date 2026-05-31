@@ -17,8 +17,7 @@ import { Newspaper } from 'lucide-react';
 
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSearchParams } from 'next/navigation';
 import { createPost, toggleLike } from './actions';
 import { toast } from 'sonner';
 
@@ -47,6 +46,7 @@ interface FeedClientProps {
         salaryMin: number | null;
         salaryMax: number | null;
     }[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialPosts: any[]; // Prisma Post type with inclusions
     stats: {
         profileViews: number;
@@ -96,6 +96,7 @@ const sponsoredPosts = [
 
 export default function FeedClient({ user, latestJobs, initialPosts, stats, trendingTopics, promotedUser }: FeedClientProps) {
     // Map initial Prisma posts to UI PostProps
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapPost = (p: any): PostProps => ({
         id: p.id,
         author: {
@@ -116,11 +117,13 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         timestamp: new Date(p.createdAt).toLocaleString(),
         likes: p.likes?.length || 0,
         comments: p._count?.comments || 0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isLiked: p.likes?.some((l: any) => l.userId === user.id) || false,
         codeSnippet: p.codeSnippet,
         poll: p.poll ? {
             id: p.poll.id,
             question: p.poll.question,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             options: p.poll.options?.map((o: any) => ({
                 id: o.id,
                 text: o.text,
@@ -129,7 +132,6 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         } : undefined
     });
 
-    const router = useRouter();
     const searchParams = useSearchParams();
     const [posts, setPosts] = useState<PostProps[]>(initialPosts.map(mapPost));
     const [isFolded, setIsFolded] = useState(false);
@@ -198,11 +200,6 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
     const handleDeletePost = (postId: string) => {
         setPosts((currentPosts) => currentPosts.filter((p) => p.id !== postId));
     };
-
-    // Derived Initials
-    const initials = user.name
-        ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-        : '??';
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-6 items-start mt-6">

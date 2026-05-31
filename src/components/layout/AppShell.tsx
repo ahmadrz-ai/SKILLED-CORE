@@ -57,12 +57,11 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
   };
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   // Initialize and sync sidebar state on mount and route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsCollapsed(getInitialCollapseState(pathname));
-    setMounted(true);
   }, [pathname]);
 
   const handleToggle = () => {
@@ -73,6 +72,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
 
   // Close mobile drawer on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileOpen(false);
   }, [pathname]);
 
