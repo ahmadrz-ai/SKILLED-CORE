@@ -136,7 +136,7 @@ const nextAuth = NextAuth({
                     // @ts-ignore
                     token.role = "ADMIN";
                 }
-            } else if (token.sessionToken) {
+            } else if (token && token.sessionToken) {
                 // Subsequent calls: check if the session was revoked in the DB
                 try {
                     const dbSession = await prisma.session.findUnique({
@@ -144,7 +144,7 @@ const nextAuth = NextAuth({
                         select: { id: true }
                     });
                     if (!dbSession) {
-                        return null; // Revoked session token -> force client logout
+                        return {}; // Revoked session token -> force client logout safely without library crash
                     }
                 } catch (err) {
                     // Fail-safe: don't block auth if the DB connection times out
@@ -157,6 +157,7 @@ const nextAuth = NextAuth({
             return token;
         },
         async session({ session, token }) {
+            if (!token) return session; // Guard against null token to prevent unhandled TypeErrors
             const userId = (token.id || token.sub) as string;
             if (session.user && userId) {
                 session.user.id = userId;
@@ -269,40 +270,44 @@ const nextAuth = NextAuth({
             }
         },
         async createUser({ user }) {
-            // Type assertion for user that may have username
-            const dbUser = user as typeof user & { username?: string | null };
-            if (!dbUser.username && dbUser.email) {
-                const baseName = dbUser.email.split('@')[0];
-                let uniqueName = baseName;
-                let counter = 1;
+            try {
+                // Type assertion for user that may have username
+                const dbUser = user as typeof user & { username?: string | null };
+                if (!dbUser.username && dbUser.email) {
+                    const baseName = dbUser.email.split('@')[0];
+                    let uniqueName = baseName;
+                    let counter = 1;
 
-                // Simple collision check loop
-                while (await prisma.user.findUnique({ where: { username: uniqueName } })) {
-                    uniqueName = `${baseName}${counter}`;
-                    counter++;
-                }
-
-                // Retrieve signup role from cookies
-                let roleToSave = 'CANDIDATE';
-                try {
-                    const { cookies } = await import("next/headers");
-                    const cookieStore = await cookies();
-                    const signupRole = cookieStore.get("skilledcore_signup_role")?.value;
-                    if (signupRole === 'RECRUITER' || signupRole === 'CANDIDATE') {
-                        roleToSave = signupRole;
+                    // Simple collision check loop
+                    while (await prisma.user.findUnique({ where: { username: uniqueName } })) {
+                        uniqueName = `${baseName}${counter}`;
+                        counter++;
                     }
-                } catch (e) {
-                    console.error("Failed to read signup role cookie:", e);
-                }
 
-                await prisma.user.update({
-                    where: { id: dbUser.id },
-                    data: { 
-                        username: uniqueName,
-                        role: roleToSave
+                    // Retrieve signup role from cookies
+                    let roleToSave = 'CANDIDATE';
+                    try {
+                        const { cookies } = await import("next/headers");
+                        const cookieStore = await cookies();
+                        const signupRole = cookieStore.get("skilledcore_signup_role")?.value;
+                        if (signupRole === 'RECRUITER' || signupRole === 'CANDIDATE') {
+                            roleToSave = signupRole;
+                        }
+                    } catch (e) {
+                        console.error("Failed to read signup role cookie:", e);
                     }
-                });
-                console.log(`[OAuth Registration] Created user: ${dbUser.email} with username: ${uniqueName} and role: ${roleToSave}`);
+
+                    await prisma.user.update({
+                        where: { id: dbUser.id },
+                        data: { 
+                            username: uniqueName,
+                            role: roleToSave
+                        }
+                    });
+                    console.log(`[OAuth Registration] Created user: ${dbUser.email} with username: ${uniqueName} and role: ${roleToSave}`);
+                }
+            } catch (err) {
+                console.error("Failed inside createUser event callback:", err);
             }
         }
     },
