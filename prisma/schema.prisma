@@ -31,6 +31,10 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  userAgent    String?
+  ipAddress    String?
+  location     String?
+  createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -97,6 +101,26 @@ model User {
   interviews    Interview[]
   assessments   UserAssessment[]
   transactions  Transaction[]
+
+  // 2FA & Settings Overhaul fields
+  twoFactorEnabled     Boolean      @default(false)
+  twoFactorSecret      String?      // encrypted TOTP secret (AES-256-GCM hex string)
+  twoFactorBackupCodes String[]     // bcrypt-hashed backup codes
+  twoFactorVerifiedAt  DateTime?    // last verified 2FA timestamp
+  searchIndexable      Boolean      @default(true)
+  openToWork           Boolean      @default(false)
+  loginEvents          LoginEvent[] // access audit log
+}
+
+model LoginEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  location  String?
+  createdAt DateTime @default(now())
 }
 
 model Interview {

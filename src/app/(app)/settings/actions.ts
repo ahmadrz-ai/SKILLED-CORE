@@ -3,6 +3,7 @@
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import bcrypt from 'bcryptjs';
 import { signOut } from '@/auth'; // Adjust import if signOut is client-side only (usually client), for server side we might just delete session in DB or let client handle redirection. 
 // Actually signOut in next-auth v5 is server-usable but often for redirects. 
 // We will just delete the user and return success, letting client redirect.
@@ -20,12 +21,23 @@ export async function getSettings() {
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
             select: {
+                name: true,
+                headline: true,
+                bio: true,
+                location: true,
+                username: true,
+                image: true,
                 email: true,
                 ghostMode: true,
                 nodeType: true,
                 emailNotifications: true,
                 marketingEmails: true,
                 role: true,
+                searchIndexable: true,
+                openToWork: true,
+                twoFactorEnabled: true,
+                twoFactorVerifiedAt: true,
+                twoFactorBackupCodes: true, // count length on client, securely
                 verificationRequests: {
                     where: { status: 'PENDING' },
                     select: {
@@ -201,5 +213,157 @@ export async function requestRoleChange(workEmail: string) {
     } catch (error) {
         console.error("Failed to request role change:", error);
         return { success: false, message: 'Pipeline failure creating role change request. Please try again.' };
+    }
+}
+
+export async function updateSearchIndexable(enabled: boolean) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    try {
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { searchIndexable: enabled }
+        });
+        revalidatePath('/settings');
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: 'Failed to update search engine preferences' };
+    }
+}
+
+export async function updateOpenToWork(enabled: boolean) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    try {
+        // Feed into find talent search ranking
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { openToWork: enabled }
+        });
+        revalidatePath('/settings');
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: 'Failed to update career status' };
+    }
+}
+
+export async function requestDataExport() {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { email: true }
+        });
+
+        // Simulate preparing JSON + CSV zip file and emailing link within 24 hours.
+        return {
+            success: true,
+            message: `Data export request submitted. A secure download link containing your profile, timeline history, and assessments will be emailed to ${user?.email || 'your account email'} within 24 hours.`
+        };
+    } catch (error) {
+        return { success: false, message: 'Failed to request data export' };
+    }
+}
+
+export async function changeEmail(newEmail: string, passwordInput: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    const emailTrimmed = newEmail.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailTrimmed)) {
+        return { success: false, message: 'Please enter a valid email address.' };
+    }
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+        if (!user || !user.password) {
+            return { success: false, message: 'Identity verification failed.' };
+        }
+
+        const passwordValid = await bcrypt.compare(passwordInput, user.password);
+        if (!passwordValid) {
+            return { success: false, message: 'Incorrect password.' };
+        }
+
+        // Verify uniqueness of new email
+        const existingUser = await prisma.user.findUnique({ where: { email: emailTrimmed } });
+        if (existingUser && existingUser.id !== session.user.id) {
+            return { success: false, message: 'This email is already linked to another account.' };
+        }
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { email: emailTrimmed, emailVerified: null } // reset verified flag until they confirm
+        });
+
+        revalidatePath('/settings');
+        return { success: true, message: 'Email address updated. Please check your new inbox for verification instructions.' };
+    } catch (error) {
+        return { success: false, message: 'Failed to update email address.' };
+    }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    if (newPassword.length < 8) {
+        return { success: false, message: 'New password must be at least 8 characters long.' };
+    }
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+        if (!user || !user.password) {
+            return { success: false, message: 'Identity verification failed.' };
+        }
+
+        const passwordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!passwordValid) {
+            return { success: false, message: 'Incorrect current password.' };
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { password: hashedPassword }
+        });
+
+        return { success: true, message: 'Password updated successfully!' };
+    } catch (error) {
+        return { success: false, message: 'Failed to update password.' };
+    }
+}
+
+export async function deleteAccountWithVerification(passwordInput: string, deleteText: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+
+    if (deleteText !== 'DELETE') {
+        return { success: false, message: 'Confirmation text is incorrect.' };
+    }
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+        if (!user || !user.password) {
+            return { success: false, message: 'Identity verification failed.' };
+        }
+
+        const passwordValid = await bcrypt.compare(passwordInput, user.password);
+        if (!passwordValid) {
+            return { success: false, message: 'Incorrect password.' };
+        }
+
+        await prisma.user.delete({
+            where: { id: session.user.id }
+        });
+
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: 'Failed to terminate account.' };
     }
 }

@@ -58,9 +58,85 @@ const nextAuth = NextAuth({
             }
             return true;
         },
+        async jwt({ token, user, trigger, session }) {
+            if (user) {
+                token.id = user.id;
+                // @ts-ignore
+                token.role = user.role;
+
+                // Create database session record for auditing and revocation
+                try {
+                    const crypto = await import("crypto");
+                    const sessionToken = crypto.randomUUID();
+                    const { headers } = await import("next/headers");
+                    const headersList = await headers();
+                    const userAgent = headersList.get("user-agent") || "";
+                    const xForwardedFor = headersList.get("x-forwarded-for");
+                    const xRealIp = headersList.get("x-real-ip");
+                    const ip = xForwardedFor?.split(",")[0]?.trim() || xRealIp || "127.0.0.1";
+
+                    let location = "Unknown Location";
+                    // @ts-ignore
+                    const geoip = (await import("geoip-lite")).default;
+                    if (geoip && ip !== "127.0.0.1" && ip !== "::1" && !ip.startsWith("10.") && !ip.startsWith("192.168.")) {
+                        const geo = geoip.lookup(ip);
+                        if (geo) {
+                            const parts = [];
+                            if (geo.city) parts.push(geo.city);
+                            if (geo.region) parts.push(geo.region);
+                            if (geo.country) parts.push(geo.country);
+                            location = parts.join(", ");
+                        }
+                    }
+
+                    await prisma.session.create({
+                        data: {
+                            sessionToken,
+                            userId: user.id,
+                            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                            userAgent,
+                            ipAddress: ip,
+                            location: location === "Unknown Location" ? null : location,
+                        }
+                    });
+
+                    token.sessionToken = sessionToken;
+                } catch (err) {
+                    console.error("Failed to register active DB session record in JWT callback:", err);
+                }
+
+                // Elevate superusers to ADMIN dynamically
+                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
+                const userEmail = user.email || "";
+                if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
+                    // @ts-ignore
+                    token.role = "ADMIN";
+                }
+            } else if (token.sessionToken) {
+                // Subsequent calls: check if the session was revoked in the DB
+                try {
+                    const dbSession = await prisma.session.findUnique({
+                        where: { sessionToken: token.sessionToken as string },
+                        select: { id: true }
+                    });
+                    if (!dbSession) {
+                        return null; // Revoked session token -> force client logout
+                    }
+                } catch (err) {
+                    // Fail-safe: don't block auth if the DB connection times out
+                }
+            }
+
+            if (trigger === "update" && session) {
+                token = { ...token, ...session.user };
+            }
+            return token;
+        },
         async session({ session, token }) {
             if (session.user && token.sub) {
                 session.user.id = token.sub;
+                // @ts-ignore
+                session.user.sessionToken = token.sessionToken as string;
 
                 // Elevate superusers to ADMIN dynamically
                 const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];

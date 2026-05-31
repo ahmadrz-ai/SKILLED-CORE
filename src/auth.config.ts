@@ -44,8 +44,8 @@ export const authConfig = {
                 return Response.redirect(new URL(`/register?redirect=${redirectUrl}`, nextUrl));
             }
 
-            // Redirect logged-in users away from login/register
-            if (isLoggedIn && (path === '/login' || path === '/register')) {
+            // Redirect logged-in users away from login/register/verify-2fa
+            if (isLoggedIn && (path === '/login' || path === '/register' || path === '/verify-2fa')) {
                 return Response.redirect(new URL('/feed', nextUrl));
             }
 

@@ -41,12 +41,32 @@ export default function LoginPageContent() {
         setIsLoading("credentials");
         setError("");
         try {
+            // Import dynamically to avoid server action bundle issues on initial render
+            const { verifyPasswordLogin } = await import("@/app/actions/twoFactor");
+            
+            // 1. Audit password credentials first
+            const check = await verifyPasswordLogin(identifier, password);
+            
+            if (!check.success) {
+                setError(check.error || "Invalid email or password. Please try again.");
+                setIsLoading(null);
+                return;
+            }
+
+            // 2. Redirect to verification page if Two-Factor is enabled on this profile
+            if (check.twoFactorRequired) {
+                window.location.href = "/verify-2fa";
+                return;
+            }
+
+            // 3. Fall through to standard Credentials auth session creation if no 2FA setup is active
             const res = await signIn("credentials", {
                 email: identifier,
                 password,
                 redirect: false,
                 callbackUrl: "/feed",
             });
+            
             if (res?.error) {
                 setError("Invalid email or password. Please try again.");
                 setIsLoading(null);
@@ -54,7 +74,7 @@ export default function LoginPageContent() {
                 window.location.href = "/feed";
             }
         } catch (e: any) {
-            setError(e.message);
+            setError(e?.message || "Internal server error occurred.");
             setIsLoading(null);
         }
     };

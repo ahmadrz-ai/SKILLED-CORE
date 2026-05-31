@@ -150,7 +150,10 @@ export async function getCandidates(): Promise<Candidate[]> {
             const connectionCount = (user._count.receivedConnections || 0) + (user._count.sentConnections || 0);
 
             // Deterministic match score based on user ID hash (not random — avoids re-render flicker)
-            const matchScore = 70 + (user.id.charCodeAt(0) + user.id.charCodeAt(1)) % 30;
+            let matchScore = 70 + (user.id.charCodeAt(0) + user.id.charCodeAt(1)) % 30;
+            if (user.openToWork) {
+                matchScore = Math.min(100, matchScore + 10);
+            }
 
             let yearsOfExperience = 0;
             if (user.experience && user.experience.length > 0) {
