@@ -174,6 +174,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
     // --- UPLOAD SIMULATION ---
     const [uploadStatus, setUploadStatus] = useState('idle');
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [isSkipping, setIsSkipping] = useState(false);
 
     // --- VALIDATION ---
     const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
@@ -300,6 +301,32 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                 setCurrentStep(prev => prev - 1);
                 setIsTransitioning(false);
             }, 300);
+        }
+    };
+
+    const handleSkip = async () => {
+        setIsSkipping(true);
+        try {
+            const res = await fetch("/api/user/onboarding", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    role: role.toUpperCase(),
+                    name: resolvedName,
+                    ...formData
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to save profile");
+
+            toast.success("Onboarding completed successfully!");
+            router.push('/feed');
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to finalize onboarding. Redirecting to feed...");
+            router.push('/feed');
+        } finally {
+            setIsSkipping(false);
         }
     };
 
@@ -891,14 +918,33 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                             <Button
                                 variant="ghost"
                                 onClick={prevStep}
-                                disabled={currentStep === 1}
-                                className={cn("text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] cursor-pointer", currentStep === 1 && "opacity-0 pointer-events-none")}
+                                disabled={currentStep === 1 || isSkipping}
+                                className={cn("text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] cursor-pointer", (currentStep === 1 || isSkipping) && "opacity-0 pointer-events-none")}
                             >
                                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
                             </Button>
 
+                            {currentStep === 3 && role === 'candidate' && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleSkip}
+                                    disabled={isSkipping}
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                                >
+                                    {isSkipping ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Finishing...
+                                        </>
+                                    ) : (
+                                        "Skip & Complete"
+                                    )}
+                                </Button>
+                            )}
+
                             <Button
                                 onClick={nextStep}
+                                disabled={isSkipping}
                                 className="min-w-[140px] font-bold tracking-wide transition-all shadow-lg h-11 bg-gradient-to-r from-[var(--sc-purple-600)] to-[var(--sc-purple-700)] hover:from-[var(--sc-purple-500)] hover:to-[var(--sc-purple-600)] text-white shadow-[var(--sc-purple-500)]/20 cursor-pointer"
                             >
                                 {currentStep === STEPS.length ? "LAUNCH" : "CONTINUE"}
