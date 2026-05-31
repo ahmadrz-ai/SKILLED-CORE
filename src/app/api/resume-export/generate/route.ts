@@ -76,18 +76,34 @@ Return exactly this structure:
     const modelName = process.env.NVIDIA_INTERVIEW_MODEL || 'meta/llama-4-maverick-17b-128e-instruct';
     console.log(`[Resume Generate] Sending request to Nvidia model: ${modelName}`);
 
-    const responseText = await callGLM(
-      [
+    let responseText: string;
+    try {
+      responseText = await callGLM(
+        [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
         {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      {
-        model: modelName,
-        temperature: 0.1, // low temperature for precise, deterministic extraction
-      }
-    );
+          model: modelName,
+          temperature: 0.1, // low temperature for precise, deterministic extraction
+        }
+      );
+    } catch (modelErr: any) {
+      console.warn(`[Resume Generate] Custom Llama-4 model failed, falling back to default GLM model:`, modelErr?.message || modelErr);
+      responseText = await callGLM(
+        [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        {
+          temperature: 0.1, // uses default NVIDIA_MODEL (GLM-5.1)
+        }
+      );
+    }
 
     try {
       const parsed = parseGLMJson<any>(responseText);
