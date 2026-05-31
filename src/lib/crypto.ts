@@ -2,11 +2,10 @@ import crypto from 'crypto';
 
 const ENCRYPTION_KEY = process.env.TWO_FACTOR_ENCRYPTION_KEY || "";
 
-if (!ENCRYPTION_KEY) {
-    throw new Error("CRITICAL SECURITY ERROR: TWO_FACTOR_ENCRYPTION_KEY environment variable is not defined!");
-}
-
 export function encrypt(text: string): string {
+    if (!ENCRYPTION_KEY) {
+        throw new Error("TWO_FACTOR_ENCRYPTION_KEY is not set in environment variables.");
+    }
     let key: Buffer;
     if (ENCRYPTION_KEY.length === 64) {
         key = Buffer.from(ENCRYPTION_KEY, 'hex');
@@ -27,6 +26,9 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(encryptedText: string): string {
+    if (!ENCRYPTION_KEY) {
+        throw new Error("TWO_FACTOR_ENCRYPTION_KEY is not set in environment variables.");
+    }
     const parts = encryptedText.split(':');
     if (parts.length !== 3) {
         throw new Error('Invalid encrypted text format');
