@@ -150,17 +150,18 @@ export default function SettingsPage() {
           setEmailNotifications(data.emailNotifications ?? true);
           setMarketingEmails(data.marketingEmails ?? false);
           setRole((data as any).role || 'CANDIDATE');
-          setSearchIndexable(data.searchIndexable ?? true);
-          setOpenToWork(data.openToWork ?? false);
-          setTwoFactorEnabled(data.twoFactorEnabled || false);
-          setTwoFactorVerifiedAt(data.twoFactorVerifiedAt || null);
-          setBackupCodesCount(data.twoFactorBackupCodes ? data.twoFactorBackupCodes.length : 0);
+          setSearchIndexable((data as any).searchIndexable ?? true);
+          setOpenToWork((data as any).openToWork ?? false);
+          setTwoFactorEnabled((data as any).twoFactorEnabled || false);
+          setTwoFactorVerifiedAt((data as any).twoFactorVerifiedAt || null);
+          setBackupCodesCount((data as any).twoFactorBackupCodes ? (data as any).twoFactorBackupCodes.length : 0);
           
           const req = (data as any).verificationRequests?.[0] || null;
           setPendingRequest(req);
         }
       } catch (error) {
-        toast.error("Failed to load user settings.");
+        console.error("loadSettings component error:", error);
+        // Don't toast — error is already handled inside getSettings()
       } finally {
         setIsLoading(false);
       }
@@ -464,7 +465,15 @@ export default function SettingsPage() {
         <div className="bg-sc-purple-50 border border-sc-purple-100 rounded-xl p-4 text-xs leading-relaxed text-text-sidebar-active flex gap-2">
           <UserIcon className="w-4 h-4 text-sc-purple-600 flex-shrink-0 mt-0.5" />
           <span>
-            Profile details (Avatar, Name, Bio, and Locations) must be updated directly on your primary timeline dashboard. Go to your **[Profile Page](file:///profile)** to perform edits.
+            Profile details (Avatar, Name, Bio, and Location) must be updated directly on your primary
+            timeline dashboard. Go to your{' '}
+            <a
+              href={username ? `/profile/${username}` : 'https://skilledcore.com/profile/me'}
+              className="font-semibold underline underline-offset-2 text-sc-purple-700 hover:text-sc-purple-900 transition-colors"
+            >
+              Profile Page
+            </a>
+            {' '}to perform edits.
           </span>
         </div>
 

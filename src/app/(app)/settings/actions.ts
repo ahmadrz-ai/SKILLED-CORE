@@ -18,7 +18,7 @@ export async function getSettings() {
             return null;
         }
 
-        // Try full query including 2FA fields (requires migration to have run)
+        // Try full query including 2FA fields
         try {
             const user = await prisma.user.findUnique({
                 where: { id: session.user.id },
@@ -53,53 +53,54 @@ export async function getSettings() {
             console.log("getSettings - User found (full):", user ? "Yes" : "No");
             return user;
         } catch (prismaErr: any) {
-            // If columns don't exist yet (migration pending), fall back to base query
-            const errMsg = String(prismaErr?.message || '');
-            const isColumnMissing = errMsg.includes('column') || errMsg.includes('P2022') || errMsg.includes('does not exist');
-            if (!isColumnMissing) throw prismaErr;
+            // Full query failed for any reason — fall back to base query without new fields
+            console.warn("getSettings - Full query failed, trying base query. Error:", prismaErr?.message);
 
-            console.warn("getSettings - 2FA/new columns not yet migrated. Falling back to base query.");
-
-            const user = await prisma.user.findUnique({
-                where: { id: session.user.id },
-                select: {
-                    name: true,
-                    headline: true,
-                    bio: true,
-                    location: true,
-                    username: true,
-                    image: true,
-                    email: true,
-                    ghostMode: true,
-                    nodeType: true,
-                    emailNotifications: true,
-                    marketingEmails: true,
-                    role: true,
-                    verificationRequests: {
-                        where: { status: 'PENDING' },
-                        select: {
-                            id: true,
-                            type: true,
-                            documentUrl: true,
+            try {
+                const user = await prisma.user.findUnique({
+                    where: { id: session.user.id },
+                    select: {
+                        name: true,
+                        headline: true,
+                        bio: true,
+                        location: true,
+                        username: true,
+                        image: true,
+                        email: true,
+                        ghostMode: true,
+                        nodeType: true,
+                        emailNotifications: true,
+                        marketingEmails: true,
+                        role: true,
+                        verificationRequests: {
+                            where: { status: 'PENDING' },
+                            select: {
+                                id: true,
+                                type: true,
+                                documentUrl: true,
+                            }
                         }
                     }
-                }
-            });
+                });
 
-            console.log("getSettings - User found (base fallback):", user ? "Yes" : "No");
-            // Return with 2FA fields defaulted so client code doesn't break
-            return user ? {
-                ...user,
-                searchIndexable: true,
-                openToWork: false,
-                twoFactorEnabled: false,
-                twoFactorVerifiedAt: null,
-                twoFactorBackupCodes: [],
-            } : null;
+                console.log("getSettings - User found (base fallback):", user ? "Yes" : "No");
+                return user ? {
+                    ...user,
+                    searchIndexable: true,
+                    openToWork: false,
+                    twoFactorEnabled: false,
+                    twoFactorVerifiedAt: null,
+                    twoFactorBackupCodes: [] as string[],
+                } : null;
+            } catch (baseErr: any) {
+                // Even base query failed — return null silently
+                console.error("getSettings - Base query also failed:", baseErr?.message);
+                return null;
+            }
         }
     } catch (err) {
-        console.error("getSettings - Error:", err);
-        throw err;
+        console.error("getSettings - Unexpected Error:", err);
+        return null;
     }
 }
 
