@@ -18,220 +18,281 @@ const getLogoPath = () => {
   return '/logo.png';
 };
 
-const getBgrPath = () => {
-  if (typeof window === 'undefined') {
-    return path.join(process.cwd(), 'public', 'BGR Full.png');
-  }
-  return '/BGR Full.png';
-};
-
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 10,
-    paddingTop: 0,
+    fontSize: 9,
+    paddingTop: 36,
     paddingBottom: 40,
-    paddingHorizontal: 0,
+    paddingHorizontal: 36,
     backgroundColor: '#FFFFFF',
     position: 'relative',
   },
   watermark: {
     position: 'absolute',
-    top: '50%',
+    top: '40%',
     left: '50%',
-    transform: 'translate(-150px, -150px)', // center 300x300 image
+    marginLeft: -150,
+    marginTop: -150,
     width: 300,
     height: 300,
-    opacity: 0.08,
+    opacity: 0.03, // Extremely subtle watermark so it doesn't degrade text readability
     zIndex: 0,
   },
-  headerBanner: {
-    backgroundColor: '#5B35D5', // sc-purple-600
-    paddingHorizontal: 32,
-    paddingVertical: 18,
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 0,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#5B35D5', // --sc-purple-600 (bold accent brand border)
+    paddingBottom: 16,
+    marginBottom: 20,
+    zIndex: 10,
   },
-  headerTagline: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 8,
-    fontFamily: 'Helvetica',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  logoImage: {
-    height: 24,
+  headerLogo: {
+    width: 36,
+    height: 36,
     objectFit: 'contain',
   },
-  contactArea: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8ED', // border-card
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    objectFit: 'cover',
-    flexShrink: 0,
-    borderWidth: 1,
-    borderColor: '#E8E8ED',
-  },
-  basicsContainer: {
-    flex: 1,
+  headerTitleArea: {
+    flexDirection: 'column',
   },
   candidateName: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Helvetica-Bold',
-    color: '#141417', // text-heading
-    marginBottom: 2,
+    color: '#141417', // --sc-gray-900 (crisp high contrast name)
+    letterSpacing: -0.5,
   },
   candidateHeadline: {
-    fontSize: 10.5,
-    color: '#5B35D5', // sc-purple-600
-    marginBottom: 6,
+    fontSize: 10,
+    color: '#5B35D5', // --sc-purple-600 (bold brand purple)
     fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: 2,
   },
-  contactRow: {
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  headerTagline: {
+    color: '#6B6B78', // --sc-gray-500
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.5,
+  },
+  mainLayout: {
     flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
+    gap: 24,
+    flex: 1,
+    zIndex: 10,
   },
-  contactText: {
-    fontSize: 8.5,
-    color: '#6B6B78', // text-secondary
+  leftColumn: {
+    width: '62%',
+    flexDirection: 'column',
   },
-  socialLink: {
-    fontSize: 8.5,
-    color: '#5B35D5',
-    textDecoration: 'none',
+  rightColumn: {
+    width: '38%',
+    flexDirection: 'column',
+    borderLeftWidth: 1,
+    borderLeftColor: '#E8E8ED', // --sc-gray-150 (clean subtle separator)
+    paddingLeft: 16,
   },
   section: {
-    paddingHorizontal: 32,
-    marginTop: 16,
+    marginBottom: 16,
   },
   sectionHeading: {
     fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
-    color: '#5B35D5',
+    color: '#141417', // --sc-gray-900 (crisp modern text)
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginBottom: 6,
+    marginBottom: 8,
     paddingBottom: 3,
     borderBottomWidth: 1,
-    borderBottomColor: '#EAE6FD', // sc-purple-100
+    borderBottomColor: '#EAE6FD', // --sc-purple-100 (subtle section underline)
   },
   bodyText: {
-    fontSize: 9,
-    color: '#2D2D35', // text-body
+    fontSize: 8.5,
+    color: '#2D2D35', // --sc-gray-700
     lineHeight: 1.45,
   },
-  secondaryText: {
+  contactItem: {
+    marginBottom: 8,
+  },
+  contactLabel: {
+    fontSize: 7.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#6B6B78', // --sc-gray-500
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  contactValue: {
     fontSize: 8.5,
-    color: '#6B6B78',
+    color: '#2D2D35', // --sc-gray-700
+  },
+  contactLink: {
+    fontSize: 8.5,
+    color: '#5B35D5', // --sc-purple-600
+    textDecoration: 'none',
   },
   jobContainer: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 1,
+    alignItems: 'baseline',
+    marginBottom: 2,
   },
   jobCompany: {
     fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     color: '#141417',
   },
+  jobDate: {
+    fontSize: 8,
+    color: '#6B6B78',
+  },
   jobTitle: {
-    fontSize: 9,
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Oblique',
     color: '#5B35D5',
-    marginBottom: 3,
+    marginBottom: 4,
   },
   bulletRow: {
     flexDirection: 'row',
-    marginBottom: 2,
-    paddingLeft: 6,
+    marginBottom: 3,
+    paddingLeft: 4,
   },
   bulletPoint: {
-    fontSize: 8.5,
-    color: '#6B6B78',
+    fontSize: 8,
+    color: '#5B35D5',
     marginRight: 4,
+    marginTop: 1,
   },
   bulletText: {
-    fontSize: 8.8,
+    fontSize: 8.2,
     color: '#2D2D35',
     flex: 1,
-    lineHeight: 1.4,
+    lineHeight: 1.35,
   },
   skillsWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 5,
+    gap: 4,
+    marginTop: 2,
   },
   skillChip: {
-    backgroundColor: '#F5F3FF', // sc-purple-50
+    backgroundColor: '#F5F3FF', // --sc-purple-50
     borderWidth: 1,
-    borderColor: '#D4CCF8', // sc-purple-200
-    borderRadius: 3,
+    borderColor: '#EAE6FD', // --sc-purple-100
+    borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   skillText: {
-    fontSize: 8,
-    color: '#4A28C9',
+    fontSize: 7.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#4A28C9', // --sc-purple-700
   },
-  interviewBadge: {
-    backgroundColor: '#F5F3FF',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#D4CCF8',
-    padding: 10,
+  projectContainer: {
+    marginBottom: 10,
   },
-  interviewHeader: {
+  projectHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 2,
+  },
+  projectName: {
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#141417',
+  },
+  projectDescription: {
+    fontSize: 8.2,
+    color: '#2D2D35',
+    lineHeight: 1.4,
+    marginBottom: 4,
+  },
+  eduContainer: {
+    marginBottom: 10,
+  },
+  eduInstitution: {
     fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
-    color: '#4A28C9',
+    color: '#141417',
+  },
+  eduDegree: {
+    fontSize: 8,
+    color: '#2D2D35',
+  },
+  eduDate: {
+    fontSize: 7.5,
+    color: '#6B6B78',
+    marginTop: 2,
+  },
+  interviewCard: {
+    backgroundColor: '#F5F3FF', // --sc-purple-50
+    borderWidth: 1,
+    borderColor: '#D4CCF8', // --sc-purple-200
+    borderRadius: 6,
+    padding: 8,
+    marginTop: 2,
+  },
+  interviewTitle: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: '#4A28C9', // --sc-purple-700
     marginBottom: 3,
+  },
+  interviewScore: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#141417',
+    marginBottom: 2,
   },
   badgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 4,
+    marginTop: 2,
   },
   badgeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F3FF',
+    backgroundColor: '#F0FDF4', // bg-badge-success tint
     borderWidth: 1,
-    borderColor: '#D4CCF8',
+    borderColor: '#DCFCE7', // bg-badge-success border
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   badgeText: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
-    color: '#4A28C9',
+    color: '#15803D', // text-badge-success dark green
   },
   footer: {
     position: 'absolute',
     bottom: 14,
-    left: 32,
-    right: 32,
+    left: 36,
+    right: 36,
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: '#E8E8ED',
     paddingTop: 6,
+    zIndex: 10,
   },
   footerText: {
-    fontSize: 7.5,
+    fontSize: 7,
     color: '#909099',
   },
 });
@@ -275,7 +336,6 @@ interface SkilledCoreResumeTemplateProps {
 
 export function SkilledCoreResumeTemplate({ data }: SkilledCoreResumeTemplateProps) {
   const logoSrc = getLogoPath();
-  const bgrSrc = getBgrPath();
 
   return (
     <Document>
@@ -283,165 +343,204 @@ export function SkilledCoreResumeTemplate({ data }: SkilledCoreResumeTemplatePro
         {/* Subtle Watermark on background */}
         <Image src={logoSrc} style={styles.watermark} />
 
-        {/* Top Header Banner */}
-        <View style={styles.headerBanner}>
-          <Image src={bgrSrc} style={styles.logoImage} />
-          <Text style={styles.headerTagline}>skilledcore.com</Text>
-        </View>
-
-        {/* Contact Info Header */}
-        <View style={styles.contactArea}>
-          {data.phone ? null : null} {/* placeholder logic */}
-          <View style={styles.basicsContainer}>
-            <Text style={styles.candidateName}>{data.name}</Text>
-            <Text style={styles.candidateHeadline}>{data.headline}</Text>
-
-            <View style={styles.contactRow}>
-              {data.location && (
-                <Text style={styles.contactText}>📍 {data.location}</Text>
-              )}
-              {data.email && (
-                <Text style={styles.contactText}>✉ {data.email}</Text>
-              )}
-              {data.phone && (
-                <Text style={styles.contactText}>📞 {data.phone}</Text>
-              )}
-              {data.socials?.map((social, index) => (
-                <Link key={index} src={social.url} style={styles.socialLink}>
-                  {social.label}
-                </Link>
-              ))}
+        {/* Modern High-Contrast Header (Logo Next to Name) */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerLeft}>
+            <Image src={logoSrc} style={styles.headerLogo} />
+            <View style={styles.headerTitleArea}>
+              <Text style={styles.candidateName}>{data.name}</Text>
+              <Text style={styles.candidateHeadline}>{data.headline}</Text>
             </View>
           </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTagline}>skilledcore.com</Text>
+          </View>
         </View>
 
-        {/* 1. Summary Section */}
-        {data.summary && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Professional Summary</Text>
-            <Text style={styles.bodyText}>{data.summary}</Text>
-          </View>
-        )}
+        {/* Asymmetrical Two-Column Main Layout */}
+        <View style={styles.mainLayout}>
+          
+          {/* Left Column (62% width): Experience, Summary, Projects */}
+          <View style={styles.leftColumn}>
+            
+            {/* 1. Summary */}
+            {data.summary && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Professional Summary</Text>
+                <Text style={styles.bodyText}>{data.summary}</Text>
+              </View>
+            )}
 
-        {/* 2. Experience Section */}
-        {data.experience && data.experience.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Experience</Text>
-            {data.experience.map((job, index) => (
-              <View key={index} style={styles.jobContainer}>
-                <View style={styles.jobHeader}>
-                  <Text style={styles.jobCompany}>{job.company}</Text>
-                  <Text style={styles.secondaryText}>
-                    {job.startDate} – {job.endDate}
-                  </Text>
-                </View>
-                <Text style={styles.jobTitle}>
-                  {job.title}
-                  {job.location ? ` · ${job.location}` : ''}
-                </Text>
-                {job.bullets?.map((bullet, bulletIndex) => (
-                  <View key={bulletIndex} style={styles.bulletRow}>
-                    <Text style={styles.bulletPoint}>•</Text>
-                    <Text style={styles.bulletText}>{bullet}</Text>
+            {/* 2. Experience */}
+            {data.experience && data.experience.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Experience</Text>
+                {data.experience.map((job, index) => (
+                  <View key={index} style={styles.jobContainer}>
+                    <View style={styles.jobHeader}>
+                      <Text style={styles.jobCompany}>{job.company}</Text>
+                      <Text style={styles.jobDate}>
+                        {job.startDate} – {job.endDate}
+                      </Text>
+                    </View>
+                    <Text style={styles.jobTitle}>
+                      {job.title}
+                      {job.location ? ` · ${job.location}` : ''}
+                    </Text>
+                    {job.bullets?.map((bullet, bulletIndex) => (
+                      <View key={bulletIndex} style={styles.bulletRow}>
+                        <Text style={styles.bulletPoint}>•</Text>
+                        <Text style={styles.bulletText}>{bullet}</Text>
+                      </View>
+                    ))}
                   </View>
                 ))}
               </View>
-            ))}
-          </View>
-        )}
+            )}
 
-        {/* 3. Skills Section */}
-        {data.skills && data.skills.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Skills</Text>
-            <View style={styles.skillsWrapper}>
-              {data.skills.map((skill, index) => (
-                <View key={index} style={styles.skillChip}>
-                  <Text style={styles.skillText}>{skill}</Text>
+            {/* 3. Projects */}
+            {data.projects && data.projects.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Projects</Text>
+                {data.projects.map((project, index) => (
+                  <View key={index} style={styles.projectContainer}>
+                    <View style={styles.projectHeader}>
+                      <Text style={styles.jobCompany}>{project.name}</Text>
+                      {project.url && (
+                        <Link src={project.url} style={styles.contactLink}>
+                          Link
+                        </Link>
+                      )}
+                    </View>
+                    <Text style={styles.projectDescription}>
+                      {project.description}
+                    </Text>
+                    <View style={styles.skillsWrapper}>
+                      {project.technologies?.map((tech, techIndex) => (
+                        <View key={techIndex} style={styles.skillChip}>
+                          <Text style={styles.skillText}>{tech}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+          </View>
+
+          {/* Right Column (38% width): Contact, Skills, Education, AI Credentials */}
+          <View style={styles.rightColumn}>
+            
+            {/* 1. Contact Information */}
+            <View style={styles.section}>
+              <Text style={styles.sectionHeading}>Contact Details</Text>
+              
+              {data.location && (
+                <View style={styles.contactItem}>
+                  <Text style={styles.contactLabel}>Location</Text>
+                  <Text style={styles.contactValue}>{data.location}</Text>
                 </View>
-              ))}
+              )}
+              
+              {data.email && (
+                <View style={styles.contactItem}>
+                  <Text style={styles.contactLabel}>Email</Text>
+                  <Text style={styles.contactValue}>{data.email}</Text>
+                </View>
+              )}
+              
+              {data.phone && (
+                <View style={styles.contactItem}>
+                  <Text style={styles.contactLabel}>Phone</Text>
+                  <Text style={styles.contactValue}>{data.phone}</Text>
+                </View>
+              )}
+
+              {data.socials && data.socials.length > 0 && (
+                <View style={styles.contactItem}>
+                  <Text style={styles.contactLabel}>Social Networks</Text>
+                  {data.socials.map((social, index) => (
+                    <View key={index} style={{ marginBottom: 3 }}>
+                      <Link src={social.url} style={styles.contactLink}>
+                        {social.label}
+                      </Link>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-          </View>
-        )}
 
-        {/* 4. Projects Section */}
-        {data.projects && data.projects.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Projects</Text>
-            {data.projects.map((project, index) => (
-              <View key={index} style={{ marginBottom: 8 }}>
-                <View style={styles.jobHeader}>
-                  <Text style={styles.jobCompany}>{project.name}</Text>
-                  {project.url && (
-                    <Link src={project.url} style={styles.socialLink}>
-                      Link
-                    </Link>
-                  )}
-                </View>
-                <Text style={{ ...styles.bodyText, marginBottom: 3 }}>
-                  {project.description}
-                </Text>
+            {/* 2. Skills */}
+            {data.skills && data.skills.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Skills</Text>
                 <View style={styles.skillsWrapper}>
-                  {project.technologies?.map((tech, techIndex) => (
-                    <View key={techIndex} style={styles.skillChip}>
-                      <Text style={styles.skillText}>{tech}</Text>
+                  {data.skills.map((skill, index) => (
+                    <View key={index} style={styles.skillChip}>
+                      <Text style={styles.skillText}>{skill}</Text>
                     </View>
                   ))}
                 </View>
               </View>
-            ))}
-          </View>
-        )}
+            )}
 
-        {/* 5. Education Section */}
-        {data.education && data.education.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Education</Text>
-            {data.education.map((edu, index) => (
-              <View key={index} style={{ marginBottom: 6 }}>
-                <View style={styles.jobHeader}>
-                  <Text style={styles.jobCompany}>{edu.institution}</Text>
-                  <Text style={styles.secondaryText}>
-                    {edu.startYear} – {edu.endYear}
+            {/* 3. Education */}
+            {data.education && data.education.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Education</Text>
+                {data.education.map((edu, index) => (
+                  <View key={index} style={styles.eduContainer}>
+                    <Text style={styles.eduInstitution}>{edu.institution}</Text>
+                    <Text style={styles.eduDegree}>
+                      {edu.degree}
+                      {edu.honors ? ` · ${edu.honors}` : ''}
+                    </Text>
+                    <Text style={styles.eduDate}>
+                      {edu.startYear} – {edu.endYear}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* 4. AI Assessment (Vetted Score Card) */}
+            {data.aiInterviewScore && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>AI Assessment</Text>
+                <View style={styles.interviewCard}>
+                  <Text style={styles.interviewTitle}>
+                    ✓ SKILLEDCORE VERIFIED
+                  </Text>
+                  <Text style={styles.interviewScore}>
+                    Score: {data.aiInterviewScore}
+                  </Text>
+                  <Text style={{ ...styles.bodyText, fontSize: 7.5, color: '#6B6B78' }}>
+                    Verified by technical challenge and live system assessment.
                   </Text>
                 </View>
-                <Text style={styles.bodyText}>
-                  {edu.degree}
-                  {edu.honors ? ` · ${edu.honors}` : ''}
-                </Text>
               </View>
-            ))}
-          </View>
-        )}
+            )}
 
-        {/* 6. AI Interview Score */}
-        {data.aiInterviewScore && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>AI Interview Assessment</Text>
-            <View style={styles.interviewBadge}>
-              <Text style={styles.interviewHeader}>
-                ✓ Verified by SkilledCore AI Interview
-              </Text>
-              <Text style={styles.bodyText}>{data.aiInterviewScore}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* 7. Verified Badges */}
-        {data.verifiedBadges && data.verifiedBadges.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Verified Credentials</Text>
-            <View style={styles.badgeContainer}>
-              {data.verifiedBadges.map((badge, index) => (
-                <View key={index} style={styles.badgeChip}>
-                  <Text style={styles.badgeText}>🛡 {badge}</Text>
+            {/* 5. Verified Credentials (Security Badges) */}
+            {data.verifiedBadges && data.verifiedBadges.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionHeading}>Credentials</Text>
+                <View style={styles.badgeContainer}>
+                  {data.verifiedBadges.map((badge, index) => (
+                    <View key={index} style={styles.badgeChip}>
+                      <Text style={styles.badgeText}>🛡 {badge}</Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
+              </View>
+            )}
 
-        {/* Page Footer */}
+          </View>
+
+        </View>
+
+        {/* Modern Sticky Page Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
             Generated via SkilledCore · skilledcore.com

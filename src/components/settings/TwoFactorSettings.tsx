@@ -760,9 +760,10 @@ export default function TwoFactorSettings({
                     Cancel
                   </Button>
                   <Button
+                    variant="destructive"
                     disabled={!disablePasswordInput || disableTokenInput.length !== 6 || isDisabling}
                     onClick={handleDisable2FA}
-                    className="flex-1 bg-sc-red-650 hover:bg-sc-red-700 text-white text-xs font-bold"
+                    className="flex-1 text-xs font-bold"
                   >
                     {isDisabling ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Deactivate 2FA

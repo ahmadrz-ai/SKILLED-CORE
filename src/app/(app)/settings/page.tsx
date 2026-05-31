@@ -1027,8 +1027,9 @@ export default function SettingsPage() {
 
           <Button
             type="submit"
+            variant="destructive"
             disabled={deleteConfirmText !== 'DELETE' || !deletePassword || isDeleting}
-            className="w-full bg-sc-red-650 hover:bg-sc-red-700 text-white font-bold h-10 rounded-lg shadow-sm transition-all"
+            className="w-full font-bold h-10 rounded-lg shadow-sm transition-all"
           >
             {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Permanently Terminate Account

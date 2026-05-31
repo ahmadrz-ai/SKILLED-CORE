@@ -91,7 +91,7 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
         }
         const rawProfile = result.data;
 
-        // 2. Feed to Llama-4 Maverick route
+        // 2. Feed to SkilledCore AI generation route
         const response = await fetch('/api/resume-export/generate', {
           method: 'POST',
           headers: {
@@ -128,7 +128,7 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
 
   if (isGenerating) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay backdrop-blur-md">
         <div className="bg-bg-modal border border-border-modal rounded-2xl p-8 max-w-md w-full flex flex-col items-center justify-center gap-5 shadow-modal text-center animate-in fade-in zoom-in-95 duration-200">
           <div className="w-16 h-16 rounded-full bg-sc-purple-50 flex items-center justify-center animate-pulse">
             <Sparkles className="w-8 h-8 text-sc-purple-600" />
@@ -136,7 +136,7 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-text-heading">Generating your resume...</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Llama-4 AI is parsing and optimizing your profile data. This takes 10–15 seconds.
+              SkilledCore AI is parsing and optimizing your profile data. This takes 10–15 seconds.
             </p>
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-bg-modal border border-border-modal rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-modal animate-in zoom-in-95 duration-200">
         
         {/* Modal Sticky Header */}

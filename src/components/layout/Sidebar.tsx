@@ -180,7 +180,7 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
               {!isCollapsed && (
                 <>
                   {(item.label === "Network" || item.label === "Messages" || item.label === "Notifications") && !!badgeValue && (
-                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-red-650 px-1 text-[9px] font-bold text-white leading-none">
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sc-red-600 px-1 text-[9px] font-bold text-white leading-none">
                       {badgeValue}
                     </span>
                   )}
