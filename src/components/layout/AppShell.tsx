@@ -188,7 +188,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         />
 
         {/* Main Page Area: Padding top 56px (pt-14) to sit nicely under topbar */}
-        <main className="flex-1 px-4 pb-4 pt-14 lg:px-6 lg:pb-6 overflow-x-clip">
+        <main className="w-full min-h-screen pt-14 overflow-x-clip">
           {children}
         </main>
       </div>
