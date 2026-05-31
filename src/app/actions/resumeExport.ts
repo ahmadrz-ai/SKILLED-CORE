@@ -4,14 +4,15 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 export interface ResumeData {
-  name: string | null;
-  email: string | null;
-  bio: string | null;
-  headline: string | null;
-  location: string | null;
-  image: string | null;
-  customLinks: string | null;
-  skills: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  bio: string;
+  headline: string;
+  location: string;
+  image: string;
+  customLinks: string;
+  skills: string;
   experience: {
     id: string;
     position: string;
@@ -46,78 +47,87 @@ export interface ResumeData {
     id: string;
     score: number;
     status: string;
-    assessment: {
-      title: string;
-    };
+    title: string;
   }[];
 }
 
-export async function getProfileForResume(): Promise<ResumeData> {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error('Not authenticated');
+export async function getProfileForResume(): Promise<{ success: boolean; data?: ResumeData; error?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Not authenticated' };
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      experience: { orderBy: { createdAt: 'desc' } },
-      education: { orderBy: { createdAt: 'desc' } },
-      projects: { orderBy: { createdAt: 'desc' } },
-      interviews: { orderBy: { createdAt: 'desc' }, take: 1 },
-      assessments: {
-        where: { status: 'PASSED' },
-        include: { assessment: true },
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        experience: { orderBy: { createdAt: 'desc' } },
+        education: { orderBy: { createdAt: 'desc' } },
+        projects: { orderBy: { createdAt: 'desc' } },
+        interviews: { orderBy: { createdAt: 'desc' }, take: 1 },
+        assessments: {
+          where: { status: 'PASSED' },
+          include: { assessment: true },
+        },
       },
-    },
-  });
+    });
 
-  if (!user) throw new Error('User not found');
+    if (!user) {
+      return { success: false, error: 'User profile not found' };
+    }
 
-  return {
-    name: user.name,
-    email: user.email,
-    bio: user.bio,
-    headline: user.headline,
-    location: user.location,
-    image: user.image,
-    customLinks: user.customLinks,
-    skills: user.skills,
-    experience: user.experience.map(exp => ({
-      id: exp.id,
-      position: exp.position,
-      company: exp.company,
-      startDate: exp.startDate,
-      endDate: exp.endDate,
-      description: exp.description
-    })),
-    education: user.education.map(edu => ({
-      id: edu.id,
-      school: edu.school,
-      degree: edu.degree,
-      fieldOfStudy: edu.fieldOfStudy,
-      startDate: edu.startDate,
-      endDate: edu.endDate,
-      description: edu.description
-    })),
-    projects: user.projects.map(proj => ({
-      id: proj.id,
-      title: proj.title,
-      description: proj.description,
-      link: proj.link,
-      imageUrl: proj.imageUrl
-    })),
-    interviews: user.interviews.map(intv => ({
-      id: intv.id,
-      role: intv.role,
-      score: intv.score,
-      feedback: intv.feedback
-    })),
-    assessments: user.assessments.map(asmt => ({
-      id: asmt.id,
-      score: asmt.score,
-      status: asmt.status,
-      assessment: {
-        title: asmt.assessment.title
+    return {
+      success: true,
+      data: {
+        name: user.name ?? '',
+        email: user.email ?? '',
+        phone: '', // schema does not contain phone
+        bio: user.bio ?? '',
+        headline: user.headline ?? '',
+        location: user.location ?? '',
+        image: user.image ?? '',
+        customLinks: user.customLinks ?? '',
+        skills: user.skills ?? '',
+        experience: (user.experience ?? []).map(exp => ({
+          id: exp.id,
+          position: exp.position ?? '',
+          company: exp.company ?? '',
+          startDate: exp.startDate ?? '',
+          endDate: exp.endDate ?? null,
+          description: exp.description ?? null
+        })),
+        education: (user.education ?? []).map(edu => ({
+          id: edu.id,
+          school: edu.school ?? '',
+          degree: edu.degree ?? '',
+          fieldOfStudy: edu.fieldOfStudy ?? null,
+          startDate: edu.startDate ?? null,
+          endDate: edu.endDate ?? null,
+          description: edu.description ?? null
+        })),
+        projects: (user.projects ?? []).map(proj => ({
+          id: proj.id,
+          title: proj.title ?? '',
+          description: proj.description ?? null,
+          link: proj.link ?? null,
+          imageUrl: proj.imageUrl ?? null
+        })),
+        interviews: (user.interviews ?? []).map(intv => ({
+          id: intv.id,
+          role: intv.role ?? '',
+          score: intv.score ?? 0,
+          feedback: intv.feedback ?? null
+        })),
+        assessments: (user.assessments ?? []).map(asmt => ({
+          id: asmt.id,
+          score: asmt.score ?? 0,
+          status: asmt.status ?? 'PENDING',
+          title: asmt.assessment?.title ?? 'Assessment'
+        })),
       }
-    })),
-  };
+    };
+  } catch (err: any) {
+    console.error('[resumeExport] getProfileForResume failed:', err);
+    return { success: false, error: 'Failed to generate professional resume content. Please try again.' };
+  }
 }

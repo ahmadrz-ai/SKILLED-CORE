@@ -85,7 +85,11 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
       try {
         setIsGenerating(true);
         // 1. Fetch raw profile data
-        const rawProfile = await getProfileForResume();
+        const result = await getProfileForResume();
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Failed to fetch profile details');
+        }
+        const rawProfile = result.data;
 
         // 2. Feed to Llama-4 Maverick route
         const response = await fetch('/api/resume-export/generate', {

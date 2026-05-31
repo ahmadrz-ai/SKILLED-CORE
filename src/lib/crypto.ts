@@ -1,58 +1,60 @@
-import crypto from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 
-const ENCRYPTION_KEY = process.env.TWO_FACTOR_ENCRYPTION_KEY || "";
+// Never run any validation at module level
+// All validation happens inside functions
+
+function getKey(): Buffer | null {
+  const key = process.env.TWO_FACTOR_ENCRYPTION_KEY
+  if (!key || key.length < 64) return null
+  return Buffer.from(key, 'hex')
+}
 
 export function encrypt(text: string): string {
-    if (!ENCRYPTION_KEY) {
-        throw new Error("TWO_FACTOR_ENCRYPTION_KEY is not set in environment variables.");
-    }
-    let key: Buffer;
-    if (ENCRYPTION_KEY.length === 64) {
-        key = Buffer.from(ENCRYPTION_KEY, 'hex');
-    } else {
-        key = Buffer.alloc(32);
-        Buffer.from(ENCRYPTION_KEY, 'utf-8').copy(key);
-    }
+  const key = getKey()
+  if (!key) {
+    // Log the issue but do not throw — return a safe error marker
+    console.error('[crypto] TWO_FACTOR_ENCRYPTION_KEY not set or invalid')
+    throw new Error('Encryption key not configured. Contact administrator.')
+    // Note: this throws inside the server action which has its own try/catch
+    // It does NOT crash the module or the page
+  }
 
-    const iv = crypto.randomBytes(12); // 12-byte IV for GCM
-    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-    
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    const authTag = cipher.getAuthTag().toString('hex');
-    
-    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', key, iv)
+  const encrypted = Buffer.concat([
+    cipher.update(text, 'utf8'),
+    cipher.final()
+  ])
+  const authTag = cipher.getAuthTag()
+
+  return [
+    iv.toString('hex'),
+    authTag.toString('hex'),
+    encrypted.toString('hex')
+  ].join(':')
 }
 
 export function decrypt(encryptedText: string): string {
-    if (!ENCRYPTION_KEY) {
-        throw new Error("TWO_FACTOR_ENCRYPTION_KEY is not set in environment variables.");
-    }
-    const parts = encryptedText.split(':');
-    if (parts.length !== 3) {
-        throw new Error('Invalid encrypted text format');
-    }
-    
-    const [ivHex, authTagHex, encryptedHex] = parts;
-    
-    let key: Buffer;
-    if (ENCRYPTION_KEY.length === 64) {
-        key = Buffer.from(ENCRYPTION_KEY, 'hex');
-    } else {
-        key = Buffer.alloc(32);
-        Buffer.from(ENCRYPTION_KEY, 'utf-8').copy(key);
-    }
-    
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    const encrypted = Buffer.from(encryptedHex, 'hex');
-    
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-    decipher.setAuthTag(authTag);
-    
-    let decrypted = decipher.update(encrypted, undefined, 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
+  const key = getKey()
+  if (!key) {
+    console.error('[crypto] TWO_FACTOR_ENCRYPTION_KEY not set or invalid')
+    throw new Error('Decryption key not configured.')
+  }
+
+  const [ivHex, authTagHex, dataHex] = encryptedText.split(':')
+  if (!ivHex || !authTagHex || !dataHex) {
+    throw new Error('Invalid encrypted text format.')
+  }
+
+  const iv = Buffer.from(ivHex, 'hex')
+  const authTag = Buffer.from(authTagHex, 'hex')
+  const encrypted = Buffer.from(dataHex, 'hex')
+
+  const decipher = createDecipheriv('aes-256-gcm', key, iv)
+  decipher.setAuthTag(authTag)
+
+  return Buffer.concat([
+    decipher.update(encrypted),
+    decipher.final()
+  ]).toString('utf8')
 }

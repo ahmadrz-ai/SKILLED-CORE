@@ -20,12 +20,11 @@ const nextAuth = NextAuth({
     ...authConfig,
     adapter: PrismaAdapter(prisma) as any,
     session: { strategy: "jwt" },
-    debug: false, // Enable debug logs
-    trustHost: true, // Fix for localhost configuration error
+    debug: false,
+    trustHost: true,
     callbacks: {
         ...authConfig.callbacks,
         async signIn({ user, account }) {
-            // Check if user is registering/logging in via OAuth
             if (account?.provider === 'google' || account?.provider === 'github') {
                 try {
                     const { cookies } = await import("next/headers");
@@ -47,9 +46,7 @@ const nextAuth = NextAuth({
                         return "/register?error=RecruiterEmailDomainRequired";
                     }
 
-                    // Assign role if registering a new OAuth user
                     if (signupRole) {
-                        // @ts-ignore
                         user.role = signupRole.toUpperCase();
                     }
                 } catch (err) {
@@ -59,155 +56,41 @@ const nextAuth = NextAuth({
             return true;
         },
         async jwt({ token, user, trigger, session }) {
+            // On sign-in: attach user data to token
             if (user) {
                 token.id = user.id;
-                // @ts-ignore
                 token.role = user.role;
-
-                // Create database session record for auditing and revocation
-                try {
-                    const crypto = await import("crypto");
-                    const sessionToken = crypto.randomUUID();
-                    const { headers } = await import("next/headers");
-                    const headersList = await headers();
-                    const userAgent = headersList.get("user-agent") || "";
-                    const xForwardedFor = headersList.get("x-forwarded-for");
-                    const xRealIp = headersList.get("x-real-ip");
-                    const ip = xForwardedFor?.split(",")[0]?.trim() || xRealIp || "127.0.0.1";
-
-                    let location: string | null = null;
-                    try {
-                        // @ts-ignore
-                        const geoip = (await import("geoip-lite")).default;
-                        if (geoip && ip !== "127.0.0.1" && ip !== "::1" && !ip.startsWith("10.") && !ip.startsWith("192.168.")) {
-                            const geo = geoip.lookup(ip);
-                            if (geo) {
-                                const parts = [];
-                                if (geo.city) parts.push(geo.city);
-                                if (geo.region) parts.push(geo.region);
-                                if (geo.country) parts.push(geo.country);
-                                location = parts.join(", ") || null;
-                            }
-                        }
-                    } catch (_geoErr) {
-                        // geoip is optional
-                    }
-
-                    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-                    // Use safe Prisma client with structural fallback for maximum robustness
-                    try {
-                        await prisma.session.create({
-                            data: {
-                                id: crypto.randomUUID(),
-                                sessionToken,
-                                userId: user.id,
-                                expires,
-                                userAgent,
-                                ipAddress: ip,
-                                location
-                            }
-                        });
-                    } catch (dbErr: any) {
-                        console.warn("Session table insert failed, falling back to minimal session insert:", dbErr?.message);
-                        try {
-                            await prisma.session.create({
-                                data: {
-                                    id: crypto.randomUUID(),
-                                    sessionToken,
-                                    userId: user.id,
-                                    expires
-                                }
-                            });
-                        } catch (fallbackErr: any) {
-                            console.error("Prisma session minimal fallback failed:", fallbackErr?.message);
-                        }
-                    }
-
-                    token.sessionToken = sessionToken;
-                } catch (err) {
-                    console.error("Failed to register active DB session record in JWT callback:", err);
-                }
-
-                // Elevate superusers to ADMIN dynamically
-                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-                const userEmail = user.email || "";
-                if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
-                    // @ts-ignore
-                    token.role = "ADMIN";
-                }
-            } else if (token && token.sessionToken) {
-                // Subsequent calls: check if the session was revoked in the DB
-                try {
-                    const dbSession = await prisma.session.findUnique({
-                        where: { sessionToken: token.sessionToken as string },
-                        select: { id: true }
-                    });
-                    if (!dbSession) {
-                        return {}; // Revoked session token -> force client logout safely without library crash
-                    }
-                } catch (err) {
-                    // Fail-safe: don't block auth if the DB connection times out
+                token.plan = user.plan;
+                token.username = user.username;
+                token.isVerified = user.isVerified;
+                token.twoFactorEnabled = user.twoFactorEnabled;
+                // 2FA pending state
+                if (user.twoFactorEnabled) {
+                    token.twoFactorPending = true;
                 }
             }
 
-            if (trigger === "update" && session) {
-                token = { ...token, ...session.user };
+            // On session update trigger
+            if (trigger === 'update' && session) {
+                return { ...token, ...session };
             }
+
             return token;
         },
         async session({ session, token }) {
-            if (!token) return session; // Guard against null token to prevent unhandled TypeErrors
-            const userId = (token.id || token.sub) as string;
-            if (session.user && userId) {
-                session.user.id = userId;
-                // @ts-ignore
-                session.user.sessionToken = token.sessionToken as string;
+            // Defensive check — if no token, return session as-is
+            if (!token) return session;
 
-                // Elevate superusers to ADMIN dynamically
-                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-                const userEmail = session.user.email || "";
-
-                if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
-                    // @ts-ignore
-                    session.user.role = "ADMIN";
-                }
-
-                // Fetch fresh role from DB to handle external updates
-                try {
-                    const freshUser = await prisma.user.findUnique({
-                        where: { id: userId },
-                        select: { role: true, name: true, image: true, username: true, credits: true, email: true }
-                    });
-
-                    const activeEmail = freshUser?.email || userEmail;
-                    if (activeEmail && cleanEmails.includes(activeEmail.toLowerCase().trim())) {
-                        // @ts-ignore
-                        session.user.role = "ADMIN";
-                    } else {
-                        // @ts-ignore
-                        session.user.role = freshUser?.role || token.role;
-                    }
-
-                    if (freshUser?.name) session.user.name = freshUser.name;
-                    if (freshUser?.image) session.user.image = freshUser.image;
-                    // @ts-ignore
-                    if (freshUser?.username) session.user.username = freshUser.username;
-                    // @ts-ignore
-                    if (freshUser?.credits !== undefined) session.user.credits = freshUser.credits;
-                } catch (error: any) {
-                    const msg = error?.message || "Unknown error";
-                    console.warn("Session Sync WARN:", msg);
-
-                    if (userEmail && cleanEmails.includes(userEmail.toLowerCase().trim())) {
-                        // @ts-ignore
-                        session.user.role = "ADMIN";
-                    } else {
-                        // @ts-ignore
-                        session.user.role = token.role;
-                    }
-                }
+            if (session.user) {
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
+                session.user.plan = token.plan as string;
+                session.user.username = token.username as string;
+                session.user.isVerified = token.isVerified as boolean;
+                session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
+                session.user.twoFactorPending = token.twoFactorPending as boolean;
             }
+
             return session;
         }
     },
@@ -271,10 +154,8 @@ const nextAuth = NextAuth({
         },
         async createUser({ user }) {
             try {
-                // Type assertion for user that may have username
-                const dbUser = user as typeof user & { username?: string | null };
-                if (!dbUser.username && dbUser.email) {
-                    const baseName = dbUser.email.split('@')[0];
+                if (!user.username && user.email) {
+                    const baseName = user.email.split('@')[0];
                     let uniqueName = baseName;
                     let counter = 1;
 
@@ -298,13 +179,13 @@ const nextAuth = NextAuth({
                     }
 
                     await prisma.user.update({
-                        where: { id: dbUser.id },
+                        where: { id: user.id },
                         data: { 
                             username: uniqueName,
                             role: roleToSave
                         }
                     });
-                    console.log(`[OAuth Registration] Created user: ${dbUser.email} with username: ${uniqueName} and role: ${roleToSave}`);
+                    console.log(`[OAuth Registration] Created user: ${user.email} with username: ${uniqueName} and role: ${roleToSave}`);
                 }
             } catch (err) {
                 console.error("Failed inside createUser event callback:", err);
@@ -316,147 +197,49 @@ const nextAuth = NextAuth({
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" },
-                otp: { label: "OTP", type: "text" }
+                password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                if (!credentials?.email) return null;
-
-                const identifier = credentials.email as string;
-                const cleanEmail = identifier.toLowerCase().trim();
-
-                // --- OTP LOGIN FLOW ---
-                if (credentials.otp) {
-                    const otp = credentials.otp as string;
-
-                    const token = await prisma.verificationToken.findFirst({
-                        where: {
-                            identifier: { equals: cleanEmail, mode: 'insensitive' },
-                            token: otp
-                        }
-                    });
-
-                    if (!token) {
-                        throw new Error("Invalid code");
-                    }
-
-                    if (new Date() > token.expires) {
-                        throw new Error("Code expired");
-                    }
-
-                    // Find User (Case-insensitive match on both email and username)
-                    const user = await prisma.user.findFirst({
-                        where: {
-                            OR: [
-                                { email: { equals: cleanEmail, mode: 'insensitive' } },
-                                { username: { equals: cleanEmail, mode: 'insensitive' } }
-                            ]
-                        }
-                    });
-
-                    if (!user) return null;
-
-                    // Verify User Email using their safe unique ID
-                    await prisma.user.update({
-                        where: { id: user.id },
-                        data: { emailVerified: new Date() },
-                    });
-
-                    // Consume Token using exact retrieved parameters
-                    await prisma.verificationToken.delete({
-                        where: {
-                            identifier_token: {
-                                identifier: token.identifier,
-                                token: token.token
-                            }
-                        }
-                    });
-
-                    return user;
-                }
-
-                // --- PASSWORD LOGIN FLOW ---
-                if (!credentials.password) return null;
+                if (!credentials?.email || !credentials?.password) return null;
 
                 try {
-                    const cleanEmail = identifier.toLowerCase().trim();
-                    const isMockSocial = cleanEmail.includes("mock-google") || cleanEmail.includes("mock-github");
+                    const email = credentials.email as string;
+                    const cleanEmail = email.toLowerCase().trim();
 
-                    let user = await prisma.user.findFirst({
-                        where: {
-                            OR: [
-                                { email: { equals: cleanEmail, mode: 'insensitive' } },
-                                { username: { equals: cleanEmail, mode: 'insensitive' } }
-                            ]
+                    const user = await prisma.user.findUnique({
+                        where: { email: cleanEmail },
+                        select: {
+                            id: true,
+                            email: true,
+                            name: true,
+                            password: true,
+                            role: true,
+                            plan: true,
+                            image: true,
+                            username: true,
+                            emailVerified: true,
+                            twoFactorEnabled: true,
                         }
                     });
 
-                    if (!user && isMockSocial) {
-                        // Create mock social user on the fly in development
-                        const provider = cleanEmail.includes("google") ? "Google" : "GitHub";
-                        const parsedRole = cleanEmail.includes("recruiter") ? "RECRUITER" : "CANDIDATE";
-                        const baseUsername = cleanEmail.split("@")[0].replace(/[^a-z0-9_]/g, "");
-                        
-                        // Ensure unique username
-                        let uniqueUsername = baseUsername;
-                        let counter = 1;
-                        while (await prisma.user.findUnique({ where: { username: uniqueUsername } })) {
-                            uniqueUsername = `${baseUsername}_${counter}`;
-                            counter++;
-                        }
+                    if (!user || !user.password) return null;
 
-                        const hashedPassword = await bcrypt.hash(credentials.password as string, 10);
-                        user = await prisma.user.create({
-                            data: {
-                                email: cleanEmail,
-                                name: `Mock ${provider} User`,
-                                username: uniqueUsername,
-                                password: hashedPassword,
-                                role: parsedRole,
-                                emailVerified: new Date(),
-                                credits: 100, // Give them plenty of credits
-                            }
-                        });
-                        console.log(`[DEV ONLY] Created mock social user: ${cleanEmail} with role: ${parsedRole}`);
-                    }
+                    const isValid = await bcrypt.compare(credentials.password as string, user.password);
+                    if (!isValid) return null;
 
-                    if (!user || !user.password) {
-                        return null;
-                    }
-
-                    // @ts-ignore
-                    const isValid = await bcrypt.compare(credentials.password, user.password);
-
-                    if (isValid) {
-                        try {
-                            // Update last login
-                            await prisma.user.update({
-                                where: { id: user.id },
-                                data: { lastLogin: new Date() }
-                            });
-                        } catch (err) {
-                            console.error("Failed to update lastLogin:", err);
-                            // Don't block login
-                        }
-                        return user;
-                    }
-                    return null;
-                } catch (e) {
-                    console.error("Authorize Error:", e);
-                    const errMessage = (e as any)?.message || "";
-                    const isDbConnectionError = errMessage.includes('Can\'t reach database server') || errMessage.includes('connect to database');
-
-                    if (process.env.NODE_ENV === 'development' && isDbConnectionError && (identifier.includes('test') || identifier.includes('mock'))) {
-                        console.warn("Using MOCK login success due to DB connection error for TEST user");
-                        return {
-                            id: 'mock-user-id-demo',
-                            name: 'Mock User',
-                            email: identifier.includes('@') ? identifier : `${identifier}@example.com`,
-                            role: 'CANDIDATE',
-                            image: null,
-                            username: identifier.includes('@') ? identifier.split('@')[0] : identifier
-                        };
-                    }
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                        plan: user.plan,
+                        image: user.image,
+                        username: user.username,
+                        isVerified: !!user.emailVerified,
+                        twoFactorEnabled: user.twoFactorEnabled,
+                    };
+                } catch (err) {
+                    console.error('[auth] authorize error:', err);
                     return null;
                 }
             }
