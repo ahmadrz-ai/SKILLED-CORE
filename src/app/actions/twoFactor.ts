@@ -292,7 +292,10 @@ export async function verifyPasswordLogin(
     return { success: true, twoFactorRequired: false };
   } catch (err: any) {
     console.error('[twoFactor] verifyPasswordLogin failed:', err);
-    return { success: false, error: 'Authentication service is temporarily unavailable.' };
+    return { 
+      success: false, 
+      error: `Debug Error: ${err?.message || err}. Stack: ${err?.stack || 'None'}` 
+    };
   }
 }
 
