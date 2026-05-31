@@ -9,7 +9,6 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
-import geoip from 'geoip-lite';
 
 // ACTION 1 — Generate setup data (secret + QR code)
 export async function generate2FASetup(): Promise<{
@@ -396,16 +395,20 @@ export async function logLoginEvent(userId: string, success: boolean) {
     const xRealIp = headersList.get('x-real-ip');
     const ip = xForwardedFor?.split(',')[0]?.trim() || xRealIp || '127.0.0.1';
 
+    // Vercel Geolocation headers
+    const city = headersList.get("x-vercel-ip-city");
+    const region = headersList.get("x-vercel-ip-country-region");
+    const country = headersList.get("x-vercel-ip-country");
+
     let location: string | null = null;
-    if (geoip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('10.') && !ip.startsWith('192.168.')) {
-      const geo = geoip.lookup(ip);
-      if (geo) {
-        const parts = [];
-        if (geo.city) parts.push(geo.city);
-        if (geo.region) parts.push(geo.region);
-        if (geo.country) parts.push(geo.country);
-        location = parts.join(', ');
-      }
+    if (city || country) {
+      const parts = [];
+      if (city) parts.push(city);
+      if (region) parts.push(region);
+      if (country) parts.push(country);
+      location = parts.join(", ");
+    } else if (ip === "127.0.0.1" || ip === "::1" || ip.startsWith("127.") || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+      location = "Localhost (Development)";
     }
 
     await prisma.loginEvent.create({

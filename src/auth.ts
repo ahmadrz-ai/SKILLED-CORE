@@ -207,8 +207,13 @@ const nextAuth = NextAuth({
                     const email = credentials.email as string;
                     const cleanEmail = email.toLowerCase().trim();
 
-                    const user = await prisma.user.findUnique({
-                        where: { email: cleanEmail },
+                    const user = await prisma.user.findFirst({
+                        where: {
+                            OR: [
+                                { email: { equals: cleanEmail, mode: 'insensitive' } },
+                                { username: { equals: cleanEmail, mode: 'insensitive' } }
+                            ]
+                        },
                         select: {
                             id: true,
                             email: true,
