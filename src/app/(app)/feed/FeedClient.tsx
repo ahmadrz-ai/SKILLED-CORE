@@ -205,10 +205,10 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
         : '??';
 
     return (
-        <div className="flex flex-row gap-6 items-start max-w-[1200px] mx-auto px-6 py-6">
+        <div className="flex flex-row gap-8 items-start max-w-[1380px] mx-auto px-4 lg:px-8 py-6">
 
-            {/* Left Column: Identity Card (Sticky) */}
-            <div className="hidden lg:block w-64 shrink-0 sticky top-[80px] self-start space-y-4">
+            {/* Left Column: Identity Card (Sticky & Scrollless) */}
+            <div className="hidden lg:block w-72 shrink-0 sticky top-20 self-start space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <ProfileSideWidget
                     user={{
                         id: user.id,
@@ -329,8 +329,8 @@ export default function FeedClient({ user, latestJobs, initialPosts, stats, tren
                 </div> */}
             </div>
 
-            {/* Right Column: Trending & Jobs */}
-            <div className="hidden lg:block w-80 shrink-0 sticky top-[80px] self-start flex flex-col gap-4">
+            {/* Right Column: Trending & Jobs (Sticky & Scrollless) */}
+            <div className="hidden lg:block w-[340px] shrink-0 sticky top-20 self-start flex flex-col gap-4 max-h-[calc(100vh-100px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <div className="space-y-4">
                     <TrendingWidget topics={trendingTopics} isFolded={isFolded} isCollapsed={scrollY > 150} />
                     <RecommendationsWidget isFolded={isFolded} isCollapsed={scrollY > 300} />

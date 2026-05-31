@@ -254,6 +254,13 @@ const nextAuth = NextAuth({
             clientId: googleId,
             clientSecret: googleSecret,
             allowDangerousEmailAccountLinking: true,
+            authorization: {
+                params: {
+                    prompt: "select_account",
+                    access_type: "offline",
+                    response_type: "code"
+                }
+            }
         })] : []),
         ...(process.env.AUTH_GITHUB_ID && !process.env.AUTH_GITHUB_ID.includes("placeholder") ? [GitHub({
             clientId: process.env.AUTH_GITHUB_ID,
