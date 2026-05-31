@@ -474,5 +474,10 @@ export const signIn = nextAuth.signIn;
 export const signOut = nextAuth.signOut;
 
 export async function auth() {
-    return (nextAuth.auth as any)();
+    try {
+        return await (nextAuth.auth as any)();
+    } catch (err) {
+        console.warn("auth() helper caught unhandled crash:", err);
+        return null;
+    }
 }
