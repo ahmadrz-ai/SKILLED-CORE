@@ -95,44 +95,39 @@ const nextAuth = NextAuth({
 
                     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-                    // Use raw SQL so this works whether or not Prisma client was compiled
-                    // with the new userAgent/ipAddress/location columns in its generated types.
+                    // Use safe Prisma client with structural fallback for maximum robustness
                     try {
-                        await prisma.$executeRaw`
-                            INSERT INTO "Session" ("id", "sessionToken", "userId", "expires", "userAgent", "ipAddress", "location")
-                            VALUES (
-                                ${crypto.randomUUID()},
-                                ${sessionToken},
-                                ${user.id},
-                                ${expires},
-                                ${userAgent},
-                                ${ip},
-                                ${location}
-                            )
-                            ON CONFLICT ("sessionToken") DO NOTHING
-                        `;
-                    } catch (rawErr: any) {
-                        // If the new columns don't exist yet, fall back to minimal insert
-                        if (String(rawErr?.message || '').includes('column') || String(rawErr?.message || '').includes('does not exist')) {
-                            await prisma.$executeRaw`
-                                INSERT INTO "Session" ("id", "sessionToken", "userId", "expires")
-                                VALUES (
-                                    ${crypto.randomUUID()},
-                                    ${sessionToken},
-                                    ${user.id},
-                                    ${expires}
-                                )
-                                ON CONFLICT ("sessionToken") DO NOTHING
-                            `;
+                        await prisma.session.create({
+                            data: {
+                                id: crypto.randomUUID(),
+                                sessionToken,
+                                userId: user.id,
+                                expires,
+                                userAgent,
+                                ipAddress: ip,
+                                location
+                            }
+                        });
+                    } catch (dbErr: any) {
+                        console.warn("Session table insert failed, falling back to minimal session insert:", dbErr?.message);
+                        try {
+                            await prisma.session.create({
+                                data: {
+                                    id: crypto.randomUUID(),
+                                    sessionToken,
+                                    userId: user.id,
+                                    expires
+                                }
+                            });
+                        } catch (fallbackErr: any) {
+                            console.error("Prisma session minimal fallback failed:", fallbackErr?.message);
                         }
-                        // Either way, don't block auth
                     }
 
                     token.sessionToken = sessionToken;
                 } catch (err) {
                     console.error("Failed to register active DB session record in JWT callback:", err);
                 }
-
 
                 // Elevate superusers to ADMIN dynamically
                 const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
@@ -162,8 +157,9 @@ const nextAuth = NextAuth({
             return token;
         },
         async session({ session, token }) {
-            if (session.user && token.sub) {
-                session.user.id = token.sub;
+            const userId = (token.id || token.sub) as string;
+            if (session.user && userId) {
+                session.user.id = userId;
                 // @ts-ignore
                 session.user.sessionToken = token.sessionToken as string;
 
@@ -179,7 +175,7 @@ const nextAuth = NextAuth({
                 // Fetch fresh role from DB to handle external updates
                 try {
                     const freshUser = await prisma.user.findUnique({
-                        where: { id: token.sub },
+                        where: { id: userId },
                         select: { role: true, name: true, image: true, username: true, credits: true, email: true }
                     });
 
