@@ -94,6 +94,7 @@ export default function InterviewPage() {
     const [sandboxCode, setSandboxCode] = useState<string>(getInitialSandboxCode(""));
     const [sandboxOutput, setSandboxOutput] = useState<string[]>([]);
     const [sessionCheated, setSessionCheated] = useState(false);
+    const [lastCodeRun, setLastCodeRun] = useState<{ code: string; output: string[]; timestamp: number } | null>(null);
 
     const [telemetry, setTelemetry] = useState<TelemetryData>({
         confidence: 50,
@@ -317,13 +318,14 @@ export default function InterviewPage() {
                             onTelemetryUpdate={setTelemetry}
                             sandboxCode={sandboxCode}
                             sandboxOutput={sandboxOutput}
+                            lastCodeRun={lastCodeRun}
                         />
                     </div>
 
                     {/* Editor Column */}
                     {isCoding && (
                         <div className="lg:col-span-8 h-[35vh] lg:h-full flex flex-col min-h-0 animate-in fade-in slide-in-from-right-10 duration-500">
-                            <CodeEditorPanel
+                             <CodeEditorPanel
                                 language="javascript"
                                 code={sandboxCode}
                                 onChange={setSandboxCode}
@@ -331,6 +333,7 @@ export default function InterviewPage() {
                                 onRun={(code, out) => {
                                     setSandboxCode(code);
                                     setSandboxOutput(out);
+                                    setLastCodeRun({ code, output: out, timestamp: Date.now() });
                                 }}
                             />
                         </div>

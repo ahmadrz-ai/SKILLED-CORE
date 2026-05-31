@@ -110,6 +110,7 @@ model User {
   searchIndexable      Boolean      @default(true)
   openToWork           Boolean      @default(false)
   loginEvents          LoginEvent[] // access audit log
+  verifiedSkills       VerifiedSkill[]
 }
 
 model LoginEvent {
@@ -532,4 +533,24 @@ model Transaction {
   refId     String? // Payoneer Transaction ID from user
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerifiedSkill {
+  id             String       @id @default(uuid())
+  userId         String
+  skillId        String
+  name           String       @default("")
+  description    String       @default("")
+  status         String       @default("VERIFIED")
+  verifiedAt     DateTime     @default(now())
+  depthScore     Int          @default(90)
+  skillDetailsId String?
+  skillDetails   SkillDetail? @relation(fields: [skillDetailsId], references: [id], onDelete: SetNull)
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SkillDetail {
+  id             String          @id @default(uuid())
+  verifiedSkills VerifiedSkill[]
 }

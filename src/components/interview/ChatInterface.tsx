@@ -11,9 +11,10 @@ import { getUserProfile } from "@/app/actions/interview";
 
 interface Message {
     id: string;
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'system';
     content: string;
     persona?: 'suggester' | 'interviewer'; // NEW: Track who is speaking
+    isSubscribedTelemetry?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -26,6 +27,7 @@ interface ChatInterfaceProps {
     onTelemetryUpdate?: (data: any) => void;
     sandboxCode?: string;
     sandboxOutput?: string[];
+    lastCodeRun?: { code: string; output: string[]; timestamp: number } | null;
 }
 
 export function ChatInterface({
@@ -37,13 +39,63 @@ export function ChatInterface({
     onCodeTrigger,
     onTelemetryUpdate,
     sandboxCode = "",
-    sandboxOutput = []
+    sandboxOutput = [],
+    lastCodeRun = null
 }: ChatInterfaceProps) {
     const { data: session } = useSession();
     const [dbUser, setDbUser] = useState<any>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    const sendTelemetryPayload = async (code: string, output: string[]) => {
+        if (isLoading || !sessionActive) return;
+
+        const telemetryPayload: Message = {
+            id: `telemetry-${Date.now()}`,
+            role: 'system',
+            content: `[SANDBOX_TELEMETRY] 
+USER_CODE: \`\`\`javascript\n${code}\n\`\`\`
+TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
+            isSubscribedTelemetry: true
+        };
+
+        const updatedMessages = [...messages, telemetryPayload];
+        setMessages(updatedMessages);
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: updatedMessages,
+                    user_role: config.role,
+                    is_grill_mode: config.useResume,
+                    intensity: config.difficulty || 3,
+                    sandbox_code: code,
+                    sandbox_output: output
+                })
+            });
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            if (!response.body) throw new Error("No response body");
+
+            await readStream(response.body);
+
+        } catch (error) {
+            console.error("Telemetry submission error:", error);
+            setMessages(prev => prev.filter(msg => msg.id !== telemetryPayload.id));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (lastCodeRun && sessionActive) {
+            sendTelemetryPayload(lastCodeRun.code, lastCodeRun.output);
+        }
+    }, [lastCodeRun]);
     const [timer, setTimer] = useState(0);
     const [isListening, setIsListening] = useState(false);
     const initializedRef = useRef(false);
@@ -515,7 +567,7 @@ export function ChatInterface({
 
             {/* Chat Area */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 scroll-smooth bg-zinc-50/30 dark:bg-zinc-900/10">
-                {messages.map((msg) => {
+                {messages.filter(msg => !msg.isSubscribedTelemetry && msg.role !== 'system').map((msg) => {
                     // Hide empty messages (Silent Suggester)
                     if (!msg.content.trim()) return null;
 

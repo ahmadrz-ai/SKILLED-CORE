@@ -320,17 +320,17 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
             <div className="space-y-4">
                 <div
                     onClick={() => inputRef.current?.focus()}
-                    className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-zinc-900/50 border border-white/5 rounded-xl focus-within:border-violet-500/50 transition-all cursor-text"
+                    className="flex flex-wrap gap-2 min-h-[50px] p-3 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-xl focus-within:border-[var(--border-focus)] transition-all cursor-text"
                 >
                     {formData.skills.map(s => (
-                        <span key={s} className="px-2 py-1 bg-violet-500/10 text-violet-300 rounded-md text-sm flex items-center gap-1 border border-violet-500/20 animate-in fade-in zoom-in duration-200">
+                        <span key={s} className="px-2 py-1 bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] rounded-md text-sm flex items-center gap-1 border border-[var(--sc-purple-200)] animate-in fade-in zoom-in duration-200 font-semibold">
                             {s}
-                            <button onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, skills: prev.skills.filter(i => i !== s) })); }} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, skills: prev.skills.filter(i => i !== s) })); }} className="hover:text-[var(--sc-purple-900)] transition-colors cursor-pointer"><X className="w-3 h-3" /></button>
                         </span>
                     ))}
                     <input
                         ref={inputRef}
-                        className="bg-transparent outline-none flex-1 min-w-[120px] text-white placeholder:text-zinc-600 text-sm h-full"
+                        className="bg-transparent outline-none flex-1 min-w-[120px] text-[var(--text-body)] placeholder:text-zinc-400 text-sm h-full"
                         placeholder={formData.skills.length === 0 ? "Add skills (e.g. React, UX Design)..." : "Add more..."}
                         value={input}
                         onChange={e => setInput(e.target.value)}
@@ -349,7 +349,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                             key={s}
                             onClick={() => addSkill(s)}
                             disabled={formData.skills.includes(s) || formData.skills.length >= 10}
-                            className="px-3 py-1.5 rounded-full text-xs font-medium border border-white/5 bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30 transition-all"
+                            className="px-3 py-1.5 rounded-full text-xs font-bold border border-[var(--sc-purple-200)] bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] hover:bg-[var(--sc-purple-100)] disabled:opacity-30 transition-all cursor-pointer"
                         >
                             + {s}
                         </button>
@@ -460,13 +460,13 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                 )}
 
                 {uploadStatus === 'complete' && (
-                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center bg-zinc-900/50 p-6 rounded-xl border border-green-500/20">
-                        <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4 mx-auto border border-green-500/20">
-                            <CheckCircle2 className="w-8 h-8 text-green-400" />
+                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center bg-green-50/50 p-6 rounded-xl border border-green-200">
+                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto border border-green-300">
+                            <CheckCircle2 className="w-8 h-8 text-green-600" />
                         </div>
-                        <h3 className="text-white font-heading font-bold mb-1">Extraction Complete</h3>
-                        <p className="text-sm text-green-400/80 mb-4">Resume Analyzed & Data Ingested</p>
-                        <Button variant="outline" onClick={() => setUploadStatus('idle')} className="text-xs h-8 bg-transparent border-white/10 hover:bg-white/5 hover:text-white">Replace Resume</Button>
+                        <h3 className="text-[var(--text-heading)] font-heading font-bold mb-1">Extraction Complete</h3>
+                        <p className="text-sm text-green-700 font-semibold mb-4">Resume Analyzed & Data Ingested</p>
+                        <Button variant="outline" onClick={() => setUploadStatus('idle')} className="text-xs h-8 bg-transparent border-[var(--border-default)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] cursor-pointer">Replace Resume</Button>
                     </motion.div>
                 )}
             </div>
@@ -474,17 +474,17 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
     }
 
     return (
-        <div className="min-h-screen bg-transparent flex flex-col relative overflow-hidden font-sans text-white">
+        <div className="min-h-screen bg-[var(--bg-page)] flex flex-col relative overflow-hidden font-sans text-[var(--text-body)]">
             {/* Background Atmosphere */}
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.15),transparent_70%)]" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-violet-900/10 blur-[100px] rounded-full" />
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,var(--sc-purple-50),transparent_70%)]" />
+                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[var(--sc-purple-50)]/50 blur-[100px] rounded-full" />
             </div>
 
             {/* PROGRESS BAR */}
-            <div className="w-full h-1 bg-zinc-900 fixed top-0 left-0 z-50">
+            <div className="w-full h-1 bg-[var(--border-subtle)] fixed top-0 left-0 z-50">
                 <motion.div
-                    className="h-full shadow-[0_0_10px_rgba(139,92,246,0.5)] bg-gradient-to-r from-violet-600 to-indigo-600"
+                    className="h-full shadow-[0_0_10px_rgba(139,92,246,0.2)] bg-gradient-to-r from-[var(--sc-purple-500)] to-[var(--sc-purple-700)]"
                     initial={{ width: 0 }}
                     animate={{ width: `${(currentStep / STEPS.length) * 100}%` }}
                     transition={{ duration: 0.5 }}
@@ -500,22 +500,22 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                             key={currentStep}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest text-zinc-400 inline-block"
+                            className="bg-[var(--bg-secondary-panel)] border border-[var(--border-strong)] px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest text-[var(--text-secondary)] inline-block"
                         >
                             Step {currentStep} of {STEPS.length}
                         </motion.div>
                         <div className="space-y-2">
-                            <h1 className="text-3xl md:text-4xl font-heading font-black tracking-tight text-white mb-2">
+                            <h1 className="text-3xl md:text-4xl font-heading font-black tracking-tight text-[var(--text-heading)] mb-2 uppercase">
                                 {STEPS[currentStep - 1].title}
                             </h1>
-                            <p className="text-zinc-400 text-sm md:text-base max-w-sm mx-auto">
+                            <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-sm mx-auto font-medium">
                                 {STEPS[currentStep - 1].description}
                             </p>
                         </div>
                     </div>
 
                     {/* Content Card */}
-                    <div className="bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl min-h-[420px] flex flex-col relative overflow-hidden">
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-8 shadow-xl min-h-[420px] flex flex-col relative overflow-hidden">
 
                         {/* Error Banner */}
                         <AnimatePresence>
@@ -524,10 +524,10 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 flex items-center gap-3"
+                                    className="bg-red-50/80 border border-red-200 rounded-lg p-3 mb-6 flex items-center gap-3"
                                 >
-                                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                                    <p className="text-sm text-red-200">{pageError}</p>
+                                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                    <p className="text-sm text-red-700 font-semibold">{pageError}</p>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -549,16 +549,16 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                 {currentStep === 1 && (
                                                     <div className="space-y-6">
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Unique ID (Username) <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Unique ID (Username) <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <Hexagon className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <Hexagon className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="e.g. shadow_coder"
                                                                     className={cn(
-                                                                        "pl-10 bg-zinc-900/50 border-white/5 transition-colors h-11 text-white",
+                                                                        "pl-10 bg-[var(--bg-input)] border-[var(--border-default)] transition-colors h-11 text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)]",
                                                                         usernameStatus === 'available' ? "focus:border-green-500/50 border-green-500/20" :
                                                                             usernameStatus === 'taken' ? "focus:border-red-500/50 border-red-500/20" :
-                                                                                "focus:border-violet-500/50"
+                                                                                "focus:border-[var(--sc-purple-600)]"
                                                                     )}
                                                                     value={formData.username}
                                                                     onChange={(e) => {
@@ -569,7 +569,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                                     }}
                                                                     autoFocus
                                                                 />
-                                                                {usernameStatus === 'checking' && <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-zinc-500" />}
+                                                                {usernameStatus === 'checking' && <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-[var(--icon-muted)]" />}
                                                                 {usernameStatus === 'available' && <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />}
                                                             </div>
                                                             {usernameWarning && <p className="text-xs text-red-400">{usernameWarning}</p>}
@@ -577,12 +577,12 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                         </div>
 
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Professional Headline <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Professional Headline <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <Briefcase className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <Briefcase className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="e.g. Senior Frontend Architect"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
                                                                     value={formData.headline}
                                                                     onChange={e => setFormData({ ...formData, headline: e.target.value })}
                                                                     autoFocus
@@ -590,12 +590,12 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                             </div>
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Current Location <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Current Location <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <MapPin className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <MapPin className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="City, Country"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
                                                                     value={formData.location}
                                                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
                                                                 />
@@ -616,16 +616,16 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                 {currentStep === 1 && (
                                                     <div className="space-y-6">
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Unique ID (Username) <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Unique ID (Username) <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <Hexagon className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <Hexagon className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="e.g. tech_scout"
                                                                     className={cn(
-                                                                        "pl-10 bg-zinc-900/50 border-white/5 transition-colors h-11 text-white",
+                                                                        "pl-10 bg-[var(--bg-input)] border-[var(--border-default)] transition-colors h-11 text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)]",
                                                                         usernameStatus === 'available' ? "focus:border-green-500/50 border-green-500/20" :
                                                                             usernameStatus === 'taken' ? "focus:border-red-500/50 border-red-500/20" :
-                                                                                "focus:border-violet-500/50"
+                                                                                "focus:border-[var(--sc-purple-600)]"
                                                                     )}
                                                                     value={formData.username}
                                                                     onChange={(e) => {
@@ -636,19 +636,19 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                                     }}
                                                                     autoFocus
                                                                 />
-                                                                {usernameStatus === 'checking' && <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-zinc-500" />}
+                                                                {usernameStatus === 'checking' && <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-[var(--icon-muted)]" />}
                                                                 {usernameStatus === 'available' && <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />}
                                                             </div>
                                                             {usernameWarning && <p className="text-xs text-red-400">{usernameWarning}</p>}
                                                             {usernameStatus === 'taken' && <p className="text-xs text-red-400">Username taken.</p>}
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Organization Name <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Organization Name <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <Building2 className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <Building2 className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="e.g. Acme Corp"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
                                                                     value={formData.companyName}
                                                                     onChange={e => setFormData({ ...formData, companyName: e.target.value })}
                                                                     autoFocus
@@ -656,12 +656,12 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                             </div>
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label className="text-zinc-400 text-xs uppercase tracking-wide">Industry <span className="text-red-500">*</span></Label>
+                                                            <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Industry <span className="text-red-500">*</span></Label>
                                                             <div className="relative">
-                                                                <Globe className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                <Globe className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                 <Input
                                                                     placeholder="e.g. Fintech, AI, Healthcare"
-                                                                    className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                    className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
                                                                     value={formData.industry}
                                                                     onChange={e => setFormData({ ...formData, industry: e.target.value })}
                                                                 />
@@ -672,19 +672,19 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
 
                                                 {currentStep === 2 && (
                                                     <div className="space-y-6">
-                                                        <div className="space-y-4 border-b border-white/5 pb-5">
-                                                            <div className="flex items-center gap-2 text-violet-400 font-mono text-xs uppercase tracking-wider mb-2">
+                                                        <div className="space-y-4 border-b border-[var(--border-subtle)] pb-5">
+                                                            <div className="flex items-center gap-2 text-[var(--sc-purple-700)] font-mono text-xs uppercase tracking-wider mb-2 font-bold">
                                                                 <Hexagon className="w-3.5 h-3.5" />
                                                                 1. Verify Command Credentials
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <Label className="text-zinc-400 text-xs uppercase tracking-wide">Work Email <span className="text-red-500">*</span></Label>
+                                                                <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Work Email <span className="text-red-500">*</span></Label>
                                                                 <div className="relative">
-                                                                    <Mail className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                                                                    <Mail className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
                                                                     <Input
                                                                         placeholder="you@company.com"
                                                                         type="email"
-                                                                        className="pl-10 bg-zinc-900/50 border-white/5 focus:border-violet-500/50 transition-colors h-11 text-white"
+                                                                        className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
                                                                         value={formData.workEmail}
                                                                         onChange={e => setFormData({ ...formData, workEmail: e.target.value })}
                                                                         autoFocus
@@ -694,7 +694,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                         </div>
 
                                                         <div className="space-y-4">
-                                                            <div className="flex items-center gap-2 text-violet-400 font-mono text-xs uppercase tracking-wider">
+                                                            <div className="flex items-center gap-2 text-[var(--sc-purple-700)] font-mono text-xs uppercase tracking-wider font-bold">
                                                                 <Building2 className="w-3.5 h-3.5" />
                                                                 2. Select Primary ATS Integration
                                                             </div>
@@ -705,10 +705,10 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                                         type="button"
                                                                         onClick={() => setFormData(prev => ({ ...prev, atsSystem: ats }))}
                                                                         className={cn(
-                                                                            "py-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                                                                            "py-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm",
                                                                             formData.atsSystem === ats
-                                                                                ? "bg-violet-500/10 border-violet-500/30 text-violet-300 shadow-sm"
-                                                                                : "bg-zinc-900/30 border-white/5 text-zinc-500 hover:text-zinc-300"
+                                                                                ? "bg-[var(--sc-purple-50)] border-[var(--sc-purple-300)] text-[var(--sc-purple-700)]"
+                                                                                : "bg-[var(--bg-secondary-panel)] border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)]"
                                                                         )}
                                                                     >
                                                                         {ats}
@@ -717,28 +717,28 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                             </div>
 
                                                             <div className="grid grid-cols-2 gap-4 pt-2">
-                                                                <div className="flex items-center justify-between p-3 bg-zinc-900/30 border border-white/5 rounded-xl">
+                                                                <div className="flex items-center justify-between p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl shadow-sm">
                                                                     <div>
-                                                                        <div className="text-xs font-bold text-zinc-200">Webhook Sync</div>
-                                                                        <div className="text-[10px] text-zinc-500">Real-time bi-directional pipeline update</div>
+                                                                        <div className="text-xs font-bold text-[var(--text-heading)]">Webhook Sync</div>
+                                                                        <div className="text-[10px] text-[var(--text-secondary)]">Real-time bi-directional pipeline update</div>
                                                                     </div>
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={formData.atsWebhookSync}
                                                                         onChange={e => setFormData(prev => ({ ...prev, atsWebhookSync: e.target.checked }))}
-                                                                        className="w-4 h-4 rounded text-violet-500 bg-zinc-900 border-white/5 focus:ring-violet-500 cursor-pointer"
+                                                                        className="w-4 h-4 rounded text-[var(--sc-purple-600)] bg-[var(--bg-input)] border-[var(--border-default)] focus:ring-[var(--sc-purple-500)] cursor-pointer"
                                                                     />
                                                                 </div>
-                                                                <div className="flex items-center justify-between p-3 bg-zinc-900/30 border border-white/5 rounded-xl">
+                                                                <div className="flex items-center justify-between p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl shadow-sm">
                                                                     <div>
-                                                                        <div className="text-xs font-bold text-zinc-200">Auto-Pipeline</div>
-                                                                        <div className="text-[10px] text-zinc-500">Automate screening triggers</div>
+                                                                        <div className="text-xs font-bold text-[var(--text-heading)]">Auto-Pipeline</div>
+                                                                        <div className="text-[10px] text-[var(--text-secondary)]">Automate screening triggers</div>
                                                                     </div>
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={formData.atsAutoPipeline}
                                                                         onChange={e => setFormData(prev => ({ ...prev, atsAutoPipeline: e.target.checked }))}
-                                                                        className="w-4 h-4 rounded text-violet-500 bg-zinc-900 border-white/5 focus:ring-violet-500 cursor-pointer"
+                                                                        className="w-4 h-4 rounded text-[var(--sc-purple-600)] bg-[var(--bg-input)] border-[var(--border-default)] focus:ring-[var(--sc-purple-500)] cursor-pointer"
                                                                     />
                                                                 </div>
                                                             </div>
@@ -748,92 +748,92 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
 
                                                 {currentStep === 3 && (
                                                     <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
-                                                        <div className="bg-violet-500/10 border border-violet-500/20 p-3 rounded-xl flex items-start gap-2.5 mb-2">
-                                                            <CheckCircle2 className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" />
-                                                            <div className="text-xs text-zinc-400 leading-relaxed">
+                                                        <div className="bg-[var(--sc-purple-50)] border border-[var(--sc-purple-200)] p-3 rounded-xl flex items-start gap-2.5 mb-2 shadow-sm">
+                                                            <CheckCircle2 className="w-4 h-4 text-[var(--sc-purple-700)] mt-0.5 shrink-0" />
+                                                            <div className="text-xs text-[var(--text-secondary)] leading-relaxed font-semibold">
                                                                 To eliminate the <strong>cold start</strong>, please seed SkilledCore with 3 past benchmark candidates. This trains your local execution model on your exact stack ontology.
                                                             </div>
                                                         </div>
 
                                                         {/* Hero Hire Card */}
-                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
-                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                                                        <div className="p-4 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl space-y-3 shadow-sm">
+                                                            <div className="text-xs font-black text-[var(--sc-purple-700)] uppercase tracking-widest flex items-center gap-1.5">
                                                                 <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
                                                                 Cohort 1: The Hero Hire (Successful Senior)
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <Input
                                                                     placeholder="Candidate name"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.heroName}
                                                                     onChange={e => setFormData({ ...formData, heroName: e.target.value })}
                                                                 />
                                                                 <Input
                                                                     placeholder="Role (e.g. Senior Node Dev)"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.heroRole}
                                                                     onChange={e => setFormData({ ...formData, heroRole: e.target.value })}
                                                                 />
                                                             </div>
                                                             <textarea
                                                                 placeholder="Standout execution characteristics (e.g., deep system architecture knowledge, modular code decomposer)..."
-                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                className="w-full p-2 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-xs text-[var(--text-body)] placeholder:text-zinc-400 focus:outline-none focus:border-[var(--border-focus)] h-16 resize-none"
                                                                 value={formData.heroOntology}
                                                                 onChange={e => setFormData({ ...formData, heroOntology: e.target.value })}
                                                             />
                                                         </div>
 
                                                         {/* Missed Signal Card */}
-                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
-                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
-                                                                <CheckCircle2 className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
+                                                        <div className="p-4 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl space-y-3 shadow-sm">
+                                                            <div className="text-xs font-black text-[var(--sc-purple-700)] uppercase tracking-widest flex items-center gap-1.5">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--sc-purple-400)] animate-pulse" />
                                                                 Cohort 2: The Missed Signal (Regret Pass)
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <Input
                                                                     placeholder="Candidate name"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.missedName}
                                                                     onChange={e => setFormData({ ...formData, missedName: e.target.value })}
                                                                 />
                                                                 <Input
                                                                     placeholder="Role (e.g. Fullstack Dev)"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.missedRole}
                                                                     onChange={e => setFormData({ ...formData, missedRole: e.target.value })}
                                                                 />
                                                             </div>
                                                             <textarea
                                                                 placeholder="Why was this candidate passed on? (e.g. failed a generic algorithmic brainteaser but excels at high-performance systems execution)..."
-                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                className="w-full p-2 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-xs text-[var(--text-body)] placeholder:text-zinc-400 focus:outline-none focus:border-[var(--border-focus)] h-16 resize-none"
                                                                 value={formData.missedOntology}
                                                                 onChange={e => setFormData({ ...formData, missedOntology: e.target.value })}
                                                             />
                                                         </div>
 
                                                         {/* Mismatched Hire Card */}
-                                                        <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl space-y-3">
-                                                            <div className="text-xs font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                                                        <div className="p-4 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl space-y-3 shadow-sm">
+                                                            <div className="text-xs font-black text-[var(--sc-purple-700)] uppercase tracking-widest flex items-center gap-1.5">
                                                                 <CheckCircle2 className="w-3.5 h-3.5 text-red-500" />
                                                                 Cohort 3: The Mismatched Hire (Regret Hired)
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <Input
                                                                     placeholder="Candidate name"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.mismatchedName}
                                                                     onChange={e => setFormData({ ...formData, mismatchedName: e.target.value })}
                                                                 />
                                                                 <Input
                                                                     placeholder="Role (e.g. Lead Frontend Dev)"
-                                                                    className="bg-zinc-900/50 border-white/5 text-xs h-9"
+                                                                    className="bg-[var(--bg-input)] border border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus-visible:ring-[var(--border-focus)] text-xs h-9"
                                                                     value={formData.mismatchedRole}
                                                                     onChange={e => setFormData({ ...formData, mismatchedRole: e.target.value })}
                                                                 />
                                                             </div>
                                                             <textarea
                                                                 placeholder="Failed execution metrics (e.g. strong behavioral skills but lacks problem-solving autonomy and coding velocity)..."
-                                                                className="w-full p-2 bg-zinc-900/50 border border-white/5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 h-16 resize-none"
+                                                                className="w-full p-2 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-xs text-[var(--text-body)] placeholder:text-zinc-400 focus:outline-none focus:border-[var(--border-focus)] h-16 resize-none"
                                                                 value={formData.mismatchedOntology}
                                                                 onChange={e => setFormData({ ...formData, mismatchedOntology: e.target.value })}
                                                             />
@@ -844,24 +844,24 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                 {currentStep === 4 && (
                                                     <div className="flex flex-col h-full space-y-5 py-2">
                                                         <div className="space-y-2 text-center">
-                                                            <div className="text-violet-400 font-mono text-xs uppercase tracking-widest animate-pulse">
+                                                            <div className="text-[var(--text-brand)] font-mono text-xs font-bold uppercase tracking-widest animate-pulse">
                                                                 ONTOLOGY SYNTHESIS IN PROGRESS...
                                                             </div>
-                                                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-white/5">
+                                                            <div className="h-2 w-full bg-[var(--border-subtle)] rounded-full overflow-hidden border border-[var(--border-default)]">
                                                                 <motion.div
-                                                                    className="h-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-[0_0_10px_rgba(124,58,237,0.5)]"
+                                                                    className="h-full bg-gradient-to-r from-[var(--sc-purple-500)] to-[var(--sc-purple-700)]"
                                                                     initial={{ width: "0%" }}
                                                                     animate={{ width: `${compileProgress}%` }}
                                                                     transition={{ duration: 0.3 }}
-                                                                />
+                                                                 />
                                                             </div>
-                                                            <div className="text-[10px] text-zinc-500 font-mono text-right">
+                                                            <div className="text-[10px] text-[var(--text-secondary)] font-mono font-bold text-right">
                                                                 {compileProgress}% COMPLETE
                                                             </div>
                                                         </div>
 
                                                         {/* Scrolling Telemetry Logs */}
-                                                        <div className="flex-1 min-h-[160px] max-h-[180px] bg-black/80 border border-white/5 rounded-xl p-4 overflow-y-auto space-y-1.5 font-mono text-[10px] text-zinc-500 leading-normal scrollbar-thin">
+                                                        <div className="flex-1 min-h-[160px] max-h-[180px] bg-zinc-950 border border-zinc-800 rounded-xl p-4 overflow-y-auto space-y-1.5 font-mono text-[10px] text-zinc-400 leading-normal scrollbar-thin">
                                                             {activeLogs.map((log, i) => (
                                                                 <motion.div
                                                                     key={i}
@@ -869,10 +869,10 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                                     animate={{ opacity: 1, x: 0 }}
                                                                     className={cn(
                                                                         "flex gap-2 items-center",
-                                                                        i === activeLogs.length - 1 ? "text-violet-400 font-bold" : "text-zinc-500"
+                                                                        i === activeLogs.length - 1 ? "text-[var(--sc-purple-300)] font-bold" : "text-zinc-400"
                                                                     )}
                                                                 >
-                                                                    <span className="text-zinc-700 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                                                                    <span className="text-zinc-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
                                                                     <span>&gt;&gt; {log}</span>
                                                                 </motion.div>
                                                             ))}
@@ -887,19 +887,19 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                         </div>
 
                         {/* NAV FOOTER */}
-                        <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/5">
+                        <div className="flex justify-between items-center mt-8 pt-6 border-t border-[var(--border-subtle)]">
                             <Button
                                 variant="ghost"
                                 onClick={prevStep}
                                 disabled={currentStep === 1}
-                                className={cn("text-zinc-500 hover:text-white hover:bg-white/5", currentStep === 1 && "opacity-0 pointer-events-none")}
+                                className={cn("text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] cursor-pointer", currentStep === 1 && "opacity-0 pointer-events-none")}
                             >
                                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
                             </Button>
 
                             <Button
                                 onClick={nextStep}
-                                className="min-w-[140px] font-bold tracking-wide transition-all shadow-lg h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-indigo-600/25"
+                                className="min-w-[140px] font-bold tracking-wide transition-all shadow-lg h-11 bg-gradient-to-r from-[var(--sc-purple-600)] to-[var(--sc-purple-700)] hover:from-[var(--sc-purple-500)] hover:to-[var(--sc-purple-600)] text-white shadow-[var(--sc-purple-500)]/20 cursor-pointer"
                             >
                                 {currentStep === STEPS.length ? "LAUNCH" : "CONTINUE"}
                                 {currentStep !== STEPS.length && <ChevronRight className="w-4 h-4 ml-1" />}
@@ -918,21 +918,21 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-[2px] font-sans"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] font-sans"
                     >
-                        <div className="w-full max-w-lg bg-zinc-950 border border-violet-500/30 rounded-2xl p-6 md:p-8 shadow-[0_10px_50px_rgba(124,58,237,0.15)] relative overflow-hidden text-left">
+                        <div className="w-full max-w-lg bg-[var(--bg-modal)] border border-[var(--sc-purple-200)] rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden text-left">
                             {/* Decorative top line */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 to-indigo-600" />
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--sc-purple-500)] to-[var(--sc-purple-700)]" />
                             
                             {/* Header */}
                             <div className="flex justify-between items-start mb-5">
                                 <div>
-                                    <span className="text-[10px] font-mono font-bold tracking-widest text-violet-400 uppercase">Interactive Calibration Walkthrough</span>
-                                    <h3 className="text-lg font-black text-white tracking-tight mt-1">Understanding Talent Calibration Cohorts</h3>
+                                    <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--sc-purple-700)] uppercase">Interactive Calibration Walkthrough</span>
+                                    <h3 className="text-lg font-black text-[var(--text-heading)] tracking-tight mt-1 uppercase">Understanding Talent Calibration Cohorts</h3>
                                 </div>
                                 <button 
                                     onClick={() => setCohortGuideMinimized(true)}
-                                    className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
+                                    className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-sidebar-hover)] transition-all cursor-pointer border-none bg-transparent"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
@@ -949,13 +949,13 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                             exit={{ opacity: 0, x: -10 }}
                                             className="space-y-3"
                                         >
-                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-semibold">
                                                 A <strong>Calibration Cohort</strong> is a structural learning batch that trains your custom recruitment model on your team's specific stack ontology. 
                                             </p>
-                                            <p className="text-xs text-zinc-450 leading-relaxed font-semibold">
+                                            <p className="text-xs text-[var(--text-heading)] leading-relaxed font-bold uppercase tracking-wider text-[9px]">
                                                 How it works:
                                             </p>
-                                            <ul className="text-xs text-zinc-500 leading-relaxed space-y-2 list-disc pl-4">
+                                            <ul className="text-xs text-[var(--text-secondary)] leading-relaxed space-y-2 list-disc pl-4 font-medium">
                                                 <li>You seed the system with three key engineer profiles from your history.</li>
                                                 <li>SkilledCore parses their characteristics to build a 100% objective sandbox evaluation benchmark.</li>
                                                 <li>Subsequent candidates are evaluated directly against your high-performer execution criteria.</li>
@@ -971,17 +971,17 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                             exit={{ opacity: 0, x: -10 }}
                                             className="space-y-3"
                                         >
-                                            <p className="text-xs text-zinc-455 leading-relaxed font-semibold">
+                                            <p className="text-xs text-[var(--sc-purple-700)] leading-relaxed font-bold uppercase tracking-wide">
                                                 Step 1: The Hero Hire (Your benchmark standard)
                                             </p>
-                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-medium">
                                                 Think of the strongest developer on your team. Write their details in the first block:
                                             </p>
-                                            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-3.5 space-y-1">
-                                                <p className="text-xs font-bold text-violet-300">How to fill the fields:</p>
-                                                <ul className="text-[11px] text-zinc-500 space-y-1 list-disc pl-4 leading-normal">
-                                                    <li><span className="font-semibold text-zinc-400">Candidate Name / Role:</span> Their name and exact technical focus (e.g. Senior Backend Architect).</li>
-                                                    <li><span className="font-semibold text-zinc-400">Standout execution characteristics:</span> Define what makes them excel. (e.g. lock-free atomic synchronizations, modular decoupling, or performance profiling depth).</li>
+                                            <div className="bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl p-3.5 space-y-1 shadow-sm">
+                                                <p className="text-xs font-bold text-[var(--sc-purple-700)]">How to fill the fields:</p>
+                                                <ul className="text-[11px] text-[var(--text-secondary)] space-y-1 list-disc pl-4 leading-normal font-medium">
+                                                    <li><span className="font-bold text-[var(--text-heading)]">Candidate Name / Role:</span> Their name and exact technical focus (e.g. Senior Backend Architect).</li>
+                                                    <li><span className="font-bold text-[var(--text-heading)]">Standout execution characteristics:</span> Define what makes them excel. (e.g. lock-free atomic synchronizations, modular decoupling, or performance profiling depth).</li>
                                                 </ul>
                                             </div>
                                         </motion.div>
@@ -995,20 +995,20 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                             exit={{ opacity: 0, x: -10 }}
                                             className="space-y-3"
                                         >
-                                            <p className="text-xs text-zinc-455 leading-relaxed font-semibold">
+                                            <p className="text-xs text-[var(--sc-purple-700)] leading-relaxed font-bold uppercase tracking-wide">
                                                 Step 2 & 3: Missed Signals & Mismatched Hires
                                             </p>
-                                            <p className="text-xs text-zinc-450 leading-relaxed">
+                                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-medium">
                                                 To build a strong competitive moat, the model needs to understand who you regrettably missed vs who interviewed perfectly but failed on execution:
                                             </p>
-                                            <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-3.5 space-y-2">
+                                            <div className="bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl p-3.5 space-y-2 shadow-sm">
                                                 <div>
-                                                    <p className="text-[11px] font-bold text-violet-300">The Missed Signal (Regret Pass):</p>
-                                                    <p className="text-[10px] text-zinc-500 leading-normal pl-1">Explain who you passed on for superficial reasons (e.g. poor verbal presentation, missed a generic graph traversal riddle) but who is actually a highly capable builder.</p>
+                                                    <p className="text-[11px] font-bold text-[var(--sc-purple-700)]">The Missed Signal (Regret Pass):</p>
+                                                    <p className="text-[10px] text-[var(--text-secondary)] leading-normal pl-1 font-medium">Explain who you passed on for superficial reasons (e.g. poor verbal presentation, missed a generic graph traversal riddle) but who is actually a highly capable builder.</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[11px] font-bold text-red-400">The Mismatched Hire (Regret Hired):</p>
-                                                    <p className="text-[10px] text-zinc-500 leading-normal pl-1">Explain who was a verbal genius (rehearsed credentials) but failed to write autonomous, thread-safe production code under actual load spikes.</p>
+                                                    <p className="text-[11px] font-bold text-red-600">The Mismatched Hire (Regret Hired):</p>
+                                                    <p className="text-[10px] text-[var(--text-secondary)] leading-normal pl-1 font-medium">Explain who was a verbal genius (rehearsed credentials) but failed to write autonomous, thread-safe production code under actual load spikes.</p>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -1016,15 +1016,15 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                 </AnimatePresence>
 
                                 {/* Controls */}
-                                <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
-                                    <div className="flex gap-1 text-[10px] font-mono text-zinc-500">
+                                <div className="flex justify-between items-center mt-6 pt-4 border-t border-[var(--border-subtle)]">
+                                    <div className="flex gap-1 text-[10px] font-mono text-[var(--text-tertiary)] font-bold">
                                         Step {cohortGuideStep} of 3
                                     </div>
                                     <div className="flex gap-2 shrink-0">
                                         {cohortGuideStep > 1 && (
                                             <Button
                                                 onClick={() => setCohortGuideStep(prev => prev - 1)}
-                                                className="bg-transparent border border-white/10 hover:bg-white/5 text-xs text-zinc-400 hover:text-white px-3 h-9"
+                                                className="bg-transparent border border-[var(--border-default)] hover:bg-[var(--bg-sidebar-hover)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-heading)] px-3 h-9 cursor-pointer"
                                             >
                                                 Back
                                             </Button>
@@ -1037,7 +1037,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                     setCohortGuideMinimized(true);
                                                 }
                                             }}
-                                            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-xs text-white px-4 h-9 font-bold"
+                                            className="bg-gradient-to-r from-[var(--sc-purple-600)] to-[var(--sc-purple-700)] hover:from-[var(--sc-purple-500)] hover:to-[var(--sc-purple-600)] text-xs text-white px-4 h-9 font-bold cursor-pointer"
                                         >
                                             {cohortGuideStep === 3 ? "Close Guide" : "Next Step"}
                                         </Button>
@@ -1055,7 +1055,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         onClick={() => setCohortGuideMinimized(false)}
-                        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-4 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 border border-violet-500/20 text-xs tracking-wider uppercase active:scale-95 transition-transform"
+                        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-[var(--sc-purple-600)] to-[var(--sc-purple-700)] hover:from-[var(--sc-purple-500)] hover:to-[var(--sc-purple-600)] text-white px-4 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 border border-[var(--sc-purple-200)] text-xs tracking-wider uppercase active:scale-95 transition-transform cursor-pointer"
                     >
                         <AlertCircle className="w-4 h-4" />
                         Calibration Guide

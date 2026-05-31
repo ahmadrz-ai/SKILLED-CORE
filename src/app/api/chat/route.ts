@@ -73,9 +73,9 @@ export async function POST(req: Request) {
     console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity });
 
     const role = user_role || "Candidate";
-     let resumeContext = "";
-     if (is_grill_mode) {
-       const session = await auth();
+    const session = await auth();
+    let resumeContext = "";
+    if (is_grill_mode) {
        if (session?.user?.id) {
          resumeContext = await getDynamicResumeContext(session.user.id);
        } else {
@@ -193,6 +193,12 @@ export async function POST(req: Request) {
   - Periodically (e.g., after 2-3 turns), challenge them to prove their skills by performing a hands-on live assessment using the sandbox.
   - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution/prompt/spec to..."
   - If they write code/text in the chat or state they solved it in the Sandbox, analyze their code/text or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.`}
+
+[CRITICAL SANDBOX INTERACTION PROTOCOLS]
+- Upon receiving a [SANDBOX_TELEMETRY] string block, immediately analyze the algorithm logic and terminal output errors.
+- DO NOT mention the telemetry format in your speech. Respond natively as an interviewer reviewing the execution.
+- IF THE SOLUTION IS CORRECT: Confirm its validity -> Increment local internal milestone check -> Ask 2 to 3 progressive, high-depth architectural follow-up questions -> If passed, declare completion and output the token: [TRIGGER_EARN_BADGE:PROMPT_ENGINEERING] or [TRIGGER_EARN_BADGE:JAVASCRIPT_LOGIC] and instruct the candidate to click "End Session".
+- IF THE SOLUTION IS INCORRECT: Surface the exact logical edge-cases or execution faults -> Continue the interview cycle -> If the candidate repeatedly fails to demonstrate baseline potential, output the token: [TRIGGER_SESSION_FAIL] and terminate with a "Better luck next time" summary.
      `;
  
      const stream = new ReadableStream({
@@ -264,6 +270,7 @@ export async function POST(req: Request) {
            }
 
            let buffer = "";
+           let fullInterviewerResponse = "";
            while (true) {
              const { done, value } = await reader.read();
              if (done) break;
@@ -281,6 +288,7 @@ export async function POST(req: Request) {
                    const parsed = JSON.parse(jsonStr);
                    const content = parsed.choices?.[0]?.delta?.content;
                    if (content) {
+                     fullInterviewerResponse += content;
                      controller.enqueue(encoder.encode(content));
                    }
                  } catch {}
@@ -296,9 +304,40 @@ export async function POST(req: Request) {
                  const parsed = JSON.parse(jsonStr);
                  const content = parsed.choices?.[0]?.delta?.content;
                  if (content) {
+                   fullInterviewerResponse += content;
                    controller.enqueue(encoder.encode(content));
                  }
                } catch {}
+             }
+           }
+ 
+           // Parse badges
+           if (session?.user?.id && fullInterviewerResponse.includes('[TRIGGER_EARN_BADGE:')) {
+             const badgeMatches = fullInterviewerResponse.match(/\[TRIGGER_EARN_BADGE:([^\]]+)\]/g);
+             if (badgeMatches) {
+               for (const match of badgeMatches) {
+                 const badgeType = match.split(':')[1].replace(']', '');
+                 // Check if it already exists to avoid duplicate entries
+                 const existing = await prisma.verifiedSkill.findFirst({
+                   where: {
+                     userId: session.user.id,
+                     skillId: badgeType
+                   }
+                 });
+                 if (!existing) {
+                   await prisma.verifiedSkill.create({
+                     data: {
+                       userId: session.user.id,
+                       skillId: badgeType,
+                       name: badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                       description: `Demonstrated professional-grade skill in ${badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} during live AI Sandbox evaluation.`,
+                       status: 'VERIFIED',
+                       verifiedAt: new Date(),
+                       depthScore: 95
+                     }
+                   });
+                 }
+               }
              }
            }
 

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getAssessments } from "@/app/actions/assessments";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import AssessmentList from "./AssessmentList";
 
 export const metadata = {
@@ -10,9 +11,19 @@ export const metadata = {
 
 export default async function AssessmentsPage() {
     const session = await auth();
-    if (!session) redirect("/api/auth/signin");
+    if (!session || !session.user?.id) redirect("/api/auth/signin");
 
     const assessments = await getAssessments();
+
+    let verifiedSkills: any[] = [];
+    try {
+        verifiedSkills = await prisma.verifiedSkill.findMany({
+            where: { userId: session.user.id },
+            orderBy: { verifiedAt: 'desc' }
+        });
+    } catch (e) {
+        console.error("Error fetching verified skills:", e);
+    }
 
     return (
         <div className="max-w-[1200px] mx-auto space-y-6 font-sans text-[var(--text-body)]">
@@ -27,7 +38,7 @@ export default async function AssessmentsPage() {
             </div>
 
             {/* Content & Pattern B Two Column Layout */}
-            <AssessmentList assessments={assessments} />
+            <AssessmentList assessments={assessments} verifiedSkills={verifiedSkills} />
         </div>
     );
 }
