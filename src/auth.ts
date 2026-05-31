@@ -75,35 +75,64 @@ const nextAuth = NextAuth({
                     const xRealIp = headersList.get("x-real-ip");
                     const ip = xForwardedFor?.split(",")[0]?.trim() || xRealIp || "127.0.0.1";
 
-                    let location = "Unknown Location";
-                    // @ts-ignore
-                    const geoip = (await import("geoip-lite")).default;
-                    if (geoip && ip !== "127.0.0.1" && ip !== "::1" && !ip.startsWith("10.") && !ip.startsWith("192.168.")) {
-                        const geo = geoip.lookup(ip);
-                        if (geo) {
-                            const parts = [];
-                            if (geo.city) parts.push(geo.city);
-                            if (geo.region) parts.push(geo.region);
-                            if (geo.country) parts.push(geo.country);
-                            location = parts.join(", ");
+                    let location: string | null = null;
+                    try {
+                        // @ts-ignore
+                        const geoip = (await import("geoip-lite")).default;
+                        if (geoip && ip !== "127.0.0.1" && ip !== "::1" && !ip.startsWith("10.") && !ip.startsWith("192.168.")) {
+                            const geo = geoip.lookup(ip);
+                            if (geo) {
+                                const parts = [];
+                                if (geo.city) parts.push(geo.city);
+                                if (geo.region) parts.push(geo.region);
+                                if (geo.country) parts.push(geo.country);
+                                location = parts.join(", ") || null;
+                            }
                         }
+                    } catch (_geoErr) {
+                        // geoip is optional
                     }
 
-                    await prisma.session.create({
-                        data: {
-                            sessionToken,
-                            userId: user.id,
-                            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-                            userAgent,
-                            ipAddress: ip,
-                            location: location === "Unknown Location" ? null : location,
+                    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+                    // Use raw SQL so this works whether or not Prisma client was compiled
+                    // with the new userAgent/ipAddress/location columns in its generated types.
+                    try {
+                        await prisma.$executeRaw`
+                            INSERT INTO "Session" ("id", "sessionToken", "userId", "expires", "userAgent", "ipAddress", "location")
+                            VALUES (
+                                ${crypto.randomUUID()},
+                                ${sessionToken},
+                                ${user.id},
+                                ${expires},
+                                ${userAgent},
+                                ${ip},
+                                ${location}
+                            )
+                            ON CONFLICT ("sessionToken") DO NOTHING
+                        `;
+                    } catch (rawErr: any) {
+                        // If the new columns don't exist yet, fall back to minimal insert
+                        if (String(rawErr?.message || '').includes('column') || String(rawErr?.message || '').includes('does not exist')) {
+                            await prisma.$executeRaw`
+                                INSERT INTO "Session" ("id", "sessionToken", "userId", "expires")
+                                VALUES (
+                                    ${crypto.randomUUID()},
+                                    ${sessionToken},
+                                    ${user.id},
+                                    ${expires}
+                                )
+                                ON CONFLICT ("sessionToken") DO NOTHING
+                            `;
                         }
-                    });
+                        // Either way, don't block auth
+                    }
 
                     token.sessionToken = sessionToken;
                 } catch (err) {
                     console.error("Failed to register active DB session record in JWT callback:", err);
                 }
+
 
                 // Elevate superusers to ADMIN dynamically
                 const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
