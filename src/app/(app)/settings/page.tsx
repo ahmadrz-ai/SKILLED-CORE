@@ -1176,9 +1176,9 @@ export default function SettingsPage() {
 
           {/* RIGHT VIEW CONTENT SURFACE */}
           <div className="flex-1 bg-bg-card border border-border-default rounded-2xl p-6 md:p-8 shadow-sc-sm w-full min-h-[500px]">
-            {activeTab === 'profile' && <ProfileInfoPanel />}
-            {activeTab === 'email_password' && <EmailPasswordPanel />}
-            {activeTab === 'preferences' && <AccountPreferencesPanel />}
+            {activeTab === 'profile' && ProfileInfoPanel()}
+            {activeTab === 'email_password' && EmailPasswordPanel()}
+            {activeTab === 'preferences' && AccountPreferencesPanel()}
             
             {activeTab === '2fa' && (
               <div className="space-y-6">
@@ -1194,14 +1194,14 @@ export default function SettingsPage() {
               </div>
             )}
             
-            {activeTab === 'sessions' && <ActiveSessionsPanel />}
-            {activeTab === 'history' && <LoginHistoryPanel />}
-            {activeTab === 'visibility' && <ProfileVisibilityPanel />}
-            {activeTab === 'data_sovereignty' && <DataExportPanel />}
-            {activeTab === 'notifications' && <NotificationsPanel />}
-            {activeTab === 'career' && role === 'CANDIDATE' && <CareerPanel />}
-            {activeTab === 'recruiting' && role === 'RECRUITER' && <RecruitingPanel />}
-            {activeTab === 'danger' && <DangerZonePanel />}
+            {activeTab === 'sessions' && ActiveSessionsPanel()}
+            {activeTab === 'history' && LoginHistoryPanel()}
+            {activeTab === 'visibility' && ProfileVisibilityPanel()}
+            {activeTab === 'data_sovereignty' && DataExportPanel()}
+            {activeTab === 'notifications' && NotificationsPanel()}
+            {activeTab === 'career' && role === 'CANDIDATE' && CareerPanel()}
+            {activeTab === 'recruiting' && role === 'RECRUITER' && RecruitingPanel()}
+            {activeTab === 'danger' && DangerZonePanel()}
           </div>
         </div>
       </div>
