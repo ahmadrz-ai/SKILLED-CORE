@@ -379,30 +379,50 @@ export async function getActiveSessions(): Promise<any[]> {
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  const uaSessions = await prisma.session.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' }
-  });
+  try {
+    const uaSessions = await prisma.session.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' }
+    });
 
-  const { UAParser } = await import('ua-parser-js');
+    const { UAParser } = await import('ua-parser-js');
 
-  return uaSessions.map(s => {
-    const parser = new UAParser(s.userAgent || '');
-    const browser = parser.getBrowser();
-    const os = parser.getOS();
+    return uaSessions.map((s: any) => {
+      const parser = new UAParser(s.userAgent || '');
+      const browser = parser.getBrowser();
+      const os = parser.getOS();
+      const deviceName = `${browser.name || 'Unknown Browser'} on ${os.name || 'Unknown OS'}`;
 
-    const deviceName = `${browser.name || 'Unknown Browser'} on ${os.name || 'Unknown OS'}`;
-
-    return {
-      id: s.id,
-      sessionToken: s.sessionToken,
-      deviceName,
-      ipAddress: s.ipAddress,
-      location: s.location,
-      lastActive: s.createdAt,
-      isCurrent: false, // will be matched on the client
-    };
-  });
+      return {
+        id: s.id,
+        sessionToken: s.sessionToken,
+        deviceName,
+        ipAddress: s.ipAddress || null,
+        location: s.location || null,
+        lastActive: s.createdAt || new Date(),
+        isCurrent: false,
+      };
+    });
+  } catch (err: any) {
+    // Columns like userAgent/ipAddress/location may not exist yet (migration pending)
+    console.warn('getActiveSessions fallback — new Session columns missing:', err?.message);
+    try {
+      const uaSessions = await prisma.session.findMany({
+        where: { userId: session.user.id },
+      });
+      return uaSessions.map((s: any) => ({
+        id: s.id,
+        sessionToken: s.sessionToken,
+        deviceName: 'Browser session',
+        ipAddress: null,
+        location: null,
+        lastActive: s.expires || new Date(),
+        isCurrent: false,
+      }));
+    } catch {
+      return [];
+    }
+  }
 }
 
 // ACTION 9 — Revoke Session
@@ -445,27 +465,33 @@ export async function getLoginHistory(): Promise<any[]> {
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  const events = await prisma.loginEvent.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 10
-  });
+  try {
+    const events = await prisma.loginEvent.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
 
-  const { UAParser } = await import('ua-parser-js');
+    const { UAParser } = await import('ua-parser-js');
 
-  return events.map(e => {
-    const parser = new UAParser(e.userAgent || '');
-    const browser = parser.getBrowser();
-    const os = parser.getOS();
-    const deviceName = `${browser.name || 'Browser'} on ${os.name || 'OS'}`;
+    return events.map((e: any) => {
+      const parser = new UAParser(e.userAgent || '');
+      const browser = parser.getBrowser();
+      const os = parser.getOS();
+      const deviceName = `${browser.name || 'Browser'} on ${os.name || 'OS'}`;
 
-    return {
-      id: e.id,
-      deviceName,
-      ipAddress: e.ipAddress,
-      location: e.location,
-      success: e.success,
-      createdAt: e.createdAt,
-    };
-  });
+      return {
+        id: e.id,
+        deviceName,
+        ipAddress: e.ipAddress,
+        location: e.location,
+        success: e.success,
+        createdAt: e.createdAt,
+      };
+    });
+  } catch (err: any) {
+    // LoginEvent table does not exist yet (migration pending)
+    console.warn('getLoginHistory fallback — LoginEvent table missing:', err?.message);
+    return [];
+  }
 }

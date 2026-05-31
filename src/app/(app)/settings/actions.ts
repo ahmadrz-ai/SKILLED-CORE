@@ -11,49 +11,95 @@ import { signOut } from '@/auth'; // Adjust import if signOut is client-side onl
 export async function getSettings() {
     try {
         const session = await auth();
-        console.log("getSettings - Session:", session?.user?.email); // Debug log
+        console.log("getSettings - Session:", session?.user?.email);
 
         if (!session?.user?.id) {
             console.log("getSettings - No user ID");
             return null;
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: {
-                name: true,
-                headline: true,
-                bio: true,
-                location: true,
-                username: true,
-                image: true,
-                email: true,
-                ghostMode: true,
-                nodeType: true,
-                emailNotifications: true,
-                marketingEmails: true,
-                role: true,
-                searchIndexable: true,
-                openToWork: true,
-                twoFactorEnabled: true,
-                twoFactorVerifiedAt: true,
-                twoFactorBackupCodes: true, // count length on client, securely
-                verificationRequests: {
-                    where: { status: 'PENDING' },
-                    select: {
-                        id: true,
-                        type: true,
-                        documentUrl: true,
+        // Try full query including 2FA fields (requires migration to have run)
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                select: {
+                    name: true,
+                    headline: true,
+                    bio: true,
+                    location: true,
+                    username: true,
+                    image: true,
+                    email: true,
+                    ghostMode: true,
+                    nodeType: true,
+                    emailNotifications: true,
+                    marketingEmails: true,
+                    role: true,
+                    searchIndexable: true,
+                    openToWork: true,
+                    twoFactorEnabled: true,
+                    twoFactorVerifiedAt: true,
+                    twoFactorBackupCodes: true,
+                    verificationRequests: {
+                        where: { status: 'PENDING' },
+                        select: {
+                            id: true,
+                            type: true,
+                            documentUrl: true,
+                        }
                     }
                 }
-            }
-        });
+            });
+            console.log("getSettings - User found (full):", user ? "Yes" : "No");
+            return user;
+        } catch (prismaErr: any) {
+            // If columns don't exist yet (migration pending), fall back to base query
+            const errMsg = String(prismaErr?.message || '');
+            const isColumnMissing = errMsg.includes('column') || errMsg.includes('P2022') || errMsg.includes('does not exist');
+            if (!isColumnMissing) throw prismaErr;
 
-        console.log("getSettings - User found:", user ? "Yes" : "No");
-        return user;
+            console.warn("getSettings - 2FA/new columns not yet migrated. Falling back to base query.");
+
+            const user = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                select: {
+                    name: true,
+                    headline: true,
+                    bio: true,
+                    location: true,
+                    username: true,
+                    image: true,
+                    email: true,
+                    ghostMode: true,
+                    nodeType: true,
+                    emailNotifications: true,
+                    marketingEmails: true,
+                    role: true,
+                    verificationRequests: {
+                        where: { status: 'PENDING' },
+                        select: {
+                            id: true,
+                            type: true,
+                            documentUrl: true,
+                        }
+                    }
+                }
+            });
+
+            console.log("getSettings - User found (base fallback):", user ? "Yes" : "No");
+            // Return with 2FA fields defaulted so client code doesn't break
+            return user ? {
+                ...user,
+                searchIndexable: true,
+                openToWork: false,
+                twoFactorEnabled: false,
+                twoFactorVerifiedAt: null,
+                twoFactorBackupCodes: [],
+            } : null;
+        }
     } catch (err) {
         console.error("getSettings - Error:", err);
-        throw err; // Re-throw to be caught by component
+        throw err;
     }
 }
 
