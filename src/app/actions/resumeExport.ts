@@ -81,10 +81,43 @@ export async function getProfileForResume(): Promise<ResumeData> {
     image: user.image,
     customLinks: user.customLinks,
     skills: user.skills,
-    experience: user.experience,
-    education: user.education,
-    projects: user.projects,
-    interviews: user.interviews,
-    assessments: user.assessments,
+    experience: user.experience.map(exp => ({
+      id: exp.id,
+      position: exp.position,
+      company: exp.company,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      description: exp.description
+    })),
+    education: user.education.map(edu => ({
+      id: edu.id,
+      school: edu.school,
+      degree: edu.degree,
+      fieldOfStudy: edu.fieldOfStudy,
+      startDate: edu.startDate,
+      endDate: edu.endDate,
+      description: edu.description
+    })),
+    projects: user.projects.map(proj => ({
+      id: proj.id,
+      title: proj.title,
+      description: proj.description,
+      link: proj.link,
+      imageUrl: proj.imageUrl
+    })),
+    interviews: user.interviews.map(intv => ({
+      id: intv.id,
+      role: intv.role,
+      score: intv.score,
+      feedback: intv.feedback
+    })),
+    assessments: user.assessments.map(asmt => ({
+      id: asmt.id,
+      score: asmt.score,
+      status: asmt.status,
+      assessment: {
+        title: asmt.assessment.title
+      }
+    })),
   };
 }
