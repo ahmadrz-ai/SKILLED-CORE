@@ -399,7 +399,7 @@ export async function getActiveSessions(): Promise<any[]> {
         deviceName,
         ipAddress: s.ipAddress || null,
         location: s.location || null,
-        lastActive: s.createdAt || new Date(),
+        lastActive: (s.createdAt || new Date()).toISOString(),
         isCurrent: false,
       };
     });
@@ -416,7 +416,7 @@ export async function getActiveSessions(): Promise<any[]> {
         deviceName: 'Browser session',
         ipAddress: null,
         location: null,
-        lastActive: s.expires || new Date(),
+        lastActive: (s.expires || new Date()).toISOString(),
         isCurrent: false,
       }));
     } catch {
@@ -486,7 +486,7 @@ export async function getLoginHistory(): Promise<any[]> {
         ipAddress: e.ipAddress,
         location: e.location,
         success: e.success,
-        createdAt: e.createdAt,
+        createdAt: e.createdAt.toISOString(),
       };
     });
   } catch (err: any) {

@@ -50,8 +50,10 @@ export async function getSettings() {
                     }
                 }
             });
-            console.log("getSettings - User found (full):", user ? "Yes" : "No");
-            return user;
+            return user ? {
+                ...user,
+                twoFactorVerifiedAt: user.twoFactorVerifiedAt ? user.twoFactorVerifiedAt.toISOString() : null
+            } as any : null;
         } catch (prismaErr: any) {
             // Full query failed for any reason — fall back to base query without new fields
             console.warn("getSettings - Full query failed, trying base query. Error:", prismaErr?.message);
