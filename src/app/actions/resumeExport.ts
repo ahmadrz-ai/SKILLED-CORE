@@ -1,5 +1,6 @@
 'use server';
 
+import 'server-only';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -92,8 +93,10 @@ export async function getProfileForResume(): Promise<{ success: boolean; data?: 
           id: exp.id,
           position: exp.position ?? '',
           company: exp.company ?? '',
-          startDate: exp.startDate ?? '',
-          endDate: exp.endDate ?? null,
+          startDate: typeof exp.startDate === 'string' ? exp.startDate
+                     : (exp.startDate as any)?.toISOString?.() ?? '',
+          endDate: typeof exp.endDate === 'string' ? exp.endDate
+                   : (exp.endDate as any)?.toISOString?.() ?? '',
           description: exp.description ?? null
         })),
         education: (user.education ?? []).map(edu => ({
@@ -101,8 +104,10 @@ export async function getProfileForResume(): Promise<{ success: boolean; data?: 
           school: edu.school ?? '',
           degree: edu.degree ?? '',
           fieldOfStudy: edu.fieldOfStudy ?? null,
-          startDate: edu.startDate ?? null,
-          endDate: edu.endDate ?? null,
+          startDate: typeof edu.startDate === 'string' ? edu.startDate
+                     : (edu.startDate as any)?.toISOString?.() ?? '',
+          endDate: typeof edu.endDate === 'string' ? edu.endDate
+                   : (edu.endDate as any)?.toISOString?.() ?? '',
           description: edu.description ?? null
         })),
         projects: (user.projects ?? []).map(proj => ({

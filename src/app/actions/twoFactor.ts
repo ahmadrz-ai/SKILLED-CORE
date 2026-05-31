@@ -1,39 +1,41 @@
 'use server';
 
+import 'server-only';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { encrypt, decrypt } from '@/lib/crypto';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-
-// Static Imports for secure typescript compiling
-const otplib = require('otplib');
-const authenticator = otplib.authenticator;
+import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
 import geoip from 'geoip-lite';
 
 // ACTION 1 — Generate setup data (secret + QR code)
 export async function generate2FASetup(): Promise<{
-  secret: string;
-  qrCodeDataUrl: string;
-  backupCodes: string[];
+  success: boolean;
+  data?: {
+    secret: string;
+    qrCodeDataUrl: string;
+    backupCodes: string[];
+  };
+  error?: string;
 }> {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new Error('Not authenticated');
+      return { success: false, error: 'Not authenticated' };
     }
 
-    // Generate a new secret
-    const secret = authenticator.generateSecret();
+    // Generate a new secret using functional otplib API
+    const secret = generateSecret();
 
-    // Build the OTPAuth URI
-    const otpAuthUrl = authenticator.keyuri(
-      session.user.email ?? 'user',
-      'SkilledCore',
-      secret
-    );
+    // Build the OTPAuth URI using functional otplib object signature
+    const otpAuthUrl = generateURI({
+      secret,
+      label: session.user.email ?? 'user',
+      issuer: 'SkilledCore'
+    });
 
     // Convert URI to QR code base64 image
     const qrCodeDataUrl = await QRCode.toDataURL(otpAuthUrl, {
@@ -50,10 +52,13 @@ export async function generate2FASetup(): Promise<{
       Math.random().toString(36).substring(2, 10).toUpperCase()
     );
 
-    return { secret, qrCodeDataUrl, backupCodes };
+    return {
+      success: true,
+      data: { secret, qrCodeDataUrl, backupCodes }
+    };
   } catch (err: any) {
     console.error('[twoFactor] generate2FASetup failed:', err);
-    throw new Error(err.message || 'Failed to start 2FA configuration.');
+    return { success: false, error: 'Failed to start 2FA configuration. Please try again.' };
   }
 }
 
@@ -69,9 +74,9 @@ export async function enable2FA(
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Verify the code against the secret
-    const isValid = authenticator.verify({ token: verificationCode, secret });
-    if (!isValid) {
+    // Verify the code using functional async verify checking .valid
+    const result = await verify({ token: verificationCode, secret });
+    if (!result.valid) {
       return { success: false, error: 'Invalid code. Please try again.' };
     }
 
@@ -127,11 +132,11 @@ export async function disable2FA(
     // Verify 2FA code
     if (user.twoFactorSecret) {
       const decryptedSecret = decrypt(user.twoFactorSecret);
-      const codeValid = authenticator.verify({
+      const result = await verify({
         token: verificationCode,
         secret: decryptedSecret
       });
-      if (!codeValid) {
+      if (!result.valid) {
         return { success: false, error: 'Invalid authenticator code' };
       }
     }
@@ -172,11 +177,11 @@ export async function regenerateBackupCodes(
 
     // Verify TOTP code first
     const decryptedSecret = decrypt(user.twoFactorSecret);
-    const codeValid = authenticator.verify({
+    const result = await verify({
       token: verificationCode,
       secret: decryptedSecret
     });
-    if (!codeValid) {
+    if (!result.valid) {
       return { success: false, error: 'Invalid authenticator code. Cannot regenerate backup codes.' };
     }
 
@@ -222,12 +227,12 @@ export async function getBackupCodes(
     }
 
     const decryptedSecret = decrypt(user.twoFactorSecret);
-    const codeValid = authenticator.verify({
+    const result = await verify({
       token: verificationCode,
       secret: decryptedSecret
     });
 
-    if (!codeValid) {
+    if (!result.valid) {
       return { success: false, error: 'Invalid authenticator code' };
     }
 
@@ -323,10 +328,12 @@ export async function verify2FAAndLogin(
 
     const decryptedSecret = decrypt(user.twoFactorSecret);
 
-    let verified = authenticator.verify({
+    const result = await verify({
       token: verificationCode,
       secret: decryptedSecret
     });
+
+    let verified = result.valid;
 
     if (!verified) {
       // Verify backup codes
@@ -423,59 +430,41 @@ export async function getActiveSessions(): Promise<any[]> {
 
     const uaSessions = await prisma.session.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' }
+      select: {
+        id: true,
+        sessionToken: true,
+        expires: true,
+      }
     });
 
-    const { UAParser } = await import('ua-parser-js');
-
     return uaSessions.map((s: any) => {
-      const parser = new UAParser(s.userAgent || '');
-      const browser = parser.getBrowser();
-      const os = parser.getOS();
-      const deviceName = `${browser.name || 'Unknown Browser'} on ${os.name || 'Unknown OS'}`;
-
       return {
         id: s.id,
         sessionToken: s.sessionToken,
-        deviceName,
-        ipAddress: s.ipAddress || null,
-        location: s.location || null,
-        lastActive: (s.createdAt || new Date()).toISOString(),
+        deviceName: 'Active Session',
+        ipAddress: null,
+        location: null,
+        lastActive: s.expires.toISOString(),
         isCurrent: false,
       };
     });
   } catch (err: any) {
-    console.warn('[settings] getActiveSessions failed or columns missing, returning fallback sessions:', err?.message);
-    try {
-      const session = await auth();
-      if (!session?.user?.id) return [];
-      
-      const uaSessions = await prisma.session.findMany({
-        where: { userId: session.user.id },
-      });
-      return uaSessions.map((s: any) => ({
-        id: s.id,
-        sessionToken: s.sessionToken,
-        deviceName: 'Browser session',
-        ipAddress: null,
-        location: null,
-        lastActive: (s.expires || new Date()).toISOString(),
-        isCurrent: false,
-      }));
-    } catch {
-      return [];
-    }
+    console.warn('[settings] getActiveSessions failed:', err?.message);
+    return [];
   }
 }
 
-// ACTION 9 — Revoke Session
+// ACTION 9 — Revoke Session (Using deleteMany for robust non-crashing behavior)
 export async function revokeSession(sessionToken: string): Promise<boolean> {
   try {
     const session = await auth();
     if (!session?.user?.id) return false;
 
-    await prisma.session.delete({
-      where: { sessionToken }
+    await prisma.session.deleteMany({
+      where: {
+        sessionToken,
+        userId: session.user.id
+      }
     });
     return true;
   } catch (err) {
@@ -484,7 +473,7 @@ export async function revokeSession(sessionToken: string): Promise<boolean> {
   }
 }
 
-// ACTION 10 — Revoke all other sessions
+// ACTION 10 — Revoke all other sessions (Using deleteMany for robust non-crashing behavior)
 export async function revokeAllOtherSessions(currentSessionToken: string): Promise<boolean> {
   try {
     const session = await auth();
@@ -509,25 +498,26 @@ export async function getLoginHistory(): Promise<any[]> {
     const session = await auth();
     if (!session?.user?.id) return [];
 
+    // Verify LoginEvent model exists in DB schema
     const events = await prisma.loginEvent.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
-      take: 10
+      take: 10,
+      select: {
+        id: true,
+        success: true,
+        ipAddress: true,
+        location: true,
+        createdAt: true,
+      }
     });
 
-    const { UAParser } = await import('ua-parser-js');
-
     return events.map((e: any) => {
-      const parser = new UAParser(e.userAgent || '');
-      const browser = parser.getBrowser();
-      const os = parser.getOS();
-      const deviceName = `${browser.name || 'Browser'} on ${os.name || 'OS'}`;
-
       return {
         id: e.id,
-        deviceName,
-        ipAddress: e.ipAddress || 'Unknown',
-        location: e.location || 'Unknown',
+        deviceName: 'Security Sign-in Alert',
+        ipAddress: e.ipAddress ?? 'Unknown',
+        location: e.location ?? 'Unknown',
         success: e.success,
         createdAt: e.createdAt.toISOString(),
       };

@@ -67,10 +67,13 @@ export default function TwoFactorSettings({
   const handleStartSetup = async () => {
     setIsLoading(true);
     try {
-      const data = await generate2FASetup();
-      setSetupSecret(data.secret);
-      setSetupQrUrl(data.qrCodeDataUrl);
-      setSetupBackupCodes(data.backupCodes);
+      const res = await generate2FASetup();
+      if (!res.success || !res.data) {
+        throw new Error(res.error || 'Failed to start 2FA configuration.');
+      }
+      setSetupSecret(res.data.secret);
+      setSetupQrUrl(res.data.qrCodeDataUrl);
+      setSetupBackupCodes(res.data.backupCodes);
       setSetupStep(1);
     } catch (err: any) {
       toast.error(err.message || 'Failed to start 2FA configuration.');

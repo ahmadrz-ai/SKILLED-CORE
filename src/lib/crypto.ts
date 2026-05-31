@@ -1,7 +1,5 @@
+import 'server-only'
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
-
-// Never run any validation at module level
-// All validation happens inside functions
 
 function getKey(): Buffer | null {
   const key = process.env.TWO_FACTOR_ENCRYPTION_KEY
@@ -12,11 +10,8 @@ function getKey(): Buffer | null {
 export function encrypt(text: string): string {
   const key = getKey()
   if (!key) {
-    // Log the issue but do not throw — return a safe error marker
     console.error('[crypto] TWO_FACTOR_ENCRYPTION_KEY not set or invalid')
     throw new Error('Encryption key not configured. Contact administrator.')
-    // Note: this throws inside the server action which has its own try/catch
-    // It does NOT crash the module or the page
   }
 
   const iv = randomBytes(12)
