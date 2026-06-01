@@ -12,21 +12,27 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // Collect all 5 keys in order — skip undefined ones
 function getGeminiKeys(): string[] {
-  const keys = [
+  const rawKeys = [
     process.env.GOOGLE_API_KEY_1,
     process.env.GOOGLE_API_KEY_2,
     process.env.GOOGLE_API_KEY_3,
     process.env.GOOGLE_API_KEY_4,
     process.env.GOOGLE_API_KEY_5,
+    process.env.QODEE_API_KEY,
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    process.env.GOOGLE_API_KEY,
+    process.env.RESUME_PARSER,
   ].filter((k): k is string => Boolean(k && k.trim().length > 0))
 
-  if (keys.length === 0) {
+  const uniqueKeys = Array.from(new Set(rawKeys))
+
+  if (uniqueKeys.length === 0) {
     throw new Error(
-      'No Gemini API keys found. Set GOOGLE_API_KEY_1 through GOOGLE_API_KEY_5 in .env'
+      'No Gemini API keys found. Set GOOGLE_API_KEY_1 through GOOGLE_API_KEY_5 or GOOGLE_GENERATIVE_AI_API_KEY in environment variables.'
     )
   }
 
-  return keys
+  return uniqueKeys
 }
 
 /**

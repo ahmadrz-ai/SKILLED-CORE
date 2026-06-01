@@ -282,12 +282,16 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                     }),
                 });
 
-                if (!res.ok) throw new Error("Failed to save profile");
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || "Failed to save profile");
+                }
 
                 // Redirect
                 router.push('/feed');
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
+                toast.error(error.message || "Failed to save profile");
                 router.push('/feed');
             }
         }
@@ -317,13 +321,16 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                 }),
             });
 
-            if (!res.ok) throw new Error("Failed to save profile");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || "Failed to save profile");
+            }
 
             toast.success("Onboarding completed successfully!");
             router.push('/feed');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error("Failed to finalize onboarding. Redirecting to feed...");
+            toast.error(error.message || "Failed to finalize onboarding.");
             router.push('/feed');
         } finally {
             setIsSkipping(false);
