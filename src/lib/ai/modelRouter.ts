@@ -84,6 +84,8 @@ async function callNvidiaNIM(
   if (!apiKey) throw new Error(`NVIDIA API key missing for model: ${model}`)
   if (!model) throw new Error('NVIDIA model name is required')
 
+  console.log(`[NIM] Calling model="${model}" key="${apiKey.slice(0, 12)}…"`)
+
   const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -121,6 +123,13 @@ export type AITask =
   | 'report'
   | 'roleClassify'
 
+// ─── KNOWN-WORKING MODELS (verified warm on NVIDIA NIM) ──────────────────────
+// These are used as the ultimate fallback when specific env vars are not set.
+// DO NOT fall back to process.env.NVIDIA_MODEL — on Vercel production it still
+// points to 'z-ai/glm-5.1' which gateway-timeouts (504) and breaks everything.
+const FAST_MODEL   = 'meta/llama-3.1-8b-instruct'            // ~800ms, JSON-capable
+const STRONG_MODEL = 'meta/llama-3.3-70b-instruct'           // ~900ms, high quality
+
 export async function executeAI(
   task: AITask,
   messages: { role: string; content: string }[],
@@ -131,46 +140,46 @@ export async function executeAI(
     stream?: boolean
   } = {}
 ) {
-  const mainKey = process.env.NVIDIA_API_KEY || '';
-  const mainModel = process.env.NVIDIA_MODEL || '';
+  // Fallback API key — the legacy single key that already exists on Vercel
+  const fallbackKey = process.env.NVIDIA_API_KEY || '';
 
   switch (task) {
     case 'search':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH || mainKey,
-        process.env.NVIDIA_MODEL_SEARCH || mainModel || 'meta/llama-3.1-8b-instruct',
+        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
         messages,
         options
       )
 
     case 'assistant':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_ASSISTANT || mainKey,
-        process.env.NVIDIA_MODEL_ASSISTANT || mainModel || 'meta/llama-3.1-8b-instruct',
+        process.env.NVIDIA_API_KEY_ASSISTANT || fallbackKey,
+        process.env.NVIDIA_MODEL_ASSISTANT || STRONG_MODEL,
         messages,
         options
       )
 
     case 'resumeImport':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_IMPORT || mainKey,
-        process.env.NVIDIA_MODEL_RESUME_IMPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
+        process.env.NVIDIA_API_KEY_RESUME_IMPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_RESUME_IMPORT || STRONG_MODEL,
         messages,
         options
       )
 
     case 'resumeExport':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_EXPORT || mainKey,
-        process.env.NVIDIA_MODEL_RESUME_EXPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
+        process.env.NVIDIA_API_KEY_RESUME_EXPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_RESUME_EXPORT || STRONG_MODEL,
         messages,
         options
       )
 
     case 'report':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_REPORT || mainKey,
-        process.env.NVIDIA_MODEL_REPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
+        process.env.NVIDIA_API_KEY_REPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_REPORT || STRONG_MODEL,
         messages,
         { ...options, jsonMode: true }
       )
@@ -179,8 +188,8 @@ export async function executeAI(
       // Uses the fastest available model for instant classification
       // Role classification runs BEFORE the interview starts — must be <2s
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH || mainKey,
-        process.env.NVIDIA_MODEL_SEARCH || mainModel || 'meta/llama-3.1-8b-instruct',
+        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
         messages,
         { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
       )
