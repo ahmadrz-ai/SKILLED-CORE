@@ -249,18 +249,24 @@ export async function POST(req: Request) {
 
             try {
               console.log("SERVER: Trying Suggester via executeAI('assistant')");
-              const suggesterResponse = await executeAI('assistant', [
+              // Race against a 10s timeout — the suggester is non-critical and must
+              // NEVER block the Gemini interviewer call (which is what the user sees).
+              const suggesterPromise = executeAI('assistant', [
                 { role: 'system', content: suggesterSystemPrompt },
                 { role: 'user', content: `Analyze this candidate response: "${lastMessage}"` }
               ], {
                 temperature: 0.7,
                 maxTokens: 1024,
               });
-              const suggesterResponseText = suggesterResponse.choices[0].message.content;
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Suggester timeout')), 10_000)
+              );
+              const suggesterResponse = await Promise.race([suggesterPromise, timeoutPromise]) as any;
+              const suggesterResponseText = suggesterResponse?.choices?.[0]?.message?.content;
               console.log("SERVER: Suggester generation succeeded");
               suggesterText = suggesterResponseText || "Good response.";
-            } catch (e) {
-              console.error("Suggester Error:", e);
+            } catch (e: any) {
+              console.error("Suggester Error (non-fatal):", e?.message || e);
               suggesterText = "Good response.";
             }
 
@@ -303,7 +309,11 @@ export async function POST(req: Request) {
             interviewerSystemPrompt
           );
 
-          const fullInterviewerResponse = geminiResponse.text || "";
+          // Safely extract text from Gemini response — handle multiple SDK shapes
+          const fullInterviewerResponse =
+            geminiResponse?.text ??
+            geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text ??
+            "I apologize, but I encountered a brief interruption. Could you please repeat your last answer?";
 
           // Stream interviewer response to the client with premium simulated typing speed
           const words = fullInterviewerResponse.split(" ");

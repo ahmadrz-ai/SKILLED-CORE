@@ -1,11 +1,15 @@
 import 'server-only'
 
 // ─── GEMINI ROTATION (AI Interview only) ───────────────────────────────────
+// Include the legacy singular key as a final fallback for Vercel environments
+// that only have GEMINI_API_KEY set (not the numbered slots).
 const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
   process.env.GEMINI_API_KEY_3,
   process.env.GEMINI_API_KEY_4,
+  process.env.GEMINI_API_KEY,          // legacy singular fallback
+  process.env.GOOGLE_GENERATIVE_AI_API_KEY, // Vercel AI SDK convention
 ].filter((k): k is string => Boolean(k?.trim()))
 
 function isQuotaError(err: unknown): boolean {
@@ -51,16 +55,19 @@ export async function callGeminiInterview(
 
     } catch (err) {
       lastError = err
-      if (isQuotaError(err)) {
+      const errMsg = String((err as any)?.message ?? err).toLowerCase()
+      const errStatus = (err as any)?.status ?? (err as any)?.statusCode ?? 0
+      // Rotate on quota errors, 503 overloads, and transient network errors
+      if (isQuotaError(err) || errStatus === 503 || errMsg.includes('fetch failed') || errMsg.includes('econnreset')) {
         console.warn(
-          `[Gemini Interview] Key ${i + 1} quota exhausted.`,
+          `[Gemini Interview] Key ${i + 1} failed (${errStatus || errMsg.slice(0, 60)}).`,
           i + 1 < GEMINI_KEYS.length ? `Trying key ${i + 2}...` : 'All keys exhausted.'
         )
         continue
       }
-      // Non-quota error — do not rotate, throw immediately
-      console.error(`[Gemini Interview] Non-quota error on key ${i + 1}:`, err)
-      throw err
+      // Non-transient error — still try next key rather than crashing
+      console.error(`[Gemini Interview] Error on key ${i + 1}:`, err)
+      continue
     }
   }
 
