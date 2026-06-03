@@ -131,43 +131,46 @@ export async function executeAI(
     stream?: boolean
   } = {}
 ) {
+  const mainKey = process.env.NVIDIA_API_KEY || '';
+  const mainModel = process.env.NVIDIA_MODEL || '';
+
   switch (task) {
     case 'search':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH!,
-        process.env.NVIDIA_MODEL_SEARCH!,
+        process.env.NVIDIA_API_KEY_SEARCH || mainKey,
+        process.env.NVIDIA_MODEL_SEARCH || mainModel || 'meta/llama-3.1-8b-instruct',
         messages,
         options
       )
 
     case 'assistant':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_ASSISTANT!,
-        process.env.NVIDIA_MODEL_ASSISTANT!,
+        process.env.NVIDIA_API_KEY_ASSISTANT || mainKey,
+        process.env.NVIDIA_MODEL_ASSISTANT || mainModel || 'meta/llama-3.1-8b-instruct',
         messages,
         options
       )
 
     case 'resumeImport':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_IMPORT!,
-        process.env.NVIDIA_MODEL_RESUME_IMPORT!,
+        process.env.NVIDIA_API_KEY_RESUME_IMPORT || mainKey,
+        process.env.NVIDIA_MODEL_RESUME_IMPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
         messages,
         options
       )
 
     case 'resumeExport':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_EXPORT!,
-        process.env.NVIDIA_MODEL_RESUME_EXPORT!,
+        process.env.NVIDIA_API_KEY_RESUME_EXPORT || mainKey,
+        process.env.NVIDIA_MODEL_RESUME_EXPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
         messages,
         options
       )
 
     case 'report':
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_REPORT!,
-        process.env.NVIDIA_MODEL_REPORT!,
+        process.env.NVIDIA_API_KEY_REPORT || mainKey,
+        process.env.NVIDIA_MODEL_REPORT || mainModel || 'nvidia/llama-3.1-nemotron-70b-instruct',
         messages,
         { ...options, jsonMode: true }
       )
@@ -176,8 +179,8 @@ export async function executeAI(
       // Uses the fastest available model for instant classification
       // Role classification runs BEFORE the interview starts — must be <2s
       return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH!,
-        process.env.NVIDIA_MODEL_SEARCH!,
+        process.env.NVIDIA_API_KEY_SEARCH || mainKey,
+        process.env.NVIDIA_MODEL_SEARCH || mainModel || 'meta/llama-3.1-8b-instruct',
         messages,
         { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
       )
