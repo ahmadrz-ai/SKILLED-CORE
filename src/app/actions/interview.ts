@@ -49,6 +49,29 @@ export async function generateAnalysis(
     sandboxCode?: string,
     sandboxOutput?: string[]
 ) {
+    // 1. Check if the candidate provided any actual responses (user role messages)
+    const userMessages = (messages || []).filter(
+        (m: any) => m.role === 'user' && !m.content.startsWith('[SANDBOX_TELEMETRY]')
+    );
+    if (userMessages.length === 0) {
+        return {
+            success: true,
+            data: {
+                score: 0,
+                feedback: "The candidate terminated the interview session immediately without providing any responses.",
+                radarData: {
+                    technical: 0,
+                    communication: 0,
+                    grammar: 0,
+                    problemSolving: 0,
+                    culturalFit: 0
+                },
+                strengths: [],
+                weaknesses: ["Did Not Participate"]
+            }
+        };
+    }
+
     // Filter out system messages, only keep user/assistant exchange
     const transcript = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
 
@@ -166,23 +189,50 @@ export async function createInterviewSession(
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
-        const interview = await prisma.interview.create({
-            data: {
-                userId: session.user.id,
-                role,
-                difficulty,
-                score: 0,
-                feedback: "",
-                radarData: undefined,
-                transcript: undefined,
-                roleClassification: roleClassification as any,
-                isPublic: false
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Fetch user's current credit balance
+            const user = await tx.user.findUnique({
+                where: { id: session.user.id },
+                select: { credits: true }
+            });
+
+            if (!user) {
+                throw new Error("User record not found");
             }
+
+            if (user.credits < 1) {
+                throw new Error("Insufficient credits. Please top up to continue.");
+            }
+
+            // 2. Decrement user's credits by 1
+            await tx.user.update({
+                where: { id: session.user.id },
+                data: { credits: { decrement: 1 } }
+            });
+
+            // 3. Create the interview session
+            const interview = await tx.interview.create({
+                data: {
+                    userId: session.user.id,
+                    role,
+                    difficulty,
+                    score: 0,
+                    feedback: "",
+                    radarData: undefined,
+                    transcript: undefined,
+                    roleClassification: roleClassification as any,
+                    isPublic: false
+                }
+            });
+
+            return interview.id;
         });
-        return { success: true, id: interview.id };
-    } catch (error) {
+
+        revalidatePath("/credits");
+        return { success: true, id: result };
+    } catch (error: any) {
         console.error("Create interview session failed:", error);
-        return { error: "Failed to initialize interview session." };
+        return { error: error.message || "Failed to initialize interview session." };
     }
 }
 

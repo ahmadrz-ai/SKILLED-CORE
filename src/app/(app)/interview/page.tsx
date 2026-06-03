@@ -417,6 +417,28 @@ export default function InterviewPage() {
             </div>
 
             {/* Modals */}
+            {isClassifying && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-bg-overlay backdrop-blur-md animate-in fade-in duration-300 select-none">
+                    <div className="bg-bg-modal border border-border-modal p-8 rounded-2xl shadow-sc-modal max-w-md w-[90vw] text-center space-y-6 flex flex-col items-center">
+                        <div className="relative flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-full border-4 border-sc-purple-100 border-t-sc-purple-650 animate-spin" />
+                            <MessageSquarePlus className="w-6 h-6 text-sc-purple-650 absolute animate-pulse" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-heading font-black text-text-heading tracking-tight">
+                                Setting up your Interview Workspace
+                            </h3>
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                                Please wait while we calibrate your environment, analyze requirements, and initialize the assessment panel.
+                            </p>
+                        </div>
+                        <p className="text-xs text-text-error font-mono uppercase tracking-widest font-extrabold animate-pulse">
+                            Do not close or refresh this screen.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <ConfigurationModal
                 isOpen={configOpen}
                 onStart={handleStartSession}

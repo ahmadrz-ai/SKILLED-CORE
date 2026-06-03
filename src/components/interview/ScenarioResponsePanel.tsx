@@ -94,32 +94,32 @@ export function ScenarioResponsePanel({ category, competencies, tools }: Scenari
   };
 
   return (
-    <div className="flex flex-col bg-[#16161F] border border-[#2A2A3A] rounded-2xl h-full p-6 text-[#E8E8F0] space-y-6 overflow-y-auto">
+    <div className="flex flex-col bg-bg-card border border-border-default rounded-2xl h-full p-6 text-text-body space-y-6 overflow-y-auto">
       {/* Header */}
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[#9278EA]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-brand">
           Scenario Challenge
         </span>
-        <h3 className="text-base font-bold text-[#E8E8F0]">
+        <h3 className="text-base font-bold text-text-heading">
           {scenario.title}
         </h3>
       </div>
 
       {/* Description */}
-      <div className="bg-[#12121A] border border-[#2A2A3A] rounded-xl p-4 space-y-3">
-        <p className="text-xs text-[#9090A8] leading-relaxed">
+      <div className="bg-bg-secondary-panel border border-border-default rounded-xl p-4 space-y-3">
+        <p className="text-xs text-text-secondary leading-relaxed">
           {scenario.prompt}
         </p>
 
         {/* Competencies & Tools tags */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-[#2A2A3A]/50">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border-subtle/50">
           {competencies.map((comp, idx) => (
-            <span key={idx} className="px-2 py-0.5 rounded bg-sc-purple-500/10 border border-[#9278EA]/20 text-[10px] font-bold text-[#9278EA]">
+            <span key={idx} className="px-2 py-0.5 rounded bg-sc-purple-50 border border-sc-purple-200 text-[10px] font-bold text-sc-purple-700">
               {comp}
             </span>
           ))}
           {tools.map((tool, idx) => (
-            <span key={idx} className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-400">
+            <span key={idx} className="px-2 py-0.5 rounded bg-sc-gray-100 border border-border-default text-[10px] font-bold text-text-body">
               {tool}
             </span>
           ))}
@@ -129,30 +129,30 @@ export function ScenarioResponsePanel({ category, competencies, tools }: Scenari
       {/* Textarea */}
       <div className="flex-1 flex flex-col min-h-[220px] relative">
         {isSubmitted ? (
-          <div className="flex-1 border border-emerald-500/30 bg-emerald-500/5 rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-3">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-            <h4 className="text-sm font-bold text-emerald-400">Response Submitted</h4>
-            <p className="text-xs text-[#9090A8] max-w-sm leading-relaxed">
+          <div className="flex-1 border border-border-success/30 bg-bg-success rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-3">
+            <CheckCircle2 className="w-10 h-10 text-text-success" />
+            <h4 className="text-sm font-bold text-text-success">Response Submitted</h4>
+            <p className="text-xs text-text-secondary max-w-sm leading-relaxed">
               Your response has been saved and will be analyzed by the interviewer to evaluate your domain expertise.
             </p>
           </div>
         ) : (
           <>
             <textarea
-              className="flex-1 w-full bg-[#12121A] border border-[#2A2A3A] rounded-xl p-4 text-xs text-[#E8E8F0] placeholder:text-[#4A4A60] focus:border-[#9278EA] focus:outline-none resize-none leading-relaxed transition-all"
+              className="flex-1 w-full bg-bg-input border border-border-input rounded-xl p-4 text-xs text-text-body placeholder:text-text-placeholder focus:border-border-focus focus:outline-none resize-none leading-relaxed transition-all"
               placeholder="Write your approach here. Be specific about what you would do, what tools you would use, and how you would measure success..."
               value={response}
               onChange={(e) => setResponse(e.target.value)}
             />
             {/* Character count & Submit button container */}
             <div className="flex items-center justify-between mt-3 shrink-0">
-              <span className="text-[10px] text-[#4A4A60]">
+              <span className="text-[10px] text-text-secondary">
                 {response.length} characters
               </span>
               <Button
                 onClick={handleSubmit}
                 disabled={!response.trim() || response.length < 50}
-                className="bg-[#5B35D5] hover:bg-[#4A28C9] text-white px-5 py-2 h-9 text-xs font-bold rounded-lg border-none shadow-md shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-btn-primary-bg hover:bg-btn-primary-bg-hover text-white px-5 py-2 h-9 text-xs font-bold rounded-lg border-none shadow-md shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit Response
               </Button>

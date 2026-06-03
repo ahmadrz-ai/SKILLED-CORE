@@ -57,13 +57,7 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
 
         setIsStarting(true);
         try {
-            const result = await deductCredits(1);
-            if (result.success) {
-                setCredits(result.remaining);
-                onStart({ role, difficulty: difficulty[0], persona, useResume });
-            } else {
-                toast.error("Failed to start session. Please try again.");
-            }
+            onStart({ role, difficulty: difficulty[0], persona, useResume });
         } catch (err) {
             toast.error("An error occurred.");
         } finally {
