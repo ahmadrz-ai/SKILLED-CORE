@@ -1,6 +1,6 @@
 "use server";
 
-import { callGLM, parseGLMJson } from "@/lib/glm";
+import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -53,7 +53,7 @@ export async function generateAnalysis(
     const transcript = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
 
     try {
-        console.log("SERVER ACTION: Generating analysis for role using GLM-5.1:", role);
+        console.log("SERVER ACTION: Generating analysis for role using executeAI('search'):", role);
 
         let codeSection = "";
         if (sandboxCode) {
@@ -63,11 +63,11 @@ export async function generateAnalysis(
             
             FINAL SOLUTION CODE IN SANDBOX:
             \`\`\`javascript
-            ${sandboxCode}
+            \${sandboxCode}
             \`\`\`
             
             COMPILER / CONSOLE RUN OUTPUTS:
-            ${Array.isArray(sandboxOutput) && sandboxOutput.length > 0 ? sandboxOutput.join("\n") : "No output was captured (code was not executed, or generated no console logs)."}
+            \${Array.isArray(sandboxOutput) && sandboxOutput.length > 0 ? sandboxOutput.join("\n") : "No output was captured (code was not executed, or generated no console logs)."}
             
             Evaluate this code's time/space complexity, modularity, readability, and correct fulfillment of standard constraints. Factor these observations heavily into the Technical and Problem Solving scores.
             `;
@@ -109,7 +109,8 @@ export async function generateAnalysis(
             Strict JSON only. Do not include markdown code block formatting (e.g. no \`\`\`json).
             `;
 
-        const rawResponse = await callGLM(
+        const result = await executeAI(
+            'search',
             [
                 {
                     role: 'system',
@@ -123,12 +124,14 @@ export async function generateAnalysis(
             {
                 temperature: 0.2,
                 maxTokens: 4096,
-                enableThinking: true,  // Enable deep reasoning for accurate scoring
+                jsonMode: true
             }
         );
 
-        console.log("SERVER ACTION: Analysis successfully generated with GLM-5.1");
-        const analysis = parseGLMJson<AnalysisResult>(rawResponse);
+        const rawResponse = result.choices[0].message.content;
+
+        console.log("SERVER ACTION: Analysis successfully generated");
+        const analysis = parseAIJson<AnalysisResult>(rawResponse);
         return { success: true, data: analysis };
 
     } catch (error: any) {
@@ -154,9 +157,37 @@ export async function generateAnalysis(
     }
 }
 
-export async function saveInterview(
+export async function createInterviewSession(
     role: string,
     difficulty: number,
+    roleClassification: any
+) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const interview = await prisma.interview.create({
+            data: {
+                userId: session.user.id,
+                role,
+                difficulty,
+                score: 0,
+                feedback: "",
+                radarData: undefined,
+                transcript: undefined,
+                roleClassification: roleClassification as any,
+                isPublic: false
+            }
+        });
+        return { success: true, id: interview.id };
+    } catch (error) {
+        console.error("Create interview session failed:", error);
+        return { error: "Failed to initialize interview session." };
+    }
+}
+
+export async function saveInterview(
+    interviewId: string,
     analysis: AnalysisResult,
     transcript: any[],
     durationSeconds?: number,
@@ -167,11 +198,9 @@ export async function saveInterview(
 
     try {
         // Save to DB, wrapping strengths and weaknesses in radarData JSON
-        const interview = await prisma.interview.create({
+        const interview = await prisma.interview.update({
+            where: { id: interviewId },
             data: {
-                userId: session.user.id,
-                role,
-                difficulty,
                 score: cheated ? 0 : analysis.score,
                 feedback: analysis.feedback,
                 radarData: {

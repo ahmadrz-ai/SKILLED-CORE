@@ -111,6 +111,7 @@ model User {
   openToWork           Boolean      @default(false)
   loginEvents          LoginEvent[] // access audit log
   verifiedSkills       VerifiedSkill[]
+  systemReports        SystemReport[]
 }
 
 model LoginEvent {
@@ -133,6 +134,7 @@ model Interview {
   feedback   String?  @db.Text
   radarData  Json? // Stores { technical: number, communication: number, ... }
   transcript Json? // Stores full chat history
+  roleClassification Json?
   isPublic   Boolean  @default(true)
   createdAt  DateTime @default(now())
 
@@ -553,4 +555,18 @@ model VerifiedSkill {
 model SkillDetail {
   id             String          @id @default(uuid())
   verifiedSkills VerifiedSkill[]
+}
+
+model SystemReport {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  userWords   String   @db.Text       // Exactly what the user wrote
+  category    String   @default("bug") // "bug" | "support" | "feature" | "stuck"
+  aiSummary   String?  @db.Text       // AI technical summary
+  fixPrompt   String?  @db.Text       // Copy-paste ready Antigravity prompt
+  status      String   @default("OPEN") // "OPEN" | "ANALYZED" | "IN_PROGRESS" | "RESOLVED"
+  severity    String   @default("medium") // "low" | "medium" | "high" | "critical"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

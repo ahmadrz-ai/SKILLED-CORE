@@ -147,8 +147,7 @@ export function Scorecard({
 
                     // Auto-save generated report to profile DB, passing cheated flag!
                     const saveResult = await saveInterview(
-                        config?.role || "General",
-                        config?.difficulty || 3,
+                        config?.interviewId || "",
                         result.data,
                         actualMessages,
                         durationSeconds,

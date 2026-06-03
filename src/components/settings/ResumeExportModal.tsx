@@ -16,6 +16,7 @@ import { getProfileForResume } from '@/app/actions/resumeExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SocialIcon } from '@/components/shared/SocialIcon';
 
 interface SocialLink {
   label: string;
@@ -405,14 +406,14 @@ export default function ResumeExportModal({ onClose }: ResumeExportModalProps) {
             </p>
 
             {editingSection !== 'socials' ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {resumeData.socials?.map((social, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1.5 bg-sc-purple-50 text-sc-purple-700 border border-sc-purple-200 px-2.5 py-1 rounded-md text-xs font-semibold"
+                    className="inline-flex items-center gap-2 bg-sc-purple-50 text-sc-purple-700 border border-sc-purple-200/50 pl-1.5 pr-3 py-1 rounded-lg text-xs font-semibold"
                   >
-                    <FileText className="w-3 h-3" />
-                    {social.label}: {social.url}
+                    <SocialIcon platform={social.label} className="w-5 h-5 bg-sc-purple-100/50 border-none shadow-none" />
+                    <span>{social.label}: {social.url}</span>
                   </span>
                 ))}
               </div>

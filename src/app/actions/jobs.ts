@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { callGLM } from "@/lib/glm";
+import { executeAI } from "@/lib/ai/modelRouter";
 
 export async function getJobs(searchParams: any) {
     const { query, type, remote, minSalary, experience } = searchParams;
@@ -111,7 +111,8 @@ export async function rewriteJobDescription(currentDescription: string) {
 
     // Real AI Logic
     try {
-        const text = await callGLM(
+        const result = await executeAI(
+            'search',
             [
                 {
                     role: 'system',
@@ -125,9 +126,10 @@ export async function rewriteJobDescription(currentDescription: string) {
             {
                 temperature: 0.5,
                 maxTokens: 3000,
-                enableThinking: false,
             }
         );
+
+        const text = result.choices[0].message.content;
 
         return { 
             success: true, 

@@ -1,69 +1,13 @@
+import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
-import { callGeminiWithRotation } from "@/lib/gemini-rotate";
+import * as _pdfParse from "pdf-parse";
+const pdfParse = (_pdfParse as any).default || _pdfParse;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
-    try {
-        let base64Data = "";
-        let mimeType = "application/pdf";
-
-        try {
-            const contentType = req.headers.get("content-type") || "";
-            if (contentType.includes("application/json")) {
-                const body = await req.json();
-                const resumeUrl = body.url;
-                if (!resumeUrl) {
-                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
-                }
-                const response = await fetch(resumeUrl);
-                if (!response.ok) {
-                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
-                }
-                const arrayBuffer = await response.arrayBuffer();
-                base64Data = Buffer.from(arrayBuffer).toString('base64');
-            } else {
-                const formData = await req.formData();
-                const file = formData.get("file") as File;
-                const resumeUrl = formData.get("url") as string;
-
-                if (file) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    base64Data = Buffer.from(arrayBuffer).toString('base64');
-                    mimeType = file.type || "application/pdf";
-                } else if (resumeUrl) {
-                    const response = await fetch(resumeUrl);
-                    if (!response.ok) {
-                        return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
-                    }
-                    const arrayBuffer = await response.arrayBuffer();
-                    base64Data = Buffer.from(arrayBuffer).toString('base64');
-                } else {
-                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
-                }
-            }
-        } catch (fileErr: any) {
-            console.error("Option A File read failed:", fileErr);
-            return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
-        }
-
-        // STEP 3: Send to Gemini with fallback rotation
-        let textResult = "";
-        try {
-            textResult = await callGeminiWithRotation(async (client) => {
-                const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const result = await model.generateContent([
-                    {
-                        inlineData: {
-                            mimeType: mimeType,
-                            data: base64Data,
-                        }
-                    },
-                    {
-                        text: `You are an expert resume parser and professional profile writer.
-Your job is to extract every piece of information from this resume
-and structure it perfectly.
+const RESUME_EXTRACTION_PROMPT = `You are an expert resume parser and professional profile writer.
+Your job is to extract every piece of information from this resume and structure it perfectly.
 
 RULES:
 - Extract EVERY piece of data you can find. Miss nothing.
@@ -168,22 +112,94 @@ Return exactly this structure:
       "proficiency": "Native | Fluent | Professional | Conversational | Basic"
     }
   ]
-}`
+}`;
+
+export async function POST(req: Request) {
+    try {
+        let pdfBuffer: Buffer;
+        let mimeType = "application/pdf";
+
+        try {
+            const contentType = req.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                const body = await req.json();
+                const resumeUrl = body.url;
+                if (!resumeUrl) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
+                const response = await fetch(resumeUrl);
+                if (!response.ok) {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                pdfBuffer = Buffer.from(arrayBuffer);
+            } else {
+                const formData = await req.formData();
+                const file = formData.get("file") as File;
+                const resumeUrl = formData.get("url") as string;
+
+                if (file) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdfBuffer = Buffer.from(arrayBuffer);
+                    mimeType = file.type || "application/pdf";
+                } else if (resumeUrl) {
+                    const response = await fetch(resumeUrl);
+                    if (!response.ok) {
+                        return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
                     }
-                ]);
-                return result.response.text();
-            });
-            console.log("Raw Gemini response text (Option A):", textResult);
-        } catch (geminiErr: any) {
-            console.error("Gemini Content Generation Failed:", geminiErr);
-            return NextResponse.json({ error: "AI parsing failed", details: geminiErr.message }, { status: 500 });
+                    const arrayBuffer = await response.arrayBuffer();
+                    pdfBuffer = Buffer.from(arrayBuffer);
+                } else {
+                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
+                }
+            }
+        } catch (fileErr: any) {
+            console.error("File read failed:", fileErr);
+            return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
         }
 
-        // STEP 4: Strip markdown fences before parsing:
+        // Extract text from PDF
+        let extractedText = "";
         try {
-            let text = textResult;
-            text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-            const parsed = JSON.parse(text);
+            if (mimeType.includes("pdf") || mimeType.includes("octet-stream")) {
+                const pdfData = await pdfParse(pdfBuffer);
+                extractedText = pdfData.text || "";
+            } else {
+                extractedText = pdfBuffer.toString("utf-8");
+            }
+        } catch (pdfErr) {
+            console.error("pdf-parse failed, falling back to buffer string:", pdfErr);
+            extractedText = pdfBuffer.toString("utf-8");
+        }
+
+        if (!extractedText.trim()) {
+            return NextResponse.json({ error: "Could not extract text from resume file" }, { status: 400 });
+        }
+
+        // Send to executeAI with resumeImport task
+        let textResult = "";
+        try {
+            const result = await executeAI('resumeImport', [
+                {
+                    role: 'system',
+                    content: 'You are an expert resume parser and professional profile writer. Return ONLY valid JSON. No markdown. No backticks.'
+                },
+                {
+                    role: 'user',
+                    content: `Parse this resume text and structure it according to the schema rules:\n\nResume Text:\n${extractedText}\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`
+                }
+            ], {
+                temperature: 0.1,
+                jsonMode: true
+            });
+            textResult = result.choices[0].message.content;
+        } catch (aiErr: any) {
+            console.error("executeAI resumeImport failed:", aiErr);
+            return NextResponse.json({ error: "AI parsing failed", details: aiErr.message }, { status: 500 });
+        }
+
+        try {
+            const parsed = parseAIJson<any>(textResult);
             const mapped = mapToClientFormat(parsed);
             return NextResponse.json({ success: true, aiData: mapped });
         } catch (jsonErr: any) {

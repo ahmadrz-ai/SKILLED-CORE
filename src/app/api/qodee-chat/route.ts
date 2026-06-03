@@ -1,4 +1,4 @@
-import { streamGLMText } from "@/lib/glm";
+import { streamNvidiaText } from "@/lib/ai/modelRouter";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -6,7 +6,7 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
     const { messages } = await req.json();
 
-    console.log("Qodee API Request via GLM-5.1:", {
+    console.log("Qodee API Request via executeAI:", {
         messagesCount: messages?.length,
         firstMessage: messages?.[0]
     });
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   - User Identity/Profile: /profile (or /profile/[username])
   - Platform Configurations/Settings: /settings
   - Self-Service Help & Support Center: /help
-  
+  -
   INSTRUCTIONS & CONSTRAINTS:
   - You MUST strictly answer questions based ONLY on the documented facts above.
   - If a user asks how to perform a task (e.g., changing their profile role, enabling Ghost Mode, topping up credits), you must give the exact, correct steps from the SKILLEDCORE PLATFORM KNOWLEDGE BASE above.
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
             })),
         ];
 
-        const textStreamResponse = await streamGLMText(glmMessages, {
+        const textStreamResponse = await streamNvidiaText('assistant', glmMessages, {
             temperature: 0.7,
             maxTokens: 4096,
         });

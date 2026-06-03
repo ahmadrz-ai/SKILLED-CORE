@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { IconPicker } from './IconPicker';
 import { iconMap } from '@/lib/icons';
+import { SocialIcon } from '@/components/shared/SocialIcon';
 
 // --- Types ---
 interface ProfileEditModalsProps {
@@ -756,13 +757,11 @@ function CustomLinksForm({ user, onSave }: any) {
                         <div key={field.id} className="flex items-center gap-3 p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-subtle)] rounded-xl mb-3 group">
                             <button
                                 type="button"
-                                className="w-10 h-10 p-0 bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] rounded-lg text-white flex items-center justify-center cursor-pointer shrink-0 border-none relative"
+                                className="bg-transparent border-none cursor-pointer p-0 shrink-0 outline-none"
                                 onClick={() => setIconPickerIndex(index)}
                                 title="Click to change icon"
                             >
-                                <div className="relative text-white flex items-center justify-center">
-                                    {renderIcon(form.watch(`customLinks.${index}.icon`))}
-                                </div>
+                                <SocialIcon platform={form.watch(`customLinks.${index}.icon`) ? form.watch(`customLinks.${index}.icon`)!.replace(/^Si/, '').replace(/^Fa/, '').toLowerCase() : 'globe'} />
                             </button>
 
                             <div className="w-32 flex-shrink-0">

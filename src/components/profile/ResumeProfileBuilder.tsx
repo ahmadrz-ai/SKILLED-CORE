@@ -37,6 +37,7 @@ import {
     CheckCircle
 } from 'lucide-react';
 import { iconMap } from '@/lib/icons';
+import { SocialIcon } from '@/components/shared/SocialIcon';
 
 interface ResumeProfileBuilderProps {
     user: any;
@@ -1589,9 +1590,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                                         {socials.map((soc, idx) => (
                                             <div key={idx} className="flex items-center gap-3 p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-subtle)] rounded-xl group">
                                                 {/* Left Icon Square */}
-                                                <div className="w-10 h-10 bg-[var(--sc-purple-600)] hover:bg-[var(--sc-purple-700)] rounded-lg flex items-center justify-center shrink-0 shadow-sm border-none relative">
-                                                    {renderSocialIcon(soc.icon)}
-                                                </div>
+                                                <SocialIcon platform={soc.icon ? soc.icon.replace(/^Si/, '').replace(/^Fa/, '').toLowerCase() : 'globe'} />
                                                 
                                                 <div className="w-32 flex-shrink-0">
                                                     <Input 

@@ -1,4 +1,4 @@
-import { callGLM, parseGLMJson } from "@/lib/glm";
+import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
 
 export const runtime = 'nodejs';
@@ -46,7 +46,8 @@ Rules:
 - Never invent requirements not mentioned in the query
 - Return ONLY JSON`;
 
-        const rawResponse = await callGLM(
+        const result = await executeAI(
+            'search',
             [
                 {
                     role: 'system',
@@ -60,12 +61,14 @@ Rules:
             {
                 temperature: 0.1,  // Very low — needs consistent structured output
                 maxTokens: 2048,
-                enableThinking: false,  // Fast, no deep reasoning needed
+                jsonMode: true,
             }
         );
 
+        const rawResponse = result.choices[0].message.content;
+
         try {
-            const parsed = parseGLMJson<any>(rawResponse);
+            const parsed = parseAIJson<any>(rawResponse);
             return NextResponse.json(parsed);
         } catch (parseError) {
             console.error("JSON parsing of query parser failed:", parseError, "Raw output:", rawResponse);
@@ -77,3 +80,4 @@ Rules:
         return NextResponse.json({ error: "Could not parse query", details: err.message }, { status: 500 });
     }
 }
+

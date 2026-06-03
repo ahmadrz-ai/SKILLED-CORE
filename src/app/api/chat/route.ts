@@ -1,4 +1,4 @@
-import { callGLM, callGLMStream } from "@/lib/glm";
+import { callGeminiInterview, executeAI } from "@/lib/ai/modelRouter";
 import { getSystemResumeContext } from "@/lib/userContext";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -65,26 +65,137 @@ function logError(error: any) {
   }
 }
 
+function buildInterviewSystemPrompt(
+  role: string,
+  intensity: number,
+  sandboxCode: string,
+  sandboxOutput: string[],
+  resumeContext: string,
+  classification: any,
+  questionCount: number
+) {
+  const requiresCodingSandbox = classification ? classification.requiresCodingSandbox : true;
+  
+  let personality = "";
+  switch (intensity) {
+    case 1:
+      personality = `You are KIND, PATIENT, and ENCOURAGING. Treat the candidate like a junior peer or intern who is learning. If they make a mistake, gently guide them. Friendly tone.`;
+      break;
+    case 2:
+      personality = `You are PROFESSIONAL, POLITE, and BALANCED. Act like a standard corporate recruiter or HM. Ask standard questions. No trick questions. Neutral tone.`;
+      break;
+    case 3:
+      personality = `You are EXTREMELY STRICT, BLUNT, and have exceptionally HIGH STANDARDS. Expect absolute competence. Zero patience for textbook definitions or generic hand-waving. Call out vague answers, fluff, or buzzwords immediately and directly. Edge cases and concrete production engineering details are expected.`;
+      break;
+    case 4:
+      personality = `You are highly ARROGANT, NITPICKY, and UNCOMPROMISING. Challenge every design decision, assumption, or code snippet. Biting, direct critique. Highlight gaps/warnings in **Orange Text** (wrap in double stars **like this**).`;
+      break;
+    case 5:
+      personality = `You are an ELITE FOUNDER, SAVAGELY BLUNT, and have ZERO TOLERANCE for mediocrity. Believe 99% of candidates hide behind fluff. Nitpick every single word and line of code. Use ***RED TEXT*** (wrap in triple stars ***LIKE THIS***) aggressively for brutal insults like ***PATHETIC*** or ***INCOMPETENT***. Use **ORANGE TEXT** for warnings.`;
+      break;
+  }
+
+  let prompt = `You are a Technical Interviewer conducting a mock interview for the role of "${role}".
+Intensity Level: ${intensity} / 5.
+YOUR PERSONALITY:
+${personality}
+
+FORMATTING RULES:
+- Use ***TRIPLE STARS*** for extreme anger/insults (Red).
+- Use **DOUBLE STARS** for warnings/emphasis (Orange).
+- Use *SINGLE STARS* for corrections (Green).
+
+STRIKE RULE:
+- If Level is 4 or 5, terminate after 5 strikes.
+- If Level < 4, be more lenient.
+
+[CRITICAL SANDBOX INTERACTION PROTOCOLS] (Only relevant if requiresCodingSandbox is true)
+- Upon receiving a [SANDBOX_TELEMETRY] string block, immediately analyze the algorithm logic and terminal output errors.
+- DO NOT mention the telemetry format in your speech. Respond natively as an interviewer reviewing the execution.
+- IF THE SOLUTION IS CORRECT: Confirm its validity -> Increment local internal milestone check -> Ask 2 to 3 progressive, high-depth architectural follow-up questions -> If passed, declare completion and output the token: [TRIGGER_EARN_BADGE:PROMPT_ENGINEERING] or [TRIGGER_EARN_BADGE:JAVASCRIPT_LOGIC] and instruct the candidate to click "End Session".
+- IF THE SOLUTION IS INCORRECT: Surface the exact logical edge-cases or execution faults -> Continue the interview cycle.
+`;
+
+  if (resumeContext) {
+    prompt += `\nCandidate Background (Resume Context active):\n${resumeContext}\n`;
+  }
+
+  if (requiresCodingSandbox) {
+    // Technical/Engineering Roles: 6 Questions
+    prompt += `
+ROLE COMPLIANCE RULES:
+- You are interviewing for a technical role that requires a coding sandbox workspace.
+- The total interview consists of exactly 6 questions/turns.
+- Current Turn: Question ${questionCount} of 6.
+- QUESTION SEQUENCE PROTOCOL:
+  - Question 1: Greeting & Ask candidate to "Introduce yourself and highlight your experience relevant to ${role}". Do not ask technical questions yet.
+  - Questions 2, 3, 4: Deep dive into technical skills, architecture, and core competencies. Challenge them on concepts from their resume if present.
+  - Question 5 (CODING TASK): You MUST present a coding challenge. Clearly instruct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution to..."
+  - Question 6 (FOLLOW-UP): Conduct a brief code review or ask an architectural follow-up question on their sandbox code solution.
+  - End of Session: When the user responds to Question 6, you must declare the interview complete. Output a short wrap-up summary and tell the candidate to click the "End Session" button. Output the failure token [TRIGGER_SESSION_FAIL] only if they completely failed standard coding checks, or if they successfully passed coding evaluations you can output a badge trigger.
+
+CURRENT CODE SANDBOX STATE:
+\`\`\`javascript
+${sandboxCode || "// No code written yet"}
+\`\`\`
+`;
+    if (sandboxOutput && sandboxOutput.length > 0) {
+      prompt += `\nCURRENT TERMINAL RUN OUTPUT:\n${sandboxOutput.join("\n")}\n`;
+    }
+  } else {
+    // Non-Technical Roles: 5 Questions
+    prompt += `
+ROLE COMPLIANCE RULES:
+- You are interviewing for a non-technical or specialized business/creative role.
+- The total interview consists of exactly 5 questions/turns.
+- Current Turn: Question ${questionCount} of 5.
+- ZERO CODE REFERENCE RULE (CRITICAL):
+  - Do NOT reference programming languages, coding syntax, Monaco editor, code compilers, O(n) math, or coding sandboxes.
+  - Never ask the candidate to write code or open a code editor.
+  - The workspace is scenario-based or design-based. Treat it as purely conversational and scenario-driven.
+- QUESTION SEQUENCE PROTOCOL:
+  - Question 1: Greeting & Ask candidate to "Introduce yourself and highlight your experience relevant to ${role}". Do not ask scenario questions yet.
+  - Questions 2, 3, 4: Present scenario-based challenges, behavioral case studies, UX design critiques, or role-specific business situations. Dig deep into their reasoning, strategy, and tools.
+  - Question 5 (FINAL SCENARIO WRAP-UP): Present a final challenging situation or crisis-management question related to their role.
+  - End of Session: When the user responds to Question 5, you must declare the interview complete. Output a short wrap-up summary and tell the candidate to click the "End Session" button. Do NOT reference coding sandboxes or coding results.
+`;
+  }
+
+  return prompt;
+}
+
 export const maxDuration = 45;
 
 export async function POST(req: Request) {
   try {
-    const { messages, user_role, is_grill_mode, intensity = 3, sandbox_code, sandbox_output } = await req.json();
-    console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity });
+    const { messages, user_role, is_grill_mode, intensity = 3, sandbox_code, sandbox_output, interviewId } = await req.json();
+    console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity, interviewId });
 
     const role = user_role || "Candidate";
     const session = await auth();
     let resumeContext = "";
     if (is_grill_mode) {
-       if (session?.user?.id) {
-         resumeContext = await getDynamicResumeContext(session.user.id);
-       } else {
-         resumeContext = getSystemResumeContext();
-       }
-     }
- 
-     // 1. SUGGESTER PROMPT
-     const suggesterSystemPrompt = `You are a Mentor and Interview Coach.
+      if (session?.user?.id) {
+        resumeContext = await getDynamicResumeContext(session.user.id);
+      } else {
+        resumeContext = getSystemResumeContext();
+      }
+    }
+
+    // Load classification if available
+    let classification: any = null;
+    if (interviewId) {
+      const interview = await prisma.interview.findUnique({
+        where: { id: interviewId }
+      });
+      classification = interview?.roleClassification;
+    }
+
+    const assistantMessagesCount = messages ? messages.filter((m: any) => m.role === 'assistant').length : 0;
+    const questionCount = assistantMessagesCount + 1;
+
+    // 1. SUGGESTER SYSTEM PROMPT
+    const suggesterSystemPrompt = `You are a Mentor and Interview Coach.
      
      ANALYSIS REQUIREMENTS:
      For every response, you must FIRST analyze the candidate's previous answer (if any) and current state.
@@ -102,251 +213,121 @@ export async function POST(req: Request) {
      - Constructive and encouraging.
      - If the input is empty or "start", say "Welcome."
      `;
- 
-     // 2. INTERVIEWER PROMPT LOGIC
-      const getPersonality = (level: number) => {
-        switch (level) {
-          case 1: // INTERN SENSITIVITY
-            return `
-                  - You are KIND, PATIENT, and ENCOURAGING.
-                  - Treat the candidate like a junior peer or intern who is learning.
-                  - If they make a mistake, gently guide them to the correct answer.
-                  - Use a friendly tone. "Good try," "Almost there."
-                  - Do NOT be arrogant.
-                  `;
-          case 2: // STANDARD HR
-            return `
-                  - You are PROFESSIONAL, POLITE, and BALANCED.
-                  - Act like a standard corporate recruiter or HM.
-                  - Ask standard questions. No trick questions.
-                  - Be neutral. Neither overly nice nor mean.
-                  `;
-          case 3: // TEAM LEAD (Default)
-            return `
-                  - You are EXTREMELY STRICT, BLUNT, and have exceptionally HIGH STANDARDS.
-                  - You expect absolute competence and have ZERO patience for textbook definitions or generic hand-waving.
-                  - Call out vague answers, fluff, or buzzwords immediately and directly. Tell them bluntly if their response is weak or incomplete.
-                  - Dig deep into real production engineering details, demanding they explain concrete edge cases and system performance.
-                  - Actively grill them. Challenge their assumptions on the spot.
-                  `;
-          case 4: // STAFF ENGINEER
-            return `
-                  - You are highly ARROGANT, NITPICKY, and UNCOMPROMISING.
-                  - Challenge every design decision, assumption, or code snippet the candidate makes.
-                  - Call out sub-par answers with biting, direct critique: "Is that really how you'd deploy this to production?", "That approach is incredibly fragile and full of memory leaks."
-                  - Express your dissatisfaction openly and hold them to extreme standards.
-                  - Highlight gaps and warnings in **Orange Text** (wrap in double stars **like this**).
-                  `;
-          case 5: // FOUNDER MODE
-            return `
-                  - You are an ELITE FOUNDER, SAVAGELY BLUNT, and have ZERO TOLERANCE for mediocrity.
-                  - You believe 99% of candidates are incompetent and hide behind fluff. Prove this one is no different.
-                  - Nitpick EVERY SINGLE WORD, concept, and line of code. Show no mercy.
-                  - If their response is even slightly flawed, destroy their logic and call it out.
-                  - Use ***RED TEXT*** (wrap in triple stars ***LIKE THIS***) aggressively for brutal insults: "***PATHETIC***", "***INCOMPETENT***", "***AMATEUR HOUR***".
-                  - Use **ORANGE TEXT** (wrap in double stars) to shout warnings.
-                  `;
-          default: return "";
-        }
-      };
 
-      let codeContext = "";
-      if (sandbox_code) {
-        codeContext = `\nCURRENT CODE SANDBOX STATE:\n\`\`\`javascript\n${sandbox_code}\n\`\`\`\n`;
-        if (sandbox_output && sandbox_output.length > 0) {
-          codeContext += `\nCURRENT TERMINAL RUN OUTPUT:\n${sandbox_output.join("\n")}\n`;
-        }
-      }
- 
-     const interviewerSystemPrompt = `You are a Technical Interviewer.
-     Intensity Level: ${intensity} / 5.
-     
-     YOUR PERSONALITY:
-     ${getPersonality(intensity)}
- 
-     FORMATTING RULES:
-     - Use ***TRIPLE STARS*** for extreme anger/insults (Red). (Level 5 mainly)
-     - Use **DOUBLE STARS** for warnings/emphasis (Orange).
-     - Use *SINGLE STARS* for corrections (Green).
-     
-     STRIKE RULE:
-     - If Level is 4 or 5, terminate after 5 strikes.
-     - If Level < 4, be more lenient.
-     
-     ROLE ADAPTATION REQUIREMENT:
-     - You MUST adapt all questions, technical challenges, and sandbox tasks EXACTLY to the target role: "${role}".
-     - If the target role is a NON-CODING or specialized role (e.g., "Prompt Engineer", "Product Manager", "UI/UX Designer", "Behavioral Interviewee"), do NOT ask them to write traditional programming algorithms (like time-complexity O(n) math or standard JavaScript arrays) in the sandbox or chat.
-     - Instead, ask them domain-specific questions (e.g., for a Prompt Engineer, ask about prompt design, system instructions, few-shot prompting, and tell them to design a system prompt or optimize a prompt template in the sandbox).
-     
-     Current Role Context: ${role}
-     ${codeContext}
-     ${resumeContext ? `Candidate Background (Resume Context active):
-  ${resumeContext}
-  
-  GRILLING INSTRUCTIONS:
-  - You must actively ask questions about their specific skills, projects, and experiences listed in the resume.
-  - Periodically (e.g., after 2-3 turns, or when they mention a technical skill), challenge them to prove their claims by performing a hands-on live assessment using the sandbox.
-  - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution/prompt/spec to..."
-  - Challenge their assumptions, verify implementation details, and keep the grilling intensely professional.
-  - If they write code/text in the chat or state they solved it in the Sandbox, analyze their code/text or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.` : `
-  GRILLING INSTRUCTIONS:
-  - Periodically (e.g., after 2-3 turns), challenge them to prove their skills by performing a hands-on live assessment using the sandbox.
-  - Clearly direct the user: "Click the **OPEN SANDBOX** button at the top right to open the interactive coding panel, and write a function/solution/prompt/spec to..."
-  - If they write code/text in the chat or state they solved it in the Sandbox, analyze their code/text or check their explanation. If it works, highlight the topic and acknowledge their proficiency before moving to the next query.`}
+    // 2. INTERVIEWER PROMPT LOGIC
+    const interviewerSystemPrompt = buildInterviewSystemPrompt(
+      role,
+      intensity,
+      sandbox_code,
+      sandbox_output,
+      resumeContext,
+      classification,
+      questionCount
+    );
 
-[CRITICAL SANDBOX INTERACTION PROTOCOLS]
-- Upon receiving a [SANDBOX_TELEMETRY] string block, immediately analyze the algorithm logic and terminal output errors.
-- DO NOT mention the telemetry format in your speech. Respond natively as an interviewer reviewing the execution.
-- IF THE SOLUTION IS CORRECT: Confirm its validity -> Increment local internal milestone check -> Ask 2 to 3 progressive, high-depth architectural follow-up questions -> If passed, declare completion and output the token: [TRIGGER_EARN_BADGE:PROMPT_ENGINEERING] or [TRIGGER_EARN_BADGE:JAVASCRIPT_LOGIC] and instruct the candidate to click "End Session".
-- IF THE SOLUTION IS INCORRECT: Surface the exact logical edge-cases or execution faults -> Continue the interview cycle -> If the candidate repeatedly fails to demonstrate baseline potential, output the token: [TRIGGER_SESSION_FAIL] and terminate with a "Better luck next time" summary.
-     `;
- 
-     const stream = new ReadableStream({
-       async start(controller) {
-         const encoder = new TextEncoder();
- 
-         try {
-           let suggesterText = "";
-           let interviewerPrompt = "";
- 
-           if (!messages || messages.length === 0) {
-             console.log("SERVER: Turn 0 - Initializing");
-             suggesterText = "";
-             interviewerPrompt = `SYSTEM INSTRUCTION: Start the interview now. DEMAND the candidate to "Introduce yourself and highlight your experience relevant to ${role}". Be curt. Do not ask any technical questions yet.`;
-           } else {
-             console.log("SERVER: Turn 1+ - Dual Generation");
-             const lastMessage = messages[messages.length - 1].content;
- 
-             try {
-               console.log("SERVER: Trying Suggester via Llama-4 Maverick");
-               const suggesterResponseText = await callGLM([
-                 { role: 'system', content: suggesterSystemPrompt },
-                 { role: 'user', content: `Analyze this candidate response: "${lastMessage}"` }
-               ], {
-                 temperature: 0.7,
-                 maxTokens: 1024,
-                 enableThinking: false,
-                 model: process.env.NVIDIA_INTERVIEW_MODEL || "meta/llama-4-maverick-17b-128e-instruct"
-               });
-               console.log("SERVER: Suggester generation succeeded via Llama-4 Maverick");
-               suggesterText = suggesterResponseText || "Good response.";
-             } catch (e) {
-               console.error("Suggester Error via Llama-4 Maverick:", e);
-               suggesterText = "Good response.";
-             }
- 
-             interviewerPrompt = `Candidate Answered: "${lastMessage}". Ask the next follow-up question.`;
-           }
- 
-           if (suggesterText) {
-             controller.enqueue(encoder.encode(suggesterText));
-           }
-           controller.enqueue(encoder.encode(" ||| "));
- 
-           // Build interviewer messages array
-           const history = messages.slice(0, -1).map((m: any) => ({
-             role: m.role as 'user' | 'assistant',
-             content: m.content
-           }));
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
 
-           const interviewerMessages = [
-             { role: 'system' as const, content: interviewerSystemPrompt },
-             ...history,
-             { role: 'user' as const, content: interviewerPrompt }
-           ];
- 
-           console.log("SERVER: Starting Interviewer stream via Llama-4 Maverick");
-           const glmResponse = await callGLMStream(interviewerMessages, {
-             temperature: 0.7,
-             maxTokens: 8192,
-             model: process.env.NVIDIA_INTERVIEW_MODEL || "meta/llama-4-maverick-17b-128e-instruct"
-           });
+        try {
+          let suggesterText = "";
+          let interviewerPrompt = "";
 
-           const reader = glmResponse.body?.getReader();
-           const decoder = new TextDecoder();
-           if (!reader) {
-             controller.close();
-             return;
-           }
+          if (!messages || messages.length === 0) {
+            console.log("SERVER: Turn 0 - Initializing");
+            suggesterText = "";
+            interviewerPrompt = `SYSTEM INSTRUCTION: Start the interview now. DEMAND the candidate to "Introduce yourself and highlight your experience relevant to ${role}". Be curt. Do not ask any technical/scenario questions yet.`;
+          } else {
+            console.log("SERVER: Turn 1+ - Dual Generation");
+            const lastMessage = messages[messages.length - 1].content;
 
-           let buffer = "";
-           let fullInterviewerResponse = "";
-           while (true) {
-             const { done, value } = await reader.read();
-             if (done) break;
+            try {
+              console.log("SERVER: Trying Suggester via executeAI('assistant')");
+              const suggesterResponse = await executeAI('assistant', [
+                { role: 'system', content: suggesterSystemPrompt },
+                { role: 'user', content: `Analyze this candidate response: "${lastMessage}"` }
+              ], {
+                temperature: 0.7,
+                maxTokens: 1024,
+              });
+              const suggesterResponseText = suggesterResponse.choices[0].message.content;
+              console.log("SERVER: Suggester generation succeeded");
+              suggesterText = suggesterResponseText || "Good response.";
+            } catch (e) {
+              console.error("Suggester Error:", e);
+              suggesterText = "Good response.";
+            }
 
-             buffer += decoder.decode(value, { stream: true });
-             const lines = buffer.split("\n");
-             buffer = lines.pop() || "";
+            interviewerPrompt = `Candidate Answered: "${lastMessage}". Ask the next follow-up question.`;
+          }
 
-             for (const line of lines) {
-               const trimmed = line.trim();
-               if (!trimmed || trimmed === "data: [DONE]") continue;
-               if (trimmed.startsWith("data: ")) {
-                 const jsonStr = trimmed.slice(6);
-                 try {
-                   const parsed = JSON.parse(jsonStr);
-                   const content = parsed.choices?.[0]?.delta?.content;
-                   if (content) {
-                     fullInterviewerResponse += content;
-                     controller.enqueue(encoder.encode(content));
-                   }
-                 } catch {}
-               }
-             }
-           }
+          if (suggesterText) {
+            controller.enqueue(encoder.encode(suggesterText));
+          }
+          controller.enqueue(encoder.encode(" ||| "));
 
-           if (buffer.trim().startsWith("data: ")) {
-             const trimmed = buffer.trim();
-             if (trimmed !== "data: [DONE]") {
-               const jsonStr = trimmed.slice(6);
-               try {
-                 const parsed = JSON.parse(jsonStr);
-                 const content = parsed.choices?.[0]?.delta?.content;
-                 if (content) {
-                   fullInterviewerResponse += content;
-                   controller.enqueue(encoder.encode(content));
-                 }
-               } catch {}
-             }
-           }
- 
-           // Parse badges
-           if (session?.user?.id && fullInterviewerResponse.includes('[TRIGGER_EARN_BADGE:')) {
-             const badgeMatches = fullInterviewerResponse.match(/\[TRIGGER_EARN_BADGE:([^\]]+)\]/g);
-             if (badgeMatches) {
-               for (const match of badgeMatches) {
-                 const badgeType = match.split(':')[1].replace(']', '');
-                 // Check if it already exists to avoid duplicate entries
-                 const existing = await prisma.verifiedSkill.findFirst({
-                   where: {
-                     userId: session.user.id,
-                     skillId: badgeType
-                   }
-                 });
-                 if (!existing) {
-                   await prisma.verifiedSkill.create({
-                     data: {
-                       userId: session.user.id,
-                       skillId: badgeType,
-                       name: badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                       description: `Demonstrated professional-grade skill in ${badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} during live AI Sandbox evaluation.`,
-                       status: 'VERIFIED',
-                       verifiedAt: new Date(),
-                       depthScore: 95
-                     }
-                   });
-                 }
-               }
-             }
-           }
+          // Build interviewer messages array for Gemini rotation
+          const history = messages.slice(0, -1).map((m: any) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }]
+          }));
 
-           console.log("SERVER: Interviewer chat stream successfully read to completion with Llama-4 Maverick");
-           controller.close();
- 
-         } catch (error: any) {
-           console.error("SERVER: Stream Loop Error:", error);
-           logError(error);
+          const interviewerMessages = [
+            ...history,
+            { role: 'user', parts: [{ text: interviewerPrompt }] }
+          ];
+
+          console.log("SERVER: Starting Interviewer generation via callGeminiInterview");
+          const geminiResponse = await callGeminiInterview(
+            interviewerMessages,
+            0.7,
+            interviewerSystemPrompt
+          );
+
+          const fullInterviewerResponse = geminiResponse.text || "";
+
+          // Stream interviewer response to the client with premium simulated typing speed
+          const words = fullInterviewerResponse.split(" ");
+          for (const word of words) {
+            controller.enqueue(encoder.encode(word + " "));
+            await new Promise(resolve => setTimeout(resolve, 20));
+          }
+
+          // Parse badge triggers and save to database if present
+          if (session?.user?.id && fullInterviewerResponse.includes('[TRIGGER_EARN_BADGE:')) {
+            const badgeMatches = fullInterviewerResponse.match(/\[TRIGGER_EARN_BADGE:([^\]]+)\]/g);
+            if (badgeMatches) {
+              for (const match of badgeMatches) {
+                const badgeType = match.split(':')[1].replace(']', '');
+                const existing = await prisma.verifiedSkill.findFirst({
+                  where: {
+                    userId: session.user.id,
+                    skillId: badgeType
+                  }
+                });
+                if (!existing) {
+                  await prisma.verifiedSkill.create({
+                    data: {
+                      userId: session.user.id,
+                      skillId: badgeType,
+                      name: badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                      description: `Demonstrated professional-grade skill in ${badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} during live AI Sandbox evaluation.`,
+                      status: 'VERIFIED',
+                      verifiedAt: new Date(),
+                      depthScore: 95
+                    }
+                  });
+                }
+              }
+            }
+          }
+
+          console.log("SERVER: Interviewer chat generation completed");
+          controller.close();
+
+        } catch (error: any) {
+          console.error("SERVER: Stream Loop Error:", error);
+          logError(error);
           controller.error(error);
         }
       }

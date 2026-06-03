@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { callGLM, parseGLMJson } from '@/lib/glm';
+import { executeAI, parseAIJson } from '@/lib/ai/modelRouter';
 
 export const runtime = 'nodejs';
 
@@ -73,12 +73,12 @@ Return exactly this structure:
   "verifiedBadges": ["React.js (Verified)", "Python (Verified)"]
 }`;
 
-    const modelName = process.env.NVIDIA_INTERVIEW_MODEL || 'meta/llama-4-maverick-17b-128e-instruct';
-    console.log(`[Resume Generate] Sending request to Nvidia model: ${modelName}`);
+    console.log(`[Resume Generate] Sending request to executeAI('resumeExport')`);
 
     let responseText: string;
     try {
-      responseText = await callGLM(
+      const result = await executeAI(
+        'resumeExport',
         [
           {
             role: 'user',
@@ -86,13 +86,15 @@ Return exactly this structure:
           },
         ],
         {
-          model: modelName,
-          temperature: 0.1, // low temperature for precise, deterministic extraction
+          temperature: 0.1,
+          jsonMode: true,
         }
       );
+      responseText = result.choices[0].message.content;
     } catch (modelErr: any) {
-      console.warn(`[Resume Generate] Custom Llama-4 model failed, falling back to default GLM model:`, modelErr?.message || modelErr);
-      responseText = await callGLM(
+      console.warn(`[Resume Generate] Custom resumeExport failed, falling back to default assistant model:`, modelErr?.message || modelErr);
+      const fallbackResult = await executeAI(
+        'assistant',
         [
           {
             role: 'user',
@@ -100,13 +102,15 @@ Return exactly this structure:
           },
         ],
         {
-          temperature: 0.1, // uses default NVIDIA_MODEL (GLM-5.1)
+          temperature: 0.1,
+          jsonMode: true,
         }
       );
+      responseText = fallbackResult.choices[0].message.content;
     }
 
     try {
-      const parsed = parseGLMJson<any>(responseText);
+      const parsed = parseAIJson<any>(responseText);
       return NextResponse.json(parsed);
     } catch (parseErr) {
       console.error('[Resume Generate] JSON parsing failed. Response text:', responseText, parseErr);

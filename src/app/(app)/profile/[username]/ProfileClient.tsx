@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deleteInterview } from '@/app/actions/interview';
 import { PlanBadge } from '@/components/credits/PlanBadge';
+import { SocialIcon } from '@/components/shared/SocialIcon';
 
 // --- Types ---
 // Matches the updated schema and server fetch
@@ -599,22 +600,22 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                             <div className="space-y-3">
                                 {user.linkedin && (
                                     <Link href={user.linkedin} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
-                                            <Linkedin className="w-4 h-4 mr-2 text-[#0077b5]" /> LinkedIn
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg flex items-center gap-1.5 p-2">
+                                            <SocialIcon platform="linkedin" /> LinkedIn
                                         </Button>
                                     </Link>
                                 )}
                                 {user.github && (
                                     <Link href={user.github} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
-                                            <Github className="w-4 h-4 mr-2 text-[#181717]" /> GitHub
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg flex items-center gap-1.5 p-2">
+                                            <SocialIcon platform="github" /> GitHub
                                         </Button>
                                     </Link>
                                 )}
                                 {parsedLinks.map((link, i) => (
                                     <Link key={i} href={link.url} target="_blank" className="block">
-                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg">
-                                            {renderLinkIcon(link.icon)} <span className="ml-2">{link.title}</span>
+                                        <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg flex items-center gap-1.5 p-2">
+                                            <SocialIcon platform={link.icon ? link.icon.replace(/^Si/, '').replace(/^Fa/, '').toLowerCase() : 'globe'} /> <span className="ml-0.5">{link.title}</span>
                                         </Button>
                                     </Link>
                                 ))}

@@ -1,16 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import ReportsTable from "./ReportsTable";
+import ReportsDashboard from "./ReportsDashboard";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminReportsPage() {
-    const reports = await prisma.report.findMany({
-        where: {
-            OR: [
-                { status: 'PENDING' },
-                { status: 'UNDER_REVIEW' }
-            ]
-        },
+    // 1. Fetch incident reports
+    const incidentReports = await prisma.report.findMany({
         include: {
             reporter: true,
             reportedUser: true
@@ -18,12 +13,24 @@ export default async function AdminReportsPage() {
         orderBy: { createdAt: 'desc' }
     });
 
-    return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-white mb-2">Incident Reports</h1>
-            <p className="text-zinc-400">Monitor and resolve community violations.</p>
+    // 2. Fetch system support reports
+    const systemReports = await prisma.systemReport.findMany({
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true,
+                    image: true
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
 
-            <ReportsTable reports={reports} />
-        </div>
+    return (
+        <ReportsDashboard 
+            incidentReports={incidentReports} 
+            systemReports={systemReports} 
+        />
     );
 }
