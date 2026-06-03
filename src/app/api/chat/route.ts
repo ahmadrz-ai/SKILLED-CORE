@@ -191,7 +191,13 @@ export async function POST(req: Request) {
       classification = interview?.roleClassification;
     }
 
-    const assistantMessagesCount = messages ? messages.filter((m: any) => m.role === 'assistant').length : 0;
+    // Filter out system warnings and integrity voided messages from incoming messages
+    const cleanMessages = (messages || []).filter((m: any) => {
+      const c = m.content || "";
+      return !c.includes("[SYSTEM WARNING]") && !c.includes("[INTEGRITY VOIDED]");
+    });
+
+    const assistantMessagesCount = cleanMessages.filter((m: any) => m.role === 'assistant').length;
     const questionCount = assistantMessagesCount + 1;
 
     // 1. SUGGESTER SYSTEM PROMPT
@@ -233,13 +239,13 @@ export async function POST(req: Request) {
           let suggesterText = "";
           let interviewerPrompt = "";
 
-          if (!messages || messages.length === 0) {
+          if (!cleanMessages || cleanMessages.length === 0) {
             console.log("SERVER: Turn 0 - Initializing");
             suggesterText = "";
             interviewerPrompt = `SYSTEM INSTRUCTION: Start the interview now. DEMAND the candidate to "Introduce yourself and highlight your experience relevant to ${role}". Be curt. Do not ask any technical/scenario questions yet.`;
           } else {
             console.log("SERVER: Turn 1+ - Dual Generation");
-            const lastMessage = messages[messages.length - 1].content;
+            const lastMessage = cleanMessages[cleanMessages.length - 1].content;
 
             try {
               console.log("SERVER: Trying Suggester via executeAI('assistant')");
@@ -267,15 +273,28 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(" ||| "));
 
           // Build interviewer messages array for Gemini rotation
-          const history = messages.slice(0, -1).map((m: any) => ({
+          const history = cleanMessages.slice(0, -1).map((m: any) => ({
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content }]
           }));
 
-          const interviewerMessages = [
+          const rawHistory = [
             ...history,
             { role: 'user', parts: [{ text: interviewerPrompt }] }
           ];
+
+          // Merge consecutive same-role messages for Gemini API compliance
+          const interviewerMessages: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+          for (const msg of rawHistory) {
+            if (interviewerMessages.length > 0 && interviewerMessages[interviewerMessages.length - 1].role === msg.role) {
+              interviewerMessages[interviewerMessages.length - 1].parts[0].text += "\n\n" + msg.parts[0].text;
+            } else {
+              interviewerMessages.push({
+                role: msg.role as 'user' | 'model',
+                parts: [{ text: msg.parts[0].text }]
+              });
+            }
+          }
 
           console.log("SERVER: Starting Interviewer generation via callGeminiInterview");
           const geminiResponse = await callGeminiInterview(
