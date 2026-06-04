@@ -22,6 +22,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     const [resultRows, setResultRows] = useState<any[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
     const [showQueryBanner, setShowQueryBanner] = useState(false);
+    const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
     const [filters, setFilters] = useState<SearchFilters>({
         experienceLevel: 'any',
         planType: 'all',
@@ -35,6 +36,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
         setParsedQuery(null);
         setResultRows([]);
         setShowQueryBanner(false);
+        setEmptyMessage(null);
         setFilters({
             experienceLevel: 'any',
             planType: 'all',
@@ -78,6 +80,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
             } else {
                 setParsedQuery(res.parsedQuery);
                 setResultRows(res.rows);
+                setEmptyMessage(res.message || null);
                 setShowQueryBanner(true);
             }
         } catch (err) {
@@ -270,7 +273,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                             {showQueryBanner && parsedQuery && (
                                 <QueryIntentBanner
                                     queryIntent={parsedQuery.queryIntent}
-                                    requirements={parsedQuery.requirements}
+                requirements={parsedQuery.requirements}
                                     onClose={() => setShowQueryBanner(false)}
                                 />
                             )}
@@ -280,10 +283,10 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                                 <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-[var(--sc-gray-150)] rounded-xl p-8 shadow-sm">
                                     <SearchX className="w-12 h-12 text-[var(--sc-gray-400)] mb-3" />
                                     <h3 className="text-base font-bold text-[var(--sc-gray-900)]">
-                                        No candidates found for this search
+                                        {emptyMessage || "No candidates found for this search"}
                                     </h3>
                                     <p className="text-xs text-[var(--sc-gray-600)] max-w-xs mt-1 leading-relaxed">
-                                        Try adjusting your refinement filters or using different keywords in your search description.
+                                        {emptyMessage ? "They may not have a SkilledCore profile yet." : "Try adjusting your refinement filters or using different keywords in your search description."}
                                     </p>
                                     <button 
                                         onClick={handleClearAll}

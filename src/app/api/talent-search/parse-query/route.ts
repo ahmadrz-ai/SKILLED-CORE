@@ -27,7 +27,8 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
       "priority": number,
       "label": "Human readable label — e.g. React Developer",
       "searchTerms": ["react", "reactjs", "react.js", "react developer"],
-      "type": "primary" | "secondary" | "contextual",
+      "type": "primary" | "secondary" | "contextual" | "person-name",
+      "isHardFilter": boolean,
       "experienceLevel": "any" | "junior" | "mid" | "senior" | "expert" | null,
       "notes": "any context from the query about this requirement"
     }
@@ -35,6 +36,20 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
   "industry": "industry context if mentioned — e.g. Restaurant, Finance, Healthcare — or null",
   "queryIntent": "one sentence summary of what recruiter wants"
 }
+
+SPECIAL REQUIREMENT TYPES:
+When the query contains a person's name (e.g. "find Umar", "named Sarah", "person called John"), mark that requirement with:
+  type: "person-name"
+  isHardFilter: true
+  priority: 0  (highest — above all skill requirements)
+
+A person-name requirement means ONLY candidates whose name contains that string should appear in results. Everyone else is excluded.
+
+Detection patterns for names:
+  "named [X]", "called [X]", "find [X]", "person [X]", "[X] who knows", "[X] with experience", "looking for [X]"
+  
+Name requirements are case-insensitive partial matches.
+"Umar" matches "Muhammad Umar", "Umar Khan", "Umar Ali".
 
 Rules:
 - Extract every distinct requirement from the query, no matter how small.

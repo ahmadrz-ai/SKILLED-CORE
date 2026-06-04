@@ -7,7 +7,8 @@ interface Requirement {
     priority: number;
     label: string;
     searchTerms: string[];
-    type: "primary" | "secondary" | "contextual";
+    type: "primary" | "secondary" | "contextual" | "person-name";
+    isHardFilter?: boolean;
     experienceLevel: "any" | "junior" | "mid" | "senior" | "expert" | null;
     notes: string;
 }
@@ -51,6 +52,7 @@ interface SearchResult {
     parsedQuery: ParsedQuery | null;
     rows: ResultRow[];
     error?: string;
+    message?: string;
 }
 
 const getBaseUrl = () => {
@@ -394,7 +396,25 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
         return true;
     });
 
-    const scoredCandidates = filteredCandidates.map(candidate => {
+    const hardFilterRequirements = requirements.filter(r => r.isHardFilter || r.type === 'person-name');
+
+    let eligibleCandidates = filteredCandidates;
+
+    if (hardFilterRequirements.length > 0) {
+        eligibleCandidates = filteredCandidates.filter(candidate => {
+            return hardFilterRequirements.every(req => {
+                if (req.type === 'person-name') {
+                    const candidateName = (candidate.name ?? '').toLowerCase();
+                    return req.searchTerms.some(term =>
+                        candidateName.includes(term.toLowerCase())
+                    );
+                }
+                return true;
+            });
+        });
+    }
+
+    const scoredCandidates = eligibleCandidates.map(candidate => {
         const skillsArray = parseSkillsArray(candidate.skills).map(s => s.toLowerCase());
         
         let totalBaseScore = 0;
@@ -530,7 +550,25 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
             }
             depthBonus = Math.min(depthBonus, 30);
 
-            const reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
+            let reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
+
+            if (req.type === 'person-name') {
+                let nameScore = 0;
+                const candidateName = (candidate.name ?? '').toLowerCase();
+                const nameTerms = req.searchTerms;
+
+                for (const term of nameTerms) {
+                    if (candidateName === term.toLowerCase()) {
+                        nameScore = Math.max(nameScore, 100);
+                    } else if (candidateName.startsWith(term.toLowerCase())) {
+                        nameScore = Math.max(nameScore, 80);
+                    } else if (candidateName.includes(term.toLowerCase())) {
+                        nameScore = Math.max(nameScore, 60);
+                    }
+                }
+                reqScore = nameScore + depthBonus;
+            }
+
             requirementScores.push({ requirementLabel: req.label, score: reqScore });
             totalBaseScore += reqScore;
         });
@@ -686,7 +724,8 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
       "priority": number,
       "label": "Human readable label — e.g. React Developer",
       "searchTerms": ["react", "reactjs", "react.js", "react developer"],
-      "type": "primary" | "secondary" | "contextual",
+      "type": "primary" | "secondary" | "contextual" | "person-name",
+      "isHardFilter": boolean,
       "experienceLevel": "any" | "junior" | "mid" | "senior" | "expert" | null,
       "notes": "any context from the query about this requirement"
     }
@@ -694,6 +733,20 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
   "industry": "industry context if mentioned — e.g. Restaurant, Finance, Healthcare — or null",
   "queryIntent": "one sentence summary of what recruiter wants"
 }
+
+SPECIAL REQUIREMENT TYPES:
+When the query contains a person's name (e.g. "find Umar", "named Sarah", "person called John"), mark that requirement with:
+  type: "person-name"
+  isHardFilter: true
+  priority: 0  (highest — above all skill requirements)
+
+A person-name requirement means ONLY candidates whose name contains that string should appear in results. Everyone else is excluded.
+
+Detection patterns for names:
+  "named [X]", "called [X]", "find [X]", "person [X]", "[X] who knows", "[X] with experience", "looking for [X]"
+  
+Name requirements are case-insensitive partial matches.
+"Umar" matches "Muhammad Umar", "Umar Khan", "Umar Ali".
 
 Rules:
 - Extract every distinct requirement from the query, no matter how small.
@@ -759,6 +812,17 @@ Rules:
         // 2. Score Candidates directly in-memory
         console.log(`[Talent Search Action] Scoring candidates in-memory against ${parsedQuery.requirements.length} requirements`);
         const rows = await executeScoreCandidates(parsedQuery.requirements);
+
+        const hardFilterRequirements = parsedQuery.requirements.filter(r => r.isHardFilter || r.type === 'person-name');
+        if (rows.length === 0 && hardFilterRequirements.length > 0) {
+            const nameReq = hardFilterRequirements.find(r => r.type === 'person-name');
+            const term = nameReq ? (nameReq.searchTerms[0] || '') : '';
+            return {
+                parsedQuery,
+                rows: [],
+                message: `No candidates found named '${term}'...`
+            };
+        }
 
         if (rows.length === 0) {
             console.log("[Talent Search Action] In-memory AI search returned 0 results. Executing DB fallback search.");

@@ -47,6 +47,7 @@ export function ChatInterface({
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isTerminated, setIsTerminated] = useState(false);
 
     const sendTelemetryPayload = async (code: string, output: string[]) => {
         if (isLoading || !sessionActive) return;
@@ -74,7 +75,8 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                     is_grill_mode: config.useResume,
                     intensity: config.difficulty || 3,
                     sandbox_code: code,
-                    sandbox_output: output
+                    sandbox_output: output,
+                    interviewId: config.interviewId
                 })
             });
 
@@ -217,7 +219,8 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                     messages: [], // Empty messages triggers "Start immediately" prompt
                     user_role: config.role,
                     is_grill_mode: config.useResume,
-                    intensity: config.difficulty || 3
+                    intensity: config.difficulty || 3,
+                    interviewId: config.interviewId
                 })
             });
 
@@ -332,8 +335,13 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                 fullStreamContent += chunk;
                 chunkCount++;
 
-                // BULLETPROOF TELEMETRY EXTRACTOR
-                const telemetryRegex = /%%%+\s*(\{[\s\S]*?\})\s*%%%+/;
+                // Check for violation termination token
+                if (fullStreamContent.includes('[INTERVIEW_TERMINATED_VIOLATION]')) {
+                    setIsTerminated(true);
+                }
+
+                // BULLETPROOF TELEMETRY EXTRACTOR (%%{...}%% format)
+                const telemetryRegex = /%%\s*(\{[\s\S]*?\})\s*%%/;
                 const telemetryMatch = fullStreamContent.match(telemetryRegex);
                 if (telemetryMatch) {
                     const rawJson = telemetryMatch[1];
@@ -346,7 +354,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                         } catch (e) {
                             console.error("Telemetry JSON Parse Error:", e);
                             try {
-                                // Fallback looser parser: regex matches key values directly
+                                // Fallback looser parser
                                 const confidenceMatch = rawJson.match(/"confidence"\s*:\s*(\d+)/);
                                 const feedbackMatch = rawJson.match(/"feedback"\s*:\s*"([^"]+)"/);
                                 const topicsMatch = rawJson.match(/"topics"\s*:\s*\[\s*([^\]]*)\s*\]/);
@@ -370,7 +378,6 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                 }
 
                 // ATOMIC UPDATE
-                // We calculate the state of the TWO potential messages based on `fullStreamContent`
                 setMessages(prev => {
                     const hasSplit = fullStreamContent.includes("|||");
                     let suggesterContent = fullStreamContent;
@@ -378,8 +385,10 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
 
                     if (hasSplit) {
                         const parts = fullStreamContent.split("|||");
-                        suggesterContent = parts[0];
-                        interviewerContent = parts.slice(1).join("|||"); // Join back remainder if multiple splits (unlikely)
+                        suggesterContent = parts[0].replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+                        interviewerContent = parts.slice(1).join("|||").replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+                    } else {
+                        suggesterContent = suggesterContent.replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
                     }
 
                     // 1. Update Suggester Message (Always exists as startMsgId)
@@ -400,7 +409,6 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                         const exists = nextMessages.find(m => m.id === interviewerMsgId);
 
                         if (exists) {
-                            // Update existing interviewer message
                             return nextMessages.map(msg =>
                                 msg.id === interviewerMsgId ? {
                                     ...msg,
@@ -409,8 +417,6 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                 } : msg
                             );
                         } else {
-                            // Create new interviewer message
-                            // Speak the suggester part now that it's done
                             if (suggesterContent.trim()) speak(suggesterContent);
 
                             return [...nextMessages, {
@@ -429,10 +435,11 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
             // End of stream - speak the last part (Interviewer)
             const parts = fullStreamContent.split("|||");
             const lastPart = parts.length > 1 ? parts[1] : parts[0];
-            if (lastPart.trim()) speak(lastPart);
+            const cleanLastPart = lastPart.replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+            if (cleanLastPart.trim()) speak(cleanLastPart);
 
             // If we successfully finished but read absolutely nothing (or just the split separator without content)
-            if (chunkCount === 0 || !fullStreamContent.replace("|||", "").trim()) {
+            if (chunkCount === 0 || !fullStreamContent.replace("|||", "").replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim()) {
                 throw new Error("Empty or incomplete stream response");
             }
 
@@ -484,7 +491,8 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                     is_grill_mode: config.useResume,
                     intensity: config.difficulty || 3,
                     sandbox_code: sandboxCode,
-                    sandbox_output: sandboxOutput
+                    sandbox_output: sandboxOutput,
+                    interviewId: config.interviewId
                 })
             });
 
@@ -659,10 +667,30 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                             <Sparkles className="w-5 h-5 animate-pulse" style={{ color: '#ffffff' }} />
                         </div>
                         <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl rounded-tl-none p-4 flex items-center gap-1.5 shadow-sm">
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-550 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
+                    </div>
+                )}
+
+                {/* Termination Banner */}
+                {isTerminated && (
+                    <div className="flex flex-col items-center justify-center p-6 border rounded-xl shadow-md text-center max-w-lg mx-auto my-4 animate-in fade-in slide-in-from-bottom-5 bg-red-950/30 border-red-500/50 text-red-300">
+                        <h4 className="text-sm font-bold text-red-400 mb-1.5">
+                            Interview Terminated due to Violations
+                        </h4>
+                        <p className="text-xs text-red-300/80 mb-4 leading-relaxed">
+                            This session has been automatically closed due to repeated rule violations (tab-switching, copy-pasting, or unauthorized activities). Your performance log has been saved as non-compliant.
+                        </p>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => onEndSession(messages, timer, true)}
+                            className="rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold transition-all px-6 py-2 border border-red-500/50 cursor-pointer"
+                        >
+                            Return to Dashboard
+                        </Button>
                     </div>
                 )}
             </div>
@@ -712,6 +740,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleFormSubmit(e)}
+                            disabled={isTerminated}
                             onCopy={(e) => {
                                 e.preventDefault();
                                 toast.error("Copying is disabled during the interview.");
@@ -722,8 +751,8 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                 toast.error("Pasting is disabled during the interview.");
                                 handleCheatAttempt("paste");
                             }}
-                            placeholder={isListening ? "Listening..." : "Type your answer..."}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3.5 pl-4 pr-12 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner"
+                            placeholder={isTerminated ? "Session Terminated" : isListening ? "Listening..." : "Type your answer..."}
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3.5 pl-4 pr-12 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                         />
 
                         {isVoiceMode && (
@@ -732,6 +761,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                     size="icon"
                                     variant="ghost"
                                     onClick={toggleListening}
+                                    disabled={isTerminated}
                                     className={cn(
                                         "h-9 w-9 transition-all rounded-lg cursor-pointer",
                                         isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-zinc-400 hover:text-white"
@@ -746,7 +776,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                     <Button 
                         size="icon" 
                         onClick={(e) => handleFormSubmit(e)} 
-                        disabled={isLoading || !input.trim()} 
+                        disabled={isLoading || !input.trim() || isTerminated} 
                         className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0"
                     >
                         <Send className="w-4 h-4" />

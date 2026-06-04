@@ -16,12 +16,13 @@ RULES:
   Never invent facts. Only elaborate on what is stated.
 - For experience: capture every role, company, date range, and
   responsibility. Rewrite bullet points as flowing professional prose.
-- For skills: extract ALL technologies, tools, languages, frameworks,
-  and soft skills mentioned anywhere in the resume (job descriptions,
-  projects, education, certifications — everywhere). For each skill,
-  categorize it as "professional" (active experience) or "learning"
-  (learning/basic knowledge) and write a concise 1-2 sentence detail
-  about their exact experience level or use case with that skill.
+- For skills: extract ALL technologies, tools, libraries, APIs, databases, languages, frameworks,
+  platforms, methodologies, and soft skills mentioned or implied anywhere in the resume (including within job descriptions,
+  project details, education coursework, certifications, honors — absolutely everywhere). You must perform an exhaustive scan:
+  do not limit the count of skills, and do not summarize them into general groups. Every specific technology (e.g. React, Redux, TailwindCSS, PostgreSQL, Docker, Git, Jest) must be listed as a separate, distinct skill entry. For each skill,
+  categorize it as "professional" (if they have active work or project experience using it) or "learning"
+  (if it is only mentioned in coursework, certificates, or as a general interest) and write a concise 1-2 sentence detail
+  explaining their exact experience level, context, or specific use case with that skill as stated in the resume.
 - For education: capture institution name, degree, field of study,
   start year, and graduation year. Also capture honors, GPA (if stated),
   and relevant coursework (if listed).

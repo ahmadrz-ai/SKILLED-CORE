@@ -47,7 +47,8 @@ interface Requirement {
     priority: number;
     label: string;
     searchTerms: string[];
-    type: "primary" | "secondary" | "contextual";
+    type: "primary" | "secondary" | "contextual" | "person-name";
+    isHardFilter?: boolean;
     experienceLevel: "any" | "junior" | "mid" | "senior" | "expert" | null;
     notes: string;
 }
@@ -146,8 +147,36 @@ export async function POST(req: Request) {
             return true;
         });
 
+        // Step 1 — Apply hard filters BEFORE scoring
+        const hardFilterRequirements = requirements.filter(r => r.isHardFilter || r.type === 'person-name');
+
+        let eligibleCandidates = filteredCandidates;
+
+        if (hardFilterRequirements.length > 0) {
+            eligibleCandidates = filteredCandidates.filter(candidate => {
+                return hardFilterRequirements.every(req => {
+                    if (req.type === 'person-name') {
+                        const candidateName = (candidate.name ?? '').toLowerCase();
+                        return req.searchTerms.some(term =>
+                            candidateName.includes(term.toLowerCase())
+                        );
+                    }
+                    return true;
+                });
+            });
+        }
+
+        if (eligibleCandidates.length === 0 && hardFilterRequirements.length > 0) {
+            const nameReq = hardFilterRequirements.find(r => r.type === 'person-name');
+            const term = nameReq ? (nameReq.searchTerms[0] || '') : '';
+            return NextResponse.json({
+                rows: [],
+                message: `No candidates found named '${term}'...`
+            });
+        }
+
         // Scoring algorithm
-        const scoredCandidates = filteredCandidates.map(candidate => {
+        const scoredCandidates = eligibleCandidates.map(candidate => {
             const skillsArray = parseSkillsString(candidate.skills).map(s => s.toLowerCase());
             
             let totalBaseScore = 0;
@@ -301,7 +330,25 @@ export async function POST(req: Request) {
                 }
                 depthBonus = Math.min(depthBonus, 30);
 
-                const reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
+                let reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
+
+                if (req.type === 'person-name') {
+                    let nameScore = 0;
+                    const candidateName = (candidate.name ?? '').toLowerCase();
+                    const nameTerms = req.searchTerms;
+
+                    for (const term of nameTerms) {
+                        if (candidateName === term.toLowerCase()) {
+                            nameScore = Math.max(nameScore, 100);
+                        } else if (candidateName.startsWith(term.toLowerCase())) {
+                            nameScore = Math.max(nameScore, 80);
+                        } else if (candidateName.includes(term.toLowerCase())) {
+                            nameScore = Math.max(nameScore, 60);
+                        }
+                    }
+                    reqScore = nameScore + depthBonus;
+                }
+
                 requirementScores.push({ requirementLabel: req.label, score: reqScore });
                 totalBaseScore += reqScore;
             });

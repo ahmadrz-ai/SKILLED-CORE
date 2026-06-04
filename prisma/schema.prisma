@@ -139,6 +139,7 @@ model Interview {
   createdAt  DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telemetries InterviewTelemetry[]
 }
 
 // ... (previous content)
@@ -570,3 +571,18 @@ model SystemReport {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model InterviewTelemetry {
+  id           String   @id @default(uuid())
+  interviewId  String
+  messageIndex Int
+  confidence   Int
+  topics       String[]
+  feedback     String
+  createdAt    DateTime @default(now())
+
+  interview    Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, messageIndex])
+}
+
