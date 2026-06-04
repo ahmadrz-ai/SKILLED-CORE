@@ -37,14 +37,19 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
 }
 
 Rules:
-- Extract every distinct requirement from the query, no matter how small
-- For each requirement, include all common variations/synonyms as searchTerms (e.g. "React", "React.js", "ReactJS", "React Developer" for a React requirement)
+- Extract every distinct requirement from the query, no matter how small.
+- For each requirement, you MUST include a rich, comprehensive list of searchTerms (aim for 5-10 terms per requirement) to enable fuzzy semantic matching. This list should include:
+    1. Common abbreviations, acronyms, and aliases (e.g. for "Machine Learning" include "ml", "machine learning", "deep learning", "ai", "artificial intelligence"; for "TypeScript" include "ts", "typescript", "javascript", "js").
+    2. Variations in spacing, symbols, and suffixes (e.g. "React.js", "reactjs", "react", "react dev", "react developer").
+    3. Common alternative spellings or typical spelling variations and typos (e.g. "python" -> "pyton", "pythn"; "PostgreSQL" -> "postgres", "postgresql", "postgre", "sql").
+    4. For specific frameworks or tools, include parent languages and related core tech (e.g. for "Next.js" include "nextjs", "next.js", "react", "reactjs", "frontend", "front-end", "javascript", "typescript").
+    5. For generic roles or tasks, include common synonyms and primary sub-skills (e.g. for "Data Scientist" include "data science", "data scientist", "machine learning", "python", "pandas", "numpy", "statistics").
 - Determine experience level from context words:
     experienced / senior / expert / years → senior or expert
     junior / entry / beginner / learning → junior
     knowledge of / familiar with / knows → any (not requiring expertise)
-- Never invent requirements not mentioned in the query
-- Return ONLY JSON`;
+- Never invent requirements not mentioned in the query.
+- Return ONLY JSON.`;
 
         const result = await executeAI(
             'search',

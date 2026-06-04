@@ -116,6 +116,7 @@ async function callNvidiaNIM(
   // Support fallback model rotation in case the API key tier is restricted
   const modelsToTry = [
     primaryModel,
+    'nvidia/nemotron-3-super-120b-a12b',
     'meta/llama-3.1-8b-instruct',
     'meta/llama-3.3-70b-instruct',
     'nvidia/llama-3.1-nemotron-70b-instruct',
@@ -306,7 +307,7 @@ export type AITask =
 // These are used as the ultimate fallback when specific env vars are not set.
 // DO NOT fall back to process.env.NVIDIA_MODEL — on Vercel production it still
 // points to 'z-ai/glm-5.1' which gateway-timeouts (504) and breaks everything.
-const FAST_MODEL   = 'meta/llama-3.1-8b-instruct'            // ~800ms, JSON-capable
+const FAST_MODEL   = 'nvidia/nemotron-3-super-120b-a12b'     // ~800ms, JSON-capable
 const STRONG_MODEL = 'meta/llama-3.3-70b-instruct'           // ~900ms, high quality
 
 export async function executeAI(
