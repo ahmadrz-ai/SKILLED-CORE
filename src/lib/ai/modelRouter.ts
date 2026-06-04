@@ -152,7 +152,7 @@ async function callNvidiaNIM(
             stream: options.stream ?? false,
             ...(options.jsonMode && { response_format: { type: 'json_object' } }),
           }),
-          signal: AbortSignal.timeout(30_000), // 30s timeout per model attempt
+          signal: AbortSignal.timeout(5000), // 5s timeout per model attempt to prevent Vercel timeouts
         })
 
         if (!response.ok) {
