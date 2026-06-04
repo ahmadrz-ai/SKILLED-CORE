@@ -1,15 +1,21 @@
 import 'server-only'
 
-// ─── GEMINI ROTATION (AI Interview only) ───────────────────────────────────
-// Include the legacy singular key as a final fallback for Vercel environments
-// that only have GEMINI_API_KEY set (not the numbered slots).
+// Collect all possible Google / Gemini keys to be 100% compatible with Vercel production
 const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
   process.env.GEMINI_API_KEY_3,
   process.env.GEMINI_API_KEY_4,
-  process.env.GEMINI_API_KEY,          // legacy singular fallback
-  process.env.GOOGLE_GENERATIVE_AI_API_KEY, // Vercel AI SDK convention
+  process.env.GEMINI_API_KEY,              // legacy Gemini key name
+  process.env.GOOGLE_API_KEY_1,            // legacy resume parser name 1
+  process.env.GOOGLE_API_KEY_2,            // legacy resume parser name 2
+  process.env.GOOGLE_API_KEY_3,            // legacy resume parser name 3
+  process.env.GOOGLE_API_KEY_4,            // legacy resume parser name 4
+  process.env.GOOGLE_API_KEY_5,            // legacy resume parser name 5
+  process.env.GOOGLE_API_KEY,              // legacy singular google key
+  process.env.GOOGLE_GENERATIVE_AI_API_KEY, // Vercel standard
+  process.env.QODEE_API_KEY,               // fallback name 1
+  process.env.RESUME_PARSER,               // fallback name 2
 ].filter((k): k is string => Boolean(k?.trim()))
 
 function isQuotaError(err: unknown): boolean {
@@ -32,7 +38,7 @@ export async function callGeminiInterview(
   systemInstruction?: string
 ) {
   if (GEMINI_KEYS.length === 0)
-    throw new Error('No Gemini API keys configured. Set GEMINI_API_KEY_1 through _4 in .env')
+    throw new Error('No Gemini API keys configured. Set GOOGLE_API_KEY or GEMINI_API_KEY in environment variables')
 
   let lastError: unknown = null
 
@@ -76,10 +82,9 @@ export async function callGeminiInterview(
   )
 }
 
-// ─── NVIDIA NIM UNIVERSAL CALLER ─────────────────────────────────────────────
 async function callNvidiaNIM(
   apiKey: string,
-  model: string,
+  primaryModel: string,
   messages: { role: string; content: string }[],
   options: {
     temperature?: number
@@ -88,37 +93,61 @@ async function callNvidiaNIM(
     stream?: boolean
   } = {}
 ) {
-  if (!apiKey) throw new Error(`NVIDIA API key missing for model: ${model}`)
-  if (!model) throw new Error('NVIDIA model name is required')
+  if (!apiKey) throw new Error(`NVIDIA API key is missing`)
+  if (!primaryModel) throw new Error('NVIDIA primary model name is required')
 
-  console.log(`[NIM] Calling model="${model}" key="${apiKey.slice(0, 12)}…"`)
+  // Support fallback model rotation in case the API key tier is restricted
+  const modelsToTry = [
+    primaryModel,
+    'meta/llama-3.1-8b-instruct',
+    'meta/llama-3.3-70b-instruct',
+    'nvidia/llama-3.1-nemotron-70b-instruct',
+  ].filter((m): m is string => Boolean(m?.trim()))
 
-  const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      Accept: options.stream ? 'text/event-stream' : 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options.temperature ?? 0.3,
-      max_tokens: options.maxTokens ?? 4096,
-      top_p: 0.9,
-      stream: options.stream ?? false,
-      ...(options.jsonMode && { response_format: { type: 'json_object' } }),
-    }),
-    signal: AbortSignal.timeout(60_000),
-  })
+  const uniqueModels = Array.from(new Set(modelsToTry))
+  let lastError: any = null
 
-  if (!response.ok) {
-    const errText = await response.text()
-    throw new Error(`NVIDIA NIM error [${model}] ${response.status}: ${errText}`)
+  for (let i = 0; i < uniqueModels.length; i++) {
+    const currentModel = uniqueModels[i]
+    try {
+      console.log(`[NIM] Attempting model="${currentModel}" (try ${i + 1} of ${uniqueModels.length}) key="${apiKey.slice(0, 12)}…"`)
+      
+      const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          Accept: options.stream ? 'text/event-stream' : 'application/json',
+        },
+        body: JSON.stringify({
+          model: currentModel,
+          messages,
+          temperature: options.temperature ?? 0.3,
+          max_tokens: options.maxTokens ?? 4096,
+          top_p: 0.9,
+          stream: options.stream ?? false,
+          ...(options.jsonMode && { response_format: { type: 'json_object' } }),
+        }),
+        signal: AbortSignal.timeout(30_000), // 30s timeout per model attempt
+      })
+
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`HTTP ${response.status}: ${errText}`)
+      }
+
+      console.log(`[NIM] Success with model="${currentModel}"`)
+      if (options.stream) return response
+      return response.json()
+
+    } catch (err: any) {
+      lastError = err
+      console.warn(`[NIM] Model "${currentModel}" failed:`, err?.message || err)
+      // Continue to next fallback model
+    }
   }
 
-  if (options.stream) return response
-  return response.json()
+  throw new Error(`All NVIDIA NIM models failed. Last error: ${lastError?.message || lastError}`)
 }
 
 // ─── TASK-BASED ROUTER ────────────────────────────────────────────────────────
