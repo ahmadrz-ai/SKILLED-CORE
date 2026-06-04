@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from "@/lib/prisma";
+import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 
 interface Requirement {
     priority: number;
@@ -270,27 +271,467 @@ async function executeDatabaseSearch(searchQuery: string): Promise<ResultRow[]> 
     ];
 }
 
+// Helper for profile completeness check
+function calcProfileCompleteness(user: {
+    image?: string | null;
+    bio?: string | null;
+    skills?: string | null;
+    experience?: any[];
+    location?: string | null;
+    name?: string | null;
+}): number {
+    const PLACEHOLDER_BIO = "Experienced professional. Please update your profile with specific details.";
+    let score = 0;
+    if (user.image) score += 20;
+    if (user.bio && user.bio.length >= 50 && user.bio !== PLACEHOLDER_BIO) score += 20;
+    if (user.skills && user.skills.split(',').filter(s => s.trim()).length >= 2) score += 20;
+    if (user.experience && user.experience.length > 0) score += 20;
+    if (user.location && user.location !== 'Location' && user.location !== 'Remote') score += 20;
+    return score;
+}
+
+// Helper to parse comma-separated or json-string skills
+function parseSkillsArray(skillsStr: string | null | undefined): string[] {
+    if (!skillsStr) return [];
+    const trimmed = skillsStr.trim();
+    if (trimmed.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.map(s => {
+                    if (s && typeof s === 'object') return String(s.name || '');
+                    return String(s);
+                }).map(s => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return trimmed.split(',').map(s => s.replace(/[\[\]"']/g, '').trim()).filter(Boolean);
+}
+
+// Main candidate scoring algorithm run directly in-memory on the server
+async function executeScoreCandidates(requirements: Requirement[]): Promise<ResultRow[]> {
+    const TEST_NAME_PATTERNS = /^(test|testing|testings?|new|demo|sample|bot|fake|mock|openai)/i;
+    const PLACEHOLDER_BIO = "Experienced professional. Please update your profile with specific details.";
+    const PLACEHOLDER_ROLE = "Professional Role";
+    const PLACEHOLDER_COMPANY = "Company Name";
+
+    const users = await prisma.user.findMany({
+        where: {
+            role: 'CANDIDATE',
+            email: {
+                not: { endsWith: '@test.com' }
+            }
+        },
+        select: {
+            id: true,
+            name: true,
+            username: true,
+            headline: true,
+            bio: true,
+            location: true,
+            image: true,
+            plan: true,
+            skills: true,
+            createdAt: true,
+            company: {
+                select: {
+                    name: true
+                }
+            },
+            experience: {
+                select: {
+                    id: true,
+                    position: true,
+                    company: true,
+                    description: true,
+                    startDate: true,
+                    endDate: true
+                }
+            },
+            projects: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    link: true,
+                    imageUrl: true
+                }
+            },
+            assessments: {
+                where: {
+                    status: 'PASSED'
+                },
+                select: {
+                    id: true,
+                    status: true,
+                    score: true,
+                    assessment: {
+                        select: {
+                            title: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const filteredCandidates = users.filter(user => {
+        if (user.name && TEST_NAME_PATTERNS.test(user.name)) return false;
+        if (user.bio === PLACEHOLDER_BIO) return false;
+        if (user.headline === PLACEHOLDER_ROLE) return false;
+        if (user.company?.name === PLACEHOLDER_COMPANY) return false;
+
+        const completeness = calcProfileCompleteness({
+            image: user.image,
+            bio: user.bio,
+            skills: user.skills,
+            experience: user.experience,
+            location: user.location,
+            name: user.name
+        });
+        if (completeness < 40) return false;
+
+        return true;
+    });
+
+    const scoredCandidates = filteredCandidates.map(candidate => {
+        const skillsArray = parseSkillsArray(candidate.skills).map(s => s.toLowerCase());
+        
+        let totalBaseScore = 0;
+        const requirementScores: { requirementLabel: string; score: number }[] = [];
+        const matchedTermsSet = new Set<string>();
+
+        requirements.forEach(req => {
+            const rawSearchTerms = req.searchTerms.map(t => t.toLowerCase());
+            const tokenSearchTerms = rawSearchTerms.flatMap(t => {
+                const STOP_WORDS = new Set(['with', 'experience', 'of', 'years', 'year', 'and', 'or', 'the', 'a', 'for', 'in', 'to', 'on', 'at', 'about', 'who', 'knows', 'who', 'know', 'has', 'have', 'with', 'skills', 'skill']);
+                return t
+                    .split(/[\s,\-\/]+/)
+                    .filter(Boolean)
+                    .map(s => s.trim().toLowerCase())
+                    .filter(s => s.length >= 2 && !STOP_WORDS.has(s));
+            });
+            const searchTermsLower = Array.from(new Set([...rawSearchTerms, ...tokenSearchTerms]));
+            
+            let skillScore = 0;
+            searchTermsLower.forEach(term => {
+                skillsArray.forEach(skill => {
+                    if (skill === term) {
+                        skillScore = Math.max(skillScore, 20);
+                        matchedTermsSet.add(term);
+                    } else if (skill.includes(term) || term.includes(skill)) {
+                        skillScore = Math.max(skillScore, 10);
+                        matchedTermsSet.add(term);
+                    }
+                });
+            });
+
+            let expScore = 0;
+            let experienceMentions = 0;
+            let mentionsYearsKeywords = false;
+
+            candidate.experience.forEach(exp => {
+                const titleLower = exp.position.toLowerCase();
+                const descLower = (exp.description || '').toLowerCase();
+                const companyLower = exp.company.toLowerCase();
+                
+                let expTermMatched = false;
+                searchTermsLower.forEach(term => {
+                    if (titleLower.includes(term)) {
+                        expScore = Math.max(expScore, 40);
+                        expTermMatched = true;
+                        matchedTermsSet.add(term);
+                    } else if (descLower.includes(term) || companyLower.includes(term)) {
+                        expScore = Math.max(expScore, 25);
+                        expTermMatched = true;
+                        matchedTermsSet.add(term);
+                    }
+                });
+
+                if (expTermMatched) {
+                    experienceMentions++;
+                    if (/(years|yrs|\d+\+?\s*years)/i.test(descLower)) {
+                        mentionsYearsKeywords = true;
+                    }
+                }
+            });
+
+            if (experienceMentions > 1) {
+                expScore += 10;
+            }
+            expScore = Math.min(expScore, 40);
+
+            let projScore = 0;
+            let projectMentions = 0;
+
+            candidate.projects.forEach(proj => {
+                const titleLower = proj.title.toLowerCase();
+                const descLower = (proj.description || '').toLowerCase();
+                const techArray = (proj as any).technologies 
+                    ? (proj as any).technologies.map((t: string) => t.toLowerCase()) 
+                    : [];
+
+                let projectTermMatched = false;
+                let projectBestScore = 0;
+
+                searchTermsLower.forEach(term => {
+                    if (techArray.includes(term)) {
+                        projectBestScore = Math.max(projectBestScore, 25);
+                        projectTermMatched = true;
+                        matchedTermsSet.add(term);
+                    } else if (titleLower.includes(term)) {
+                        projectBestScore = Math.max(projectBestScore, 20);
+                        projectTermMatched = true;
+                        matchedTermsSet.add(term);
+                    } else if (descLower.includes(term)) {
+                        projectBestScore = Math.max(projectBestScore, 15);
+                        projectTermMatched = true;
+                        matchedTermsSet.add(term);
+                    }
+                });
+
+                if (projectTermMatched) {
+                    projectMentions++;
+                }
+                projScore += projectBestScore;
+            });
+            projScore = Math.min(projScore, 25);
+
+            let bioHeadlineScore = 0;
+            const headlineLower = (candidate.headline || '').toLowerCase();
+            const bioLower = (candidate.bio || '').toLowerCase();
+
+            searchTermsLower.forEach(term => {
+                if (headlineLower.includes(term)) {
+                    bioHeadlineScore = Math.max(bioHeadlineScore, 15);
+                    matchedTermsSet.add(term);
+                } else if (bioLower.includes(term)) {
+                    bioHeadlineScore = Math.max(bioHeadlineScore, 10);
+                    matchedTermsSet.add(term);
+                }
+            });
+
+            let depthBonus = 0;
+            if (experienceMentions >= 3) {
+                depthBonus += 20;
+            }
+            if (projectMentions >= 2) {
+                depthBonus += 15;
+            }
+            if (mentionsYearsKeywords) {
+                depthBonus += 15;
+            }
+            const hasVerifiedBadge = candidate.assessments.some(ass => {
+                const title = ass.assessment.title.toLowerCase();
+                return searchTermsLower.some(term => title.includes(term));
+            });
+            if (hasVerifiedBadge) {
+                depthBonus += 25;
+            }
+            depthBonus = Math.min(depthBonus, 30);
+
+            const reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
+            requirementScores.push({ requirementLabel: req.label, score: reqScore });
+            totalBaseScore += reqScore;
+        });
+
+        let premiumBoost = 0;
+        if (totalBaseScore >= 40) {
+            if (candidate.plan === 'ULTRA') {
+                premiumBoost = 15;
+            } else if (candidate.plan === 'PRO') {
+                premiumBoost = 8;
+            }
+        }
+
+        const totalScore = totalBaseScore + premiumBoost;
+
+        let yearsOfExperience = 0;
+        if (candidate.experience && candidate.experience.length > 0) {
+            const sortedExp = [...candidate.experience].sort(
+                (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+            );
+            const start = new Date(sortedExp[0].startDate).getFullYear();
+            yearsOfExperience = Math.max(0, new Date().getFullYear() - start);
+        }
+
+        let role = candidate.headline || 'Software Engineer';
+        if (candidate.experience && candidate.experience.length > 0) {
+            role = candidate.experience[0].position;
+        }
+
+        let company = 'Seeking Opportunities';
+        if (candidate.experience && candidate.experience.length > 0) {
+            company = candidate.experience[0].company;
+        }
+
+        const parsedSkills = parseSkillsArray(candidate.skills);
+        if (parsedSkills.length === 0) {
+            parsedSkills.push('Generalist');
+        }
+
+        const verifiedBadges = candidate.assessments.map(ass => ass.assessment.title);
+
+        return {
+            id: candidate.id,
+            name: candidate.name || 'Anonymous User',
+            username: candidate.username || `user-${candidate.id}`,
+            headline: candidate.headline || 'Skilled Professional',
+            location: candidate.location || 'Remote',
+            avatarUrl: candidate.image,
+            plan: (candidate.plan || 'BASIC') as 'ULTRA' | 'PRO' | 'BASIC',
+            skills: parsedSkills,
+            totalScore,
+            totalBaseScore,
+            matchScore: Math.min(100, Math.round((totalScore / (130 * (requirements.length || 1))) * 100)),
+            requirementScores,
+            matchedTerms: Array.from(matchedTermsSet),
+            verifiedBadges,
+            experienceCount: candidate.experience.length,
+            projectCount: candidate.projects.length,
+            role,
+            company,
+            yearsOfExperience
+        };
+    });
+
+    const perfectMatches = scoredCandidates.filter(c => {
+        return c.requirementScores.every(reqScore => reqScore.score >= 30);
+    });
+
+    const slightMatches = scoredCandidates.filter(c => {
+        const metReqsCount = c.requirementScores.filter(reqScore => reqScore.score >= 20).length;
+        const isNotPerfect = !perfectMatches.some(p => p.id === c.id);
+        const minReqsToMeet = requirements.length === 1 ? 1 : 2;
+        return isNotPerfect && metReqsCount >= minReqsToMeet && c.totalScore >= 30;
+    });
+
+    const requirementRows: any[] = [];
+    const maxReqRows = Math.min(6, requirements.length);
+
+    for (let i = 0; i < maxReqRows; i++) {
+        const req = requirements[i];
+        const reqCandidates = scoredCandidates
+            .filter(c => {
+                const reqScoreObj = c.requirementScores.find(r => r.requirementLabel === req.label);
+                return reqScoreObj && reqScoreObj.score >= 25;
+            })
+            .sort((a, b) => {
+                const scoreA = a.requirementScores.find(r => r.requirementLabel === req.label)?.score || 0;
+                const scoreB = b.requirementScores.find(r => r.requirementLabel === req.label)?.score || 0;
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return b.totalScore - a.totalScore;
+            });
+
+        requirementRows.push({
+            id: `req-row-${i}`,
+            label: req.label,
+            type: 'requirement',
+            requirementPriority: req.priority,
+            candidates: reqCandidates.slice(0, 8)
+        });
+    }
+
+    const sortRowCandidates = (list: typeof scoredCandidates) => {
+        return [...list].sort((a, b) => {
+            if (b.totalScore !== a.totalScore) {
+                return b.totalScore - a.totalScore;
+            }
+            const planWeight = { ULTRA: 3, PRO: 2, BASIC: 1 };
+            const weightA = planWeight[a.plan] || 1;
+            const weightB = planWeight[b.plan] || 1;
+            return weightB - weightA;
+        });
+    };
+
+    const resultRows = [
+        {
+            id: 'perfect-matches',
+            label: '⭐ Perfect Matches',
+            type: 'perfect',
+            candidates: sortRowCandidates(perfectMatches).slice(0, 10)
+        },
+        {
+            id: 'slight-matches',
+            label: '🔵 Slightly Matched',
+            type: 'slight',
+            candidates: sortRowCandidates(slightMatches).slice(0, 10)
+        },
+        ...requirementRows
+    ].filter(row => row.candidates.length > 0);
+
+    return resultRows;
+}
+
 export async function searchTalent(query: string): Promise<SearchResult> {
     if (!query || !query.trim()) {
         return { parsedQuery: null, rows: [], error: "Search query is empty" };
     }
 
     try {
-        const baseUrl = getBaseUrl();
+        console.log(`[Talent Search Action] Parsing query: "${query}" in-memory`);
 
-        // 1. Call Parse Query API
-        const parseRes = await fetch(`${baseUrl}/api/talent-search/parse-query`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query }),
-            cache: 'no-store'
-        });
+        const prompt = `You are an expert technical recruiter assistant.
+A recruiter has typed this search query:
+"${query}"
 
-        if (!parseRes.ok) {
-            const errData = await parseRes.json().catch(() => ({}));
-            console.error("Parse query API failed, falling back to database search:", errData);
+Extract all the requirements they are looking for and rank them
+by priority. The first requirement mentioned or the most emphasized
+skill is Priority 1 (highest). Additional skills follow in order.
+
+Return ONLY valid JSON with no markdown, no backticks, no preamble:
+{
+  "requirements": [
+    {
+      "priority": number,
+      "label": "Human readable label — e.g. React Developer",
+      "searchTerms": ["react", "reactjs", "react.js", "react developer"],
+      "type": "primary" | "secondary" | "contextual",
+      "experienceLevel": "any" | "junior" | "mid" | "senior" | "expert" | null,
+      "notes": "any context from the query about this requirement"
+    }
+  ],
+  "industry": "industry context if mentioned — e.g. Restaurant, Finance, Healthcare — or null",
+  "queryIntent": "one sentence summary of what recruiter wants"
+}
+
+Rules:
+- Extract every distinct requirement from the query, no matter how small
+- For each requirement, include all common variations/synonyms as searchTerms (e.g. "React", "React.js", "ReactJS", "React Developer" for a React requirement)
+- Determine experience level from context words:
+    experienced / senior / expert / years → senior or expert
+    junior / entry / beginner / learning → junior
+    knowledge of / familiar with / knows → any (not requiring expertise)
+- Never invent requirements not mentioned in the query
+- Return ONLY JSON`;
+
+        let parsedQuery: ParsedQuery | null = null;
+        
+        try {
+            const result = await executeAI(
+                'search',
+                [
+                    {
+                        role: 'system',
+                        content: 'You are a talent search query parser. Return ONLY valid JSON. No markdown. No backticks.',
+                    },
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
+                {
+                    temperature: 0.1,
+                    maxTokens: 2048,
+                    jsonMode: true,
+                }
+            );
+
+            const rawResponse = result.choices[0].message.content;
+            parsedQuery = parseAIJson<ParsedQuery>(rawResponse);
+            console.log("[Talent Search Action] Parse succeeded:", parsedQuery.queryIntent);
+        } catch (aiErr: any) {
+            console.error("[Talent Search Action] AI query parse failed, falling back to db search:", aiErr?.message || aiErr);
             const fallbackRows = await executeDatabaseSearch(query);
             return {
                 parsedQuery: {
@@ -302,21 +743,7 @@ export async function searchTalent(query: string): Promise<SearchResult> {
             };
         }
 
-        const parsedQuery = (await parseRes.json()) as ParsedQuery;
-
-        // 2. Call Score Candidates API
-        const scoreRes = await fetch(`${baseUrl}/api/talent-search/score-candidates`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ requirements: parsedQuery.requirements }),
-            cache: 'no-store'
-        });
-
-        if (!scoreRes.ok) {
-            const errData = await scoreRes.json().catch(() => ({}));
-            console.error("Score candidates API failed, falling back to database search:", errData);
+        if (!parsedQuery || !parsedQuery.requirements || parsedQuery.requirements.length === 0) {
             const fallbackRows = await executeDatabaseSearch(query);
             return {
                 parsedQuery,
@@ -324,10 +751,12 @@ export async function searchTalent(query: string): Promise<SearchResult> {
             };
         }
 
-        const scoreData = (await scoreRes.json()) as { rows: ResultRow[] };
+        // 2. Score Candidates directly in-memory
+        console.log(`[Talent Search Action] Scoring candidates in-memory against ${parsedQuery.requirements.length} requirements`);
+        const rows = await executeScoreCandidates(parsedQuery.requirements);
 
-        if (scoreData.rows.length === 0) {
-            console.log("AI search returned zero results. Executing Prisma database search fallback for query:", query);
+        if (rows.length === 0) {
+            console.log("[Talent Search Action] In-memory AI search returned 0 results. Executing DB fallback search.");
             const fallbackRows = await executeDatabaseSearch(query);
             return {
                 parsedQuery,
@@ -337,11 +766,11 @@ export async function searchTalent(query: string): Promise<SearchResult> {
 
         return {
             parsedQuery,
-            rows: scoreData.rows
+            rows
         };
 
     } catch (err: any) {
-        console.error("searchTalent server action exception, falling back to database search:", err);
+        console.error("[Talent Search Action] Unexpected searchTalent exception:", err);
         try {
             const fallbackRows = await executeDatabaseSearch(query);
             return {
@@ -353,7 +782,7 @@ export async function searchTalent(query: string): Promise<SearchResult> {
                 rows: fallbackRows
             };
         } catch (fallbackErr: any) {
-            console.error("Database fallback search also failed:", fallbackErr);
+            console.error("[Talent Search Action] Fallback search also failed:", fallbackErr);
             return {
                 parsedQuery: null,
                 rows: [],

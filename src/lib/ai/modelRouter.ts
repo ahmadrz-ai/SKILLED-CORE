@@ -82,8 +82,17 @@ export async function callGeminiInterview(
   )
 }
 
+const NVIDIA_KEYS = [
+  process.env.NVIDIA_API_KEY_SEARCH,
+  process.env.NVIDIA_API_KEY_ASSISTANT,
+  process.env.NVIDIA_API_KEY_RESUME_IMPORT,
+  process.env.NVIDIA_API_KEY_RESUME_EXPORT,
+  process.env.NVIDIA_API_KEY_REPORT,
+  process.env.NVIDIA_API_KEY,
+].filter((k): k is string => Boolean(k?.trim()))
+
 async function callNvidiaNIM(
-  apiKey: string,
+  preferredApiKey: string | undefined,
   primaryModel: string,
   messages: { role: string; content: string }[],
   options: {
@@ -93,8 +102,16 @@ async function callNvidiaNIM(
     stream?: boolean
   } = {}
 ) {
-  if (!apiKey) throw new Error(`NVIDIA API key is missing`)
-  if (!primaryModel) throw new Error('NVIDIA primary model name is required')
+  const keysToTry = [
+    preferredApiKey,
+    ...NVIDIA_KEYS
+  ].filter((k): k is string => Boolean(k?.trim()))
+
+  const uniqueKeys = Array.from(new Set(keysToTry))
+
+  if (uniqueKeys.length === 0) {
+    throw new Error('No NVIDIA API keys configured in environment variables')
+  }
 
   // Support fallback model rotation in case the API key tier is restricted
   const modelsToTry = [
@@ -107,47 +124,173 @@ async function callNvidiaNIM(
   const uniqueModels = Array.from(new Set(modelsToTry))
   let lastError: any = null
 
-  for (let i = 0; i < uniqueModels.length; i++) {
-    const currentModel = uniqueModels[i]
-    try {
-      console.log(`[NIM] Attempting model="${currentModel}" (try ${i + 1} of ${uniqueModels.length}) key="${apiKey.slice(0, 12)}…"`)
-      
-      const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          Accept: options.stream ? 'text/event-stream' : 'application/json',
-        },
-        body: JSON.stringify({
-          model: currentModel,
-          messages,
-          temperature: options.temperature ?? 0.3,
-          max_tokens: options.maxTokens ?? 4096,
-          top_p: 0.9,
-          stream: options.stream ?? false,
-          ...(options.jsonMode && { response_format: { type: 'json_object' } }),
-        }),
-        signal: AbortSignal.timeout(30_000), // 30s timeout per model attempt
-      })
+  // Outer loop: Try keys
+  for (let k = 0; k < uniqueKeys.length; k++) {
+    const currentKey = uniqueKeys[k]
 
-      if (!response.ok) {
-        const errText = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errText}`)
+    // Inner loop: Try models
+    for (let i = 0; i < uniqueModels.length; i++) {
+      const currentModel = uniqueModels[i]
+      try {
+        console.log(`[NIM] Attempting model="${currentModel}" with key slot ${k + 1} (try ${i + 1} of ${uniqueModels.length})`)
+        
+        const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${currentKey}`,
+            'Content-Type': 'application/json',
+            Accept: options.stream ? 'text/event-stream' : 'application/json',
+          },
+          body: JSON.stringify({
+            model: currentModel,
+            messages,
+            temperature: options.temperature ?? 0.3,
+            max_tokens: options.maxTokens ?? 4096,
+            top_p: 0.9,
+            stream: options.stream ?? false,
+            ...(options.jsonMode && { response_format: { type: 'json_object' } }),
+          }),
+          signal: AbortSignal.timeout(30_000), // 30s timeout per model attempt
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          throw new Error(`HTTP ${response.status}: ${errText}`)
+        }
+
+        console.log(`[NIM] Success with model="${currentModel}" on key slot ${k + 1}`)
+        if (options.stream) return response
+        return response.json()
+
+      } catch (err: any) {
+        lastError = err
+        const errMsg = String(err?.message || err).toLowerCase()
+        const errStatus = err?.status ?? err?.statusCode ?? 0
+        console.warn(`[NIM] Model "${currentModel}" failed with key slot ${k + 1}:`, errMsg)
+        
+        // If it is an auth error, stop trying models on this key and move to next key
+        if (errStatus === 401 || errMsg.includes('unauthorized') || errMsg.includes('api key') || errMsg.includes('invalid api key')) {
+          console.warn(`[NIM] Key slot ${k + 1} is unauthorized. Rotating key...`)
+          break;
+        }
       }
-
-      console.log(`[NIM] Success with model="${currentModel}"`)
-      if (options.stream) return response
-      return response.json()
-
-    } catch (err: any) {
-      lastError = err
-      console.warn(`[NIM] Model "${currentModel}" failed:`, err?.message || err)
-      // Continue to next fallback model
     }
   }
 
-  throw new Error(`All NVIDIA NIM models failed. Last error: ${lastError?.message || lastError}`)
+  throw new Error(`All NVIDIA NIM keys/models failed. Last error: ${lastError?.message || lastError}`)
+}
+
+async function callGemini(
+  messages: { role: string; content: string }[],
+  options: {
+    temperature?: number
+    maxTokens?: number
+    jsonMode?: boolean
+    stream?: boolean
+  } = {}
+) {
+  if (GEMINI_KEYS.length === 0) {
+    throw new Error('No Gemini API keys configured in environment variables')
+  }
+
+  const formattedContents = messages.map(m => {
+    const role = m.role === 'assistant' ? 'model' : 'user';
+    return {
+      role,
+      parts: [{ text: m.content }]
+    };
+  });
+
+  const systemMessage = messages.find(m => m.role === 'system');
+  const systemInstruction = systemMessage?.content;
+  const contents = formattedContents.filter((_, idx) => messages[idx].role !== 'system');
+
+  let lastError: any = null;
+  for (let i = 0; i < GEMINI_KEYS.length; i++) {
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const client = new GoogleGenAI({ apiKey: GEMINI_KEYS[i] });
+
+      if (options.stream) {
+        console.log(`[Gemini Fallback Stream] Attempting streaming on key slot ${i + 1}`);
+        const responseStream = await client.models.generateContentStream({
+          model: 'gemini-2.5-flash',
+          contents,
+          config: {
+            temperature: options.temperature ?? 0.3,
+            maxOutputTokens: options.maxTokens ?? 2048,
+            ...(systemInstruction && { systemInstruction }),
+          }
+        });
+
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const chunk of responseStream) {
+                const text = chunk.text;
+                if (text) {
+                  const sseChunk = `data: ${JSON.stringify({
+                    choices: [
+                      {
+                        delta: {
+                          content: text
+                        }
+                      }
+                    ]
+                  })}\n\n`;
+                  controller.enqueue(encoder.encode(sseChunk));
+                }
+              }
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            } catch (err) {
+              controller.error(err);
+            } finally {
+              controller.close();
+            }
+          }
+        });
+
+        console.log(`[Gemini Fallback Stream] Success on key slot ${i + 1}`);
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          }
+        });
+      } else {
+        console.log(`[Gemini Fallback] Attempting on key slot ${i + 1}`);
+        const response = await client.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents,
+          config: {
+            temperature: options.temperature ?? 0.3,
+            maxOutputTokens: options.maxTokens ?? 2048,
+            ...(systemInstruction && { systemInstruction }),
+            ...(options.jsonMode && { responseMimeType: 'application/json' }),
+          }
+        });
+
+        const content = response.text || '';
+        console.log(`[Gemini Fallback] Success on key slot ${i + 1}`);
+        return {
+          choices: [
+            {
+              message: {
+                content
+              }
+            }
+          ]
+        };
+      }
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[Gemini Fallback] Key slot ${i + 1} failed:`, err?.message || err);
+    }
+  }
+
+  throw new Error(`All Gemini keys failed in fallback. Last error: ${lastError?.message || lastError}`);
 }
 
 // ─── TASK-BASED ROUTER ────────────────────────────────────────────────────────
@@ -179,59 +322,64 @@ export async function executeAI(
   // Fallback API key — the legacy single key that already exists on Vercel
   const fallbackKey = process.env.NVIDIA_API_KEY || '';
 
-  switch (task) {
-    case 'search':
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
-        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
-        messages,
-        options
-      )
+  try {
+    switch (task) {
+      case 'search':
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+          process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
+          messages,
+          options
+        )
 
-    case 'assistant':
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_ASSISTANT || fallbackKey,
-        process.env.NVIDIA_MODEL_ASSISTANT || STRONG_MODEL,
-        messages,
-        options
-      )
+      case 'assistant':
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_ASSISTANT || fallbackKey,
+          process.env.NVIDIA_MODEL_ASSISTANT || STRONG_MODEL,
+          messages,
+          options
+        )
 
-    case 'resumeImport':
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_IMPORT || fallbackKey,
-        process.env.NVIDIA_MODEL_RESUME_IMPORT || STRONG_MODEL,
-        messages,
-        options
-      )
+      case 'resumeImport':
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_RESUME_IMPORT || fallbackKey,
+          process.env.NVIDIA_MODEL_RESUME_IMPORT || STRONG_MODEL,
+          messages,
+          options
+        )
 
-    case 'resumeExport':
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_RESUME_EXPORT || fallbackKey,
-        process.env.NVIDIA_MODEL_RESUME_EXPORT || STRONG_MODEL,
-        messages,
-        options
-      )
+      case 'resumeExport':
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_RESUME_EXPORT || fallbackKey,
+          process.env.NVIDIA_MODEL_RESUME_EXPORT || STRONG_MODEL,
+          messages,
+          options
+        )
 
-    case 'report':
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_REPORT || fallbackKey,
-        process.env.NVIDIA_MODEL_REPORT || STRONG_MODEL,
-        messages,
-        { ...options, jsonMode: true }
-      )
+      case 'report':
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_REPORT || fallbackKey,
+          process.env.NVIDIA_MODEL_REPORT || STRONG_MODEL,
+          messages,
+          { ...options, jsonMode: true }
+        )
 
-    case 'roleClassify':
-      // Uses the fastest available model for instant classification
-      // Role classification runs BEFORE the interview starts — must be <2s
-      return callNvidiaNIM(
-        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
-        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
-        messages,
-        { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
-      )
+      case 'roleClassify':
+        // Uses the fastest available model for instant classification
+        // Role classification runs BEFORE the interview starts — must be <2s
+        return await callNvidiaNIM(
+          process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+          process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
+          messages,
+          { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
+        )
 
-    default:
-      throw new Error(`Unknown AI task: ${task}`)
+      default:
+        throw new Error(`Unknown AI task: ${task}`)
+    }
+  } catch (nvidiaErr: any) {
+    console.warn(`[executeAI] NVIDIA NIM failed for task "${task}". Falling back to Gemini... Error:`, nvidiaErr?.message || nvidiaErr)
+    return await callGemini(messages, options)
   }
 }
 

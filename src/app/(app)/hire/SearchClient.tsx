@@ -8,7 +8,7 @@ import { TalentSearchResults } from "@/components/hire/TalentSearchResults";
 import { QueryIntentBanner } from "@/components/hire/QueryIntentBanner";
 import { LeftFilterPanel, SearchFilters } from "@/components/hire/LeftFilterPanel";
 import { CandidateCard } from "@/components/hire/CandidateCard";
-import type { Candidate } from "./actions";
+import type { Candidate } from "@/app/(app)/hire/actions";
 
 interface SearchClientProps {
     initialCandidates: Candidate[];
