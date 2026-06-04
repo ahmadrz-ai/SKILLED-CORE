@@ -38,18 +38,16 @@ Return ONLY valid JSON with no markdown, no backticks, no preamble:
 }
 
 SPECIAL REQUIREMENT TYPES:
-When the query contains a person's name (e.g. "find Umar", "named Sarah", "person called John"), mark that requirement with:
+When the query explicitly contains a specific person's name (e.g., "find [Name]", "named [Name]", "person called [Name]"), mark that requirement with:
   type: "person-name"
   isHardFilter: true
   priority: 0  (highest — above all skill requirements)
 
 A person-name requirement means ONLY candidates whose name contains that string should appear in results. Everyone else is excluded.
+DO NOT extract a person-name requirement unless a specific person's name is explicitly written in the recruiter query.
 
-Detection patterns for names:
-  "named [X]", "called [X]", "find [X]", "person [X]", "[X] who knows", "[X] with experience", "looking for [X]"
-  
-Name requirements are case-insensitive partial matches.
-"Umar" matches "Muhammad Umar", "Umar Khan", "Umar Ali".
+Detection patterns for names in the search query:
+  "named [Name]", "called [Name]", "find [Name]", "person [Name]", "[Name] who knows", "[Name] with experience", "looking for [Name]"
 
 Rules:
 - Extract every distinct requirement from the query, no matter how small.
