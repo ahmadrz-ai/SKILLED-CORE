@@ -1,6 +1,7 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
-import { PDFParse } from "pdf-parse";
+import * as _pdfParse from "pdf-parse";
+const pdfParse = (_pdfParse as any).default || _pdfParse;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -162,10 +163,8 @@ export async function POST(req: Request) {
         let extractedText = "";
         try {
             if (mimeType.includes("pdf") || mimeType.includes("octet-stream")) {
-                const parser = new PDFParse({ data: pdfBuffer });
-                const pdfData = await parser.getText();
+                const pdfData = await pdfParse(pdfBuffer);
                 extractedText = pdfData.text || "";
-                await parser.destroy();
             } else {
                 extractedText = pdfBuffer.toString("utf-8");
             }
