@@ -134,6 +134,7 @@ export async function POST(req: Request) {
                 }
                 const arrayBuffer = await response.arrayBuffer();
                 pdfBuffer = Buffer.from(arrayBuffer);
+                mimeType = response.headers.get("content-type") || "application/pdf";
             } else {
                 const formData = await req.formData();
                 const file = formData.get("file") as File;
@@ -150,6 +151,7 @@ export async function POST(req: Request) {
                     }
                     const arrayBuffer = await response.arrayBuffer();
                     pdfBuffer = Buffer.from(arrayBuffer);
+                    mimeType = response.headers.get("content-type") || "application/pdf";
                 } else {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
                 }
@@ -173,13 +175,18 @@ export async function POST(req: Request) {
             extractedText = pdfBuffer.toString("utf-8");
         }
 
-        if (!extractedText.trim()) {
+        const isPdf = mimeType.includes("pdf") || mimeType.includes("octet-stream");
+        if (!isPdf && !extractedText.trim()) {
             return NextResponse.json({ error: "Could not extract text from resume file" }, { status: 400 });
         }
 
         // Send to executeAI with resumeImport task
         let textResult = "";
         try {
+            const userContent = isPdf
+                ? `Parse this resume and structure it according to the schema rules.\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`
+                : `Parse this resume text and structure it according to the schema rules:\n\nResume Text:\n${extractedText}\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`;
+
             const result = await executeAI('resumeImport', [
                 {
                     role: 'system',
@@ -187,11 +194,12 @@ export async function POST(req: Request) {
                 },
                 {
                     role: 'user',
-                    content: `Parse this resume text and structure it according to the schema rules:\n\nResume Text:\n${extractedText}\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`
+                    content: userContent
                 }
             ], {
                 temperature: 0.1,
-                jsonMode: true
+                jsonMode: true,
+                pdfBuffer: isPdf ? pdfBuffer : undefined
             });
             textResult = result.choices[0].message.content;
         } catch (aiErr: any) {

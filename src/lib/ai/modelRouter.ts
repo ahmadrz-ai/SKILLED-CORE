@@ -189,6 +189,7 @@ async function callGemini(
     maxTokens?: number
     jsonMode?: boolean
     stream?: boolean
+    pdfBuffer?: Buffer
   } = {}
 ) {
   if (GEMINI_KEYS.length === 0) {
@@ -206,6 +207,18 @@ async function callGemini(
   const systemMessage = messages.find(m => m.role === 'system');
   const systemInstruction = systemMessage?.content;
   const contents = formattedContents.filter((_, idx) => messages[idx].role !== 'system');
+
+  if (options.pdfBuffer) {
+    const firstUserContent = contents.find(c => c.role === 'user');
+    if (firstUserContent) {
+      (firstUserContent.parts as any[]).unshift({
+        inlineData: {
+          data: options.pdfBuffer.toString('base64'),
+          mimeType: 'application/pdf'
+        }
+      });
+    }
+  }
 
   let lastError: any = null;
   for (let i = 0; i < GEMINI_KEYS.length; i++) {
@@ -319,8 +332,14 @@ export async function executeAI(
     maxTokens?: number
     jsonMode?: boolean
     stream?: boolean
+    pdfBuffer?: Buffer
   } = {}
 ) {
+  if (options.pdfBuffer) {
+    console.log(`[executeAI] Routing task "${task}" with native PDF buffer to Gemini...`);
+    return await callGemini(messages, options);
+  }
+
   // Fallback API key — the legacy single key that already exists on Vercel
   const fallbackKey = process.env.NVIDIA_API_KEY || '';
 
