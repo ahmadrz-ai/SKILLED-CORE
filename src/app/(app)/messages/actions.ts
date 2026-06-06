@@ -220,6 +220,7 @@ export async function sendMessage(recipientId: string, content: string | null, a
         });
 
         revalidatePath('/messages');
+        revalidatePath('/', 'layout');
         return { success: true, message: newMessage, conversationId };
     } catch (error) {
         console.error("Send Message Error:", error);

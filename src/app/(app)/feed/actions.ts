@@ -670,7 +670,28 @@ export async function toggleFollow(targetUserId: string) {
                     followingId: targetUserId
                 }
             });
+
+            // Notify the followed user (new follower event)
+            try {
+                const follower = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { name: true, username: true }
+                });
+                await prisma.notification.create({
+                    data: {
+                        userId: targetUserId,
+                        type: 'FOLLOW',
+                        message: `<strong>${follower?.name || 'Someone'}</strong> started following you.`,
+                        actorId: userId,
+                        resourcePath: follower?.username ? `/profile/${follower.username}` : '/network',
+                    }
+                });
+            } catch (notifyErr) {
+                console.error("Follow notification failed:", notifyErr);
+            }
+
             revalidatePath('/feed');
+            revalidatePath('/', 'layout');
             return { success: true, following: true };
         }
     } catch (error) {

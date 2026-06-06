@@ -43,6 +43,26 @@ export async function getNotifications() {
     }
 }
 
+// Lightweight unread counts for the sidebar/topbar badges. Polled client-side so
+// badges update live as events occur, without a full page navigation.
+export async function getBadgeCounts(): Promise<{ network: number; notifications: number; messages: number }> {
+    const session = await auth();
+    if (!session?.user?.id) return { network: 0, notifications: 0, messages: 0 };
+
+    try {
+        const uid = session.user.id;
+        const [network, notifications, messages] = await Promise.all([
+            prisma.connection.count({ where: { addresseeId: uid, status: "PENDING" } }),
+            prisma.notification.count({ where: { userId: uid, read: false } }),
+            prisma.conversationParticipant.count({ where: { userId: uid, hasUnread: true } }),
+        ]);
+        return { network, notifications, messages };
+    } catch (error) {
+        console.error("getBadgeCounts failed:", error);
+        return { network: 0, notifications: 0, messages: 0 };
+    }
+}
+
 export async function markAsRead(notificationId: string) {
     const session = await auth();
     if (!session?.user?.email) return { success: false };

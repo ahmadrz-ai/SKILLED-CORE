@@ -326,6 +326,21 @@ export async function updateConnectionStatus(connectionId: string, status: 'ACCE
                     followingId: conn.requesterId
                 }
             });
+
+            // Notify the original requester that their request was accepted
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: conn.requesterId,
+                        type: 'CONNECTION_ACCEPTED',
+                        message: `<strong>${session.user.name || 'Someone'}</strong> accepted your connection request.`,
+                        actorId: session.user.id,
+                        resourcePath: '/network',
+                    }
+                });
+            } catch (notifyErr) {
+                console.error("Connection-accepted notification failed:", notifyErr);
+            }
         }
         revalidatePath('/network');
         revalidatePath('/', 'layout');
