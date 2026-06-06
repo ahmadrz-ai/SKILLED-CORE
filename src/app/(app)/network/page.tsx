@@ -35,6 +35,8 @@ export default function NetworkPage() {
 
     // Optimistic UI states
     const [pendingConnects, setPendingConnects] = useState<Set<string>>(new Set());
+    const [activeTab, setActiveTab] = useState('Connections');
+    const COMING_SOON_TABS = ['Groups', 'Events', 'Newsletter'];
 
     useEffect(() => {
         loadData();
@@ -92,12 +94,13 @@ export default function NetworkPage() {
     };
 
     const handleNavigation = (label: string) => {
-        if (label === 'Connections') return;
+        // Following has a real destination (the profile's following view).
         if (label === 'Following') {
             router.push('/profile/me?view=following');
             return;
         }
-        toast.info("Feature coming soon");
+        // Connections + the coming-soon tabs switch the in-page view.
+        setActiveTab(label);
     };
 
     if (isLoading) {
@@ -157,17 +160,17 @@ export default function NetworkPage() {
                             onClick={() => handleNavigation(item.label)}
                             className={cn(
                                 "w-full flex items-center justify-between p-3 rounded-lg text-sm font-semibold transition-all border group cursor-pointer",
-                                item.active
+                                activeTab === item.label
                                     ? "bg-bg-sidebar-active text-text-sidebar-active border-border-selected"
                                     : "text-text-sidebar-inactive border-transparent hover:bg-bg-sidebar-hover hover:text-text-sidebar-hover"
                             )}
                         >
                             <div className="flex items-center gap-3">
-                                <item.icon className={cn("w-4 h-4", item.active ? "text-text-sidebar-active" : "text-text-placeholder group-hover:text-text-secondary")} />
+                                <item.icon className={cn("w-4 h-4", activeTab === item.label ? "text-text-sidebar-active" : "text-text-placeholder group-hover:text-text-secondary")} />
                                 {item.label}
                             </div>
                             {item.count !== null && (
-                                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", item.active ? "bg-sc-purple-150 text-sc-purple-800" : "bg-bg-secondary-panel text-text-secondary border border-border-default")}>
+                                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", activeTab === item.label ? "bg-sc-purple-150 text-sc-purple-800" : "bg-bg-secondary-panel text-text-secondary border border-border-default")}>
                                     {item.count}
                                 </span>
                             )}
@@ -199,7 +202,27 @@ export default function NetworkPage() {
                     </div>
                 </div>
 
+                {/* COMING SOON (Groups / Events / Newsletter) — clean, intentional state */}
+                {COMING_SOON_TABS.includes(activeTab) && (
+                    <div className="bg-bg-card border border-border-card rounded-2xl p-12 text-center shadow-sc-card flex flex-col items-center">
+                        <span className="flex items-center justify-center w-14 h-14 rounded-full bg-sc-purple-50 text-sc-purple-400 mb-4">
+                            <Zap className="w-7 h-7" />
+                        </span>
+                        <h2 className="text-lg font-bold text-text-heading">{activeTab} are coming soon</h2>
+                        <p className="text-sm text-text-secondary mt-1 max-w-md">
+                            We&apos;re building {activeTab.toLowerCase()} to help you connect around shared interests. It&apos;s on the roadmap — check back shortly.
+                        </p>
+                        <button
+                            onClick={() => setActiveTab('Connections')}
+                            className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-sc-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sc-purple-700 transition-colors"
+                        >
+                            Back to Connections
+                        </button>
+                    </div>
+                )}
+
                 {/* LAYOUT GRID */}
+                {!COMING_SOON_TABS.includes(activeTab) && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
                     {/* LEFT COLUMN (MAIN) - 3 COLS */}
@@ -385,7 +408,12 @@ export default function NetworkPage() {
                                             </Link>
                                             <div className="min-w-0">
                                                 <Link href={`/profile/${user.username || user.id}`} className="hover:underline decoration-border-default">
-                                                    <h4 className="text-sm font-bold text-text-heading truncate hover:text-text-brand transition-colors">{user.name}</h4>
+                                                    <h4 className="text-sm font-bold text-text-heading truncate hover:text-text-brand transition-colors flex items-center gap-1.5">
+                                                        {user.name}
+                                                        {user.isPremium && (
+                                                            <span className="text-[8px] font-extrabold uppercase tracking-wider bg-sc-purple-100 text-sc-purple-800 px-1.5 py-0.5 rounded flex-shrink-0">Premium</span>
+                                                        )}
+                                                    </h4>
                                                 </Link>
                                                 <p className="text-xs text-text-secondary truncate font-medium">{user.headline}</p>
                                                 {user.mutualCount > 0 && (
@@ -409,13 +437,14 @@ export default function NetworkPage() {
                                 ))}
                             </div>
 
-                            <Button variant="ghost" className="w-full mt-2 text-xs text-text-placeholder hover:text-text-secondary font-bold cursor-pointer">
-                                Show more
-                            </Button>
+                            <Link href="/search" className="block w-full mt-2 text-center text-xs text-text-placeholder hover:text-text-secondary font-bold py-1">
+                                Discover more people
+                            </Link>
                         </div>
                     </div>
 
                 </div>
+                )}
 
             </div>
         </div>

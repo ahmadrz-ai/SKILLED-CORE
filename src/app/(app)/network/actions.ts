@@ -98,7 +98,7 @@ export async function getNetworkData() {
             excludedIds.add(c.addresseeId);
         });
 
-        const recommendations = await prisma.user.findMany({
+        const recommendationsRaw = await prisma.user.findMany({
             where: {
                 id: { notIn: Array.from(excludedIds) },
                 role: { not: 'ADMIN' }
@@ -111,8 +111,14 @@ export async function getNetworkData() {
                 image: true,
                 username: true,
                 bannerUrl: true,
+                plan: true,
             }
         });
+
+        // Surface premium (ULTRA/PRO) members first for LinkedIn-style discovery.
+        const recommendations = recommendationsRaw
+            .map(u => ({ ...u, isPremium: u.plan === 'ULTRA' || u.plan === 'PRO' }))
+            .sort((a, b) => Number(b.isPremium) - Number(a.isPremium));
 
         // ... existing code ...
 
