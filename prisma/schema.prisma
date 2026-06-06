@@ -46,6 +46,7 @@ model User {
   image                       String?
   role                        String                @default("CANDIDATE")
   createdAt                   DateTime              @default(now())
+  onboardedAt                 DateTime?
   companyId                   String?
   bio                         String?
   headline                    String?

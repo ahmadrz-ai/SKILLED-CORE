@@ -18,9 +18,13 @@ export async function POST(request: Request) {
             location, portfolio, linkedin, github, experience, education
         } = body;
 
-        // Build update data based on role
+        // Build update data based on role.
+        // onboardedAt marks completion explicitly so "Skip" works even when the user
+        // hasn't filled a headline (previously the layout gate relied on headline and
+        // bounced skippers back to onboarding).
         const updateData: any = {
             role,
+            onboardedAt: new Date(),
             name,
             username: username ? username.toLowerCase().trim() : null, // Store sanitized username
             image,
@@ -74,8 +78,8 @@ export async function POST(request: Request) {
             }
         }
 
-        // If Recruiter, Create/Connect Company
-        if (role === 'recruiter' && companyName) {
+        // If Recruiter, Create/Connect Company (role may arrive as "RECRUITER" or "recruiter")
+        if (typeof role === 'string' && role.toLowerCase() === 'recruiter' && companyName) {
             // Try to find existing company
             let company = await prisma.company.findFirst({
                 where: { name: companyName }
