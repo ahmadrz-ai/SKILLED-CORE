@@ -22,43 +22,48 @@ export default async function AppLayout({
 
     try {
         if (session?.user?.id) {
-            user = await prisma.user.findUnique({
-                where: { id: session.user.id },
-                select: { plan: true, credits: true, headline: true, role: true, companyId: true }
-            });
+            const uid = session.user.id;
+            const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            // These 7 queries are independent — run them in parallel instead of
+            // sequentially. This layout runs on EVERY page load, so it removes
+            // ~6 round-trips of latency from every navigation.
+            const [
+                userResult,
+                network,
+                notifications,
+                messages,
+                jobs,
+                learning,
+                views,
+            ] = await Promise.all([
+                prisma.user.findUnique({
+                    where: { id: uid },
+                    select: { plan: true, credits: true, headline: true, role: true, companyId: true }
+                }),
+                prisma.connection.count({ where: { addresseeId: uid, status: "PENDING" } }),
+                prisma.notification.count({ where: { userId: uid, read: false } }),
+                prisma.conversationParticipant.count({ where: { userId: uid, hasUnread: true } }),
+                prisma.job.count({ where: { createdAt: { gte: threeDaysAgo }, status: "OPEN" } }),
+                prisma.userAssessment.count({ where: { userId: uid, attemptedAt: { gte: sevenDaysAgo } } }),
+                prisma.profileView.count({ where: { profileId: uid, viewedAt: { gte: oneDayAgo } } }),
+            ]);
+
+            user = userResult;
+            networkCount = network;
+            notificationCount = notifications;
+            messagesCount = messages;
+            jobsCount = jobs;
+            learningCount = learning;
+            hasAnalytics = views > 0;
 
             // Redirect un-onboarded users to the onboarding page
             const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
             if (!isOnboarded) {
                 shouldRedirectToOnboarding = true;
             }
-
-            networkCount = await prisma.connection.count({
-                where: { addresseeId: session.user.id, status: "PENDING" }
-            });
-            notificationCount = await prisma.notification.count({
-                where: { userId: session.user.id, read: false }
-            });
-            messagesCount = await prisma.conversationParticipant.count({
-                where: { userId: session.user.id, hasUnread: true }
-            });
-            const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-            jobsCount = await prisma.job.count({
-                where: { createdAt: { gte: threeDaysAgo }, status: "OPEN" }
-            });
-            learningCount = await prisma.userAssessment.count({
-                where: {
-                    userId: session.user.id,
-                    attemptedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-                }
-            });
-            const views = await prisma.profileView.count({
-                where: {
-                    profileId: session.user.id,
-                    viewedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-                }
-            });
-            hasAnalytics = views > 0;
         }
     } catch (dbError) {
         console.error("AppLayout: DB Error fetching stats/user:", dbError);

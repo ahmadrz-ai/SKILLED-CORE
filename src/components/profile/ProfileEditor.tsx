@@ -72,7 +72,7 @@ export default function ProfileEditor({ user, isOwner }: { user: any, isOwner: b
         formData.append('file', file);
 
         try {
-            const response = await fetch('/api/ai/parse-resume', {
+            const response = await fetch('/api/parse-resume', {
                 method: 'POST',
                 body: formData
             });
@@ -81,8 +81,8 @@ export default function ProfileEditor({ user, isOwner }: { user: any, isOwner: b
 
             const data = await response.json();
 
-            // Auto-Fill Form
-            form.setValue('bio', data.bio || form.getValues('bio'));
+            // Auto-Fill Form (route returns `summary`, not `bio`)
+            form.setValue('bio', data.bio || data.summary || form.getValues('bio'));
             form.setValue('headline', data.headline || form.getValues('headline'));
 
             if (data.skills && Array.isArray(data.skills)) {

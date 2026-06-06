@@ -175,36 +175,43 @@ export async function POST(req: Request) {
             extractedText = pdfBuffer.toString("utf-8");
         }
 
-        const isPdf = mimeType.includes("pdf") || mimeType.includes("octet-stream");
-        if (!isPdf && !extractedText.trim()) {
-            return NextResponse.json({ error: "Could not extract text from resume file" }, { status: 400 });
+        // No usable text means we cannot parse. NVIDIA NIM models are text-only,
+        // so an unreadable (e.g. scanned/image-only) PDF must fail clearly here
+        // rather than sending an empty prompt and producing a blank profile.
+        if (!extractedText.trim()) {
+            return NextResponse.json(
+                { error: "Could not read text from this resume. Please upload a text-based PDF (not a scanned image)." },
+                { status: 422 }
+            );
         }
 
-        // Send to executeAI with resumeImport task
+        // Resume parsing runs on NVIDIA NIM only (Gemini is reserved for the AI Interview).
+        const systemMsg = {
+            role: 'system',
+            content: 'You are an expert resume parser and professional profile writer. Return ONLY valid JSON. No markdown. No backticks.'
+        };
+        const userContent = `Parse this resume and structure it according to the schema rules.\n\nResume Text:\n${extractedText}\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`;
+
         let textResult = "";
         try {
-            const userContent = isPdf
-                ? `Parse this resume and structure it according to the schema rules.\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`
-                : `Parse this resume text and structure it according to the schema rules:\n\nResume Text:\n${extractedText}\n\nInstructions and schema:\n${RESUME_EXTRACTION_PROMPT}`;
-
-            const result = await executeAI('resumeImport', [
-                {
-                    role: 'system',
-                    content: 'You are an expert resume parser and professional profile writer. Return ONLY valid JSON. No markdown. No backticks.'
-                },
-                {
-                    role: 'user',
-                    content: userContent
-                }
-            ], {
+            const result = await executeAI('resumeImport', [systemMsg, { role: 'user', content: userContent }], {
                 temperature: 0.1,
-                jsonMode: true,
-                pdfBuffer: isPdf ? pdfBuffer : undefined
+                jsonMode: true
             });
             textResult = result.choices[0].message.content;
         } catch (aiErr: any) {
-            console.error("executeAI resumeImport failed:", aiErr);
-            return NextResponse.json({ error: "AI parsing failed", details: aiErr.message }, { status: 500 });
+            console.error("Resume import AI failed, retrying once:", aiErr?.message || aiErr);
+            // Single retry — NVIDIA key/model rotation already happens inside executeAI.
+            try {
+                const retry = await executeAI('resumeImport', [systemMsg, { role: 'user', content: userContent }], {
+                    temperature: 0.1,
+                    jsonMode: true
+                });
+                textResult = retry.choices[0].message.content;
+            } catch (retryErr: any) {
+                console.error("Resume import retry also failed:", retryErr?.message || retryErr);
+                return NextResponse.json({ error: "AI parsing failed", details: retryErr.message }, { status: 500 });
+            }
         }
 
         try {

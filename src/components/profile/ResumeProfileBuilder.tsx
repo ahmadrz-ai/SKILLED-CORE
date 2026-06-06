@@ -443,7 +443,9 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             }
             
             setProgressText("Refining profile data layers...");
-            loadParsedData(resData);
+            // This route wraps the payload as { success, aiData }. Unwrap it so the
+            // profile fields actually populate (previously loaded an empty profile).
+            loadParsedData(resData.aiData || resData);
             setStep('review');
         } catch (error: any) {
             console.error("Option A URL parse failed:", error);

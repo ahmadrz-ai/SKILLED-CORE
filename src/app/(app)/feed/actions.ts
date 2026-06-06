@@ -768,29 +768,26 @@ export async function getFollowers(userId: string) {
         const session = await auth();
         const currentUserId = session?.user?.id;
 
-        // Map to simpler structure and check if current user follows them (for follow back)
-        const mapped = await Promise.all(followers.map(async f => {
-            let isFollowing = false;
-            if (currentUserId && f.followerId !== currentUserId) {
-                const check = await prisma.follow.findUnique({
-                    where: {
-                        followerId_followingId: {
-                            followerId: currentUserId,
-                            followingId: f.followerId
-                        }
-                    }
-                });
-                isFollowing = !!check;
-            }
+        // Batch the "do I follow them back?" check into ONE query instead of
+        // one per follower (was an N+1: 500 followers = 500 queries).
+        let followingBackIds = new Set<string>();
+        if (currentUserId) {
+            const targetIds = followers.map(f => f.followerId);
+            const myFollows = await prisma.follow.findMany({
+                where: { followerId: currentUserId, followingId: { in: targetIds } },
+                select: { followingId: true }
+            });
+            followingBackIds = new Set(myFollows.map(m => m.followingId));
+        }
 
-            return {
-                id: f.follower.id,
-                name: f.follower.name,
-                username: f.follower.username,
-                image: f.follower.image,
-                headline: f.follower.headline,
-                isFollowing
-            };
+        // Map to simpler structure (no DB calls inside the loop)
+        const mapped = followers.map(f => ({
+            id: f.follower.id,
+            name: f.follower.name,
+            username: f.follower.username,
+            image: f.follower.image,
+            headline: f.follower.headline,
+            isFollowing: followingBackIds.has(f.followerId)
         }));
 
         return { success: true, users: mapped };
@@ -823,30 +820,24 @@ export async function getFollowing(userId: string) {
         const session = await auth();
         const currentUserId = session?.user?.id;
 
-        const mapped = await Promise.all(following.map(async f => {
-            let isFollowing = false;
-            // If viewing my own profile, I perform the check logically (I am following them).
-            // If viewing someone else, check if *I* follow this person they follow.
-            if (currentUserId) {
-                const check = await prisma.follow.findUnique({
-                    where: {
-                        followerId_followingId: {
-                            followerId: currentUserId,
-                            followingId: f.followingId
-                        }
-                    }
-                });
-                isFollowing = !!check;
-            }
+        // Batch the "do I also follow them?" check into ONE query (was N+1).
+        let followingBackIds = new Set<string>();
+        if (currentUserId) {
+            const targetIds = following.map(f => f.followingId);
+            const myFollows = await prisma.follow.findMany({
+                where: { followerId: currentUserId, followingId: { in: targetIds } },
+                select: { followingId: true }
+            });
+            followingBackIds = new Set(myFollows.map(m => m.followingId));
+        }
 
-            return {
-                id: f.following.id,
-                name: f.following.name,
-                username: f.following.username,
-                image: f.following.image,
-                headline: f.following.headline,
-                isFollowing
-            };
+        const mapped = following.map(f => ({
+            id: f.following.id,
+            name: f.following.name,
+            username: f.following.username,
+            image: f.following.image,
+            headline: f.following.headline,
+            isFollowing: followingBackIds.has(f.followingId)
         }));
 
         return { success: true, users: mapped };

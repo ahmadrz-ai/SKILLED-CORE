@@ -13,10 +13,16 @@ const GEMINI_KEYS = [
   process.env.GOOGLE_API_KEY_4,            // legacy resume parser name 4
   process.env.GOOGLE_API_KEY_5,            // legacy resume parser name 5
   process.env.GOOGLE_API_KEY,              // legacy singular google key
+  process.env.GOOGLE_API_KEY2,             // production no-underscore variant (was being ignored!)
+  process.env.GOOGLE_API_KEY3,             // production no-underscore variant
+  process.env.GEMINI_API_KEY2,             // production no-underscore variant
   process.env.GOOGLE_GENERATIVE_AI_API_KEY, // Vercel standard
   process.env.QODEE_API_KEY,               // fallback name 1
   process.env.RESUME_PARSER,               // fallback name 2
-].filter((k): k is string => Boolean(k?.trim()))
+]
+  .filter((k): k is string => Boolean(k?.trim()))
+  // de-duplicate so the same key isn't tried twice under two env names
+  .filter((k, i, arr) => arr.indexOf(k) === i)
 
 function isQuotaError(err: unknown): boolean {
   const msg = String((err as any)?.message ?? err).toLowerCase()
@@ -113,14 +119,17 @@ async function callNvidiaNIM(
     throw new Error('No NVIDIA API keys configured in environment variables')
   }
 
-  // Support fallback model rotation in case the API key tier is restricted
+  // Fallback model rotation if the primary model is cold/unavailable. Verified via
+  // scripts/diagnose-nim.js + scripts/test-resume-model.js against our keys:
+  //   meta/llama-3.1-8b-instruct  → 5/5 SUCCESS, ~5s on a full resume prompt, complete JSON.
+  // Deliberately EXCLUDED:
+  //   meta/llama-3.3-70b-instruct          → intermittent 30s timeouts.
+  //   nvidia/llama-3.1-nemotron-70b-instruct → 404 on these accounts.
+  //   nvidia/nemotron-3-super-120b-a12b    → reasoning model, >30s on large (resume) prompts.
+  // Resilience comes primarily from rotating the 5 dedicated keys (each ~40 rpm).
   const modelsToTry = [
     primaryModel,
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
-    'nvidia/nemotron-3-super-120b-a12b',
     'meta/llama-3.1-8b-instruct',
-    'meta/llama-3.3-70b-instruct',
-    'nvidia/llama-3.1-nemotron-70b-instruct',
   ].filter((m): m is string => Boolean(m?.trim()))
 
   const uniqueModels = Array.from(new Set(modelsToTry))
@@ -317,12 +326,16 @@ export type AITask =
   | 'report'
   | 'roleClassify'
 
-// ─── KNOWN-WORKING MODELS (verified warm on NVIDIA NIM) ──────────────────────
-// These are used as the ultimate fallback when specific env vars are not set.
-// DO NOT fall back to process.env.NVIDIA_MODEL — on Vercel production it still
-// points to 'z-ai/glm-5.1' which gateway-timeouts (504) and breaks everything.
-const FAST_MODEL   = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning' // ~500ms, JSON-capable
-const STRONG_MODEL = 'meta/llama-3.3-70b-instruct'           // ~900ms, high quality
+// ─── KNOWN-WORKING MODEL (verified on NVIDIA NIM) ────────────────────────────
+// Used when a task's NVIDIA_MODEL_* env var is not set. meta/llama-3.1-8b-instruct
+// was the only model that is BOTH reliable (5/5 keys, json_object) AND fast enough
+// for real workloads — it parsed a full resume in ~5s with complete JSON, while
+// the larger models either time out (>30s) or 404 on these accounts. See
+// scripts/diagnose-nim.js and scripts/test-resume-model.js.
+// FAST_MODEL and STRONG_MODEL intentionally point at the same proven model; the
+// distinction is kept so individual tasks can be retargeted via NVIDIA_MODEL_* env.
+const FAST_MODEL   = 'meta/llama-3.1-8b-instruct'  // ~900ms trivial / ~5s full resume, reliable JSON
+const STRONG_MODEL = 'meta/llama-3.1-8b-instruct'
 
 export async function executeAI(
   task: AITask,
@@ -335,72 +348,71 @@ export async function executeAI(
     pdfBuffer?: Buffer
   } = {}
 ) {
-  if (options.pdfBuffer) {
-    console.log(`[executeAI] Routing task "${task}" with native PDF buffer to Gemini...`);
-    return await callGemini(messages, options);
-  }
+  // NVIDIA-ONLY for these tasks. Gemini keys are reserved exclusively for the AI
+  // Interview (see callGeminiInterview) and must never be consumed here. NVIDIA NIM
+  // chat models are text-only, so any pdfBuffer is ignored — callers extract the PDF
+  // text themselves and pass it in the prompt.
 
   // Fallback API key — the legacy single key that already exists on Vercel
-  const fallbackKey = process.env.NVIDIA_API_KEY || '';
+  const fallbackKey = process.env.NVIDIA_API_KEY || ''
 
-  try {
-    switch (task) {
-      case 'search':
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
-          process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
-          messages,
-          options
-        )
+  switch (task) {
+    case 'search':
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
+        messages,
+        options
+      )
 
-      case 'assistant':
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_ASSISTANT || fallbackKey,
-          process.env.NVIDIA_MODEL_ASSISTANT || STRONG_MODEL,
-          messages,
-          options
-        )
+    case 'assistant':
+      // Streaming chatbot — use the fast, non-reasoning model so users never see
+      // <think> tokens and time-to-first-token stays low.
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_ASSISTANT || fallbackKey,
+        process.env.NVIDIA_MODEL_ASSISTANT || FAST_MODEL,
+        messages,
+        options
+      )
 
-      case 'resumeImport':
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_RESUME_IMPORT || fallbackKey,
-          process.env.NVIDIA_MODEL_RESUME_IMPORT || STRONG_MODEL,
-          messages,
-          options
-        )
+    case 'resumeImport':
+      // Rich structured extraction — strong model, generous token budget so large
+      // resumes don't truncate the JSON.
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_RESUME_IMPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_RESUME_IMPORT || STRONG_MODEL,
+        messages,
+        { ...options, maxTokens: options.maxTokens ?? 8192 }
+      )
 
-      case 'resumeExport':
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_RESUME_EXPORT || fallbackKey,
-          process.env.NVIDIA_MODEL_RESUME_EXPORT || STRONG_MODEL,
-          messages,
-          options
-        )
+    case 'resumeExport':
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_RESUME_EXPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_RESUME_EXPORT || STRONG_MODEL,
+        messages,
+        { ...options, maxTokens: options.maxTokens ?? 8192 }
+      )
 
-      case 'report':
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_REPORT || fallbackKey,
-          process.env.NVIDIA_MODEL_REPORT || STRONG_MODEL,
-          messages,
-          { ...options, jsonMode: true }
-        )
+    case 'report':
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_REPORT || fallbackKey,
+        process.env.NVIDIA_MODEL_REPORT || STRONG_MODEL,
+        messages,
+        { ...options, jsonMode: true, maxTokens: options.maxTokens ?? 8192 }
+      )
 
-      case 'roleClassify':
-        // Uses the fastest available model for instant classification
-        // Role classification runs BEFORE the interview starts — must be <2s
-        return await callNvidiaNIM(
-          process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
-          process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
-          messages,
-          { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
-        )
+    case 'roleClassify':
+      // Role classification runs BEFORE the interview starts — must be <2s, so use
+      // the fast model.
+      return await callNvidiaNIM(
+        process.env.NVIDIA_API_KEY_SEARCH || fallbackKey,
+        process.env.NVIDIA_MODEL_SEARCH || FAST_MODEL,
+        messages,
+        { ...options, temperature: 0.1, maxTokens: 1024, jsonMode: true }
+      )
 
-      default:
-        throw new Error(`Unknown AI task: ${task}`)
-    }
-  } catch (nvidiaErr: any) {
-    console.warn(`[executeAI] NVIDIA NIM failed for task "${task}". Falling back to Gemini... Error:`, nvidiaErr?.message || nvidiaErr)
-    return await callGemini(messages, options)
+    default:
+      throw new Error(`Unknown AI task: ${task}`)
   }
 }
 
@@ -415,9 +427,51 @@ export function parseAIJson<T>(raw: string): T {
   try {
     return JSON.parse(cleaned) as T
   } catch {
+    // Fallback: some models wrap the JSON in prose or leftover reasoning text.
+    // Extract the first balanced {...} or [...] block and parse that.
+    const extracted = extractFirstJsonBlock(cleaned)
+    if (extracted) {
+      try {
+        return JSON.parse(extracted) as T
+      } catch {
+        /* fall through to error */
+      }
+    }
     console.error('[AI Router] JSON parse failed. Raw:', raw)
     throw new Error('AI response was not valid JSON')
   }
+}
+
+/**
+ * Scans for the first complete, balanced JSON object or array in a string,
+ * respecting string literals and escapes so braces inside strings don't count.
+ * Returns the substring, or null if none is found.
+ */
+function extractFirstJsonBlock(text: string): string | null {
+  const startObj = text.indexOf('{')
+  const startArr = text.indexOf('[')
+  const candidates = [startObj, startArr].filter(i => i !== -1)
+  if (candidates.length === 0) return null
+  const start = Math.min(...candidates)
+  const open = text[start]
+  const close = open === '{' ? '}' : ']'
+
+  let depth = 0
+  let inString = false
+  let escaped = false
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]
+    if (escaped) { escaped = false; continue }
+    if (ch === '\\') { escaped = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (inString) continue
+    if (ch === open) depth++
+    else if (ch === close) {
+      depth--
+      if (depth === 0) return text.slice(start, i + 1)
+    }
+  }
+  return null
 }
 
 /**
