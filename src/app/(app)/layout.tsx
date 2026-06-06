@@ -16,7 +16,7 @@ export default async function AppLayout({
     let learningCount = 0;
     let hasAnalytics = false;
 
-    let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null } | null = null;
+    let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null; onboardedAt: Date | null } | null = null;
 
     let shouldRedirectToOnboarding = false;
 
@@ -41,7 +41,7 @@ export default async function AppLayout({
             ] = await Promise.all([
                 prisma.user.findUnique({
                     where: { id: uid },
-                    select: { plan: true, credits: true, headline: true, role: true, companyId: true }
+                    select: { plan: true, credits: true, headline: true, role: true, companyId: true, onboardedAt: true }
                 }),
                 prisma.connection.count({ where: { addresseeId: uid, status: "PENDING" } }),
                 prisma.notification.count({ where: { userId: uid, read: false } }),
@@ -59,8 +59,10 @@ export default async function AppLayout({
             learningCount = learning;
             hasAnalytics = views > 0;
 
-            // Redirect un-onboarded users to the onboarding page
-            const isOnboarded = user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
+            // Redirect un-onboarded users to the onboarding page. onboardedAt is the
+            // explicit completion signal (set on submit AND skip); headline/companyId
+            // are kept as fallbacks for users onboarded before this field existed.
+            const isOnboarded = Boolean(user?.onboardedAt) || user?.headline || (user?.role === 'RECRUITER' && user?.companyId);
             if (!isOnboarded) {
                 shouldRedirectToOnboarding = true;
             }

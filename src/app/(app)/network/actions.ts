@@ -98,7 +98,7 @@ export async function getNetworkData() {
             excludedIds.add(c.addresseeId);
         });
 
-        const recommendations = await prisma.user.findMany({
+        const recommendationsRaw = await prisma.user.findMany({
             where: {
                 id: { notIn: Array.from(excludedIds) },
                 role: { not: 'ADMIN' }
@@ -111,8 +111,14 @@ export async function getNetworkData() {
                 image: true,
                 username: true,
                 bannerUrl: true,
+                plan: true,
             }
         });
+
+        // Surface premium (ULTRA/PRO) members first for LinkedIn-style discovery.
+        const recommendations = recommendationsRaw
+            .map(u => ({ ...u, isPremium: u.plan === 'ULTRA' || u.plan === 'PRO' }))
+            .sort((a, b) => Number(b.isPremium) - Number(a.isPremium));
 
         // ... existing code ...
 
@@ -326,6 +332,21 @@ export async function updateConnectionStatus(connectionId: string, status: 'ACCE
                     followingId: conn.requesterId
                 }
             });
+
+            // Notify the original requester that their request was accepted
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: conn.requesterId,
+                        type: 'CONNECTION_ACCEPTED',
+                        message: `<strong>${session.user.name || 'Someone'}</strong> accepted your connection request.`,
+                        actorId: session.user.id,
+                        resourcePath: '/network',
+                    }
+                });
+            } catch (notifyErr) {
+                console.error("Connection-accepted notification failed:", notifyErr);
+            }
         }
         revalidatePath('/network');
         revalidatePath('/', 'layout');

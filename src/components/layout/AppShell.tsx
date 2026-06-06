@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { getBadgeCounts } from "@/app/actions/notifications";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,31 @@ interface AppShellProps {
 export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppShellProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Live badge counts: seed from the server-rendered counts, then refresh on an
+  // interval and on window focus so sidebar/topbar badges update as events occur
+  // (new notifications, messages, connection requests) without a full navigation.
+  const [liveCounts, setLiveCounts] = useState(counts);
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        const fresh = await getBadgeCounts();
+        if (active) setLiveCounts(prev => ({ ...prev, ...fresh }));
+      } catch { /* ignore transient errors */ }
+    };
+    refresh();
+    const interval = setInterval(refresh, 20000);
+    const onFocus = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, []);
 
   // Auto-collapse logic per Correction 3
   const getInitialCollapseState = (path: string) => {
@@ -161,7 +187,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         onToggle={handleToggle}
         isMobileOpen={isMobileOpen}
         onMobileClose={() => setIsMobileOpen(false)}
-        counts={counts}
+        counts={liveCounts}
         plan={plan}
       />
 

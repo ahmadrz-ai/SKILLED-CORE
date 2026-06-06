@@ -1,12 +1,13 @@
 "use client";
 
-import { TrendingUp, Hash } from "lucide-react";
+import Link from "next/link";
+import { TrendingUp, Hash, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = false }: { topics: { tag: string; posts: string }[]; isFolded?: boolean; isCollapsed?: boolean }) {
-    const prefersReducedMotion =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // On scroll we fold the EXTRA items but always keep the header, the single top
+    // trend, and the destination button visible (never collapse to an empty card).
+    const foldExtras = isFolded || isCollapsed;
 
     return (
         <motion.div
@@ -21,17 +22,7 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                 <h3 className="font-bold text-[#111827] text-sm">Trending Intelligence</h3>
             </div>
 
-            {/* BODY — collapses on scroll */}
-            <div
-                style={{
-                    maxHeight: isCollapsed ? '0px' : '600px',
-                    opacity: isCollapsed ? 0 : 1,
-                    overflow: 'hidden',
-                    transition: prefersReducedMotion
-                        ? 'none'
-                        : 'max-height 0.35s ease-in-out, opacity 0.25s ease-in-out',
-                }}
-            >
+            <div>
                 <div className="divide-y divide-[#E5E7EB]">
                     {topics.length === 0 ? (
                         <div className="p-4 text-center text-[#9CA3AF] text-xs italic">
@@ -39,10 +30,8 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                         </div>
                     ) : (
                         <>
-                            {/* First item is always visible */}
-                            <div
-                                className="p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
-                            >
+                            {/* Top trend — always visible, even when scrolled */}
+                            <Link href={`/trends?tag=${encodeURIComponent(topics[0].tag)}`} className="block p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group">
                                 <div className="flex items-center justify-between">
                                     <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
                                         <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]/70 transition-colors" />
@@ -52,11 +41,11 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                                 <p className="text-xs text-[#6B7280] font-mono mt-1">
                                     {topics[0].posts} posts
                                 </p>
-                            </div>
+                            </Link>
 
-                            {/* Extra items fold with animation */}
+                            {/* Extra items fold when scrolled */}
                             <AnimatePresence initial={false}>
-                                {!isFolded && (
+                                {!foldExtras && (
                                     <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
@@ -65,9 +54,10 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                                         className="overflow-hidden divide-y divide-[#E5E7EB]"
                                     >
                                         {topics.slice(1).map((topic, i) => (
-                                            <div
+                                            <Link
+                                                href={`/trends?tag=${encodeURIComponent(topic.tag)}`}
                                                 key={i + 1}
-                                                className="p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
+                                                className="block p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
@@ -78,7 +68,7 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                                                 <p className="text-xs text-[#6B7280] font-mono mt-1">
                                                     {topic.posts} posts
                                                 </p>
-                                            </div>
+                                            </Link>
                                         ))}
                                     </motion.div>
                                 )}
@@ -86,31 +76,13 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                         </>
                     )}
                 </div>
-                {topics.length > 0 && (
-                    <div className="p-3 text-center bg-white hover:bg-[#F9FAFB] border-t border-[#E5E7EB] transition-colors">
-                        <button className="text-xs text-[#6366F1] hover:text-[#4F46E5] font-bold tracking-wide cursor-pointer">
-                            Show more
-                        </button>
-                    </div>
-                )}
-            </div>
 
-            {/* COLLAPSED STATE HINT — shows only when body is hidden */}
-            <div
-                style={{
-                    maxHeight: isCollapsed ? '32px' : '0px',
-                    opacity: isCollapsed ? 1 : 0,
-                    overflow: 'hidden',
-                    transition: prefersReducedMotion
-                        ? 'none'
-                        : 'max-height 0.35s ease-in-out, opacity 0.2s ease-in-out',
-                }}
-            >
-                <div className="px-4 pb-3 pt-1 border-t border-[#E5E7EB]">
-                    <p className="text-[11px] text-[#6B7280] font-medium">
-                        Scroll up to see trending topics
-                    </p>
-                </div>
+                {/* Destination button — always visible */}
+                {topics.length > 0 && (
+                    <Link href="/trends" className="flex items-center justify-center gap-1.5 p-3 text-center bg-white hover:bg-[#F9FAFB] border-t border-[#E5E7EB] transition-colors text-xs text-[#6366F1] hover:text-[#4F46E5] font-bold tracking-wide">
+                        Open Trend Center <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                )}
             </div>
         </motion.div>
     );
