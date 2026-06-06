@@ -7,7 +7,8 @@ import { encrypt, decrypt } from '@/lib/crypto';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { generateSecret, generateURI, verify } from 'otplib';
+import { generateSecret, generateURI } from 'otplib';
+import { verifyTotpWithSkew } from '@/lib/totp';
 import QRCode from 'qrcode';
 
 // ACTION 1 — Generate setup data (secret + QR code)
@@ -73,9 +74,8 @@ export async function enable2FA(
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Verify the code using functional async verify checking .valid
-    const result = await verify({ token: verificationCode, secret });
-    if (!result.valid) {
+    // Verify the code with a ±1 step clock-skew window (handles phone/server drift)
+    if (!verifyTotpWithSkew(verificationCode, secret)) {
       return { success: false, error: 'Invalid code. Please try again.' };
     }
 
@@ -131,11 +131,7 @@ export async function disable2FA(
     // Verify 2FA code
     if (user.twoFactorSecret) {
       const decryptedSecret = decrypt(user.twoFactorSecret);
-      const result = await verify({
-        token: verificationCode,
-        secret: decryptedSecret
-      });
-      if (!result.valid) {
+      if (!verifyTotpWithSkew(verificationCode, decryptedSecret)) {
         return { success: false, error: 'Invalid authenticator code' };
       }
     }
@@ -176,11 +172,7 @@ export async function regenerateBackupCodes(
 
     // Verify TOTP code first
     const decryptedSecret = decrypt(user.twoFactorSecret);
-    const result = await verify({
-      token: verificationCode,
-      secret: decryptedSecret
-    });
-    if (!result.valid) {
+    if (!verifyTotpWithSkew(verificationCode, decryptedSecret)) {
       return { success: false, error: 'Invalid authenticator code. Cannot regenerate backup codes.' };
     }
 
@@ -226,12 +218,7 @@ export async function getBackupCodes(
     }
 
     const decryptedSecret = decrypt(user.twoFactorSecret);
-    const result = await verify({
-      token: verificationCode,
-      secret: decryptedSecret
-    });
-
-    if (!result.valid) {
+    if (!verifyTotpWithSkew(verificationCode, decryptedSecret)) {
       return { success: false, error: 'Invalid authenticator code' };
     }
 
@@ -328,14 +315,21 @@ export async function verify2FAAndLogin(
       return { success: false, error: 'User account or 2FA parameters not found.' };
     }
 
-    const decryptedSecret = decrypt(user.twoFactorSecret);
+    // Decrypt the stored secret. If the encryption key is missing or wrong (e.g. the
+    // env var differs from where 2FA was enabled), decrypt throws — surface this as a
+    // clear configuration error instead of a misleading "invalid code".
+    let decryptedSecret: string;
+    try {
+      decryptedSecret = decrypt(user.twoFactorSecret);
+    } catch (decErr) {
+      console.error('[twoFactor] decrypt failed — TWO_FACTOR_ENCRYPTION_KEY missing or mismatched:', decErr);
+      return {
+        success: false,
+        error: 'Two-factor is misconfigured on the server (encryption key). Please contact support.',
+      };
+    }
 
-    const result = await verify({
-      token: verificationCode,
-      secret: decryptedSecret
-    });
-
-    let verified = result.valid;
+    let verified = verifyTotpWithSkew(verificationCode, decryptedSecret);
 
     if (!verified) {
       // Verify backup codes
