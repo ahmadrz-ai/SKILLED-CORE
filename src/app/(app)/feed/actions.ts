@@ -576,11 +576,11 @@ export async function checkUsername(username: string) {
         return { available: true, suggestions: [] };
     }
 }
-export async function getTrendingTopics() {
+export async function getTrendingTopics(limit = 5, scanPosts = 50) {
     try {
-        // Fetch recent posts to analyze trends (limit to last 50 to perform runtime analysis)
+        // Fetch recent posts to analyze trends
         const recentPosts = await prisma.post.findMany({
-            take: 50,
+            take: scanPosts,
             orderBy: { createdAt: 'desc' },
             select: { content: true }
         });
@@ -613,7 +613,7 @@ export async function getTrendingTopics() {
         const sortedTags = Object.entries(hashtagCounts)
             .map(([tag, count]) => ({ tag, posts: count.toString() })) // Formatting posts count as string '2.4k' later if needed, but for now raw number
             .sort((a, b) => parseInt(b.posts) - parseInt(a.posts))
-            .slice(0, 5);
+            .slice(0, limit);
 
         // Format counts (e.g. 1200 -> 1.2k)
         const formattedTags = sortedTags.map(t => {
@@ -736,29 +736,37 @@ export async function getRecommendedUsers() {
             excludedIds = [...excludedIds, ...following.map(f => f.followingId)];
         }
 
-        // 2. Fetch users NOT in that list
+        // 2. Fetch candidates NOT in that list (a few extra so we can surface premium first)
         const users = await prisma.user.findMany({
             where: {
-                id: { notIn: excludedIds }
+                id: { notIn: excludedIds },
+                role: { not: 'ADMIN' }
             },
-            take: 3,
+            take: 12,
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
                 name: true,
+                username: true,
                 headline: true,
-                image: true
+                image: true,
+                plan: true
             }
         });
 
-        // 3. Map to format (isFollowing is always false by definition here)
-        const usersWithStatus = users.map(u => ({
-            id: u.id,
-            name: u.name || "Anonymous User",
-            title: u.headline || "SkilledCore Member",
-            image: u.image || "",
-            isFollowing: false
-        }));
+        // 3. Map + surface premium (ULTRA/PRO) members first, then most recent.
+        const usersWithStatus = users
+            .map(u => ({
+                id: u.id,
+                name: u.name || "Anonymous User",
+                username: u.username || undefined,
+                title: u.headline || "SkilledCore Member",
+                image: u.image || "",
+                isFollowing: false,
+                isPremium: u.plan === 'ULTRA' || u.plan === 'PRO',
+            }))
+            .sort((a, b) => Number(b.isPremium) - Number(a.isPremium))
+            .slice(0, 5);
 
         return usersWithStatus;
     } catch (error) {
