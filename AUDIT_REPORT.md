@@ -3,6 +3,48 @@
 Date: 2026-06-06
 Reviewer: Ahmad's coding assistant
 Scope: Fix the live "AI parsing failed" error + safe high-impact wins + MVP readiness review.
+
+---
+
+## ROUND 1 — Launch-readiness fixes (branch: round1/critical-bugs-branding)
+
+Shipped this round (each a separate commit; verified with `tsc --noEmit`):
+1. **2FA login fixed.** Root cause: `otplib@13`'s `verify()` ignores all skew options (zero
+   tolerance) + a missing/mismatched `TWO_FACTOR_ENCRYPTION_KEY`. Added `src/lib/totp.ts`
+   (RFC-6238 verifier, ±1 step window), replaced all 5 verify sites, added a clear config
+   error and `scripts/disable-2fa.js` recovery.
+2. **Branding.md** created as the single source of truth; removed unused `UICOLORS.md`/`UIDESIGN.md`.
+3. **Live notification badges** (poll + focus) + new-follower / connection-accepted events.
+4. **Feed sidebar** no longer collapses to empty; **Trend Center** `/trends` built.
+5. **Onboarding skip** fixed via explicit `User.onboardedAt`.
+6. **Network**: real tabs, premium discovery, clean coming-soon states.
+
+### Readability scan (Round 1 task) — verdict
+A targeted scan for white-on-white / dark-on-dark|blue (especially buttons) found **no genuine
+contrast violations in the active light theme**. The primary `Button` variants pass WCAG AA, and
+the `text-white`/`text-black` hits are either white-on-dark overlays or `hover:text-black` on light
+hover states — all readable. The *perceived* unreadability/inconsistency comes from two things,
+both addressed by the **Round 2 redesign sweep**, not hollow Round 1 edits:
+  - **Dual color system:** a deprecated generic indigo `#6366F1` + cyan `#06B6D4` in `@theme`
+    competing with the brand purple `#5B35D5`. Round 2 removes the indigo/cyan/blue tokens and
+    unifies all primaries to `--sc-purple-600`.
+  - **Legacy hardcoded dark blocks** (`zinc-950`/`slate-900`/`text-white`) in the feed composer,
+    notification panel, and profile overlays. Round 2 migrates these to semantic tokens.
+
+### Flagged for confirmation (DO NOT delete without owner's OK)
+Tracking per the owner's rule (classify, then ask before removing):
+  - `callGemini()` in `src/lib/ai/modelRouter.ts` — now unused after the NVIDIA-only change.
+    *Recommendation: keep* (documents the capability; harmless). Confirm before removal.
+  - `src/app/(app)/learning` and `src/app/(app)/salary` — 100% mocked (hardcoded data, placeholder
+    chart). *Recommendation: build real (Round 3) or gate as "roadmap".* Confirm direction.
+  - Promoted-user **mock fallback** ("Ahmad Raza / Senior Frontend Architect") in
+    `network/actions.ts` — fake data shown when no real promoted user exists. *Recommendation:
+    replace with a real empty state.* Confirm before removal.
+  - Root-level `test-auth.js`, `test-db-conn.js`, `.vercel-build-trigger`, `.vercel-force-rebuild.txt`
+    — stray dev artifacts. *Recommendation: delete.* Confirm.
+
+---
+
 Live site: https://skilledcore.com
 
 > Note on secrets: this report never prints API keys or secret values. It only refers to environment variable *names*. Treat every key value as confidential.
