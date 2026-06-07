@@ -42,6 +42,15 @@ Tracking per the owner's rule (classify, then ask before removing):
     replace with a real empty state.* Confirm before removal.
   - Root-level `test-auth.js`, `test-db-conn.js`, `.vercel-build-trigger`, `.vercel-force-rebuild.txt`
     — stray dev artifacts. *Recommendation: delete.* Confirm.
+  - `src/components/feed/CreationStation.tsx` — dark-themed post composer that is NOT imported
+    anywhere (the live composer is `StartPostWidget`). *Recommendation: delete (dead code).* Confirm.
+
+### Round 2 (in progress)
+  - Color unification: deprecated indigo `#6366F1`/tints replaced by brand purple across 30 files. Done.
+  - Dark-block migration: `NotificationBell` dropdown converted to the light theme. Other dark
+    surfaces are intentional (interview assessment, admin `.admin-dark`) or are dark-text-on-light
+    (legal) — left as-is. ProfileClient action buttons use dark fills with white text (readable);
+    a purple restyle is optional polish, not a readability bug.
 
 ---
 
