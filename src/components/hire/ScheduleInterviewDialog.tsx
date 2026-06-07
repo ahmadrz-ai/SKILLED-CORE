@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Calendar, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { sendMessage, startConversation } from '@/app/(app)/messages/actions';
+import { createBooking } from '@/app/actions/bookings';
 
 interface ScheduleInterviewDialogProps {
     open: boolean;
@@ -90,7 +91,21 @@ export function ScheduleInterviewDialog({ open, onOpenChange, candidateName, can
         setIsSending(true);
 
         try {
-            // 1. Ensure conversation exists
+            // 0. Create a tracked interview booking (REQUESTED) — shows in /bookings,
+            //    notifies the candidate, and supports accept/decline. Video link added later.
+            const proposedDate = new Date(`${date}T${time}`);
+            const booking = await createBooking({
+                candidateId,
+                proposedAt: isNaN(proposedDate.getTime()) ? new Date().toISOString() : proposedDate.toISOString(),
+                message: questions.filter((q) => q.trim()).join(' · ') || undefined,
+            });
+            if (!booking.success) {
+                toast.error(booking.message || "Couldn't create the booking.");
+                setIsSending(false);
+                return;
+            }
+
+            // 1. Ensure conversation exists (keeps the in-chat invite card)
             const convRes = await startConversation(candidateId);
             if (!convRes.success || !convRes.conversationId) {
                 toast.error("Failed to start conversation");

@@ -10,7 +10,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   Home, Users, Briefcase, MessageSquare, BarChart, CreditCard,
   MoreHorizontal, LogOut, Settings, PlusCircle, Sparkles, DollarSign,
-  BookOpen, MessageSquarePlus, LifeBuoy, ChevronLeft, ChevronRight, X
+  BookOpen, MessageSquarePlus, LifeBuoy, ChevronLeft, ChevronRight, X, CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +30,7 @@ const NAV_ITEMS = [
   { label: "Find Talent", icon: Users, path: "/hire", highlightRole: "RECRUITER" },
   { label: "Jobs", icon: Briefcase, path: "/jobs" },
   { label: "AI Interview", icon: MessageSquarePlus, path: "/interview", highlight: true },
+  { label: "Interviews", icon: CalendarDays, path: "/bookings" },
   { label: "Salary", icon: DollarSign, path: "/salary" },
   { label: "Learning", icon: BookOpen, path: "/learning" },
   { label: "Messages", icon: MessageSquare, path: "/messages" },

@@ -113,6 +113,8 @@ model User {
   loginEvents          LoginEvent[] // access audit log
   verifiedSkills       VerifiedSkill[]
   systemReports        SystemReport[]
+  bookingsAsRecruiter  Booking[]      @relation("RecruiterBookings")
+  bookingsAsCandidate  Booking[]      @relation("CandidateBookings")
 }
 
 model LoginEvent {
@@ -597,5 +599,26 @@ model CancellationFeedback {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// Interview booking between a recruiter and a candidate. The video meeting link
+// (meetingUrl) is wired in a later phase — the rest of the lifecycle is handled here.
+model Booking {
+  id          String   @id @default(cuid())
+  recruiterId String
+  candidateId String
+  jobId       String?
+  status      String   @default("REQUESTED") // REQUESTED, CONFIRMED, DECLINED, CANCELLED, COMPLETED
+  message     String?
+  proposedAt  DateTime
+  meetingUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recruiter   User @relation("RecruiterBookings", fields: [recruiterId], references: [id], onDelete: Cascade)
+  candidate   User @relation("CandidateBookings", fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([recruiterId])
+  @@index([candidateId])
 }
 

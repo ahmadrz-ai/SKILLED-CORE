@@ -23,11 +23,13 @@ export function RecruiterGate({
     onClose,
     candidate,
     action = "do this",
+    onBook,
 }: {
     open: boolean;
     onClose: () => void;
     candidate: GateCandidate | null;
     action?: string;
+    onBook?: () => void;
 }) {
     const router = useRouter();
     if (!open || !candidate) return null;
@@ -83,7 +85,7 @@ export function RecruiterGate({
                 </p>
 
                 <button
-                    onClick={() => { onClose(); router.push(`/hire?book=${candidate.id}`); }}
+                    onClick={() => { onClose(); if (onBook) { onBook(); } else { router.push(`/hire?book=${candidate.id}`); } }}
                     className="mt-5 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-sc-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sc-purple-700 transition-colors"
                 >
                     Book Interview <ArrowRight className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2, Lock, X } from "lucide-react";
 import { RecruiterGate } from "@/components/hire/RecruiterGate";
+import { BookingModal } from "@/components/hire/BookingModal";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSession } from "next-auth/react";
@@ -97,6 +98,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     // Recruiter access gate (book-interview-to-unlock) + real PDF export state
     const [gateAction, setGateAction] = useState<string | null>(null);
     const [isSavingPdf, setIsSavingPdf] = useState(false);
+    const [bookingOpen, setBookingOpen] = useState(false);
 
     // Sync builder open state from URL search params (Task 6)
     useEffect(() => {
@@ -581,7 +583,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         {isRestrictedViewer ? (
                                             <Button
                                                 className="w-full bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold py-2 shadow-sm"
-                                                onClick={() => router.push(`/hire?book=${user.id}`)}
+                                                onClick={() => setBookingOpen(true)}
                                             >
                                                 <Lock className="w-4 h-4 mr-2" /> Book Interview
                                             </Button>
@@ -1135,6 +1137,12 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                 onClose={() => setGateAction(null)}
                 candidate={candidateForGate}
                 action={gateAction || undefined}
+                onBook={() => setBookingOpen(true)}
+            />
+            <BookingModal
+                open={bookingOpen}
+                onClose={() => setBookingOpen(false)}
+                candidate={candidateForGate}
             />
         </div>
     );
