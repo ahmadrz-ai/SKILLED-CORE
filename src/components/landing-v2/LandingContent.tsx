@@ -337,7 +337,7 @@ export default function LandingContent() {
         </section>
 
         {/* WHY */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <section id="why" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-24">
           <h2 className="text-center text-2xl font-bold text-text-heading mb-8">Why join</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {c.why.map((w) => (
@@ -351,7 +351,7 @@ export default function LandingContent() {
         </section>
 
         {/* HOW */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <section id="how" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-24">
           <h2 className="text-center text-2xl font-bold text-text-heading mb-10">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {c.how.map((h) => (

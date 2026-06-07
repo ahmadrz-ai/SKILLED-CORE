@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
+import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 
 const GoogleIcon = () => (
     <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
@@ -23,6 +24,7 @@ export default function LoginPageContent() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState("");
 
     const handleSocialLogin = (provider: "google" | "github") => {
         setIsLoading(provider);
@@ -31,14 +33,18 @@ export default function LoginPageContent() {
 
     const handleCredentialsLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading("credentials");
         setError("");
+        if (!turnstileToken) {
+            setError("Please complete the security check.");
+            return;
+        }
+        setIsLoading("credentials");
         try {
             // Import dynamically to avoid server action bundle issues on initial render
             const { verifyPasswordLogin } = await import("@/app/actions/twoFactor");
 
-            // 1. Audit password credentials first
-            const check = await verifyPasswordLogin(identifier, password);
+            // 1. Audit password credentials first (with rate limit + Turnstile server-side)
+            const check = await verifyPasswordLogin(identifier, password, turnstileToken);
 
             if (!check.success) {
                 setError(check.error || "Invalid email or password. Please try again.");
@@ -163,7 +169,9 @@ export default function LoginPageContent() {
                             </div>
                         )}
 
-                        <button type="submit" disabled={!!isLoading}
+                        <TurnstileWidget onVerify={setTurnstileToken} />
+
+                        <button type="submit" disabled={!!isLoading || !turnstileToken}
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed group bg-sc-purple-600 text-white hover:bg-sc-purple-700">
                             {isLoading === "credentials"
                                 ? <Loader2 className="w-4 h-4 animate-spin" />

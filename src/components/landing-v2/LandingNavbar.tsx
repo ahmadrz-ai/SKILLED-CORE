@@ -7,10 +7,9 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "Interactive Demo", href: "#platform" },
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#solutions" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Why SkilledCore", href: "#why" },
+  { label: "How It Works", href: "#how" },
+  { label: "Interactive Demo", href: "#demo" },
 ];
 
 export function LandingNavbar() {
@@ -35,15 +34,16 @@ export function LandingNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <Image
               src="/logo.png"
               alt="SkilledCore"
-              width={38}
-              height={38}
-              className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
+              width={36}
+              height={36}
+              priority
+              className="flex-shrink-0 w-9 h-9 object-contain group-hover:scale-105 transition-transform duration-200"
             />
-            <span className="text-[#1E1B4B] font-bold text-[17px] tracking-tight">
+            <span className="text-[#1E1B4B] font-bold text-lg tracking-tight leading-none">
               SkilledCore
             </span>
           </Link>
