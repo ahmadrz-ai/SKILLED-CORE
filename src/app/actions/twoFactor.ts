@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { generateSecret, generateURI } from 'otplib';
 import { verifyTotpWithSkew } from '@/lib/totp';
+import { checkLoginRateLimit } from '@/lib/ratelimit';
 import QRCode from 'qrcode';
 
 // ACTION 1 — Generate setup data (secret + QR code)
@@ -236,6 +237,18 @@ export async function verifyPasswordLogin(
 ): Promise<{ success: boolean; twoFactorRequired?: boolean; error?: string }> {
   try {
     const cleanEmail = identifier.toLowerCase().trim();
+
+    // Rate-limit by client IP to stop credential-stuffing / login storms (no-ops if
+    // Upstash isn't configured). Keyed by IP so one abuser can't lock out everyone.
+    try {
+      const { headers } = await import('next/headers');
+      const h = await headers();
+      const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
+      const rl = await checkLoginRateLimit(ip);
+      if (!rl.success) {
+        return { success: false, error: 'Too many login attempts. Please wait a minute and try again.' };
+      }
+    } catch { /* never block login on limiter error */ }
 
     const user = await prisma.user.findFirst({
       where: {

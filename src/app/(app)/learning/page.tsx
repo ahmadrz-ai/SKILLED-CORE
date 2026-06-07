@@ -37,39 +37,26 @@ export default function LearningPage() {
         );
     }
 
-    const COURSES = [
-        { title: "Advanced Technical Screening", author: "Dr. A. Vance", duration: "4h 30m" },
-        { title: "Negotiation Tactics for Seniors", author: "M. Specter", duration: "2h 15m" },
-        { title: "AI-Driven Sourcing Mastery", author: "System AI", duration: "6h 00m" },
-    ];
-
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in">
-            <div className="flex items-center gap-4 mb-12">
+            <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-bg-sidebar-active flex items-center justify-center border border-border-selected">
                     <GraduationCap className="w-6 h-6 text-sc-purple-600" />
                 </div>
                 <div>
                     <h1 className="text-4xl font-sans font-bold text-text-heading">Academy</h1>
-                    <p className="text-text-secondary">Elite training modules for modern operatives.</p>
+                    <p className="text-text-secondary">Skill-building courses for candidates and recruiters.</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {COURSES.map((c, i) => (
-                    <div key={i} className="group relative rounded-2xl border border-border-card bg-bg-card overflow-hidden hover:border-sc-purple-400 transition-all shadow-sc-card cursor-pointer">
-                        <div className="aspect-video bg-bg-secondary-panel flex items-center justify-center relative border-b border-border-subtle">
-                            <PlayCircle className="w-12 h-12 text-text-secondary group-hover:text-sc-purple-600 transition-colors" />
-                        </div>
-                        <div className="p-6 bg-bg-card">
-                            <h3 className="font-bold text-text-heading mb-1 group-hover:text-sc-purple-700 transition-colors">{c.title}</h3>
-                            <div className="flex justify-between text-xs text-text-secondary font-mono uppercase tracking-wider mt-4">
-                                <span>{c.author}</span>
-                                <span>{c.duration}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+            <div className="rounded-2xl border border-border-card bg-bg-card shadow-sc-card p-12 flex flex-col items-center text-center">
+                <span className="flex items-center justify-center w-14 h-14 rounded-full bg-sc-purple-50 text-sc-purple-400 mb-4">
+                    <BookOpen className="w-7 h-7" />
+                </span>
+                <h2 className="text-lg font-bold text-text-heading">Courses are coming soon</h2>
+                <p className="text-sm text-text-secondary mt-1 max-w-md">
+                    We&apos;re curating a library of practical, skill-focused courses with real video lessons and progress tracking. Your ULTRA plan will include full access at launch.
+                </p>
             </div>
         </div>
     );

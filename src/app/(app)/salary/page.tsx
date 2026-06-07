@@ -39,49 +39,24 @@ export default function SalaryPage() {
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in">
-            <div className="flex items-center gap-4 mb-12">
+            <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-bg-sidebar-active flex items-center justify-center border border-border-selected">
                     <DollarSign className="w-6 h-6 text-sc-purple-600" />
                 </div>
                 <div>
-                    <h1 className="text-4xl font-sans font-bold text-text-heading">Global Compensation Intelligence</h1>
-                    <p className="text-text-secondary">Real-time salary data sourced from 500+ enterprise nodes.</p>
+                    <h1 className="text-4xl font-sans font-bold text-text-heading">Salary Insights</h1>
+                    <p className="text-text-secondary">Compensation benchmarks by role, level, and location.</p>
                 </div>
             </div>
 
-            {/* MOCK DASHBOARD */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl bg-bg-card border border-border-card shadow-sc-card space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-text-secondary font-mono text-xs uppercase tracking-widest">Avg. Frontend</h3>
-                        <TrendingUp className="w-4 h-4 text-sc-green-600" />
-                    </div>
-                    <div className="text-4xl font-bold text-text-heading">$145,000</div>
-                    <p className="text-sc-green-600 text-sm font-mono">+12% vs last quarter</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-bg-card border border-border-card shadow-sc-card space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-text-secondary font-mono text-xs uppercase tracking-widest">Avg. Backend</h3>
-                        <TrendingUp className="w-4 h-4 text-sc-green-600" />
-                    </div>
-                    <div className="text-4xl font-bold text-text-heading">$162,000</div>
-                    <p className="text-sc-green-600 text-sm font-mono">+8% vs last quarter</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-bg-card border border-border-card shadow-sc-card space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-text-secondary font-mono text-xs uppercase tracking-widest">AI / ML</h3>
-                        <TrendingUp className="w-4 h-4 text-sc-green-600" />
-                    </div>
-                    <div className="text-4xl font-bold text-text-heading">$210,000</div>
-                    <p className="text-sc-green-600 text-sm font-mono">+24% vs last quarter</p>
-                </div>
-            </div>
-
-            <div className="h-96 rounded-2xl bg-bg-card border border-border-card shadow-sc-card flex items-center justify-center text-text-secondary">
-                <div className="text-center">
-                    <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50 text-icon-brand" />
-                    <p className="font-medium">Detailed Market Graph Construction in Progress...</p>
-                </div>
+            <div className="rounded-2xl border border-border-card bg-bg-card shadow-sc-card p-12 flex flex-col items-center text-center">
+                <span className="flex items-center justify-center w-14 h-14 rounded-full bg-sc-purple-50 text-sc-purple-400 mb-4">
+                    <BarChart3 className="w-7 h-7" />
+                </span>
+                <h2 className="text-lg font-bold text-text-heading">Salary insights are coming soon</h2>
+                <p className="text-sm text-text-secondary mt-1 max-w-md">
+                    We&apos;re building real, sourced compensation data with interactive charts and filters by role, seniority, and region. Your ULTRA plan will include it at launch.
+                </p>
             </div>
         </div>
     );

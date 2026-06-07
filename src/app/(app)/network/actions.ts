@@ -186,16 +186,8 @@ export async function getNetworkData() {
             console.error("getNetworkData: Promoted fetch failed", e);
         }
 
-        // MOCK IF NULL (For UI Demonstration)
-        if (!promotedUser) {
-            promotedUser = {
-                id: 'mock-ad',
-                name: 'Ahmad Raza',
-                headline: 'Senior Frontend Architect',
-                image: null, // UI will show initial
-                bannerUrl: null
-            };
-        }
+        // No fake fallback: if there's no real promoted user, leave it null and the UI
+        // simply hides the promoted card (real empty state, no mock data).
 
         // Format for UI
         const formattedInvites = invitations.map(inv => ({

@@ -51,6 +51,24 @@ Tracking per the owner's rule (classify, then ask before removing):
     surfaces are intentional (interview assessment, admin `.admin-dark`) or are dark-text-on-light
     (legal) — left as-is. ProfileClient action buttons use dark fills with white text (readable);
     a purple restyle is optional polish, not a readability bug.
+  - Sticky panels: notifications + network filter panels pinned while lists scroll.
+  - Landing redesigned (audience toggle, no-refresh, demos); login/register redesigned to light cards.
+
+### Round 3 (done)
+  - Login rate limiting (`src/lib/ratelimit.ts`): Upstash Redis sliding window (10/60s per IP) in
+    `verifyPasswordLogin`. Gracefully disabled (allows requests, warns) until env is set.
+  - Learning + Salary mock content replaced with branded "coming soon" states (plan gate kept).
+  - Deletions (owner-approved): old landing sections, dead CreationStation, network promoted mock
+    (now a real empty state), stray root files.
+
+### Required manual steps (owner)
+  - Upstash: create a free Upstash Redis DB; add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+    to Vercel + local .env. Until then, login rate limiting is OFF (logs a warning).
+  - DB pool: consider raising connection_limit in DATABASE_URL (currently 3) on a suitable Neon tier.
+
+### Remaining (next pass)
+  - Turnstile on login (second half of scalability decision); ATS-friendly resume template;
+    multi-step flow audit.
 
 ---
 
