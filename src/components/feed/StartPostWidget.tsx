@@ -174,7 +174,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
         }
 
         // Insert anchor
-        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#6366F1;text-decoration:underline;">${displayName}</a>`;
+        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#5B35D5;text-decoration:underline;">${displayName}</a>`;
         document.execCommand("insertHTML", false, html);
         syncEditorState();
         setIsLinkDialogOpen(false);
@@ -497,7 +497,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
             <div className="flex gap-3 mb-3">
                 <Avatar className="w-12 h-12 cursor-pointer border border-[#E5E7EB]">
                     <AvatarImage src={user?.image || ""} />
-                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold">{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold">{user?.name?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
  
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -537,7 +537,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 <div className="flex items-center gap-3 mb-3">
                                     <Avatar className="w-10 h-10 border border-[#E5E7EB]">
                                         <AvatarImage src={user?.image || ""} />
-                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-bold">{user?.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <div className="font-bold text-sm text-[#111827]">{user?.name}</div>
@@ -667,11 +667,11 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         onKeyDown={handleKeyDown}
                                         data-placeholder="What do you want to talk about?"
                                         className={cn(
-                                            "w-full bg-transparent text-[#111827] text-base min-h-[120px] outline-none caret-[#6366F1] cursor-text mt-2",
+                                            "w-full bg-transparent text-[#111827] text-base min-h-[120px] outline-none caret-[#5B35D5] cursor-text mt-2",
                                             "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
-                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer",
+                                            "[&_a]:text-[#5B35D5] [&_a]:underline [&_a]:cursor-pointer",
                                             "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1",
-                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#5B35D5]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
                                             "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[#9CA3AF] [&:empty]:before:pointer-events-none"
                                         )}
                                         style={{ whiteSpace: "pre-wrap" }}
@@ -692,14 +692,14 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                             setPollOptions(newOpts);
                                                         }}
                                                         placeholder={`Option ${idx + 1}`}
-                                                        className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:outline-none transition-colors"
+                                                        className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#5B35D5] focus:outline-none transition-colors"
                                                     />
                                                 ))}
                                             </div>
                                             {pollOptions.length < 4 && (
                                                 <button
                                                     onClick={() => setPollOptions([...pollOptions, ""])}
-                                                    className="mt-2 text-xs font-bold text-[#6366F1] hover:text-[#4F46E5] transition-colors"
+                                                    className="mt-2 text-xs font-bold text-[#5B35D5] hover:text-[#4A28C9] transition-colors"
                                                 >
                                                     + Add Option
                                                 </button>
@@ -726,7 +726,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                     setIsEditorOpen(true);
                                                 }}
                                                 disabled={isUploading}
-                                                className="absolute top-2 left-2 bg-black/60 hover:bg-[#6366F1] text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                className="absolute top-2 left-2 bg-black/60 hover:bg-[#5B35D5] text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                                 title="Edit Image"
                                             >
                                                 <Edit className="w-3.5 h-3.5" />
@@ -743,7 +743,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             {/* Upload overlay */}
                                             {isUploading && (
                                                 <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
-                                                    <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+                                                    <Loader2 className="w-8 h-8 animate-spin text-[#5B35D5]" />
                                                     <span className="text-xs font-semibold tracking-wide">Uploading...</span>
                                                 </div>
                                             )}
@@ -768,7 +768,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             }
                                         }}
                                         onClick={() => insertEmoji(" #")}
-                                        className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
+                                        className="text-[#5B35D5] hover:bg-[#EAE6FD] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
                                         # Hashtag
                                     </Button>
@@ -798,7 +798,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         size="icon"
                                         disabled={isUploading}
                                         onClick={() => setIsPollMode(!isPollMode)}
-                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", isPollMode ? "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#EEF2FF]" : "text-[#6B7280]")}
+                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", isPollMode ? "text-[#5B35D5] bg-[#EAE6FD] hover:bg-[#EAE6FD]" : "text-[#6B7280]")}
                                     >
                                         <BarChart2 className="w-5 h-5" />
                                     </Button>
@@ -858,7 +858,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         className={cn(
                                             "rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none border transition-all duration-200", 
                                             showFormatting 
-                                                ? "text-[#6366F1] bg-[#EEF2FF] border-[#6366F1]/30 hover:bg-[#EEF2FF]" 
+                                                ? "text-[#5B35D5] bg-[#EAE6FD] border-[#5B35D5]/30 hover:bg-[#EAE6FD]" 
                                                 : "text-zinc-500 border-zinc-200/80 hover:border-zinc-300"
                                         )}
                                         onClick={() => setShowFormatting(!showFormatting)}
@@ -873,7 +873,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         variant="ghost"
                                         size="icon"
                                         disabled={isUploading}
-                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", draftImage ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none text-[#6B7280]", draftImage ? "text-[#5B35D5] bg-[#EAE6FD]" : "")}
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         <ImageIcon className="w-5 h-5" />
@@ -890,7 +890,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     <Button
                                         onClick={handleSubmit}
                                         disabled={isUploading || (textLength === 0 && !draftImage) || textLength > 3000}
-                                        className="rounded-full px-6 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold h-9 transition-colors shadow-sm animate-none flex items-center gap-2"
+                                        className="rounded-full px-6 bg-[#5B35D5] hover:bg-[#4A28C9] text-white font-bold h-9 transition-colors shadow-sm animate-none flex items-center gap-2"
                                     >
                                         {isUploading ? (
                                             <>
@@ -908,9 +908,9 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                         {/* Beautiful Custom Insert Link Dialog Overlay (Absolute constrained inside DialogContent portal) */}
                         {isLinkDialogOpen && (
                             <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
-                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#6366F1] z-50">
+                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#5B35D5] z-50">
                                     <h3 className="text-base font-extrabold text-[#111827] mb-4 tracking-tight flex items-center gap-2">
-                                        <Link2 className="w-4.5 h-4.5 text-[#6366F1]" />
+                                        <Link2 className="w-4.5 h-4.5 text-[#5B35D5]" />
                                         Insert link
                                     </h3>
                                     
@@ -922,7 +922,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                 value={linkText}
                                                 onChange={(e) => setLinkText(e.target.value)}
                                                 placeholder="Text to display"
-                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-all"
                                                 autoFocus
                                             />
                                         </div>
@@ -933,7 +933,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                 value={linkUrl}
                                                 onChange={(e) => setLinkUrl(e.target.value)}
                                                 placeholder="Link to an existing file or web page"
-                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:bg-white focus:outline-none transition-all"
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3.5 py-2.5 text-sm text-[#111827] placeholder-gray-400 focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-all"
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
                                                         e.preventDefault();
@@ -955,7 +955,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                         <button
                                             type="button"
                                             onClick={handleInsertLink}
-                                            className="px-5 py-2 text-xs font-bold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-xl transition-all shadow-md shadow-[#6366F1]/10 cursor-pointer animate-none"
+                                            className="px-5 py-2 text-xs font-bold text-white bg-[#5B35D5] hover:bg-[#4A28C9] rounded-xl transition-all shadow-md shadow-[#5B35D5]/10 cursor-pointer animate-none"
                                         >
                                             Insert
                                         </button>
@@ -1014,7 +1014,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 value={eventTitle}
                                 onChange={(e) => setEventTitle(e.target.value)}
                                 placeholder="e.g. SkilledCore AI Hackathon 2026"
-                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-colors"
                             />
                             {eventErrors.title && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.title}</p>}
                         </div>
@@ -1027,7 +1027,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     type="date"
                                     value={eventDate}
                                     onChange={(e) => setEventDate(e.target.value)}
-                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-colors"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -1036,7 +1036,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     type="time"
                                     value={eventTime}
                                     onChange={(e) => setEventTime(e.target.value)}
-                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                    className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-colors"
                                 />
                             </div>
                         </div>
@@ -1051,7 +1051,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     onClick={() => setEventFormat("online")}
                                     className={cn("px-4 py-2.5 text-sm font-bold border rounded-xl flex items-center justify-center gap-2 transition-all duration-200",
                                         eventFormat === "online" 
-                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1] shadow-sm" 
+                                            ? "bg-[#EAE6FD] border-[#5B35D5] text-[#5B35D5] shadow-sm" 
                                             : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563] hover:bg-[#F3F4F6]"
                                     )}
                                 >
@@ -1062,7 +1062,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     onClick={() => setEventFormat("in-person")}
                                     className={cn("px-4 py-2.5 text-sm font-bold border rounded-xl flex items-center justify-center gap-2 transition-all duration-200",
                                         eventFormat === "in-person" 
-                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1] shadow-sm" 
+                                            ? "bg-[#EAE6FD] border-[#5B35D5] text-[#5B35D5] shadow-sm" 
                                             : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563] hover:bg-[#F3F4F6]"
                                     )}
                                 >
@@ -1081,7 +1081,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 value={eventLocation}
                                 onChange={(e) => setEventLocation(e.target.value)}
                                 placeholder={eventFormat === "online" ? "https://meet.google.com/abc-defg-hij" : "123 Technology Park, London"}
-                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-colors"
                             />
                             {eventErrors.location && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.location}</p>}
                         </div>
@@ -1093,7 +1093,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 value={eventDescription}
                                 onChange={(e: any) => setEventDescription(e.target.value)}
                                 placeholder="Describe the topics, timeline, speakers, and instructions for participants..."
-                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none min-h-[100px] resize-none"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none min-h-[100px] resize-none"
                             />
                             {eventErrors.description && <p className="text-[11px] text-red-500 font-semibold">{eventErrors.description}</p>}
                         </div>
@@ -1111,7 +1111,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             <Button
                                 type="submit"
                                 disabled={isEventSubmitting}
-                                className="rounded-full px-6 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white font-bold text-sm shadow-md hover:opacity-95 transition-opacity"
+                                className="rounded-full px-6 bg-gradient-to-r from-[#5B35D5] to-[#4A28C9] text-white font-bold text-sm shadow-md hover:opacity-95 transition-opacity"
                             >
                                 {isEventSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Event"}
                             </Button>
@@ -1135,7 +1135,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 value={articleTitle}
                                 onChange={(e) => setArticleTitle(e.target.value)}
                                 placeholder="Give your article a catchy, high-engagement headline..."
-                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none transition-colors"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none transition-colors"
                             />
                             {articleErrors.title && <p className="text-[11px] text-red-500 font-semibold">{articleErrors.title}</p>}
                         </div>
@@ -1183,10 +1183,10 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             ) : (
                                 <label
                                     htmlFor="article-cover-input"
-                                    className="border-2 border-dashed border-[#E5E7EB] hover:border-[#6366F1] rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-[#F9FAFB] cursor-pointer transition-colors group"
+                                    className="border-2 border-dashed border-[#E5E7EB] hover:border-[#5B35D5] rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-[#F9FAFB] cursor-pointer transition-colors group"
                                 >
-                                    <ImageIcon className="w-8 h-8 text-[#9CA3AF] group-hover:text-[#6366F1] transition-colors" />
-                                    <span className="text-xs font-bold text-[#4B5563] group-hover:text-[#6366F1] transition-colors">
+                                    <ImageIcon className="w-8 h-8 text-[#9CA3AF] group-hover:text-[#5B35D5] transition-colors" />
+                                    <span className="text-xs font-bold text-[#4B5563] group-hover:text-[#5B35D5] transition-colors">
                                         Upload cover image (Under 4MB)
                                     </span>
                                 </label>
@@ -1200,7 +1200,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 value={articleBody}
                                 onChange={(e: any) => setArticleBody(e.target.value)}
                                 placeholder="Share your professional insights, technical guides, or industry learnings..."
-                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:bg-white focus:outline-none min-h-[160px] resize-none"
+                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-2 text-sm text-[#111827] focus:border-[#5B35D5] focus:bg-white focus:outline-none min-h-[160px] resize-none"
                             />
                             {articleErrors.body && <p className="text-[11px] text-red-500 font-semibold">{articleErrors.body}</p>}
                         </div>

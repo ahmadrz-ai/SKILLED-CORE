@@ -49,7 +49,7 @@ export function LandingHero() {
             style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)", lineHeight: 1.15, letterSpacing: "-0.03em", color: "#1E1B4B" }}
           >
             Your ATS tells you who applied.{" "}
-            <span style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ background: "linear-gradient(135deg, #5B35D5, #4A28C9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               It still can't tell you who can build.
             </span>
           </motion.h1>
@@ -91,14 +91,14 @@ export function LandingHero() {
             <Link
               href="/register?role=recruiter"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl border-2 text-base transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
-              style={{ borderColor: "#4F46E5", color: "#4F46E5", background: "transparent" }}
+              style={{ borderColor: "#4A28C9", color: "#4A28C9", background: "transparent" }}
             >
               Hire Talent
             </Link>
             <Link
               href="/register?role=candidate"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-base group border-none active:scale-95"
-              style={{ background: "#4F46E5", color: "#FFFFFF" }}
+              style={{ background: "#4A28C9", color: "#FFFFFF" }}
             >
               Find Opportunities
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

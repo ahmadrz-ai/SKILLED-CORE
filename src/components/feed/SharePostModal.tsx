@@ -191,7 +191,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-[480px] w-[calc(100%-2rem)] sm:w-full flex flex-col p-0 gap-0 overflow-hidden shadow-2xl rounded-2xl">
                 {/* Visual Accent Header */}
-                <div className="bg-gradient-to-r from-[#6366F1]/5 via-[#7C3AED]/5 to-[#4F46E5]/5 px-6 py-5 border-b border-[#F3F4F6]">
+                <div className="bg-gradient-to-r from-[#5B35D5]/5 via-[#7C3AED]/5 to-[#4A28C9]/5 px-6 py-5 border-b border-[#F3F4F6]">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold tracking-tight text-[#111827]">Share Post</DialogTitle>
                         <DialogDescription className="text-sm text-[#6B7280]">
@@ -209,7 +209,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search candidates or connections..."
-                                className="pl-10 bg-[#F9FAFB] border-[#E5E7EB] placeholder:text-[#9CA3AF] text-[#111827] rounded-xl focus:ring-[#6366F1]/20 focus:border-[#6366F1] h-10 transition-all"
+                                className="pl-10 bg-[#F9FAFB] border-[#E5E7EB] placeholder:text-[#9CA3AF] text-[#111827] rounded-xl focus:ring-[#5B35D5]/20 focus:border-[#5B35D5] h-10 transition-all"
                             />
                         </div>
 
@@ -218,7 +218,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
                             <div className="max-h-[220px] overflow-y-auto divide-y divide-[#F3F4F6] pr-1 scrollbar-thin">
                                 {loadingConnections ? (
                                     <div className="flex flex-col items-center justify-center py-10 text-xs text-[#9CA3AF] gap-2">
-                                        <Loader2 className="w-6 h-6 animate-spin text-[#6366F1]" />
+                                        <Loader2 className="w-6 h-6 animate-spin text-[#5B35D5]" />
                                         <span>Scanning connections database...</span>
                                     </div>
                                 ) : filteredConnections.length > 0 ? (
@@ -229,7 +229,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
                                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                                     <Avatar className="w-9 h-9 border border-[#E5E7EB] flex-shrink-0">
                                                         <AvatarImage src={conn.avatar || undefined} />
-                                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-xs">{conn.name.charAt(0)}</AvatarFallback>
+                                                        <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold text-xs">{conn.name.charAt(0)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="min-w-0">
                                                         <p className="font-semibold text-xs text-[#111827] truncate leading-tight">{conn.name}</p>
@@ -245,7 +245,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
                                                     className={`compact-btn h-7 px-3 text-xs font-semibold rounded-full border transition-all shrink-0 ${
                                                         sendStatus === "sent"
                                                             ? "bg-[#DEF7EC] border-[#BCF0DA] text-[#03543F] hover:bg-[#DEF7EC]"
-                                                            : "bg-white border-[#C7D2FE] text-[#6366F1] hover:bg-[#EEF2FF] hover:text-[#4F46E5]"
+                                                            : "bg-white border-[#B4A3F3] text-[#5B35D5] hover:bg-[#EAE6FD] hover:text-[#4A28C9]"
                                                     }`}
                                                 >
                                                     {sendStatus === "sending" && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
@@ -331,7 +331,7 @@ export function SharePostModal({ post, isOpen, onClose }: SharePostModalProps) {
                     <Button
                         size="sm"
                         onClick={handleCopyLink}
-                        className="compact-btn bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs px-3.5 rounded-lg shrink-0 gap-1.5 shadow-sm active:scale-95 transition-transform"
+                        className="compact-btn bg-[#5B35D5] hover:bg-[#4A28C9] text-white font-semibold text-xs px-3.5 rounded-lg shrink-0 gap-1.5 shadow-sm active:scale-95 transition-transform"
                     >
                         <Copy className="w-3.5 h-3.5" />
                         Copy Link

@@ -48,7 +48,7 @@ export function CommandPalette() {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="w-full max-w-2xl bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative">
                 {/* Brand top accent bar */}
-                <div className="w-full h-1" style={{ background: "linear-gradient(90deg, #6366F1, #06B6D4)" }} />
+                <div className="w-full h-1" style={{ background: "linear-gradient(90deg, #5B35D5, #06B6D4)" }} />
 
                 <button
                     onClick={() => setOpen(false)}
@@ -75,9 +75,9 @@ export function CommandPalette() {
                             {query ? (
                                 <button
                                     onClick={() => runCommand(() => router.push(`/search?q=${encodeURIComponent(query)}`))}
-                                    className="flex items-center justify-center gap-2 w-full p-2 hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded-lg transition-colors cursor-pointer text-xs font-semibold"
+                                    className="flex items-center justify-center gap-2 w-full p-2 hover:text-[#4A28C9] hover:bg-[#EAE6FD] rounded-lg transition-colors cursor-pointer text-xs font-semibold"
                                 >
-                                    <Search className="w-4 h-4 text-[#6366F1]" />
+                                    <Search className="w-4 h-4 text-[#5B35D5]" />
                                     Search global catalog for "{query}"
                                 </button>
                             ) : "No match profiles or signals found."}
@@ -151,7 +151,7 @@ function CommandItem({ children, icon: Icon, onSelect }: { children: React.React
     return (
         <Command.Item
             onSelect={onSelect}
-            className="flex items-center px-3.5 py-2.5 rounded-lg text-sm text-zinc-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] aria-selected:bg-[#EEF2FF] aria-selected:text-[#4F46E5] aria-selected:border-l-2 aria-selected:border-[#6366F1] cursor-pointer transition-all duration-100 border-l-2 border-transparent pl-3"
+            className="flex items-center px-3.5 py-2.5 rounded-lg text-sm text-zinc-600 hover:bg-[#EAE6FD] hover:text-[#4A28C9] aria-selected:bg-[#EAE6FD] aria-selected:text-[#4A28C9] aria-selected:border-l-2 aria-selected:border-[#5B35D5] cursor-pointer transition-all duration-100 border-l-2 border-transparent pl-3"
         >
             <Icon className="mr-3 h-4 w-4 shrink-0" />
             {children}

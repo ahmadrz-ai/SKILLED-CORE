@@ -82,11 +82,11 @@ export async function submitSupportTicket(input: SupportTicketInput) {
                     subject: `[${severity}] Ticket #${ticketId}: ${subject}`,
                     html: `
                         <div style="font-family: sans-serif; padding: 20px; color: #1e293b; line-height: 1.6; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
-                            <h2 style="color: #4f46e5; margin-bottom: 5px;">New Support Ticket Raised</h2>
+                            <h2 style="color: #4A28C9; margin-bottom: 5px;">New Support Ticket Raised</h2>
                             <p style="font-size: 14px; color: #64748b; margin-top: 0;">Ticket ID: <strong>${ticketId}</strong> | Severity: <span style="padding: 2px 6px; font-weight: bold; font-size: 12px; border-radius: 4px; ${
                                 severity === 'CRITICAL' ? 'background: #fef2f2; color: #b91c1c;' :
                                 severity === 'HIGH' ? 'background: #fffbeb; color: #b45309;' :
-                                severity === 'MEDIUM' ? 'background: #e0e7ff; color: #4338ca;' :
+                                severity === 'MEDIUM' ? 'background: #D4CCF8; color: #4338ca;' :
                                 'background: #f1f5f9; color: #475569;'
                             }">${severity}</span></p>
                             
@@ -117,7 +117,7 @@ export async function submitSupportTicket(input: SupportTicketInput) {
                             </div>
                             
                             <div style="margin-top: 25px; text-align: center;">
-                                <a href="mailto:${email}?subject=Re:%20Ticket%20%23${ticketId}%20-%20${encodeURIComponent(subject)}" style="display: inline-block; padding: 10px 20px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+                                <a href="mailto:${email}?subject=Re:%20Ticket%20%23${ticketId}%20-%20${encodeURIComponent(subject)}" style="display: inline-block; padding: 10px 20px; background: #4A28C9; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
                                     Reply Direct to User
                                 </a>
                             </div>

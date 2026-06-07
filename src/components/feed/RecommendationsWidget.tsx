@@ -72,12 +72,12 @@ export function RecommendationsWidget({ isFolded = false, isCollapsed = false }:
             <Link href={`/profile/${item.username || item.id}`} className="flex-shrink-0 mt-0.5 hover:opacity-90 transition-opacity">
                 <Avatar className="w-10 h-10 border border-[#E5E7EB] shadow-sm">
                     <AvatarImage src={item.image} />
-                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-extrabold text-sm">{item.name[0]}</AvatarFallback>
+                    <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-extrabold text-sm">{item.name[0]}</AvatarFallback>
                 </Avatar>
             </Link>
             <div className="flex-1 min-w-0">
                 <Link href={`/profile/${item.username || item.id}`} className="hover:underline">
-                    <div className="font-bold text-sm text-[#111827] truncate hover:text-[#6366F1] transition-colors flex items-center gap-1.5">
+                    <div className="font-bold text-sm text-[#111827] truncate hover:text-[#5B35D5] transition-colors flex items-center gap-1.5">
                         {item.name}
                         {item.isPremium && (
                             <span className="text-[8px] font-extrabold uppercase tracking-wider bg-[#EAE6FD] text-[#3B1FA8] px-1.5 py-0.5 rounded">Premium</span>
@@ -90,7 +90,7 @@ export function RecommendationsWidget({ isFolded = false, isCollapsed = false }:
                     className={`flex items-center gap-1.5 text-xs font-bold px-4 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
                         item.isFollowing
                             ? "text-[#6B7280] border-[#E5E7EB] hover:text-[#EF4444] hover:bg-[#FEF2F2] hover:border-[#FCA5A5]"
-                            : "text-[#6366F1] border-[#C7D2FE] bg-[#EEF2FF] hover:bg-[#E0E7FF] hover:text-[#4F46E5]"
+                            : "text-[#5B35D5] border-[#B4A3F3] bg-[#EAE6FD] hover:bg-[#D4CCF8] hover:text-[#4A28C9]"
                     }`}
                 >
                     {item.isFollowing
@@ -142,7 +142,7 @@ export function RecommendationsWidget({ isFolded = false, isCollapsed = false }:
 
             {/* Destination button — always visible */}
             {suggestions.length > 0 && (
-                <Link href="/network" className="flex items-center justify-center gap-1.5 p-3 text-center border-t border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors text-xs text-[#6366F1] font-bold tracking-wider uppercase">
+                <Link href="/network" className="flex items-center justify-center gap-1.5 p-3 text-center border-t border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors text-xs text-[#5B35D5] font-bold tracking-wider uppercase">
                     Grow your network <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
             )}

@@ -18,7 +18,7 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
         >
             {/* HEADER — always visible */}
             <div className="p-4 border-b border-[#E5E7EB] flex items-center gap-2.5">
-                <TrendingUp className="w-4 h-4 text-[#6366F1]" />
+                <TrendingUp className="w-4 h-4 text-[#5B35D5]" />
                 <h3 className="font-bold text-[#111827] text-sm">Trending Intelligence</h3>
             </div>
 
@@ -33,8 +33,8 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                             {/* Top trend — always visible, even when scrolled */}
                             <Link href={`/trends?tag=${encodeURIComponent(topics[0].tag)}`} className="block p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
-                                        <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]/70 transition-colors" />
+                                    <span className="font-bold text-sm text-[#374151] group-hover:text-[#5B35D5] transition-colors flex items-center gap-1">
+                                        <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#5B35D5]/70 transition-colors" />
                                         {topics[0].tag}
                                     </span>
                                 </div>
@@ -60,8 +60,8 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
                                                 className="block p-4 hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
                                             >
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-sm text-[#374151] group-hover:text-[#6366F1] transition-colors flex items-center gap-1">
-                                                        <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]/70 transition-colors" />
+                                                    <span className="font-bold text-sm text-[#374151] group-hover:text-[#5B35D5] transition-colors flex items-center gap-1">
+                                                        <Hash className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#5B35D5]/70 transition-colors" />
                                                         {topic.tag}
                                                     </span>
                                                 </div>
@@ -79,7 +79,7 @@ export function TrendingWidget({ topics = [], isFolded = false, isCollapsed = fa
 
                 {/* Destination button — always visible */}
                 {topics.length > 0 && (
-                    <Link href="/trends" className="flex items-center justify-center gap-1.5 p-3 text-center bg-white hover:bg-[#F9FAFB] border-t border-[#E5E7EB] transition-colors text-xs text-[#6366F1] hover:text-[#4F46E5] font-bold tracking-wide">
+                    <Link href="/trends" className="flex items-center justify-center gap-1.5 p-3 text-center bg-white hover:bg-[#F9FAFB] border-t border-[#E5E7EB] transition-colors text-xs text-[#5B35D5] hover:text-[#4A28C9] font-bold tracking-wide">
                         Open Trend Center <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                 )}

@@ -217,11 +217,11 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                         key={job.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="group relative bg-white border border-[#E5E7EB] hover:border-[#6366F1]/40 rounded-2xl p-6 transition-all hover:bg-slate-50/50 shadow-sm"
+                        className="group relative bg-white border border-[#E5E7EB] hover:border-[#5B35D5]/40 rounded-2xl p-6 transition-all hover:bg-slate-50/50 shadow-sm"
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-lg font-bold text-[#6366F1] border border-[#EEF2FF] overflow-hidden flex-shrink-0">
+                                <div className="w-12 h-12 rounded-xl bg-[#EAE6FD] flex items-center justify-center text-lg font-bold text-[#5B35D5] border border-[#EAE6FD] overflow-hidden flex-shrink-0">
                                     {job.company.logo ? (
                                         <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -229,9 +229,9 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                                     )}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-[#111827] group-hover:text-[#4F46E5] transition-colors flex flex-wrap items-center gap-2">
+                                    <h3 className="font-bold text-lg text-[#111827] group-hover:text-[#4A28C9] transition-colors flex flex-wrap items-center gap-2">
                                         {job.title}
-                                        <span className="text-xs font-medium text-[#4F46E5] border border-[#EEF2FF] px-2.5 py-0.5 rounded-full bg-[#EEF2FF]">
+                                        <span className="text-xs font-medium text-[#4A28C9] border border-[#EAE6FD] px-2.5 py-0.5 rounded-full bg-[#EAE6FD]">
                                             {job.workplaceType}
                                         </span>
                                     </h3>
@@ -292,7 +292,7 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
 
                         <div className="flex gap-3">
                             <Link href={`/jobs/${job.id}`} className="flex-1">
-                            <Button className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold h-10 shadow-sm group/btn transition-colors">
+                            <Button className="w-full bg-[#4A28C9] hover:bg-[#4338CA] text-white font-semibold h-10 shadow-sm group/btn transition-colors">
                                 View Intelligence
                                 <ChevronRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                             </Button>

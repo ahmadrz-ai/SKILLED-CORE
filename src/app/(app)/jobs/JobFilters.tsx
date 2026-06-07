@@ -39,7 +39,7 @@ export default function JobFilters() {
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-5 sticky top-24 shadow-sm">
             <div className="flex items-center justify-between text-[#111827] font-semibold">
                 <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-[#6366F1]" />
+                    <Filter className="w-4 h-4 text-[#5B35D5]" />
                     Filters
                 </div>
                 {(query || type !== "All" || remote) && (
@@ -59,7 +59,7 @@ export default function JobFilters() {
                     <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg pl-9 pr-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#6366F1] focus:ring-1 focus:ring-[#6366F1] transition-all"
+                        className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg pl-9 pr-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#5B35D5] focus:ring-1 focus:ring-[#5B35D5] transition-all"
                         placeholder="Role, Tech, Company..."
                     />
                 </div>
@@ -73,7 +73,7 @@ export default function JobFilters() {
                             key={t}
                             onClick={() => setType(t)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border ${type === t
-                                    ? "bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]"
+                                    ? "bg-[#EAE6FD] text-[#4A28C9] border-[#B4A3F3]"
                                     : "bg-white text-[#4B5563] border-[#E5E7EB] hover:bg-[#F9FAFB]"
                                 }`}
                         >
@@ -88,7 +88,7 @@ export default function JobFilters() {
                     <span className="text-sm text-[#374151] font-medium">Remote Only</span>
                     <button
                         onClick={() => setRemote(!remote)}
-                        className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 ${remote ? "bg-[#4F46E5]" : "bg-[#D1D5DB]"}`}
+                        className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 ${remote ? "bg-[#4A28C9]" : "bg-[#D1D5DB]"}`}
                     >
                         <div className={`w-4 h-4 rounded-full bg-white shadow transform transition-transform duration-200 ${remote ? "translate-x-4" : "translate-x-0"}`} />
                     </button>

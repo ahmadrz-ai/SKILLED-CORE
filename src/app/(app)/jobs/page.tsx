@@ -65,7 +65,7 @@ export default async function JobsPage(props: {
                     </div>
 
                     <Link href="/hire/dashboard">
-                        <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-sm font-medium h-10 transition-colors">
+                        <Button className="bg-[#4A28C9] hover:bg-[#4338CA] text-white shadow-sm font-medium h-10 transition-colors">
                             <LayoutDashboard className="w-4 h-4 mr-2" />
                             Recruitment Dashboard
                         </Button>

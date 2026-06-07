@@ -154,7 +154,7 @@ export function LandingPricing() {
                   className="block w-full text-center py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-150"
                   style={
                     plan.popular
-                      ? { background: "#4F46E5", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(79,70,229,0.25)" }
+                      ? { background: "#4A28C9", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(79,70,229,0.25)" }
                       : plan.name === "Ultra"
                       ? { background: "#1E1B4B", color: "#FFFFFF" }
                       : { background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0" }

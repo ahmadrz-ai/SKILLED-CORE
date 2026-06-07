@@ -65,7 +65,7 @@ export function SponsoredPostCard({
       <div className="flex gap-3">
         <Avatar className="w-10 h-10 border border-[#E5E7EB] flex-shrink-0">
           <AvatarImage src={sponsorLogoUrl || undefined} />
-          <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">
+          <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold text-sm">
             {sponsorName.charAt(0)}
           </AvatarFallback>
         </Avatar>
@@ -110,7 +110,7 @@ export function SponsoredPostCard({
           {imageUrl && (
             <div
               onClick={handleAction}
-              className="mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] cursor-pointer hover:border-[#6366F1] transition-colors group/ad-media"
+              className="mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] cursor-pointer hover:border-[#5B35D5] transition-colors group/ad-media"
             >
               <img
                 src={imageUrl}
@@ -156,7 +156,7 @@ export function SponsoredPostCard({
             </button>
             <button
               onClick={() => toast.info("Sponsored posts cannot be reposted.")}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#5B35D5] hover:bg-[#EAE6FD] transition-all font-medium"
             >
               <Repeat className="w-3.5 h-3.5" />
               <span>Repost</span>

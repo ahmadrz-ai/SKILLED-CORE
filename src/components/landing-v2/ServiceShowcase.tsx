@@ -80,7 +80,7 @@ export function ServiceShowcase() {
             style={{ letterSpacing: "-0.03em", color: "#1E1B4B" }}
           >
             How SkilledCore{" "}
-            <span style={{ background: "linear-gradient(135deg, #6366F1, #4F46E5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ background: "linear-gradient(135deg, #5B35D5, #4A28C9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Replaces the Screening Loop
             </span>
           </h2>
@@ -103,7 +103,7 @@ export function ServiceShowcase() {
                     ? "bg-white shadow-sm border border-indigo-100"
                     : "hover:bg-slate-100/70 border border-transparent"
                 }`}
-                style={{ color: isActive ? "#4F46E5" : "#475569" }}
+                style={{ color: isActive ? "#4A28C9" : "#475569" }}
               >
                 <Icon className={`w-4.5 h-4.5 ${isActive ? "text-indigo-600" : "text-slate-400"}`} />
                 {tab.label}

@@ -294,7 +294,7 @@
   font-size: 12px;
   font-weight: 800 !important;
   color: #FFFFFF !important;
-  background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%) !important; /* Brand gradient button */
+  background: linear-gradient(135deg, #7C3AED 0%, #4A28C9 100%) !important; /* Brand gradient button */
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   text-transform: uppercase;

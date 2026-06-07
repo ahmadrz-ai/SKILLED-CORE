@@ -477,7 +477,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                         />
                                     </div>
                                     <div className="space-y-2 w-full">
-                                        <div className="text-[10px] bg-[#EEF2FF] text-[#6366F1] font-bold px-2.5 py-0.5 rounded-full inline-block">
+                                        <div className="text-[10px] bg-[#EAE6FD] text-[#5B35D5] font-bold px-2.5 py-0.5 rounded-full inline-block">
                                             Single Image Mode
                                         </div>
                                         <div className="text-xs text-[#374151] font-bold">
@@ -501,7 +501,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                 </Button>
                                 <Button 
                                     onClick={handleFinishEditing}
-                                    className="flex-1 rounded-full font-bold bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-sm"
+                                    className="flex-1 rounded-full font-bold bg-[#5B35D5] hover:bg-[#4A28C9] text-white shadow-sm"
                                 >
                                     Done
                                 </Button>
@@ -543,7 +543,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     className={cn(
                                         "p-2.5 border rounded-lg flex justify-center transition-all",
                                         flip.horizontal 
-                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1]" 
+                                            ? "bg-[#EAE6FD] border-[#5B35D5] text-[#5B35D5]" 
                                             : "bg-white border-[#E5E7EB] hover:bg-zinc-50 text-[#4B5563] hover:text-black"
                                     )}
                                 >
@@ -555,7 +555,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     className={cn(
                                         "p-2.5 border rounded-lg flex justify-center transition-all",
                                         flip.vertical 
-                                            ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1]" 
+                                            ? "bg-[#EAE6FD] border-[#5B35D5] text-[#5B35D5]" 
                                             : "bg-white border-[#E5E7EB] hover:bg-zinc-50 text-[#4B5563] hover:text-black"
                                     )}
                                 >
@@ -601,7 +601,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     step="0.1"
                                     value={zoom}
                                     onChange={(e) => setZoom(parseFloat(e.target.value))}
-                                    className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#6366F1]"
+                                    className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#5B35D5]"
                                 />
                             </div>
 
@@ -618,7 +618,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     step="1"
                                     value={straighten}
                                     onChange={(e) => setStraighten(parseInt(e.target.value))}
-                                    className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#6366F1]"
+                                    className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#5B35D5]"
                                 />
                             </div>
 
@@ -626,7 +626,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                 <Button 
                                     onClick={handleApplyTransform}
                                     disabled={isGeneratingCrop}
-                                    className="w-full rounded-full font-bold bg-[#6366F1] hover:bg-[#4F46E5] text-white py-2.5 flex items-center justify-center gap-2"
+                                    className="w-full rounded-full font-bold bg-[#5B35D5] hover:bg-[#4A28C9] text-white py-2.5 flex items-center justify-center gap-2"
                                 >
                                     {isGeneratingCrop ? (
                                         <>
@@ -669,7 +669,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                         placeholder="Type a name or names"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:ring-0 focus:outline-none transition-colors mb-3"
+                                        className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#5B35D5] focus:ring-0 focus:outline-none transition-colors mb-3"
                                         autoFocus
                                     />
 
@@ -677,7 +677,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                     <div className="flex-1 overflow-y-auto space-y-2 max-h-[220px] md:max-h-none pr-1">
                                         {isSearching ? (
                                             <div className="flex items-center justify-center p-4 text-xs font-bold text-[#6B7280] gap-1.5">
-                                                <Loader2 className="w-4 h-4 animate-spin text-[#6366F1]" />
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#5B35D5]" />
                                                 Searching...
                                             </div>
                                         ) : searchResults.length > 0 ? (
@@ -685,11 +685,11 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                                 <div 
                                                     key={user.id}
                                                     onClick={() => handleAddTag(user)}
-                                                    className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#6366F1] hover:bg-slate-50 cursor-pointer transition-all"
+                                                    className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#5B35D5] hover:bg-slate-50 cursor-pointer transition-all"
                                                 >
                                                     <Avatar className="w-8 h-8 border border-[#E5E7EB]">
                                                         <AvatarImage src={user.image || ""} />
-                                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-[10px] font-bold">
+                                                        <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold">
                                                             {user.name?.charAt(0) || "U"}
                                                         </AvatarFallback>
                                                     </Avatar>
@@ -724,7 +724,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                         {activeImg.tags.map((t) => (
                                             <div 
                                                 key={t.userId}
-                                                className="flex items-center gap-1 bg-[#EEF2FF] text-[#6366F1] text-[10px] font-bold pl-2 pr-1.5 py-0.5 rounded-full border border-indigo-100 shadow-sm"
+                                                className="flex items-center gap-1 bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold pl-2 pr-1.5 py-0.5 rounded-full border border-indigo-100 shadow-sm"
                                             >
                                                 <span>{t.name}</span>
                                                 <button 
@@ -742,7 +742,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                             <div className="mt-auto pt-4 border-t border-[#E5E7EB]">
                                 <Button 
                                     onClick={() => setSidebarTab("sequence")}
-                                    className="w-full rounded-full font-bold bg-[#6366F1] hover:bg-[#4F46E5] text-white"
+                                    className="w-full rounded-full font-bold bg-[#5B35D5] hover:bg-[#4A28C9] text-white"
                                 >
                                     Done
                                 </Button>
@@ -769,7 +769,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                 placeholder="Describe this photo..."
                                 value={altText}
                                 onChange={(e: any) => setAltText(e.target.value)}
-                                className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#6366F1] focus:ring-0 focus:outline-none transition-colors min-h-[120px] resize-none mb-4"
+                                className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#111827] focus:border-[#5B35D5] focus:ring-0 focus:outline-none transition-colors min-h-[120px] resize-none mb-4"
                                 maxLength={300}
                             />
 
@@ -780,7 +780,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                             <div className="mt-auto pt-4 border-t border-[#E5E7EB]">
                                 <Button 
                                     onClick={handleSaveAltText}
-                                    className="w-full rounded-full font-bold bg-[#6366F1] hover:bg-[#4F46E5] text-white"
+                                    className="w-full rounded-full font-bold bg-[#5B35D5] hover:bg-[#4A28C9] text-white"
                                 >
                                     Save
                                 </Button>

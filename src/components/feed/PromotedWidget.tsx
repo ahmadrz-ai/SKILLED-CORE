@@ -47,19 +47,19 @@ export function PromotedWidget({ promotedUser, isSelf }: PromotedWidgetProps) {
                 <span className="text-[9px] font-extrabold text-[#6B7280] uppercase tracking-widest bg-[#F3F4F6] border border-[#E5E7EB] px-2 py-0.5 rounded">
                     {isSelf ? "YOUR CAMPAIGN" : "PROMOTED"}
                 </span>
-                <Sparkles className="w-3.5 h-3.5 text-[#6366F1] animate-pulse" />
+                <Sparkles className="w-3.5 h-3.5 text-[#5B35D5] animate-pulse" />
             </div>
 
             <div className="flex items-start gap-3">
                 <Avatar className="w-12 h-12 border border-[#E5E7EB] shadow-sm">
                     <AvatarImage src={promotedUser.image || undefined} />
-                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-bold">
+                    <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-bold">
                         {promotedUser.name?.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-[#111827] truncate flex items-center gap-1.5 group-hover:text-[#6366F1] transition-colors">
+                    <h3 className="text-sm font-bold text-[#111827] truncate flex items-center gap-1.5 group-hover:text-[#5B35D5] transition-colors">
                         {promotedUser.name}
                         <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                     </h3>
@@ -77,12 +77,12 @@ export function PromotedWidget({ promotedUser, isSelf }: PromotedWidgetProps) {
                                 "text-xs h-7.5 border rounded-full px-4.5 font-bold shadow-sm transition-all duration-200 inline-flex items-center animate-none",
                                 connectStatus === 'SENT'
                                     ? "border-[#E5E7EB] text-[#6B7280] bg-[#F9FAFB] cursor-not-allowed"
-                                    : "border-[#C7D2FE] text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] hover:text-[#4F46E5]"
+                                    : "border-[#B4A3F3] text-[#5B35D5] bg-[#EAE6FD] hover:bg-[#D4CCF8] hover:text-[#4A28C9]"
                             )}
                         >
                             {connectStatus === 'LOADING' && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
                             {connectStatus === 'SENT' && <Check className="w-3.5 h-3.5 mr-1.5 text-green-600" />}
-                            {connectStatus === 'IDLE' && <UserPlus className="w-3.5 h-3.5 mr-1.5 text-[#6366F1]" />}
+                            {connectStatus === 'IDLE' && <UserPlus className="w-3.5 h-3.5 mr-1.5 text-[#5B35D5]" />}
                             
                             {connectStatus === 'LOADING' && "Connecting..."}
                             {connectStatus === 'SENT' && "Pending"}
@@ -99,7 +99,7 @@ export function PromotedWidget({ promotedUser, isSelf }: PromotedWidgetProps) {
             </div>
 
             {/* Decor */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#6366F1]/5 blur-[40px] rounded-full pointer-events-none" />
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#5B35D5]/5 blur-[40px] rounded-full pointer-events-none" />
         </div>
     );
 }

@@ -73,7 +73,7 @@ export default async function RecruiterDashboard(props: {
                                             "block p-4 rounded-xl border text-left transition-all shadow-sm group select-none",
                                             isSelected 
                                                 ? "bg-bg-card-selected border-border-selected" 
-                                                : "bg-bg-card border-border-card hover:border-[#6366F1]/40"
+                                                : "bg-bg-card border-border-card hover:border-[#5B35D5]/40"
                                         )}
                                     >
                                         <div className="font-bold text-xs text-text-heading group-hover:text-text-brand transition-colors truncate">

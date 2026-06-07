@@ -19,7 +19,7 @@ const Slider = (props: any) => {
         <div className="relative w-full h-6 flex items-center">
             <input
                 type="range"
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#6366F1]"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5B35D5]"
                 {...props}
             />
         </div>
@@ -271,7 +271,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 {children ? children : (
-                    <Button variant="ghost" size="sm" className="bg-[#6366F1]/10 text-[#6366F1] hover:bg-[#6366F1]/20 border border-[#6366F1]/20 rounded-full font-bold">
+                    <Button variant="ghost" size="sm" className="bg-[#5B35D5]/10 text-[#5B35D5] hover:bg-[#5B35D5]/20 border border-[#5B35D5]/20 rounded-full font-bold">
                         <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                         Add Credits
                     </Button>
@@ -336,11 +336,11 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="bg-[#EEF2FF] border border-[#C7D2FE] p-6 rounded-2xl text-center space-y-2 relative overflow-hidden group">
+                                    <div className="bg-[#EAE6FD] border border-[#B4A3F3] p-6 rounded-2xl text-center space-y-2 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-24 h-24 bg-violet-400/10 blur-xl rounded-full pointer-events-none" />
-                                        <p className="text-xs text-[#6366F1] font-bold uppercase tracking-widest">SUBTier Subscription Upgrade</p>
+                                        <p className="text-xs text-[#5B35D5] font-bold uppercase tracking-widest">SUBTier Subscription Upgrade</p>
                                         <h4 className="text-3xl font-heading font-black text-gray-900">{planName} PACKAGE</h4>
-                                        <p className="text-4xl font-heading font-black text-[#6366F1] pt-1">${price}.00<span className="text-sm font-sans font-medium text-gray-400">/mo</span></p>
+                                        <p className="text-4xl font-heading font-black text-[#5B35D5] pt-1">${price}.00<span className="text-sm font-sans font-medium text-gray-400">/mo</span></p>
                                     </div>
                                 )}
 
@@ -354,7 +354,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                     </div>
                                 </div>
 
-                                <Button onClick={() => setStep(2)} className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#6366F1]/10 flex items-center justify-center gap-1.5 group">
+                                <Button onClick={() => setStep(2)} className="w-full bg-[#5B35D5] hover:bg-[#4A28C9] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#5B35D5]/10 flex items-center justify-center gap-1.5 group">
                                     Proceed to payment method
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                                 </Button>
@@ -366,7 +366,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                             <div className="space-y-5">
                                 <div className="flex items-center justify-between">
                                     <h5 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Choose payment method</h5>
-                                    <button onClick={() => setStep(1)} className="text-[#6366F1] text-xs font-bold flex items-center hover:underline"><ChevronLeft className="w-3.5 h-3.5" /> Back</button>
+                                    <button onClick={() => setStep(1)} className="text-[#5B35D5] text-xs font-bold flex items-center hover:underline"><ChevronLeft className="w-3.5 h-3.5" /> Back</button>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-2.5">
@@ -377,25 +377,25 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                             className={cn(
                                                 "flex items-center gap-3.5 p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-sm",
                                                 selectedMethod === p.id 
-                                                    ? "bg-white border-[#6366F1] shadow-[0_0_15px_rgba(99,102,241,0.06)]"
+                                                    ? "bg-white border-[#5B35D5] shadow-[0_0_15px_rgba(99,102,241,0.06)]"
                                                     : "bg-gray-50 border-gray-200 hover:border-gray-300 hover:bg-gray-100/50"
                                             )}
                                         >
-                                            <div className={cn("p-2 rounded-lg border", selectedMethod === p.id ? "bg-[#6366F1]/10 border-[#6366F1]/20" : "bg-white border-gray-200")}>
+                                            <div className={cn("p-2 rounded-lg border", selectedMethod === p.id ? "bg-[#5B35D5]/10 border-[#5B35D5]/20" : "bg-white border-gray-200")}>
                                                 <p.icon className={cn("w-5 h-5", selectedMethod === p.id ? p.color : "text-gray-400")} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-sm font-bold text-gray-900 leading-none">{p.label}</div>
                                                 <div className="text-[10px] text-gray-400 mt-1 leading-none">{p.desc}</div>
                                             </div>
-                                            <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center transition-all", selectedMethod === p.id ? "border-[#6366F1] bg-[#6366F1]" : "border-gray-300")}>
+                                            <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center transition-all", selectedMethod === p.id ? "border-[#5B35D5] bg-[#5B35D5]" : "border-gray-300")}>
                                                 {selectedMethod === p.id && <Check className="w-2.5 h-2.5 text-white stroke-[3px]" />}
                                             </div>
                                         </button>
                                     ))}
                                 </div>
 
-                                <Button onClick={() => setStep(3)} className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#6366F1]/10">
+                                <Button onClick={() => setStep(3)} className="w-full bg-[#5B35D5] hover:bg-[#4A28C9] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#5B35D5]/10">
                                     Proceed with {PROVIDERS.find(p => p.id === selectedMethod)?.label}
                                 </Button>
                             </div>
@@ -408,7 +408,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                     <h5 className="text-xs font-bold uppercase text-gray-400 tracking-wider">
                                         {selectedMethod === 'CARD' ? "Enter Credit Card Details" : "Manual deposit verification"}
                                     </h5>
-                                    <button onClick={() => setStep(2)} className="text-[#6366F1] text-xs font-bold flex items-center hover:underline"><ChevronLeft className="w-3.5 h-3.5" /> Back</button>
+                                    <button onClick={() => setStep(2)} className="text-[#5B35D5] text-xs font-bold flex items-center hover:underline"><ChevronLeft className="w-3.5 h-3.5" /> Back</button>
                                 </div>
 
                                 {selectedMethod === 'CARD' ? (
@@ -419,7 +419,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                                 value={cardholderName}
                                                 onChange={(e) => setCardholderName(e.target.value)}
                                                 placeholder="e.g. Ahmad Raza"
-                                                className="bg-gray-50 border-gray-200 text-sm h-10 focus-visible:ring-[#6366F1] rounded-lg"
+                                                className="bg-gray-50 border-gray-200 text-sm h-10 focus-visible:ring-[#5B35D5] rounded-lg"
                                             />
                                         </div>
 
@@ -430,7 +430,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                                     value={cardNumber}
                                                     onChange={handleCardNumberChange}
                                                     placeholder="4000 1234 5678 9010"
-                                                    className="bg-gray-50 border-gray-200 text-sm h-10 pr-9 focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                                    className="bg-gray-50 border-gray-200 text-sm h-10 pr-9 focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                                 />
                                                 <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             </div>
@@ -443,7 +443,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                                     value={cardExpiry}
                                                     onChange={handleExpiryChange}
                                                     placeholder="MM/YY"
-                                                    className="bg-gray-50 border-gray-200 text-sm h-10 text-center focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                                    className="bg-gray-50 border-gray-200 text-sm h-10 text-center focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
@@ -452,13 +452,13 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                                     value={cardCvc}
                                                     onChange={handleCvcChange}
                                                     placeholder="•••"
-                                                    className="bg-gray-50 border-gray-200 text-sm h-10 text-center focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                                    className="bg-gray-50 border-gray-200 text-sm h-10 text-center focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-2 text-[10px] text-gray-400 p-2.5 rounded-lg border border-gray-200/50 bg-gray-50/50 mt-1 font-mono">
-                                            <Lock className="w-3.5 h-3.5 text-[#6366F1]" />
+                                            <Lock className="w-3.5 h-3.5 text-[#5B35D5]" />
                                             <span>GALACTIC AES-256 SECURED CLIENT PAYMENT</span>
                                         </div>
                                     </div>
@@ -466,7 +466,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                     <div className="space-y-4">
                                         <div className="space-y-2.5 bg-gray-50 border border-gray-200 p-4 rounded-xl">
                                             <div className="flex items-center gap-1.5 text-xs text-gray-400 uppercase font-bold tracking-wider">
-                                                <Wallet className="w-3.5 h-3.5 text-[#6366F1]" />
+                                                <Wallet className="w-3.5 h-3.5 text-[#5B35D5]" />
                                                 Send Payment to Account:
                                             </div>
                                             {renderManualPaymentDetails()}
@@ -481,13 +481,13 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                                 value={trxId}
                                                 onChange={(e) => setTrxId(e.target.value)}
                                                 placeholder="e.g. TRX9548231..."
-                                                className="bg-gray-50 border-gray-200 text-sm h-10 focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                                className="bg-gray-50 border-gray-200 text-sm h-10 focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                             />
                                         </div>
                                     </div>
                                 )}
 
-                                <Button onClick={handleProceedToVerify} className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#6366F1]/10 flex items-center justify-center gap-2">
+                                <Button onClick={handleProceedToVerify} className="w-full bg-[#5B35D5] hover:bg-[#4A28C9] text-white h-11 font-bold rounded-xl shadow-lg shadow-[#5B35D5]/10 flex items-center justify-center gap-2">
                                     <ShieldCheck className="w-4 h-4" />
                                     {selectedMethod === 'CARD' ? `Authorize $${price}.00 Payment` : "Submit Deposit Request"}
                                 </Button>
@@ -499,11 +499,11 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                             <div className="py-12 flex flex-col items-center justify-center space-y-6 text-center select-none">
                                 <div className="relative">
                                     <div className="w-16 h-16 rounded-full border-2 border-gray-200 flex items-center justify-center" />
-                                    <Loader2 className="w-16 h-16 text-[#6366F1] animate-spin absolute inset-0 stroke-[2px]" />
+                                    <Loader2 className="w-16 h-16 text-[#5B35D5] animate-spin absolute inset-0 stroke-[2px]" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <h4 className="font-heading font-black text-lg text-gray-900 tracking-tight animate-pulse">AUTHORIZING CHECKS</h4>
-                                    <p className="text-xs text-[#6366F1] font-mono leading-none h-4">{loadingText}</p>
+                                    <p className="text-xs text-[#5B35D5] font-mono leading-none h-4">{loadingText}</p>
                                 </div>
                                 <p className="text-[10px] text-gray-400 max-w-[280px] font-sans">
                                     Do not close or refresh this dialog panel. Your checkout is protected by secure banking encryptions.
@@ -528,9 +528,9 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                     <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Payment Gateway:</span> <span className="font-bold text-gray-900">{PROVIDERS.find(p => p.id === selectedMethod)?.label}</span></div>
                                     <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Amount Charged:</span> <span className="font-bold text-gray-900">${price}.00 USD</span></div>
                                     {mode === 'PLAN' ? (
-                                        <div className="flex justify-between"><span className="text-gray-400">Plan Upgraded:</span> <span className="font-bold text-[#6366F1]">{planName}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-400">Plan Upgraded:</span> <span className="font-bold text-[#5B35D5]">{planName}</span></div>
                                     ) : (
-                                        <div className="flex justify-between"><span className="text-gray-400">Balance Awarded:</span> <span className="font-bold text-[#6366F1]">+{creditAmount} Credits</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-400">Balance Awarded:</span> <span className="font-bold text-[#5B35D5]">+{creditAmount} Credits</span></div>
                                     )}
                                 </div>
 

@@ -132,8 +132,8 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                 {step === 1 && (
                     <div className="space-y-5">
                         <DialogHeader className="text-center pb-2 border-b border-gray-100">
-                            <div className="mx-auto w-12 h-12 rounded-full bg-[#6366F1]/10 flex items-center justify-center mb-2 border border-[#6366F1]/20">
-                                <Coins className="w-6 h-6 text-[#6366F1]" />
+                            <div className="mx-auto w-12 h-12 rounded-full bg-[#5B35D5]/10 flex items-center justify-center mb-2 border border-[#5B35D5]/20">
+                                <Coins className="w-6 h-6 text-[#5B35D5]" />
                             </div>
                             <DialogTitle className="text-lg font-bold font-heading text-gray-900">TOP UP CREDITS</DialogTitle>
                             <DialogDescription className="text-xs text-gray-400 font-sans">
@@ -161,7 +161,7 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                                     value={cardholderName}
                                     onChange={(e) => setCardholderName(e.target.value)}
                                     placeholder="e.g. Ahmad Raza"
-                                    className="bg-gray-50 border-gray-200 text-xs h-9 focus-visible:ring-[#6366F1] rounded-lg"
+                                    className="bg-gray-50 border-gray-200 text-xs h-9 focus-visible:ring-[#5B35D5] rounded-lg"
                                 />
                             </div>
 
@@ -172,7 +172,7 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                                         value={cardNumber}
                                         onChange={handleCardNumberChange}
                                         placeholder="4000 1234 5678 9010"
-                                        className="bg-gray-50 border-gray-200 text-xs h-9 pr-8 focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                        className="bg-gray-50 border-gray-200 text-xs h-9 pr-8 focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                     />
                                     <CreditCard className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                                 </div>
@@ -185,7 +185,7 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                                         value={cardExpiry}
                                         onChange={handleExpiryChange}
                                         placeholder="MM/YY"
-                                        className="bg-gray-50 border-gray-200 text-xs h-9 text-center focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                        className="bg-gray-50 border-gray-200 text-xs h-9 text-center focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -194,20 +194,20 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                                         value={cardCvc}
                                         onChange={handleCvcChange}
                                         placeholder="•••"
-                                        className="bg-gray-50 border-gray-200 text-xs h-9 text-center focus-visible:ring-[#6366F1] rounded-lg font-mono"
+                                        className="bg-gray-50 border-gray-200 text-xs h-9 text-center focus-visible:ring-[#5B35D5] rounded-lg font-mono"
                                     />
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-1.5 text-[9px] text-gray-400 p-2.5 rounded-lg border border-gray-200/50 bg-gray-50/50 font-mono">
-                            <Lock className="w-3.5 h-3.5 text-[#6366F1]" />
+                            <Lock className="w-3.5 h-3.5 text-[#5B35D5]" />
                             <span>GALACTIC AES-256 SECURED CLIENT PAYMENT</span>
                         </div>
 
                         <Button
                             onClick={handlePurchase}
-                            className="w-full h-11 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-bold rounded-xl shadow-lg shadow-[#6366F1]/10 flex items-center justify-center gap-2"
+                            className="w-full h-11 bg-[#5B35D5] hover:bg-[#4A28C9] text-white font-bold rounded-xl shadow-lg shadow-[#5B35D5]/10 flex items-center justify-center gap-2"
                         >
                             <ShieldCheck className="w-4 h-4" />
                             AUTHORIZE $2.00 PURCHASE
@@ -219,11 +219,11 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                     <div className="py-10 flex flex-col items-center justify-center space-y-6 text-center select-none animate-in fade-in duration-300">
                         <div className="relative">
                             <div className="w-14 h-14 rounded-full border-2 border-gray-200 flex items-center justify-center" />
-                            <Loader2 className="w-14 h-14 text-[#6366F1] animate-spin absolute inset-0 stroke-[2px]" />
+                            <Loader2 className="w-14 h-14 text-[#5B35D5] animate-spin absolute inset-0 stroke-[2px]" />
                         </div>
                         <div className="space-y-1">
                             <h4 className="font-heading font-black text-base text-gray-900 tracking-tight animate-pulse">GALACTIC PAYGATEWAY</h4>
-                            <p className="text-[10px] text-[#6366F1] font-mono leading-none h-4">{loadingText}</p>
+                            <p className="text-[10px] text-[#5B35D5] font-mono leading-none h-4">{loadingText}</p>
                         </div>
                     </div>
                 )}
@@ -242,7 +242,7 @@ export function PurchaseCreditsModal({ isOpen, onClose, onPurchaseComplete }: Pu
                             <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Order Status:</span> <span className="font-bold text-[#10B981]">COMPLETED</span></div>
                             <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Reference Code:</span> <span className="font-bold text-gray-900">{completedRef}</span></div>
                             <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Total Price:</span> <span className="font-bold text-gray-900">$2.00 USD</span></div>
-                            <div className="flex justify-between"><span className="text-gray-400">Item Loaded:</span> <span className="font-bold text-[#6366F1]">+10 Credits</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">Item Loaded:</span> <span className="font-bold text-[#5B35D5]">+10 Credits</span></div>
                         </div>
 
                         <Button onClick={onClose} className="w-full bg-[#111827] hover:bg-black text-white h-11 font-bold rounded-xl shadow-md">

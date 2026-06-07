@@ -137,13 +137,13 @@ const paragraph = {
 };
 
 const highlight = {
-    color: '#4f46e5', // Corporate Indigo-600 highlight
+    color: '#4A28C9', // Corporate Indigo-600 highlight
     fontWeight: '700',
 };
 
 const messageBox = {
     backgroundColor: '#f8fafc', // Light slate-50 message background
-    borderLeft: '4px solid #4f46e5', // Indigo indicator bar
+    borderLeft: '4px solid #4A28C9', // Indigo indicator bar
     padding: '16px 20px',
     borderRadius: '0 8px 8px 0',
     marginBottom: '24px',
@@ -164,7 +164,7 @@ const hr = {
 };
 
 const button = {
-    backgroundColor: '#4f46e5', // Professional Indigo background
+    backgroundColor: '#4A28C9', // Professional Indigo background
     borderRadius: '8px',
     color: '#ffffff', // Pure white text
     fontSize: '15px',

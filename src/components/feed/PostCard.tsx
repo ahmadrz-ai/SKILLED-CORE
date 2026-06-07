@@ -245,7 +245,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
             sel.removeAllRanges();
             sel.addRange(editSavedRangeRef.current);
         }
-        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#6366F1;text-decoration:underline;">${displayName}</a>`;
+        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#5B35D5;text-decoration:underline;">${displayName}</a>`;
         document.execCommand("insertHTML", false, html);
         syncEditEditorState();
         setEditIsLinkDialogOpen(false);
@@ -500,7 +500,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         return <em key={subKey} className="italic text-gray-700">{part.slice(1, -1)}</em>;
                     }
                     if (part.startsWith('__') && part.endsWith('__')) {
-                        return <span key={subKey} className="underline decoration-[#6366F1]/50 decoration-wavy decoration-1 underline-offset-2">{part.slice(2, -2)}</span>;
+                        return <span key={subKey} className="underline decoration-[#5B35D5]/50 decoration-wavy decoration-1 underline-offset-2">{part.slice(2, -2)}</span>;
                     }
                     if (part.startsWith('~~') && part.endsWith('~~')) {
                         return <span key={subKey} className="line-through text-gray-400">{part.slice(2, -2)}</span>;
@@ -535,7 +535,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 const punctuation = rawHandle.substring(cleanHandle.length);
                 return (
                     <span key={key}>
-                        <Link href={`/profile/${cleanHandle}`} className="text-[#6366F1] hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/profile/${cleanHandle}`} className="text-[#5B35D5] hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
                             @{cleanHandle}
                         </Link>
                         {punctuation}
@@ -566,16 +566,16 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
             <div className="flex justify-between items-center gap-3 mb-4">
                 <div className="flex items-center gap-3">
                     <Link href={`/profile/${authorUsername}`}>
-                        <Avatar className="w-10 h-10 border border-[#E5E7EB] cursor-pointer hover:border-[#6366F1] transition-colors flex-shrink-0">
+                        <Avatar className="w-10 h-10 border border-[#E5E7EB] cursor-pointer hover:border-[#5B35D5] transition-colors flex-shrink-0">
                             <AvatarImage src={post.author.avatar || undefined} />
-                            <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                     </Link>
 
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <Link href={`/profile/${authorUsername}`} className="hover:underline group/author flex items-center">
-                                <span className="font-semibold text-[#111827] text-sm group-hover/author:text-[#6366F1] transition-colors leading-none">
+                                <span className="font-semibold text-[#111827] text-sm group-hover/author:text-[#5B35D5] transition-colors leading-none">
                                     {post.author.name}
                                 </span>
                             </Link>
@@ -598,7 +598,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase border border-[#BFDBFE] leading-none">RECRUITER</span>
                             )}
                             {post.author.isHiring && (
-                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EEF2FF] text-[#6366F1] text-[10px] font-bold uppercase border border-[#C7D2FE] leading-none">Hiring</span>
+                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold uppercase border border-[#B4A3F3] leading-none">Hiring</span>
                             )}
                         </div>
                         <span suppressHydrationWarning className="flex items-center text-[#9CA3AF] text-xs mt-1">
@@ -612,7 +612,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         <>
                             {connStatus === 'NONE' && post.author.nodeType !== 'BROADCAST' && post.author.role !== 'RECRUITER' && (
                                 <Button variant="ghost" size="sm" onClick={handleConnect} disabled={loadingConnect}
-                                    className="h-7 px-2.5 text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5] hover:bg-[#EEF2FF] border border-[#C7D2FE] rounded-full">
+                                    className="h-7 px-2.5 text-xs font-semibold text-[#5B35D5] hover:text-[#4A28C9] hover:bg-[#EAE6FD] border border-[#B4A3F3] rounded-full">
                                     <UserPlus className="w-3 h-3 mr-1" /> Connect
                                 </Button>
                             )}
@@ -625,7 +625,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         ? "text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEF2F2] border-[#E5E7EB]"
                                         : (post.author.nodeType === 'BROADCAST' || post.author.role === 'RECRUITER')
                                             ? "text-[#0891B2] bg-[#ECFEFF] hover:bg-[#CFFAFE] border-[#A5F3FC]"
-                                            : "text-[#6366F1] bg-[#EEF2FF] hover:bg-[#E0E7FF] border-[#C7D2FE]")}>
+                                            : "text-[#5B35D5] bg-[#EAE6FD] hover:bg-[#D4CCF8] border-[#B4A3F3]")}>
                                 {isFollowing ? "Following" : <><Plus className="w-3 h-3 mr-1" />Follow</>}
                             </Button>
                         </>
@@ -669,7 +669,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         {/* Header */}
                         <DialogHeader className="px-5 pt-5 pb-3 border-b border-[#E5E7EB]">
                             <DialogTitle className="text-base font-bold text-[#111827] flex items-center gap-2">
-                                <Edit className="w-4 h-4 text-[#6366F1]" /> Edit Post
+                                <Edit className="w-4 h-4 text-[#5B35D5]" /> Edit Post
                             </DialogTitle>
                             <DialogDescription className="text-xs text-[#9CA3AF] mt-0.5">Your post will be updated instantly after saving.</DialogDescription>
                         </DialogHeader>
@@ -682,7 +682,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 <div className="flex items-center gap-2.5 mb-3">
                                     <Avatar className="w-9 h-9 border border-[#E5E7EB] flex-shrink-0">
                                         <AvatarImage src={post.author.avatar || undefined} />
-                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold text-sm">{post.author.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <div className="font-bold text-sm text-[#111827] leading-none">{post.author.name}</div>
@@ -745,11 +745,11 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         onKeyDown={handleEditKeyDown}
                                         data-placeholder="Edit your post..."
                                         className={cn(
-                                            "w-full bg-transparent text-[#111827] text-sm min-h-[120px] outline-none caret-[#6366F1] cursor-text",
+                                            "w-full bg-transparent text-[#111827] text-sm min-h-[120px] outline-none caret-[#5B35D5] cursor-text",
                                             "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
-                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer",
+                                            "[&_a]:text-[#5B35D5] [&_a]:underline [&_a]:cursor-pointer",
                                             "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_li]:my-0.5",
-                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#5B35D5]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
                                             "[&_code]:bg-[#F3F4F6] [&_code]:border [&_code]:border-[#E5E7EB] [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-red-600",
                                             "[&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[#9CA3AF] [&:empty]:before:pointer-events-none"
                                         )}
@@ -769,7 +769,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             />
                                             {(isSaving && editIsUploading) && (
                                                 <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[1px] text-white gap-2 z-30 rounded-xl">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-[#6366F1]" />
+                                                    <Loader2 className="w-6 h-6 animate-spin text-[#5B35D5]" />
                                                     <span className="text-[10px] font-semibold">Uploading...</span>
                                                 </div>
                                             )}
@@ -800,7 +800,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             }
                                         }}
                                         onClick={() => insertEditText(" #")}
-                                        className="text-[#6366F1] hover:bg-[#EEF2FF] font-bold px-2 rounded-full text-xs h-8">
+                                        className="text-[#5B35D5] hover:bg-[#EAE6FD] font-bold px-2 rounded-full text-xs h-8">
                                         # Hashtag
                                     </Button>
                                     {/* Mention */}
@@ -825,7 +825,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         className={cn(
                                             "rounded-full w-8 h-8 border transition-all duration-200",
                                             editShowFormatting
-                                                ? "text-[#6366F1] bg-[#EEF2FF] border-[#6366F1]/30 hover:bg-[#EEF2FF]"
+                                                ? "text-[#5B35D5] bg-[#EAE6FD] border-[#5B35D5]/30 hover:bg-[#EAE6FD]"
                                                 : "text-zinc-500 border-zinc-200/80 hover:border-zinc-300 hover:bg-[#F3F4F6]"
                                         )}
                                         onClick={() => setEditShowFormatting(!editShowFormatting)}
@@ -851,7 +851,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         }}
                                     />
                                     <Button variant="ghost" size="icon"
-                                        className={cn("rounded-full w-8 h-8 hover:bg-[#F3F4F6] text-[#6B7280]", editImagePreview ? "text-[#6366F1] bg-[#EEF2FF]" : "")}
+                                        className={cn("rounded-full w-8 h-8 hover:bg-[#F3F4F6] text-[#6B7280]", editImagePreview ? "text-[#5B35D5] bg-[#EAE6FD]" : "")}
                                         onClick={() => editFileInputRef.current?.click()}
                                         title="Change image">
                                         <ImageIcon className="w-4 h-4" />
@@ -865,7 +865,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         Cancel
                                     </Button>
                                     <Button onClick={handleUpdate} disabled={isSaving}
-                                        className="bg-[#6366F1] hover:bg-[#4F46E5] text-white h-8 px-5 text-xs rounded-full font-bold shadow-sm flex items-center gap-1.5">
+                                        className="bg-[#5B35D5] hover:bg-[#4A28C9] text-white h-8 px-5 text-xs rounded-full font-bold shadow-sm flex items-center gap-1.5">
                                         {isSaving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</> : "Save Changes"}
                                     </Button>
                                 </div>
@@ -875,28 +875,28 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         {/* Insert Link overlay */}
                         {editIsLinkDialogOpen && (
                             <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
-                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-xs w-full p-5 text-[#111827] border-t-4 border-t-[#6366F1]">
+                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-xs w-full p-5 text-[#111827] border-t-4 border-t-[#5B35D5]">
                                     <h3 className="text-sm font-extrabold text-[#111827] mb-4 flex items-center gap-2">
-                                        <Link2 className="w-4 h-4 text-[#6366F1]" /> Insert link
+                                        <Link2 className="w-4 h-4 text-[#5B35D5]" /> Insert link
                                     </h3>
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-[10px] font-bold text-[#4B5563] uppercase tracking-wider mb-1">Display text</label>
                                             <input type="text" value={editLinkText} onChange={(e) => setEditLinkText(e.target.value)}
                                                 placeholder="Link text" autoFocus
-                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:outline-none transition-all" />
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#5B35D5] focus:outline-none transition-all" />
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-[#4B5563] uppercase tracking-wider mb-1">URL</label>
                                             <input type="text" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)}
                                                 placeholder="https://example.com"
                                                 onKeyDown={(e) => { if (e.key === "Enter") handleEditInsertLink(); }}
-                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#6366F1] focus:outline-none transition-all" />
+                                                className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm text-[#111827] placeholder-gray-400 focus:border-[#5B35D5] focus:outline-none transition-all" />
                                         </div>
                                         <div className="flex gap-2 pt-1">
                                             <Button variant="outline" className="flex-1 border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] h-8 text-xs rounded-xl"
                                                 onClick={() => setEditIsLinkDialogOpen(false)}>Cancel</Button>
-                                            <Button className="flex-1 bg-[#6366F1] hover:bg-[#4F46E5] text-white h-8 text-xs font-bold rounded-xl"
+                                            <Button className="flex-1 bg-[#5B35D5] hover:bg-[#4A28C9] text-white h-8 text-xs font-bold rounded-xl"
                                                 onClick={handleEditInsertLink}>Insert</Button>
                                         </div>
                                     </div>
@@ -946,9 +946,9 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                         className={cn(
                                             "post-html-content",
                                             "[&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline",
-                                            "[&_a]:text-[#6366F1] [&_a]:underline [&_a]:cursor-pointer hover:[&_a]:text-[#4F46E5]",
+                                            "[&_a]:text-[#5B35D5] [&_a]:underline [&_a]:cursor-pointer hover:[&_a]:text-[#4A28C9]",
                                             "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_li]:my-0.5",
-                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#6366F1]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
+                                            "[&_blockquote]:border-l-4 [&_blockquote]:border-[#5B35D5]/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-[#6B7280] [&_blockquote]:my-1",
                                             "[&_code]:bg-[#F3F4F6] [&_code]:border [&_code]:border-[#E5E7EB] [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-red-600",
                                             !isExpanded && shouldFold && "line-clamp-4"
                                         )}
@@ -965,7 +965,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                                 e.stopPropagation();
                                                 setIsExpanded(true);
                                             }}
-                                            className="text-[#6366F1] hover:text-[#4F46E5] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
+                                            className="text-[#5B35D5] hover:text-[#4A28C9] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
                                         >
                                             more
                                         </button>
@@ -1001,7 +1001,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             e.stopPropagation();
                                             setIsExpanded(true);
                                         }}
-                                        className="text-[#6366F1] hover:text-[#4F46E5] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
+                                        className="text-[#5B35D5] hover:text-[#4A28C9] font-semibold hover:underline transition-colors ml-1 focus:outline-none"
                                     >
                                         more
                                     </button>
@@ -1231,7 +1231,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                                             {img.tags && img.tags.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                    <h5 className="font-bold text-xs text-[#6366F1] flex items-center gap-1">
+                                                    <h5 className="font-bold text-xs text-[#5B35D5] flex items-center gap-1">
                                                         <UserPlus className="w-3.5 h-3.5" /> Tagged People
                                                     </h5>
                                                     <div className="space-y-2">
@@ -1246,7 +1246,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                                             >
                                                                 <Avatar className="w-7 h-7 border border-white/10 flex-shrink-0">
                                                                     <AvatarImage src={t.image || ""} />
-                                                                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] text-[9px] font-bold">
+                                                                    <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] text-[9px] font-bold">
                                                                         {t.name.charAt(0)}
                                                                     </AvatarFallback>
                                                                 </Avatar>
@@ -1286,7 +1286,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         <span>{post.comments}</span>
                     </button>
                     <button onClick={() => toast.success("Reposted to your network.")}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#6366F1] md:hover:bg-[#EEF2FF] transition-all font-medium cursor-pointer">
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#5B35D5] md:hover:bg-[#EAE6FD] transition-all font-medium cursor-pointer">
                         <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
                     </button>
                     <button onClick={() => setIsShareModalOpen(true)}

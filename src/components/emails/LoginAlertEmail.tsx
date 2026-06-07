@@ -262,7 +262,7 @@ const bulletItem = {
 };
 
 const indigoLink = {
-    color: '#4f46e5', // Sleek Indigo accent
+    color: '#4A28C9', // Sleek Indigo accent
     fontWeight: '600',
     textDecoration: 'underline',
 };
@@ -278,7 +278,7 @@ const footerLinksContainer = {
 };
 
 const footerLink = {
-    color: '#4f46e5', // Corporate Indigo-600 link
+    color: '#4A28C9', // Corporate Indigo-600 link
     fontSize: '13px',
     textDecoration: 'none',
     fontWeight: '600',

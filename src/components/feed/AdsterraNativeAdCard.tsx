@@ -170,7 +170,7 @@ export function AdsterraNativeAdCard() {
       <div className="flex gap-3">
         {/* Avatar — generic "AD" placeholder matching PostCard avatar size */}
         <Avatar className="w-10 h-10 border border-[#E5E7EB] flex-shrink-0">
-          <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-xs">
+          <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-semibold text-xs">
             AD
           </AvatarFallback>
         </Avatar>
@@ -252,7 +252,7 @@ export function AdsterraNativeAdCard() {
             </button>
             <button
               onClick={() => toast.info("Sponsored posts cannot be reposted.")}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-all font-medium"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] hover:text-[#5B35D5] hover:bg-[#EAE6FD] transition-all font-medium"
             >
               <Repeat className="w-3.5 h-3.5" />
               <span>Repost</span>

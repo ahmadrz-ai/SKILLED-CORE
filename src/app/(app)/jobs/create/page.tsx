@@ -355,7 +355,7 @@ export default function JobWizardPage() {
         const sel = window.getSelection();
         const selected = sel?.toString() || "link";
         
-        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#6366F1;text-decoration:underline;">${selected}</a>`;
+        const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#5B35D5;text-decoration:underline;">${selected}</a>`;
         execFormat("insertHTML", html);
     };
 
