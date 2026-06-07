@@ -153,6 +153,11 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         location: user.location,
     };
 
+    // AI-Verified signal (public — this is what makes recruiters book an interview).
+    const aiInterviews: any[] = (user as any).interviews || [];
+    const topInterviewScore = aiInterviews.length ? Math.max(...aiInterviews.map((i: any) => i.score || 0)) : 0;
+    const interviewRoles = Array.from(new Set(aiInterviews.map((i: any) => i.role).filter(Boolean)));
+
     // Build resume data from the loaded profile and generate a real, text-based PDF
     // via the SkilledCore template (replaces the old window.print() screenshot).
     const buildResumeData = () => ({
@@ -682,6 +687,36 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 )}
                             </div>
                         </div>
+
+                        {/* AI-Verified highlight — the recruiter-facing signal (never gated) */}
+                        {user.role !== 'RECRUITER' && aiInterviews.length > 0 && (
+                            <div className="bg-white rounded-xl border border-[var(--sc-purple-200)] p-6 shadow-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <BadgeCheck className="w-5 h-5 text-[var(--sc-purple-600)]" />
+                                    <h3 className="text-sm font-bold text-[var(--text-heading)]">AI-Verified</h3>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-3xl font-bold text-[var(--text-heading)]">{topInterviewScore}</span>
+                                    <span className="text-sm text-[var(--text-secondary)] mb-1">/ 100 top score</span>
+                                </div>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                                    {aiInterviews.length} verified assessment{aiInterviews.length > 1 ? 's' : ''}
+                                </p>
+                                {interviewRoles.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-3">
+                                        {interviewRoles.slice(0, 4).map((r: any, idx: number) => (
+                                            <span key={idx} className="text-[10px] font-bold uppercase tracking-wider bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-100)] px-2 py-0.5 rounded">{r}</span>
+                                        ))}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => setActiveTab('interviews')}
+                                    className="mt-4 text-xs font-bold text-[var(--sc-purple-600)] hover:text-[var(--sc-purple-800)] flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
+                                >
+                                    View AI interviews <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        )}
 
                         {/* Sidebar: Socials & Custom Links */}
                         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 group relative shadow-sm">
