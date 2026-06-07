@@ -144,7 +144,16 @@ export async function respondToBooking(
             return { success: false, message: "This request has already been handled." };
         }
 
-        await prisma.booking.update({ where: { id: bookingId }, data: { status: decision } });
+        // On confirm, generate a ready-to-use video room. Jitsi public rooms need no API
+        // key or setup, so the link works immediately; the cuid bookingId keeps it
+        // unguessable. Swap this for a managed provider (Daily/100ms/Zoom) later by
+        // changing only this line.
+        const meetingUrl = decision === "CONFIRMED" ? `https://meet.jit.si/skilledcore-${bookingId}` : null;
+
+        await prisma.booking.update({
+            where: { id: bookingId },
+            data: { status: decision, ...(meetingUrl ? { meetingUrl } : {}) },
+        });
 
         try {
             await prisma.notification.create({
@@ -153,7 +162,7 @@ export async function respondToBooking(
                     type: decision === "CONFIRMED" ? "BOOKING_CONFIRMED" : "BOOKING_DECLINED",
                     message:
                         decision === "CONFIRMED"
-                            ? `<strong>${caller.name || "The candidate"}</strong> accepted your interview request.`
+                            ? `<strong>${caller.name || "The candidate"}</strong> accepted your interview request. A video room is ready in your bookings.`
                             : `<strong>${caller.name || "The candidate"}</strong> declined your interview request.`,
                     actorId: caller.id,
                     resourcePath: "/bookings",

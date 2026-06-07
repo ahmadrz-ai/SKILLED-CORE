@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: any = {
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
     serverExternalPackages: ["bcryptjs", "pdf-parse"],
 
     // FIX-015: Enable WebP image optimization

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Eye, MapPin, CheckCircle2, Users, Briefcase, Lock, Unlock, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
 import { BookingModal } from "./BookingModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { unlockConversation } from "@/app/actions/chatActions";
@@ -101,7 +100,6 @@ interface CandidateCardProps {
 }
 
 export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' }: CandidateCardProps) {
-    const [isScheduleOpen, setIsScheduleOpen] = useState(false);
     const [isUnlockOpen, setIsUnlockOpen] = useState(false);
     const [unlockPendingAction, setUnlockPendingAction] = useState<"MESSAGE" | "INTERVIEW" | null>(null);
     const [isUnlocking, setIsUnlocking] = useState(false);
@@ -123,8 +121,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
 
     const handleInterview = (e: React.MouseEvent) => {
         e.stopPropagation();
-        setUnlockPendingAction("INTERVIEW");
-        setIsUnlockOpen(true);
+        setBookingOpen(true);
     };
 
     const handleConfirmUnlock = async () => {
@@ -146,8 +143,6 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
 
             if (unlockPendingAction === "MESSAGE") {
                 router.push(`/messages?userId=${candidate.id}`);
-            } else if (unlockPendingAction === "INTERVIEW") {
-                setIsScheduleOpen(true);
             }
         } catch (error) {
             toast.error("An error occurred");
@@ -442,12 +437,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 </Button>
             </div>
 
-            <ScheduleInterviewDialog
-                open={isScheduleOpen}
-                onOpenChange={setIsScheduleOpen}
-                candidateName={candidate.name}
-                candidateId={candidate.id}
-            />
+            <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} candidate={bookingCandidate} />
 
             <Dialog open={isUnlockOpen} onOpenChange={setIsUnlockOpen}>
                 <DialogContent className="sm:max-w-md bg-white text-[#111827]">
