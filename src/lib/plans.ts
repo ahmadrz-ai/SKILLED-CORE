@@ -186,3 +186,40 @@ export function normalizePlanCode(raw?: string | null): PlanCode {
   if (v === "PRO") return "ELITE";
   return "FREE";
 }
+
+/**
+ * Internal tier compatibility layer.
+ *
+ * The whole app still gates on the legacy plan strings (BASIC/PRO/ULTRA) in ~20 places.
+ * To show the new landing plans WITHOUT rewriting all that gating, the Plans page
+ * displays plans.ts but stores the mapped legacy tier in user.plan. These helpers map
+ * between the two.
+ */
+export type LegacyTier = "BASIC" | "PRO" | "ULTRA";
+
+const LEGACY_TIER: Partial<Record<PlanCode, LegacyTier>> = {
+  FREE: "BASIC",
+  ELITE: "ULTRA",          // premium candidate tier
+  RECRUITER_PRO: "PRO",
+  RECRUITER_UNLIMITED: "ULTRA",
+  // CANDIDATE_CUSTOM has no self-serve tier (contact sales).
+};
+
+/** The legacy tier to store when a user subscribes to a given plan (undefined = contact-only). */
+export function legacyTierFor(code: PlanCode): LegacyTier | undefined {
+  return LEGACY_TIER[code];
+}
+
+/** Given the user's stored legacy plan + audience, which displayed plan is current. */
+export function currentPlanCode(legacyPlan: string | null | undefined, audience: Audience): PlanCode | null {
+  const p = (legacyPlan || "BASIC").toUpperCase();
+  if (audience === "candidate") {
+    if (p === "ELITE" || p === "CANDIDATE_CUSTOM") return p as PlanCode;
+    if (p === "PRO" || p === "ULTRA") return "ELITE";
+    return "FREE";
+  }
+  // recruiter
+  if (p === "RECRUITER_UNLIMITED" || p === "ULTRA") return "RECRUITER_UNLIMITED";
+  if (p === "RECRUITER_PRO" || p === "PRO") return "RECRUITER_PRO";
+  return null; // on free / no recruiter plan
+}

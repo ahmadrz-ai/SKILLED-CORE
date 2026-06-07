@@ -67,6 +67,21 @@ export async function deductCredits(amount: number) {
     }
 }
 
+export async function getBillingContext(): Promise<{ plan: string; role: string; credits: number }> {
+    const session = await auth();
+    if (!session?.user?.id) return { plan: "BASIC", role: "CANDIDATE", credits: 0 };
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { plan: true, role: true, credits: true },
+        });
+        return { plan: user?.plan || "BASIC", role: user?.role || "CANDIDATE", credits: user?.credits || 0 };
+    } catch (error) {
+        console.error("getBillingContext error:", error);
+        return { plan: "BASIC", role: "CANDIDATE", credits: 0 };
+    }
+}
+
 export async function getPlan() {
     const session = await auth();
     if (!session?.user?.id) return "BASIC";

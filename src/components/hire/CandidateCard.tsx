@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Eye, MapPin, CheckCircle2, Users, Briefcase, Lock, Unlock, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
+import { BookingModal } from "./BookingModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { unlockConversation } from "@/app/actions/chatActions";
 import { toast } from "sonner";
@@ -104,7 +105,15 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
     const [isUnlockOpen, setIsUnlockOpen] = useState(false);
     const [unlockPendingAction, setUnlockPendingAction] = useState<"MESSAGE" | "INTERVIEW" | null>(null);
     const [isUnlocking, setIsUnlocking] = useState(false);
+    const [bookingOpen, setBookingOpen] = useState(false);
     const router = useRouter();
+
+    const bookingCandidate = {
+        id: candidate.id,
+        name: candidate.name,
+        image: candidate.avatarUrl || candidate.avatar,
+        headline: candidate.headline,
+    };
 
     const handleMessage = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -162,7 +171,8 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
         const isPro = candidate.plan === 'PRO';
 
         return (
-            <div 
+            <>
+            <div
                 onClick={() => handleViewProfile()}
                 className={cn(
                     "flex-shrink-0 w-64 bg-white border border-[#E5E7EB] rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#9278EA]/40 transition-all duration-150 cursor-pointer flex flex-col justify-between relative",
@@ -252,21 +262,29 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                 </div>
 
                 {/* Footer section */}
-                <div className="border-t border-[#F3F4F6] mt-4 pt-3 flex items-center justify-between">
-                    <span className="text-[10px] text-[#9CA3AF]">
-                        {candidate.experienceCount ?? candidate.yearsOfExperience ?? 0} roles · {candidate.projectCount ?? 0} projects
-                    </span>
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewProfile();
-                        }}
-                        className="text-[10px] font-semibold text-[#5B35D5] hover:underline cursor-pointer"
+                <div className="border-t border-[#F3F4F6] mt-4 pt-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-[#9CA3AF]">
+                            {candidate.experienceCount ?? candidate.yearsOfExperience ?? 0} roles · {candidate.projectCount ?? 0} projects
+                        </span>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleViewProfile(); }}
+                            className="text-[10px] font-semibold text-[#5B35D5] hover:underline cursor-pointer"
+                        >
+                            View Profile
+                        </button>
+                    </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setBookingOpen(true); }}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-[#5B35D5] hover:bg-[#4A28C9] text-white text-xs font-bold py-2 transition-colors cursor-pointer"
                     >
-                        View Profile
+                        <Lock className="w-3.5 h-3.5 opacity-70" /> Book Interview
                     </button>
                 </div>
             </div>
+
+            <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} candidate={bookingCandidate} />
+            </>
         );
     }
 
