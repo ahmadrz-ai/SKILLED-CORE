@@ -229,3 +229,109 @@ export function ListSkeleton() {
     </div>
   );
 }
+
+/* Profile — cover banner + avatar card + tabs + content cards. */
+export function ProfileSkeleton() {
+  return (
+    <div>
+      <div className="h-48 w-full bg-sc-gray-150 animate-pulse" />
+      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
+        <div className="-mt-16">
+          <Card className="flex flex-col items-center text-center">
+            <div className="w-28 h-28 rounded-full bg-sc-gray-200 animate-pulse -mt-20 border-4 border-bg-card" />
+            <Block className="h-6 w-40 mt-4" />
+            <Block className="h-3 w-28 mt-2" />
+            <Block className="h-3 w-48 mt-3" />
+            <Block className="h-10 w-full mt-5 rounded-lg" />
+            <Block className="h-10 w-full mt-2 rounded-lg" />
+          </Card>
+        </div>
+        <div className="space-y-4 mt-6 lg:mt-20">
+          <Block className="h-10 w-72 rounded-lg" />
+          <Card className="space-y-3"><Block className="h-5 w-24" />{Array.from({ length: 4 }).map((_, i) => <Block key={i} className="h-3 w-full" />)}</Card>
+          <Card className="space-y-3"><Block className="h-5 w-24" />{Array.from({ length: 3 }).map((_, i) => <Block key={i} className="h-10 w-full" />)}</Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Settings — left tab list + form panel. */
+export function SettingsSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col lg:flex-row gap-6">
+      <Card className="w-full lg:w-64 flex-shrink-0 space-y-2">
+        {Array.from({ length: 7 }).map((_, i) => <Block key={i} className="h-9 w-full rounded-lg" />)}
+      </Card>
+      <div className="flex-1 space-y-4">
+        <Block className="h-7 w-48" />
+        <Card className="space-y-4">{Array.from({ length: 5 }).map((_, i) => <Block key={i} className="h-10 w-full" />)}</Card>
+      </div>
+    </div>
+  );
+}
+
+/* Messages — conversation list + thread. */
+export function MessagesSkeleton() {
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      <div className="w-full md:w-80 border-r border-border-default p-4 space-y-3">
+        <Block className="h-9 w-full rounded-lg mb-2" />
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <Block className="h-11 w-11 rounded-full" />
+            <div className="flex-1 space-y-2"><Block className="h-3.5 w-28" /><Block className="h-3 w-40" /></div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden md:flex flex-1 flex-col p-6 gap-3">
+        <Block className="h-6 w-40 mb-4" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Block key={i} className={cn("h-10 rounded-2xl", i % 2 ? "w-1/2 self-end" : "w-2/3")} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Analytics — stat cards + chart. */
+export function AnalyticsSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <Block className="h-7 w-48" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => <Card key={i} className="space-y-3"><Block className="h-3 w-20" /><Block className="h-8 w-24" /></Card>)}
+      </div>
+      <Card><Block className="h-64 w-full" /></Card>
+    </div>
+  );
+}
+
+/* Credits / plans — pricing cards. */
+export function CreditsSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <Block className="h-7 w-48" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="space-y-3">
+            <Block className="h-5 w-24" /><Block className="h-8 w-28" />
+            {Array.from({ length: 4 }).map((_, j) => <Block key={j} className="h-3 w-full" />)}
+            <Block className="h-10 w-full rounded-lg mt-2" />
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Support — contact form + FAQ rows. */
+export function SupportSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <Block className="h-7 w-48" />
+      <Card className="space-y-4">{Array.from({ length: 4 }).map((_, i) => <Block key={i} className="h-10 w-full" />)}</Card>
+      <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Card key={i}><Block className="h-4 w-3/4" /></Card>)}</div>
+    </div>
+  );
+}
