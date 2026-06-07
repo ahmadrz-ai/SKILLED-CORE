@@ -81,8 +81,8 @@ export function NotificationsClient({ initialData }: { initialData: Notification
             {/* Pattern B: Two Column Layout */}
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 
-                {/* Left Panel: Filter tabs (w-72 fixed) */}
-                <div className="w-full lg:w-72 flex-shrink-0 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl p-4 space-y-3 shadow-sm">
+                {/* Left Panel: Filter tabs (w-72 fixed) — sticky so it stays put while the list scrolls */}
+                <div className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-20 self-start bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl p-4 space-y-3 shadow-sm">
                     <div className="flex justify-between items-center px-1">
                         <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
                             Filter Inbox

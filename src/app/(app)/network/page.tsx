@@ -144,8 +144,8 @@ export default function NetworkPage() {
     return (
         <div className="min-h-screen bg-bg-secondary-panel text-text-body flex flex-col md:flex-row">
 
-            {/* MANAGER SIDEBAR (Left) */}
-            <div className="w-full md:w-64 bg-bg-sidebar border-r border-border-sidebar p-6 flex-shrink-0 shadow-sc-xs">
+            {/* MANAGER SIDEBAR (Left) — sticky so it stays visible while the list scrolls */}
+            <div className="w-full md:w-64 bg-bg-sidebar border-r border-border-sidebar p-6 flex-shrink-0 shadow-sc-xs md:sticky md:top-14 md:self-start">
                 <h2 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-6 px-2">Manage Network</h2>
                 <nav className="space-y-1">
                     {[
