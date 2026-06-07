@@ -255,6 +255,79 @@ function RecruiterDemo() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+   Pricing — audience-aware plans (kept in sync with the in-app plans).
+   ──────────────────────────────────────────────────────────────────────────── */
+type Plan = { name: string; price: string; cadence?: string; tag?: string; highlight?: boolean; features: string[]; cta: string; href: string };
+
+const PRICING: Record<Audience, Plan[]> = {
+  candidate: [
+    {
+      name: "Free", price: "$0", cadence: "forever",
+      features: ["AI Resume → Profile builder (3× / month)", "3 AI interviews / month", "Standard analytics", "Standard support", "Unlimited job applications"],
+      cta: "Start free", href: "/register?role=candidate",
+    },
+    {
+      name: "Elite", price: "$12", cadence: "/ month", tag: "Most popular", highlight: true,
+      features: ["Verified skill badge", "10 AI interviews / month", "10× profile builder / month", "Advanced analytics", "Priority visibility — reach more people", "Direct messaging", "Priority support", "Unlimited job applications"],
+      cta: "Get Elite", href: "/register?role=candidate",
+    },
+    {
+      name: "Custom", price: "Let's talk",
+      features: ["Everything in Elite", "Custom interview & builder volume", "Cohort / bootcamp options", "Dedicated support"],
+      cta: "Contact us", href: "/support",
+    },
+  ],
+  recruiter: [
+    {
+      name: "Recruiter Pro", price: "$79", cadence: "/ month",
+      features: ["Recruiter badge", "500 talent searches / month", "Unlimited job posts", "Advanced ATS", "20 interview bookings / month", "Priority support"],
+      cta: "Start hiring", href: "/register?role=recruiter",
+    },
+    {
+      name: "Recruiter Unlimited", price: "$199", cadence: "/ month", tag: "Best value", highlight: true,
+      features: ["Recruiter badge on profile & feed", "Unlimited talent search", "Automated cross-candidate AI evaluations", "Unlimited job posts", "Advanced AI ATS", "Unlimited interview bookings", "Priority support"],
+      cta: "Go Unlimited", href: "/register?role=recruiter",
+    },
+  ],
+};
+
+function PricingSection({ audience }: { audience: Audience }) {
+  const plans = PRICING[audience];
+  return (
+    <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-24">
+      <h2 className="text-center text-2xl font-bold text-text-heading mb-2">Simple, transparent pricing</h2>
+      <p className="text-center text-sm text-text-secondary mb-8">
+        {audience === "candidate" ? "Start free. Upgrade when you want to stand out." : "Find and hire verified talent at any scale."}
+      </p>
+      <div className={`grid grid-cols-1 gap-5 ${plans.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2 max-w-3xl mx-auto"}`}>
+        {plans.map((p) => (
+          <div key={p.name} className={`relative rounded-2xl border p-6 flex flex-col ${p.highlight ? "border-sc-purple-300 bg-sc-purple-50 shadow-sc-card" : "border-border-default bg-bg-card"}`}>
+            {p.tag && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider bg-sc-purple-600 text-white px-3 py-1 rounded-full">{p.tag}</span>
+            )}
+            <h3 className="font-bold text-text-heading">{p.name}</h3>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-text-heading">{p.price}</span>
+              {p.cadence && <span className="text-sm text-text-secondary">{p.cadence}</span>}
+            </div>
+            <ul className="mt-5 space-y-2.5 flex-1">
+              {p.features.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm text-text-body">
+                  <CheckCircle2 className="w-4 h-4 text-sc-green-600 flex-shrink-0 mt-0.5" /> {f}
+                </li>
+              ))}
+            </ul>
+            <Link href={p.href} className={`mt-6 inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${p.highlight ? "bg-sc-purple-600 text-white hover:bg-sc-purple-700" : "border border-border-default text-text-heading hover:bg-sc-purple-50 hover:text-sc-purple-800"}`}>
+              {p.cta} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
    Page
    ──────────────────────────────────────────────────────────────────────────── */
 export default function LandingContent() {
@@ -378,6 +451,9 @@ export default function LandingContent() {
             </motion.div>
           </AnimatePresence>
         </section>
+
+        {/* PRICING */}
+        <PricingSection audience={audience} />
 
         {/* CTA */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

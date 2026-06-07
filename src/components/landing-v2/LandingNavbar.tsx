@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: "Why SkilledCore", href: "#why" },
   { label: "How It Works", href: "#how" },
   { label: "Interactive Demo", href: "#demo" },
+  { label: "Pricing", href: "#pricing" },
 ];
 
 export function LandingNavbar() {
