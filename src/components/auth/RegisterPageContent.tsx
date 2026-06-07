@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Github, Loader2, Eye, EyeOff, Check, Shield } from "lucide-react";
+import { Github, Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -169,55 +169,14 @@ export default function RegisterPageContent() {
     };
 
     return (
-        <div className="h-screen w-full flex overflow-hidden bg-bg-secondary-panel">
-            {/* LEFT SIDE - BRAND */}
-            <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col justify-between p-12"
-                style={{ background: 'linear-gradient(165deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%)' }}>
-                {/* Subtle high-fidelity grid pattern */}
-                <div className="absolute inset-0 opacity-[0.05]"
-                    style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(to right, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-                {/* Decorative glowing lines and spheres */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-                
-                {/* Ambient violet/indigo glows */}
-                <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-                <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-
-                <div className="relative z-10 flex items-center gap-3">
-                    <Image src="/logo.png" alt="SkilledCore" width={44} height={44} className="drop-shadow-lg" />
-                    <div>
-                        <h3 className="text-sc-gray-55 font-extrabold text-[18px] tracking-[-0.01em]">SkilledCore</h3>
-                        <p className="text-sc-gray-400 text-[11px] font-medium">Talent Intelligence Platform</p>
-                    </div>
-                </div>
-
-                <div className="relative z-10 max-w-lg">
-                    <h1 className="text-5xl font-bold leading-tight tracking-tight mb-6 text-sc-gray-55">
-                        &quot;The future belongs to the{" "}
-                        <span style={{ background: "linear-gradient(135deg, #C4B5FD, #A78BFA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                            builders
-                        </span>.&quot;
-                    </h1>
-                    <div className="flex items-center gap-2 text-xs text-sc-gray-400">
-                        <Shield className="w-3 h-3 text-sc-green-600" />
-                        <span>CAPTCHA-protected • AES-256 Encrypted • GDPR Compliant</span>
-                    </div>
-                </div>
-
-                <div className="relative z-10 text-xs uppercase tracking-widest text-sc-gray-500">
-                    Secure Connection • AES-256 Encryption
-                </div>
-            </div>
-
-            {/* RIGHT SIDE - FORM */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-                <div className="max-w-md w-full rounded-2xl p-8 bg-bg-card border border-border-card shadow-sc-lg">
-                    {/* Mobile Logo */}
-                    <div className="flex items-center gap-2.5 mb-6 lg:hidden justify-center">
-                        <Image src="/logo.png" alt="SkilledCore" width={32} height={32} className="drop-shadow-lg" />
-                        <span className="font-bold text-sm text-text-heading">SkilledCore</span>
-                    </div>
+        <div className="min-h-screen w-full flex items-center justify-center bg-sc-gray-50 px-4 py-10 text-text-body">
+            <div className="w-full max-w-md">
+                {/* Logo */}
+                <Link href="/" className="flex items-center justify-center gap-2.5 mb-6 group">
+                    <Image src="/logo.png" alt="SkilledCore" width={36} height={36} className="group-hover:scale-105 transition-transform" />
+                    <span className="font-bold text-lg text-text-heading tracking-tight">SkilledCore</span>
+                </Link>
+                <div className="w-full rounded-2xl p-8 bg-bg-card border border-border-default shadow-sc-card">
 
                     <div className="text-center space-y-2 mb-6">
                         <h2 className="text-2xl font-bold tracking-tight text-text-heading">Create Account</h2>
@@ -302,7 +261,7 @@ export default function RegisterPageContent() {
                                     minLength={2}
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.name.length > 2 ? "text-emerald-500" : "text-slate-300")} />
+                                    <Check className={cn("w-4 h-4", formData.name.length > 2 ? "text-sc-green-600" : "text-sc-gray-300")} />
                                 </div>
                             </div>
                         </div>
@@ -320,7 +279,7 @@ export default function RegisterPageContent() {
                                     minLength={3}
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.username.length >= 3 ? "text-emerald-500" : "text-slate-300")} />
+                                    <Check className={cn("w-4 h-4", formData.username.length >= 3 ? "text-sc-green-600" : "text-sc-gray-300")} />
                                 </div>
                             </div>
                         </div>
@@ -340,7 +299,7 @@ export default function RegisterPageContent() {
                                     required
                                 />
                                 <div className="absolute left-3 top-2.5">
-                                    <Check className={cn("w-4 h-4", formData.email.includes('@') ? "text-emerald-500" : "text-slate-300")} />
+                                    <Check className={cn("w-4 h-4", formData.email.includes('@') ? "text-sc-green-600" : "text-sc-gray-300")} />
                                 </div>
                             </div>
                         </div>
@@ -360,7 +319,7 @@ export default function RegisterPageContent() {
                                         minLength={8}
                                     />
                                     <div className="absolute left-3 top-2.5">
-                                        <Check className={cn("w-4 h-4", formData.password.length >= 8 ? "text-emerald-500" : "text-slate-300")} />
+                                        <Check className={cn("w-4 h-4", formData.password.length >= 8 ? "text-sc-green-600" : "text-sc-gray-300")} />
                                     </div>
                                     <button
                                         type="button"
@@ -386,7 +345,7 @@ export default function RegisterPageContent() {
                                         required
                                     />
                                     <div className="absolute left-3 top-2.5">
-                                        <Check className={cn("w-4 h-4", formData.confirmPassword && formData.password === formData.confirmPassword ? "text-emerald-500" : "text-slate-300")} />
+                                        <Check className={cn("w-4 h-4", formData.confirmPassword && formData.password === formData.confirmPassword ? "text-sc-green-600" : "text-sc-gray-300")} />
                                     </div>
                                 </div>
                             </div>

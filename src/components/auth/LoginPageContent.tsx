@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Github, Loader2, Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Github, Loader2, Eye, EyeOff, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,13 +16,6 @@ const GoogleIcon = () => (
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
     </svg>
 );
-
-const FEATURES = [
-    "AI-powered candidate matching",
-    "Real-time hiring analytics",
-    "Built-in skills assessments & LMS",
-    "GDPR-compliant data handling",
-];
 
 export default function LoginPageContent() {
     const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -43,10 +36,10 @@ export default function LoginPageContent() {
         try {
             // Import dynamically to avoid server action bundle issues on initial render
             const { verifyPasswordLogin } = await import("@/app/actions/twoFactor");
-            
+
             // 1. Audit password credentials first
             const check = await verifyPasswordLogin(identifier, password);
-            
+
             if (!check.success) {
                 setError(check.error || "Invalid email or password. Please try again.");
                 setIsLoading(null);
@@ -66,7 +59,7 @@ export default function LoginPageContent() {
                 redirect: false,
                 callbackUrl: "/feed",
             });
-            
+
             if (res?.error) {
                 setError("Invalid email or password. Please try again.");
                 setIsLoading(null);
@@ -80,73 +73,20 @@ export default function LoginPageContent() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-bg-secondary-panel">
-
-            {/* LEFT PANEL — Dark brand panel */}
-            <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden"
-                style={{ background: 'linear-gradient(165deg, #0B0F19 0%, #111827 50%, #1E1B4B 100%)' }}>
-                {/* Subtle high-fidelity grid pattern */}
-                <div className="absolute inset-0 opacity-[0.05]"
-                    style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(to right, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-                {/* Decorative glowing lines and spheres */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border rounded-full opacity-[0.03]" style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-                
-                {/* Ambient violet/indigo glows */}
-                <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-                <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="min-h-screen w-full flex items-center justify-center bg-sc-gray-50 px-4 py-12 text-text-body">
+            <div className="w-full max-w-md">
 
                 {/* Logo */}
-                <div className="relative z-10 flex items-center gap-3">
-                    <Image src="/logo.png" alt="SkilledCore" width={38} height={38} className="drop-shadow-lg" />
-                    <div>
-                        <div className="font-bold text-sm tracking-wide text-white">SkilledCore</div>
-                        <div className="text-[10px] font-medium text-sc-gray-400">Talent Intelligence Platform</div>
-                    </div>
-                </div>
+                <Link href="/" className="flex items-center justify-center gap-2.5 mb-8 group">
+                    <Image src="/logo.png" alt="SkilledCore" width={36} height={36} className="group-hover:scale-105 transition-transform" />
+                    <span className="font-bold text-lg text-text-heading tracking-tight">SkilledCore</span>
+                </Link>
 
-                {/* Headline */}
-                <div className="relative z-10">
-                    <h1 className="text-4xl font-bold leading-tight mb-6 text-white" style={{ letterSpacing: '-0.02em' }}>
-                        Your talent intelligence
-                        <br />
-                        <span className="text-sc-purple-300">command center.</span>
-                    </h1>
-                    <p className="text-base leading-relaxed mb-10 text-sc-gray-400">
-                        Access your hiring pipeline, candidate profiles, skills analytics, and everything you need to build world-class teams.
-                    </p>
-                    <div className="space-y-3">
-                        {FEATURES.map((item) => (
-                            <div key={item} className="flex items-center gap-3">
-                                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-sc-purple-400" />
-                                <span className="text-sm text-sc-gray-200">{item}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Footer trust */}
-                <div className="relative z-10 flex items-center gap-5">
-                    {['SOC 2 Certified', 'GDPR Compliant', '256-bit SSL'].map((t) => (
-                        <span key={t} className="text-xs font-medium text-sc-gray-500">{t}</span>
-                    ))}
-                </div>
-            </div>
-
-            {/* RIGHT PANEL — Clean Form */}
-            <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-bg-page text-text-body">
-                <div className="w-full max-w-md">
-
-                    {/* Mobile Logo */}
-                    <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-                        <Image src="/logo.png" alt="SkilledCore" width={32} height={32} className="drop-shadow-lg" />
-                        <span className="font-bold text-sm text-text-heading">SkilledCore</span>
-                    </div>
-
-                    {/* Heading */}
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold mb-1.5 text-text-heading" style={{ letterSpacing: '-0.015em' }}>Welcome back</h2>
-                        <p className="text-sm text-text-secondary">Sign in to your account to continue.</p>
+                {/* Card */}
+                <div className="bg-bg-card border border-border-default rounded-2xl shadow-sc-card p-8">
+                    <div className="mb-7 text-center">
+                        <h2 className="text-2xl font-bold text-text-heading tracking-tight">Welcome back</h2>
+                        <p className="text-sm text-text-secondary mt-1.5">Sign in to your account to continue.</p>
                     </div>
 
                     {/* Social Buttons */}
@@ -154,7 +94,7 @@ export default function LoginPageContent() {
                         <button
                             onClick={() => handleSocialLogin("google")}
                             disabled={!!isLoading}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-card border border-border-default text-text-body-strong hover:bg-bg-card-hover"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-page border border-border-default text-text-body-strong hover:bg-sc-gray-50"
                         >
                             {isLoading === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
                             Google
@@ -162,7 +102,7 @@ export default function LoginPageContent() {
                         <button
                             onClick={() => handleSocialLogin("github")}
                             disabled={!!isLoading}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-card border border-border-default text-text-body-strong hover:bg-bg-card-hover"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 bg-bg-page border border-border-default text-text-body-strong hover:bg-sc-gray-50"
                         >
                             {isLoading === "github" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Github className="w-4 h-4" />}
                             GitHub
@@ -174,8 +114,8 @@ export default function LoginPageContent() {
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t border-border-default" />
                         </div>
-                        <div className="relative flex justify-center text-xs">
-                            <span className="px-3 text-sm font-medium bg-bg-page text-text-tertiary">or continue with email</span>
+                        <div className="relative flex justify-center">
+                            <span className="px-3 text-xs font-medium bg-bg-card text-text-tertiary">or continue with email</span>
                         </div>
                     </div>
 
@@ -224,7 +164,7 @@ export default function LoginPageContent() {
                         )}
 
                         <button type="submit" disabled={!!isLoading}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed group bg-btn-primary-bg text-btn-primary-text hover:bg-btn-primary-bg-hover">
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed group bg-sc-purple-600 text-white hover:bg-sc-purple-700">
                             {isLoading === "credentials"
                                 ? <Loader2 className="w-4 h-4 animate-spin" />
                                 : <><span>Sign in</span><ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>}
@@ -232,11 +172,18 @@ export default function LoginPageContent() {
                     </form>
 
                     <p className="text-center text-sm mt-6 text-text-secondary">
-                        Don't have an account?{" "}
+                        Don&apos;t have an account?{" "}
                         <Link href="/register" className="font-semibold text-text-brand hover:text-text-brand-hover transition-opacity">
                             Create account
                         </Link>
                     </p>
+                </div>
+
+                {/* Trust row */}
+                <div className="flex items-center justify-center gap-5 mt-6">
+                    {['GDPR Compliant', '256-bit SSL', 'SOC 2'].map((t) => (
+                        <span key={t} className="text-[11px] font-medium text-text-tertiary">{t}</span>
+                    ))}
                 </div>
             </div>
         </div>
