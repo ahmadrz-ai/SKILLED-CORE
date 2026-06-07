@@ -16,7 +16,7 @@ const KNOWLEDGE_ARTICLES = [
     {
         category: "Account & Profile",
         icon: User,
-        color: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        color: "bg-sc-purple-50 text-sc-purple-600 border-sc-purple-100",
         articles: [
             { q: "How do I change my profile role?", a: "If you are currently a Candidate and wish to transition your role to a Recruiter, you must navigate to Settings -> Account Access and apply for the Recruiter role. You will be required to submit a verified corporate/work email address (public email providers like Gmail, Yahoo, or Outlook are restricted). Upon domain validation, your onboarding application will go to the Admin Panel queue for review. You will be promoted to Recruiter status once approved." },
             { q: "What is Ghost Mode?", a: "Ghost Mode allows you to browse other candidate profiles and job listings completely anonymously. No view telemetries will be dispatched while Ghost Mode is enabled." }
@@ -142,7 +142,7 @@ export default function HelpPage() {
                 {/* Hero Header */}
                 <div className="text-center max-w-2xl mx-auto space-y-6">
                     <h1 className="text-4xl md:text-5xl font-heading font-black text-slate-900 tracking-tight leading-none">
-                        How can we <span className="text-indigo-600">help</span> you?
+                        How can we <span className="text-sc-purple-600">help</span> you?
                     </h1>
                     <p className="text-slate-500 font-medium">Search our knowledge base or submit a high-priority support ticket below.</p>
                     <div className="relative max-w-xl mx-auto">
@@ -152,7 +152,7 @@ export default function HelpPage() {
                             placeholder="Search for answers..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400 shadow-sm font-medium"
+                            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 focus:outline-none focus:border-sc-purple-500 focus:ring-2 focus:ring-sc-purple-100 transition-all placeholder:text-slate-400 shadow-sm font-medium"
                         />
                     </div>
                 </div>
@@ -179,7 +179,7 @@ export default function HelpPage() {
                                                     <div key={aIdx} className="border-b border-slate-50 last:border-0 pb-3 last:pb-0">
                                                         <button 
                                                             onClick={() => setActiveAccordion(isOpen ? null : accordionId)}
-                                                            className="w-full text-left font-bold text-sm text-slate-800 hover:text-indigo-600 transition-colors flex items-center justify-between py-1"
+                                                            className="w-full text-left font-bold text-sm text-slate-800 hover:text-sc-purple-600 transition-colors flex items-center justify-between py-1"
                                                         >
                                                             <span>{art.q}</span>
                                                             <span className="text-slate-400 font-normal">{isOpen ? "−" : "+"}</span>
@@ -227,7 +227,7 @@ export default function HelpPage() {
                                     onSubmit={handleSubmitTicket}
                                     className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 space-y-6 shadow-sm relative overflow-hidden"
                                 >
-                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
+                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-sc-purple-600" />
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
@@ -238,7 +238,7 @@ export default function HelpPage() {
                                                 placeholder="Your Name"
                                                 value={name}
                                                 onChange={e => setName(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -249,7 +249,7 @@ export default function HelpPage() {
                                                 placeholder="you@domain.com"
                                                 value={email}
                                                 onChange={e => setEmail(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             />
                                         </div>
                                     </div>
@@ -260,7 +260,7 @@ export default function HelpPage() {
                                             <select 
                                                 value={category}
                                                 onChange={e => setCategory(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             >
                                                 <option>Account & Profile</option>
                                                 <option>AI Interview</option>
@@ -274,7 +274,7 @@ export default function HelpPage() {
                                             <select 
                                                 value={severity}
                                                 onChange={e => setSeverity(e.target.value as any)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-bold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-bold shadow-sm"
                                             >
                                                 <option value="LOW">LOW</option>
                                                 <option value="MEDIUM">MEDIUM</option>
@@ -292,7 +292,7 @@ export default function HelpPage() {
                                             placeholder="What's going on?"
                                             value={subject}
                                             onChange={e => setSubject(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                         />
                                     </div>
 
@@ -304,14 +304,14 @@ export default function HelpPage() {
                                             placeholder="Explain the anomaly..."
                                             value={description}
                                             onChange={e => setDescription(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500/50 transition-colors text-sm font-semibold resize-none shadow-sm"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold resize-none shadow-sm"
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-indigo-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-sc-purple-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {isSubmitting ? (
                                             <>
@@ -345,7 +345,7 @@ export default function HelpPage() {
 
                                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-left space-y-3">
                                         <div className="flex items-start gap-2 text-xs">
-                                            <AlertCircle className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                                            <AlertCircle className="w-4 h-4 text-sc-purple-500 mt-0.5 flex-shrink-0" />
                                             <div>
                                                 <p className="font-bold text-slate-800">Email Notification Dispatched</p>
                                                 <p className="text-slate-500 font-medium mt-0.5">A complete diagnostic summary has been sent to our core queue: <span className="font-semibold text-slate-700">support@skilledcore.com</span>.</p>
@@ -378,13 +378,13 @@ export default function HelpPage() {
                 {/* YOUR ACTIVE INQUIRIES TERMINAL */}
                 {myTickets.length > 0 && (
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-sc-purple-600" />
                         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900">Your Active Support Uplinks</h3>
                                 <p className="text-xs text-slate-500 font-medium">Real-time connection telemetry to our Core Operations queue.</p>
                             </div>
-                            <span className="text-xs font-mono font-bold bg-indigo-50 text-indigo-650 px-2.5 py-1.5 rounded-full border border-indigo-100">
+                            <span className="text-xs font-mono font-bold bg-sc-purple-50 text-sc-purple-700 px-2.5 py-1.5 rounded-full border border-sc-purple-100">
                                 ACTIVE TICKETS: {myTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'DISMISSED').length}
                             </span>
                         </div>
@@ -409,7 +409,7 @@ export default function HelpPage() {
                                                     "text-[10px] font-mono font-black px-1.5 py-0.5 rounded border leading-none",
                                                     ticket.severity === 'CRITICAL' ? 'bg-red-50 text-red-600 border-red-100' :
                                                     ticket.severity === 'HIGH' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                    ticket.severity === 'MEDIUM' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                    ticket.severity === 'MEDIUM' ? 'bg-sc-purple-50 text-sc-purple-600 border-sc-purple-100' :
                                                     'bg-slate-100 text-slate-500 border-slate-200'
                                                 )}>
                                                     {ticket.severity}
@@ -459,7 +459,7 @@ export default function HelpPage() {
                 {/* Footer Info */}
                 <div className="text-center pt-8 border-t border-slate-200">
                     <p className="text-slate-400 font-medium">Need immediate system status?</p>
-                    <a href="mailto:support@skilledcore.com" className="text-indigo-600 hover:text-indigo-700 font-bold hover:underline transition-colors mt-1 block">
+                    <a href="mailto:support@skilledcore.com" className="text-sc-purple-600 hover:text-sc-purple-700 font-bold hover:underline transition-colors mt-1 block">
                         support@skilledcore.com
                     </a>
                 </div>

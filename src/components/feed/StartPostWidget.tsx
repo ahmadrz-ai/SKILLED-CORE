@@ -1001,7 +1001,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
  
             {/* Event Creation Modal */}
             <Dialog open={isEventOpen} onOpenChange={setIsEventOpen}>
-                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-xl p-0 overflow-visible shadow-2xl rounded-2xl">
+                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] w-[calc(100%-1rem)] sm:max-w-xl p-0 overflow-visible shadow-2xl rounded-2xl">
                     <DialogHeader className="p-5 border-b border-[#E5E7EB]">
                         <DialogTitle className="text-xl font-extrabold text-[#111827]">Create an Event</DialogTitle>
                     </DialogHeader>
@@ -1122,7 +1122,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
             {/* Article Creation Modal */}
             <Dialog open={isArticleOpen} onOpenChange={setIsArticleOpen}>
-                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-2xl p-0 overflow-visible shadow-2xl rounded-2xl">
+                <DialogContent className="bg-white border-[#E5E7EB] text-[#111827] w-[calc(100%-1rem)] sm:max-w-2xl p-0 overflow-visible shadow-2xl rounded-2xl">
                     <DialogHeader className="p-5 border-b border-[#E5E7EB]">
                         <DialogTitle className="text-xl font-extrabold text-[#111827]">Write an Article</DialogTitle>
                     </DialogHeader>

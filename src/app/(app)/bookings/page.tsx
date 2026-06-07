@@ -98,7 +98,7 @@ export default function BookingsPage() {
     const empty = data.asCandidate.length === 0 && data.asRecruiter.length === 0;
 
     return (
-        <div className="max-w-3xl mx-auto px-6 py-8 space-y-10">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 md:space-y-10">
             <div className="border-b border-border-default pb-5">
                 <div className="flex items-center gap-2.5">
                     <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-sc-purple-100 text-sc-purple-700"><CalendarDays className="w-5 h-5" /></span>

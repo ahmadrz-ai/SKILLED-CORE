@@ -200,7 +200,7 @@ export default async function InterviewDetailPage(props: PageProps) {
             <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm relative text-zinc-900">
                 {/* Decorative subtle light accents */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-sc-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
                 {/* Banner Graphic Header - Redesigned into 3 Columns */}
                 <div className="p-8 border-b border-zinc-200 bg-white relative">
@@ -408,7 +408,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                     </div>
 
                     {transcript.length > 0 ? (
-                        <div className="max-h-[600px] overflow-y-auto space-y-6 pr-4 custom-scrollbar">
+                        <div className="max-h-[400px] md:max-h-[600px] overflow-y-auto space-y-4 md:space-y-6 pr-2 md:pr-4 custom-scrollbar">
                             {transcript.map((msg: any, index: number) => {
                                 const roleUpper = (msg.role || "").toUpperCase();
                                 const personaUpper = (msg.persona || "").toUpperCase();
@@ -437,7 +437,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                                         {/* Avatar bubble */}
                                         <div className="shrink-0 mt-0.5">
                                             {isMentor ? (
-                                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center border border-cyan-400/50 shadow-md">
+                                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sc-purple-500 to-sc-purple-700 flex items-center justify-center border border-sc-purple-400/50 shadow-md">
                                                     <Sparkles className="w-4 h-4" style={{ color: '#ffffff' }} />
                                                 </div>
                                             ) : isInterviewer ? (
@@ -470,7 +470,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                                                 className={cn(
                                                     "p-4 rounded-2xl text-sm leading-relaxed",
                                                     isMentor
-                                                        ? "bg-cyan-50 border border-cyan-150 text-zinc-800 shadow-xs"
+                                                        ? "bg-sc-purple-50 border border-sc-purple-200 text-zinc-800 shadow-xs"
                                                         : isInterviewer 
                                                             ? "bg-zinc-50 border border-zinc-200 text-zinc-700 shadow-xs" 
                                                             : "bg-violet-50 border border-violet-100 text-zinc-800 shadow-xs"
