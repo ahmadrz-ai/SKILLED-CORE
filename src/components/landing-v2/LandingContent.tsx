@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { LandingNavbar } from "./LandingNavbar";
 import { LandingFooter } from "./LandingFooter";
+import { plansFor } from "@/lib/plans";
 
 type Audience = "candidate" | "recruiter";
 
@@ -255,44 +256,11 @@ function RecruiterDemo() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   Pricing — audience-aware plans (kept in sync with the in-app plans).
+   Pricing — driven by the canonical plan config in src/lib/plans.ts so the landing
+   and the in-app plans never drift.
    ──────────────────────────────────────────────────────────────────────────── */
-type Plan = { name: string; price: string; cadence?: string; tag?: string; highlight?: boolean; features: string[]; cta: string; href: string };
-
-const PRICING: Record<Audience, Plan[]> = {
-  candidate: [
-    {
-      name: "Free", price: "$0", cadence: "forever",
-      features: ["AI Resume → Profile builder (3× / month)", "3 AI interviews / month", "Standard analytics", "Standard support", "Unlimited job applications"],
-      cta: "Start free", href: "/register?role=candidate",
-    },
-    {
-      name: "Elite", price: "$12", cadence: "/ month", tag: "Most popular", highlight: true,
-      features: ["Verified skill badge", "10 AI interviews / month", "10× profile builder / month", "Advanced analytics", "Priority visibility — reach more people", "Direct messaging", "Priority support", "Unlimited job applications"],
-      cta: "Get Elite", href: "/register?role=candidate",
-    },
-    {
-      name: "Custom", price: "Let's talk",
-      features: ["Everything in Elite", "Custom interview & builder volume", "Cohort / bootcamp options", "Dedicated support"],
-      cta: "Contact us", href: "/support",
-    },
-  ],
-  recruiter: [
-    {
-      name: "Recruiter Pro", price: "$79", cadence: "/ month",
-      features: ["Recruiter badge", "500 talent searches / month", "Unlimited job posts", "Advanced ATS", "20 interview bookings / month", "Priority support"],
-      cta: "Start hiring", href: "/register?role=recruiter",
-    },
-    {
-      name: "Recruiter Unlimited", price: "$199", cadence: "/ month", tag: "Best value", highlight: true,
-      features: ["Recruiter badge on profile & feed", "Unlimited talent search", "Automated cross-candidate AI evaluations", "Unlimited job posts", "Advanced AI ATS", "Unlimited interview bookings", "Priority support"],
-      cta: "Go Unlimited", href: "/register?role=recruiter",
-    },
-  ],
-};
-
 function PricingSection({ audience }: { audience: Audience }) {
-  const plans = PRICING[audience];
+  const plans = plansFor(audience);
   return (
     <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-24">
       <h2 className="text-center text-2xl font-bold text-text-heading mb-2">Simple, transparent pricing</h2>
@@ -317,7 +285,7 @@ function PricingSection({ audience }: { audience: Audience }) {
                 </li>
               ))}
             </ul>
-            <Link href={p.href} className={`mt-6 inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${p.highlight ? "bg-sc-purple-600 text-white hover:bg-sc-purple-700" : "border border-border-default text-text-heading hover:bg-sc-purple-50 hover:text-sc-purple-800"}`}>
+            <Link href={p.ctaHref} className={`mt-6 inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${p.highlight ? "bg-sc-purple-600 text-white hover:bg-sc-purple-700" : "border border-border-default text-text-heading hover:bg-sc-purple-50 hover:text-sc-purple-800"}`}>
               {p.cta} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
