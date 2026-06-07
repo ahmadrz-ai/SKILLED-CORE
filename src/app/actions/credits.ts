@@ -127,6 +127,14 @@ export async function upgradePlan(plan: "BASIC" | "PRO" | "ULTRA") {
     const session = await auth();
     if (!session?.user?.id) return;
 
+    // Plans can only be granted by an admin (no self-serve activation). Paid upgrades go
+    // through a PENDING transaction that an admin approves in the admin billing panel.
+    const caller = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+    if (caller?.role !== "ADMIN") {
+        console.warn("upgradePlan blocked: non-admin attempted self-grant");
+        return;
+    }
+
     const creditsToAdd = plan === "ULTRA" ? 100 : plan === "PRO" ? 50 : 0;
 
     await prisma.user.update({

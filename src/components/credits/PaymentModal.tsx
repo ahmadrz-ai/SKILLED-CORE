@@ -10,7 +10,7 @@ import {
     ShieldCheck, CheckCircle2, History, Coins, ArrowRight, Info
 } from "lucide-react";
 import { toast } from "sonner";
-import { createPaymentRequest, getTransactions, approveTransaction } from "@/app/actions/billing";
+import { createPaymentRequest, getTransactions } from "@/app/actions/billing";
 import { processDirectCardPayment } from "@/app/actions/checkoutActions";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +62,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
     // Verification & loading
     const [loadingText, setLoadingText] = useState("Establishing secure tunnel...");
     const [completedRef, setCompletedRef] = useState("");
+    const [isPlanPending, setIsPlanPending] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
 
     // Calculate Price
@@ -196,6 +197,8 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
 
                     if (res.success) {
                         setCompletedRef((res as any).refId || trxId);
+                        // Plan purchases (card or manual) never auto-activate — they await admin approval.
+                        setIsPlanPending(mode === 'PLAN' || !!(res as any).pending);
                         setStep(5); // Receipt
                         loadHistory();
                     } else {
@@ -214,26 +217,6 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
             };
         }
     }, [step]);
-
-    const handleSimulateApprove = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        toast.loading("Processing Admin Approval simulation...");
-        try {
-            const res = await approveTransaction(id);
-            if (res.success) {
-                toast.dismiss();
-                toast.success("Transaction successfully approved!");
-                loadHistory();
-                if (onSuccess) onSuccess();
-            } else {
-                toast.dismiss();
-                toast.error(res.message);
-            }
-        } catch (error) {
-            toast.dismiss();
-            toast.error("Verification connection error.");
-        }
-    };
 
     const renderManualPaymentDetails = () => {
         switch (selectedMethod) {
@@ -515,20 +498,20 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                         {step === 5 && (
                             <div className="space-y-6 select-none animate-in fade-in duration-300">
                                 <div className="flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-3">
-                                        <CheckCircle2 className="w-6 h-6 text-[#10B981] fill-emerald-50" />
+                                    <div className={cn("w-12 h-12 rounded-full border flex items-center justify-center mb-3", isPlanPending ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100")}>
+                                        <CheckCircle2 className={cn("w-6 h-6", isPlanPending ? "text-amber-500 fill-amber-50" : "text-[#10B981] fill-emerald-50")} />
                                     </div>
-                                    <h4 className="font-heading font-black text-[#10B981] text-lg tracking-tight">TRANSACTION SUCCESS</h4>
-                                    <p className="text-xs text-gray-400 mt-0.5">Your payment was completed successfully!</p>
+                                    <h4 className={cn("font-heading font-black text-lg tracking-tight", isPlanPending ? "text-amber-600" : "text-[#10B981]")}>{isPlanPending ? "REQUEST SUBMITTED" : "TRANSACTION SUCCESS"}</h4>
+                                    <p className="text-xs text-gray-400 mt-0.5">{isPlanPending ? "An admin will review and activate your plan shortly." : "Your payment was completed successfully!"}</p>
                                 </div>
 
                                 <div className="border border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-4 font-mono text-[11px] text-[#374151] space-y-2">
-                                    <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Order Status:</span> <span className="font-bold text-[#10B981] uppercase">COMPLETED</span></div>
+                                    <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Order Status:</span> <span className={cn("font-bold uppercase", isPlanPending ? "text-amber-600" : "text-[#10B981]")}>{isPlanPending ? "PENDING APPROVAL" : "COMPLETED"}</span></div>
                                     <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Transaction ID:</span> <span className="font-bold text-gray-900">{completedRef}</span></div>
                                     <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Payment Gateway:</span> <span className="font-bold text-gray-900">{PROVIDERS.find(p => p.id === selectedMethod)?.label}</span></div>
                                     <div className="flex justify-between border-b border-gray-200/50 pb-1.5"><span className="text-gray-400">Amount Charged:</span> <span className="font-bold text-gray-900">${price}.00 USD</span></div>
                                     {mode === 'PLAN' ? (
-                                        <div className="flex justify-between"><span className="text-gray-400">Plan Upgraded:</span> <span className="font-bold text-[#5B35D5]">{planName}</span></div>
+                                        <div className="flex justify-between"><span className="text-gray-400">Plan Requested:</span> <span className="font-bold text-[#5B35D5]">{planName} (pending)</span></div>
                                     ) : (
                                         <div className="flex justify-between"><span className="text-gray-400">Balance Awarded:</span> <span className="font-bold text-[#5B35D5]">+{creditAmount} Credits</span></div>
                                     )}
@@ -575,18 +558,8 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                     </div>
                                     
                                     {tx.status === 'PENDING' ? (
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                            <div className="text-[9px] text-gray-400 italic">
-                                                Reviewing...
-                                            </div>
-                                            {/* Dev Fast-Approve Action */}
-                                            <button
-                                                onClick={(e) => handleSimulateApprove(tx.id, e)}
-                                                title="Simulate Admin Review Approval"
-                                                className="p-1 hover:bg-[#10B981]/10 text-gray-300 hover:text-[#10B981] rounded-md transition-all"
-                                            >
-                                                <Check className="w-3.5 h-3.5 stroke-[3px]" />
-                                            </button>
+                                        <div className="text-[9px] text-amber-600 italic flex-shrink-0 font-semibold">
+                                            Awaiting admin approval
                                         </div>
                                     ) : (
                                         <div className="text-[10px] text-gray-400 font-mono flex-shrink-0">
