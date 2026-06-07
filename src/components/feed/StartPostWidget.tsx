@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import ImageEditorModal from "@/components/feed/ImageEditorModal";
-import CustomEmojiPicker from "@/components/feed/CustomEmojiPicker";
+import { EmojiPicker } from "@/components/shared/EmojiPicker";
 
 interface StartPostWidgetProps {
     onPostCreated?: (content: string, pollOptions?: string[], imageUrl?: string) => void;
@@ -726,7 +726,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                     setIsEditorOpen(true);
                                                 }}
                                                 disabled={isUploading}
-                                                className="absolute top-2 left-2 bg-black/60 hover:bg-[#5B35D5] text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                className="absolute top-2 left-2 bg-white/90 hover:bg-[#5B35D5] text-[#374151] hover:text-white border border-[#E5E7EB] p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                                 title="Edit Image"
                                             >
                                                 <Edit className="w-3.5 h-3.5" />
@@ -736,7 +736,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                 type="button"
                                                 onClick={handleRemoveDraftImage}
                                                 disabled={isUploading}
-                                                className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                className="absolute top-2 right-2 bg-white/90 hover:bg-[#EF4444] text-[#374151] hover:text-white border border-[#E5E7EB] p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
@@ -809,7 +809,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             variant="ghost"
                                             size="icon"
                                             disabled={isUploading}
-                                            className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", showEmojiPicker ? "text-[#D97706] bg-[#FFFBEB] hover:bg-[#FFFBEB]" : "text-[#6B7280]")}
+                                            className={cn("rounded-full hover:bg-[#F3F4F6] w-9 h-9 animate-none", showEmojiPicker ? "text-[#5B35D5] bg-[#EAE6FD] hover:bg-[#EAE6FD]" : "text-[#6B7280]")}
                                             onMouseDown={(e) => {
                                                 // Capture cursor position on mousedown — BEFORE browser shifts focus away from the editor.
                                                 // This must happen on mousedown, not click, because mousedown fires first and can blur the editor.
@@ -1259,8 +1259,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <CustomEmojiPicker
-                            onEmojiSelect={(emoji) => {
+                        <EmojiPicker
+                            onSelect={(emoji) => {
                                 insertEmoji(emoji);
                                 setShowEmojiPicker(false);
                             }}

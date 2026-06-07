@@ -9,7 +9,7 @@ import {
     Smile, CornerUpLeft, Trash2, Copy, AlertCircle, Heart,
     ThumbsUp
 } from 'lucide-react';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { EmojiPicker } from '@/components/shared/EmojiPicker';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -476,8 +476,7 @@ export default function MessagesPage() {
                                         <PopoverContent className="w-auto p-0 border-none bg-transparent" side="top" align="end" sideOffset={10}>
                                             <div style={{ zIndex: 50, pointerEvents: 'auto' }}>
                                                 <EmojiPicker
-                                                    theme={Theme.LIGHT}
-                                                    onEmojiClick={(e: any) => setMessageInput(prev => prev + e.emoji)}
+                                                    onSelect={(emoji) => setMessageInput(prev => prev + emoji)}
                                                 />
                                             </div>
                                         </PopoverContent>

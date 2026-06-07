@@ -324,14 +324,14 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
                 showCloseButton={false}
-                className="w-[calc(100%-1rem)] sm:max-w-5xl p-0 overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row h-[85vh] max-h-[90vh] sm:max-h-[680px] outline-none rounded-2xl"
+                className="w-[calc(100%-1rem)] sm:max-w-5xl p-0 overflow-y-auto md:overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row h-[90vh] md:h-[85vh] max-h-[90vh] sm:max-h-[680px] outline-none rounded-2xl"
             >
                 <DialogTitle className="sr-only">Edit Uploaded Images</DialogTitle>
                 <DialogDescription className="sr-only">
                     Adjust crops, rotate, flip, tag community members, or add accessibility alt text to your images.
                 </DialogDescription>
                 {/* Main Image Editor Stage (Left) */}
-                <div className="flex-1 bg-[#111827] relative flex flex-col items-center justify-center p-4">
+                <div className="flex-shrink-0 h-[45vh] md:h-auto md:flex-1 bg-[#111827] relative flex flex-col items-center justify-center p-4">
                     {/* Stage Header */}
                     <div className="absolute top-4 left-4 z-20 text-white font-semibold text-sm drop-shadow-md">
                         Single Image Editor
@@ -346,7 +346,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                     </button>
 
                     {/* Editor Canvas Area */}
-                    <div className="w-full flex-1 relative flex items-center justify-center min-h-[350px]">
+                    <div className="w-full flex-1 relative flex items-center justify-center min-h-[200px] md:min-h-[350px]">
                         {sidebarTab === "crop" ? (
                             <div className="absolute inset-0 select-none">
                                 <Cropper
@@ -425,30 +425,30 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                         <div className="flex justify-center gap-6 mt-4 z-10 w-full">
                             <button 
                                 onClick={() => navigateSidebar("crop")}
-                                className="flex flex-col items-center gap-1 text-white/70 hover:text-white text-xs font-semibold px-4 py-2 hover:bg-white/5 rounded-xl transition-all"
+                                className="flex flex-col items-center gap-1 text-[#374151] hover:text-[#111827] text-xs font-semibold px-4 py-2 hover:bg-[#F3F4F6] rounded-xl transition-all"
                             >
-                                <div className="p-2.5 bg-white/10 rounded-full mb-1 group-hover:scale-110 transition-transform">
-                                    <Crop className="w-5 h-5 text-white" />
+                                <div className="p-2.5 bg-[#F3F4F6] border border-[#E5E7EB] rounded-full mb-1 group-hover:scale-110 transition-transform">
+                                    <Crop className="w-5 h-5 text-[#4B5563]" />
                                 </div>
                                 <span>Crop</span>
                             </button>
 
                             <button 
                                 onClick={() => navigateSidebar("tag")}
-                                className="flex flex-col items-center gap-1 text-white/70 hover:text-white text-xs font-semibold px-4 py-2 hover:bg-white/5 rounded-xl transition-all"
+                                className="flex flex-col items-center gap-1 text-[#374151] hover:text-[#111827] text-xs font-semibold px-4 py-2 hover:bg-[#F3F4F6] rounded-xl transition-all"
                             >
-                                <div className="p-2.5 bg-white/10 rounded-full mb-1">
-                                    <UserPlus className="w-5 h-5 text-white" />
+                                <div className="p-2.5 bg-[#F3F4F6] border border-[#E5E7EB] rounded-full mb-1">
+                                    <UserPlus className="w-5 h-5 text-[#4B5563]" />
                                 </div>
                                 <span>Tag</span>
                             </button>
 
                             <button 
                                 onClick={() => navigateSidebar("alt")}
-                                className="flex flex-col items-center gap-1 text-white/70 hover:text-white text-xs font-semibold px-4 py-2 hover:bg-white/5 rounded-xl transition-all"
+                                className="flex flex-col items-center gap-1 text-[#374151] hover:text-[#111827] text-xs font-semibold px-4 py-2 hover:bg-[#F3F4F6] rounded-xl transition-all"
                             >
-                                <div className="p-2.5 bg-white/10 rounded-full mb-1">
-                                    <FileText className="w-5 h-5 text-white" />
+                                <div className="p-2.5 bg-[#F3F4F6] border border-[#E5E7EB] rounded-full mb-1">
+                                    <FileText className="w-5 h-5 text-[#4B5563]" />
                                 </div>
                                 <span>ALT</span>
                             </button>
@@ -457,7 +457,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                 </div>
 
                 {/* Sidebar Workspace Controls (Right) */}
-                <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-[#E5E7EB] bg-[#F9FAFB] flex flex-col max-h-full">
+                <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-[#E5E7EB] bg-[#F9FAFB] flex flex-col flex-shrink-0 md:max-h-full">
                     
                     {/* Sidebar Sequencer Tab */}
                     {sidebarTab === "sequence" && (
