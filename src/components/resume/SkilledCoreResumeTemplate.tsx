@@ -18,283 +18,94 @@ const getLogoPath = () => {
   return '/logo.png';
 };
 
+/**
+ * ATS-friendly, single-column resume.
+ *
+ * Design rules for parser-safety:
+ * - SINGLE column flow (multi-column layouts get garbled by ATS readers).
+ * - Real selectable text everywhere (no text baked into images/graphics).
+ * - Standard section headings (Summary, Skills, Experience, Projects, Education).
+ * - Contact details and skills rendered as plain text lines (most reliably parsed).
+ * - No essential info in headers/footers (ATS often skips them).
+ * Brand identity is kept subtle: small logo by the name, a thin purple rule, purple
+ * headings/links — none of which interfere with text extraction.
+ */
+const PURPLE = '#5B35D5';
+const INK = '#141417';
+const BODY = '#2D2D35';
+const MUTED = '#6B6B78';
+const LINE = '#E8E8ED';
+
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 9,
-    paddingTop: 36,
-    paddingBottom: 40,
-    paddingHorizontal: 36,
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-  },
-  watermark: {
-    position: 'absolute',
-    top: '40%',
-    left: '50%',
-    marginLeft: -150,
-    marginTop: -150,
-    width: 300,
-    height: 300,
-    opacity: 0.03, // Extremely subtle watermark so it doesn't degrade text readability
-    zIndex: 0,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#5B35D5', // --sc-purple-600 (bold accent brand border)
-    paddingBottom: 16,
-    marginBottom: 20,
-    zIndex: 10,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerLogo: {
-    width: 36,
-    height: 36,
-    objectFit: 'contain',
-  },
-  headerTitleArea: {
-    flexDirection: 'column',
-  },
-  candidateName: {
-    fontSize: 24,
-    fontFamily: 'Helvetica-Bold',
-    color: '#141417', // --sc-gray-900 (crisp high contrast name)
-    letterSpacing: -0.5,
-  },
-  candidateHeadline: {
-    fontSize: 10,
-    color: '#5B35D5', // --sc-purple-600 (bold brand purple)
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginTop: 2,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
-  headerTagline: {
-    color: '#6B6B78', // --sc-gray-500
-    fontSize: 8.5,
-    fontFamily: 'Helvetica-Bold',
-    letterSpacing: 0.5,
-  },
-  mainLayout: {
-    flexDirection: 'row',
-    gap: 24,
-    flex: 1,
-    zIndex: 10,
-  },
-  leftColumn: {
-    width: '62%',
-    flexDirection: 'column',
-  },
-  rightColumn: {
-    width: '38%',
-    flexDirection: 'column',
-    borderLeftWidth: 1,
-    borderLeftColor: '#E8E8ED', // --sc-gray-150 (clean subtle separator)
-    paddingLeft: 16,
-  },
-  section: {
-    marginBottom: 16,
-  },
-  sectionHeading: {
     fontSize: 9.5,
+    paddingTop: 40,
+    paddingBottom: 48,
+    paddingHorizontal: 48,
+    backgroundColor: '#FFFFFF',
+    color: BODY,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderBottomWidth: 1.5,
+    borderBottomColor: PURPLE,
+    paddingBottom: 12,
+    marginBottom: 10,
+  },
+  logo: { width: 30, height: 30, objectFit: 'contain' },
+  name: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: INK, letterSpacing: -0.4 },
+  headline: { fontSize: 10, color: PURPLE, fontFamily: 'Helvetica-Bold', marginTop: 2 },
+  // Contact as a single wrapped text line near the top (ATS reads this reliably)
+  contactRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 18 },
+  contactText: { fontSize: 9, color: MUTED },
+  contactLink: { fontSize: 9, color: PURPLE, textDecoration: 'none' },
+  contactSep: { fontSize: 9, color: '#B8B8C0' },
+  section: { marginBottom: 14 },
+  heading: {
+    fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: '#141417', // --sc-gray-900 (crisp modern text)
+    color: INK,
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 8,
+    letterSpacing: 1,
+    marginBottom: 6,
     paddingBottom: 3,
     borderBottomWidth: 1,
-    borderBottomColor: '#EAE6FD', // --sc-purple-100 (subtle section underline)
+    borderBottomColor: LINE,
   },
-  bodyText: {
-    fontSize: 8.5,
-    color: '#2D2D35', // --sc-gray-700
-    lineHeight: 1.45,
-  },
-  contactItem: {
-    marginBottom: 8,
-  },
-  contactLabel: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#6B6B78', // --sc-gray-500
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  contactValue: {
-    fontSize: 8.5,
-    color: '#2D2D35', // --sc-gray-700
-  },
-  contactLink: {
-    fontSize: 8.5,
-    color: '#5B35D5', // --sc-purple-600
-    textDecoration: 'none',
-  },
-  jobContainer: {
-    marginBottom: 12,
-  },
-  jobHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 2,
-  },
-  jobCompany: {
-    fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#141417',
-  },
-  jobDate: {
-    fontSize: 8,
-    color: '#6B6B78',
-  },
-  jobTitle: {
-    fontSize: 8.5,
-    fontFamily: 'Helvetica-Oblique',
-    color: '#5B35D5',
-    marginBottom: 4,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    marginBottom: 3,
-    paddingLeft: 4,
-  },
-  bulletPoint: {
-    fontSize: 8,
-    color: '#5B35D5',
-    marginRight: 4,
-    marginTop: 1,
-  },
-  bulletText: {
-    fontSize: 8.2,
-    color: '#2D2D35',
-    flex: 1,
-    lineHeight: 1.35,
-  },
-  skillsWrapper: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
-  },
-  skillChip: {
-    backgroundColor: '#F5F3FF', // --sc-purple-50
+  body: { fontSize: 9.5, color: BODY, lineHeight: 1.45 },
+  itemHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 1 },
+  itemTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: INK },
+  itemDate: { fontSize: 9, color: MUTED },
+  itemSub: { fontSize: 9.5, fontFamily: 'Helvetica-Oblique', color: PURPLE, marginBottom: 4 },
+  bulletRow: { flexDirection: 'row', marginBottom: 3, paddingLeft: 2 },
+  bulletDot: { fontSize: 9, color: PURPLE, marginRight: 5, marginTop: 0.5 },
+  bulletText: { fontSize: 9.3, color: BODY, flex: 1, lineHeight: 1.4 },
+  itemBlock: { marginBottom: 10 },
+  techText: { fontSize: 9, color: MUTED, marginTop: 3 },
+  verifyBox: {
     borderWidth: 1,
-    borderColor: '#EAE6FD', // --sc-purple-100
+    borderColor: '#D4CCF8',
+    backgroundColor: '#F5F3FF',
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  skillText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#4A28C9', // --sc-purple-700
-  },
-  projectContainer: {
-    marginBottom: 10,
-  },
-  projectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 2,
-  },
-  projectName: {
-    fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#141417',
-  },
-  projectDescription: {
-    fontSize: 8.2,
-    color: '#2D2D35',
-    lineHeight: 1.4,
-    marginBottom: 4,
-  },
-  eduContainer: {
-    marginBottom: 10,
-  },
-  eduInstitution: {
-    fontSize: 8.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#141417',
-  },
-  eduDegree: {
-    fontSize: 8,
-    color: '#2D2D35',
-  },
-  eduDate: {
-    fontSize: 7.5,
-    color: '#6B6B78',
-    marginTop: 2,
-  },
-  interviewCard: {
-    backgroundColor: '#F5F3FF', // --sc-purple-50
-    borderWidth: 1,
-    borderColor: '#D4CCF8', // --sc-purple-200
-    borderRadius: 6,
     padding: 8,
-    marginTop: 2,
   },
-  interviewTitle: {
-    fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
-    color: '#4A28C9', // --sc-purple-700
-    marginBottom: 3,
-  },
-  interviewScore: {
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: '#141417',
-    marginBottom: 2,
-  },
-  badgeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
-  },
-  badgeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4', // bg-badge-success tint
-    borderWidth: 1,
-    borderColor: '#DCFCE7', // bg-badge-success border
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  badgeText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#15803D', // text-badge-success dark green
-  },
+  verifyTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#4A28C9', marginBottom: 3 },
+  verifyText: { fontSize: 9, color: BODY, lineHeight: 1.4 },
   footer: {
     position: 'absolute',
-    bottom: 14,
-    left: 36,
-    right: 36,
+    bottom: 18,
+    left: 48,
+    right: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#E8E8ED',
+    borderTopColor: LINE,
     paddingTop: 6,
-    zIndex: 10,
   },
-  footerText: {
-    fontSize: 7,
-    color: '#909099',
-  },
+  footerText: { fontSize: 7.5, color: '#909099' },
 });
 
 interface SkilledCoreResumeTemplateProps {
@@ -337,219 +148,140 @@ interface SkilledCoreResumeTemplateProps {
 export function SkilledCoreResumeTemplate({ data }: SkilledCoreResumeTemplateProps) {
   const logoSrc = getLogoPath();
 
+  // Build a flat, parser-friendly contact list.
+  const contactParts: { text: string; url?: string }[] = [];
+  if (data.location) contactParts.push({ text: data.location });
+  if (data.email) contactParts.push({ text: data.email, url: `mailto:${data.email}` });
+  if (data.phone) contactParts.push({ text: data.phone });
+  (data.socials || []).forEach((s) => contactParts.push({ text: s.label, url: s.url }));
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Subtle Watermark on background */}
-        <Image src={logoSrc} style={styles.watermark} />
-
-        {/* Modern High-Contrast Header (Logo Next to Name) */}
-        <View style={styles.headerContainer}>
-          <View style={styles.headerLeft}>
-            <Image src={logoSrc} style={styles.headerLogo} />
-            <View style={styles.headerTitleArea}>
-              <Text style={styles.candidateName}>{data.name}</Text>
-              <Text style={styles.candidateHeadline}>{data.headline}</Text>
-            </View>
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.headerTagline}>skilledcore.com</Text>
+        {/* Header — small logo + name + headline (real text, single column) */}
+        <View style={styles.header}>
+          <Image src={logoSrc} style={styles.logo} />
+          <View>
+            <Text style={styles.name}>{data.name}</Text>
+            {data.headline ? <Text style={styles.headline}>{data.headline}</Text> : null}
           </View>
         </View>
 
-        {/* Asymmetrical Two-Column Main Layout */}
-        <View style={styles.mainLayout}>
-          
-          {/* Left Column (62% width): Experience, Summary, Projects */}
-          <View style={styles.leftColumn}>
-            
-            {/* 1. Summary */}
-            {data.summary && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Professional Summary</Text>
-                <Text style={styles.bodyText}>{data.summary}</Text>
-              </View>
-            )}
-
-            {/* 2. Experience */}
-            {data.experience && data.experience.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Experience</Text>
-                {data.experience.map((job, index) => (
-                  <View key={index} style={styles.jobContainer}>
-                    <View style={styles.jobHeader}>
-                      <Text style={styles.jobCompany}>{job.company}</Text>
-                      <Text style={styles.jobDate}>
-                        {job.startDate} – {job.endDate}
-                      </Text>
-                    </View>
-                    <Text style={styles.jobTitle}>
-                      {job.title}
-                      {job.location ? ` · ${job.location}` : ''}
-                    </Text>
-                    {job.bullets?.map((bullet, bulletIndex) => (
-                      <View key={bulletIndex} style={styles.bulletRow}>
-                        <Text style={styles.bulletPoint}>•</Text>
-                        <Text style={styles.bulletText}>{bullet}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* 3. Projects */}
-            {data.projects && data.projects.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Projects</Text>
-                {data.projects.map((project, index) => (
-                  <View key={index} style={styles.projectContainer}>
-                    <View style={styles.projectHeader}>
-                      <Text style={styles.jobCompany}>{project.name}</Text>
-                      {project.url && (
-                        <Link src={project.url} style={styles.contactLink}>
-                          Link
-                        </Link>
-                      )}
-                    </View>
-                    <Text style={styles.projectDescription}>
-                      {project.description}
-                    </Text>
-                    <View style={styles.skillsWrapper}>
-                      {project.technologies?.map((tech, techIndex) => (
-                        <View key={techIndex} style={styles.skillChip}>
-                          <Text style={styles.skillText}>{tech}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
+        {/* Contact line */}
+        {contactParts.length > 0 && (
+          <View style={styles.contactRow}>
+            {contactParts.map((c, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <Text style={styles.contactSep}>·</Text>}
+                {c.url ? (
+                  <Link src={c.url} style={styles.contactLink}>{c.text}</Link>
+                ) : (
+                  <Text style={styles.contactText}>{c.text}</Text>
+                )}
+              </React.Fragment>
+            ))}
           </View>
+        )}
 
-          {/* Right Column (38% width): Contact, Skills, Education, AI Credentials */}
-          <View style={styles.rightColumn}>
-            
-            {/* 1. Contact Information */}
-            <View style={styles.section}>
-              <Text style={styles.sectionHeading}>Contact Details</Text>
-              
-              {data.location && (
-                <View style={styles.contactItem}>
-                  <Text style={styles.contactLabel}>Location</Text>
-                  <Text style={styles.contactValue}>{data.location}</Text>
-                </View>
-              )}
-              
-              {data.email && (
-                <View style={styles.contactItem}>
-                  <Text style={styles.contactLabel}>Email</Text>
-                  <Text style={styles.contactValue}>{data.email}</Text>
-                </View>
-              )}
-              
-              {data.phone && (
-                <View style={styles.contactItem}>
-                  <Text style={styles.contactLabel}>Phone</Text>
-                  <Text style={styles.contactValue}>{data.phone}</Text>
-                </View>
-              )}
+        {/* Summary */}
+        {data.summary ? (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Summary</Text>
+            <Text style={styles.body}>{data.summary}</Text>
+          </View>
+        ) : null}
 
-              {data.socials && data.socials.length > 0 && (
-                <View style={styles.contactItem}>
-                  <Text style={styles.contactLabel}>Social Networks</Text>
-                  {data.socials.map((social, index) => (
-                    <View key={index} style={{ marginBottom: 3 }}>
-                      <Link src={social.url} style={styles.contactLink}>
-                        {social.label}
-                      </Link>
-                    </View>
-                  ))}
+        {/* Skills — comma-separated for reliable keyword parsing */}
+        {data.skills && data.skills.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Skills</Text>
+            <Text style={styles.body}>{data.skills.join(', ')}</Text>
+          </View>
+        )}
+
+        {/* Experience */}
+        {data.experience && data.experience.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Experience</Text>
+            {data.experience.map((job, i) => (
+              <View key={i} style={styles.itemBlock} wrap={false}>
+                <View style={styles.itemHeaderRow}>
+                  <Text style={styles.itemTitle}>{job.title}</Text>
+                  <Text style={styles.itemDate}>{job.startDate} – {job.endDate}</Text>
                 </View>
+                <Text style={styles.itemSub}>
+                  {job.company}{job.location ? ` · ${job.location}` : ''}
+                </Text>
+                {job.bullets?.map((b, bi) => (
+                  <View key={bi} style={styles.bulletRow}>
+                    <Text style={styles.bulletDot}>•</Text>
+                    <Text style={styles.bulletText}>{b}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Projects */}
+        {data.projects && data.projects.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Projects</Text>
+            {data.projects.map((p, i) => (
+              <View key={i} style={styles.itemBlock} wrap={false}>
+                <View style={styles.itemHeaderRow}>
+                  <Text style={styles.itemTitle}>{p.name}</Text>
+                  {p.url ? <Link src={p.url} style={styles.contactLink}>{p.url}</Link> : null}
+                </View>
+                <Text style={styles.body}>{p.description}</Text>
+                {p.technologies && p.technologies.length > 0 && (
+                  <Text style={styles.techText}>Technologies: {p.technologies.join(', ')}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Education */}
+        {data.education && data.education.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Education</Text>
+            {data.education.map((edu, i) => (
+              <View key={i} style={styles.itemBlock} wrap={false}>
+                <View style={styles.itemHeaderRow}>
+                  <Text style={styles.itemTitle}>{edu.institution}</Text>
+                  <Text style={styles.itemDate}>{edu.startYear} – {edu.endYear}</Text>
+                </View>
+                <Text style={styles.body}>
+                  {edu.degree}{edu.honors ? ` · ${edu.honors}` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* SkilledCore verification — kept last, as plain text */}
+        {(data.aiInterviewScore || (data.verifiedBadges && data.verifiedBadges.length > 0)) && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>SkilledCore Verification</Text>
+            <View style={styles.verifyBox}>
+              <Text style={styles.verifyTitle}>SkilledCore Verified</Text>
+              {data.aiInterviewScore ? (
+                <Text style={styles.verifyText}>AI Interview Score: {data.aiInterviewScore}</Text>
+              ) : null}
+              {data.verifiedBadges && data.verifiedBadges.length > 0 && (
+                <Text style={styles.verifyText}>Verified skills: {data.verifiedBadges.join(', ')}</Text>
               )}
             </View>
-
-            {/* 2. Skills */}
-            {data.skills && data.skills.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Skills</Text>
-                <View style={styles.skillsWrapper}>
-                  {data.skills.map((skill, index) => (
-                    <View key={index} style={styles.skillChip}>
-                      <Text style={styles.skillText}>{skill}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* 3. Education */}
-            {data.education && data.education.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Education</Text>
-                {data.education.map((edu, index) => (
-                  <View key={index} style={styles.eduContainer}>
-                    <Text style={styles.eduInstitution}>{edu.institution}</Text>
-                    <Text style={styles.eduDegree}>
-                      {edu.degree}
-                      {edu.honors ? ` · ${edu.honors}` : ''}
-                    </Text>
-                    <Text style={styles.eduDate}>
-                      {edu.startYear} – {edu.endYear}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* 4. AI Assessment (Vetted Score Card) */}
-            {data.aiInterviewScore && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>AI Assessment</Text>
-                <View style={styles.interviewCard}>
-                  <Text style={styles.interviewTitle}>
-                    ✓ SKILLEDCORE VERIFIED
-                  </Text>
-                  <Text style={styles.interviewScore}>
-                    Score: {data.aiInterviewScore}
-                  </Text>
-                  <Text style={{ ...styles.bodyText, fontSize: 7.5, color: '#6B6B78' }}>
-                    Verified by technical challenge and live system assessment.
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* 5. Verified Credentials (Security Badges) */}
-            {data.verifiedBadges && data.verifiedBadges.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Credentials</Text>
-                <View style={styles.badgeContainer}>
-                  {data.verifiedBadges.map((badge, index) => (
-                    <View key={index} style={styles.badgeChip}>
-                      <Text style={styles.badgeText}>🛡 {badge}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
           </View>
+        )}
 
-        </View>
-
-        {/* Modern Sticky Page Footer */}
+        {/* Footer — non-essential info only (ATS may ignore) */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>
-            Generated via SkilledCore · skilledcore.com
-          </Text>
+          <Text style={styles.footerText}>Generated via SkilledCore · skilledcore.com</Text>
           <Text
             style={styles.footerText}
-            render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} of ${totalPages}`
-            }
+            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
           />
         </View>
       </Page>
