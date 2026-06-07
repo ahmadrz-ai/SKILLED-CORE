@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2, X } from "lucide-react";
+import { Camera, CheckCircle2, CloudUpload, FileText, Github, Globe, Link as LinkIcon, Linkedin, MapPin, MessageSquare, Pencil, Plus, Sparkles, Trash2, Users, Eye, MoreHorizontal, UserPlus, Send, Flag, Download, Share2, BadgeCheck, FolderOpen, Star, StarHalf, ArrowRight, Loader2, Lock, X } from "lucide-react";
+import { RecruiterGate } from "@/components/hire/RecruiterGate";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSession } from "next-auth/react";
@@ -64,9 +65,10 @@ interface ProfileClientProps {
         following: number;
     };
     isAdmin?: boolean;
+    isRestrictedViewer?: boolean;
 }
 
-export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false }: ProfileClientProps) {
+export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false, isRestrictedViewer = false }: ProfileClientProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'interviews'>('overview');
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -91,6 +93,10 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         return searchParams.get('builder') === 'open';
     });
     const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+
+    // Recruiter access gate (book-interview-to-unlock) + real PDF export state
+    const [gateAction, setGateAction] = useState<string | null>(null);
+    const [isSavingPdf, setIsSavingPdf] = useState(false);
 
     // Sync builder open state from URL search params (Task 6)
     useEffect(() => {
@@ -138,6 +144,79 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     try {
         if (user.customLinks) parsedLinks = JSON.parse(user.customLinks);
     } catch { parsedLinks = []; }
+
+    const candidateForGate = {
+        id: user.id,
+        name: user.name || 'This candidate',
+        image: user.image,
+        headline: user.headline,
+        location: user.location,
+    };
+
+    // Build resume data from the loaded profile and generate a real, text-based PDF
+    // via the SkilledCore template (replaces the old window.print() screenshot).
+    const buildResumeData = () => ({
+        name: user.name || '',
+        headline: user.headline || '',
+        location: user.location || '',
+        email: '',
+        phone: '',
+        summary: user.bio || '',
+        socials: [
+            ...(user.linkedin ? [{ label: 'LinkedIn', url: user.linkedin }] : []),
+            ...(user.github ? [{ label: 'GitHub', url: user.github }] : []),
+            ...parsedLinks.map((l) => ({ label: l.title, url: l.url })),
+        ],
+        experience: (user.experience || []).map((e: any) => ({
+            title: e.position || e.title || '',
+            company: e.company || '',
+            location: e.location || '',
+            startDate: e.startDate || '',
+            endDate: e.endDate || 'Present',
+            bullets: e.description ? [e.description] : [],
+        })),
+        education: (user.education || []).map((e: any) => ({
+            degree: e.degree || '',
+            institution: e.school || e.institution || '',
+            startYear: e.startDate || e.startYear || '',
+            endYear: e.endDate || e.endYear || '',
+            honors: e.honors || '',
+        })),
+        skills: parsedSkills,
+        projects: (user.projects || []).map((p: any) => ({
+            name: p.title || p.name || '',
+            description: p.description || '',
+            technologies: p.technologies || [],
+            url: p.link || p.url || '',
+        })),
+        aiInterviewScore: null,
+        verifiedBadges: [],
+    });
+
+    const handleSaveToPdf = async () => {
+        try {
+            setIsSavingPdf(true);
+            const res = await fetch('/api/resume-export/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resumeData: buildResumeData() }),
+            });
+            if (!res.ok) throw new Error('Failed to generate PDF');
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${(user.name || 'profile').replace(/\s+/g, '_')}_SkilledCore.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch {
+            toast.error('Could not generate the PDF. Please try again.');
+        } finally {
+            setIsSavingPdf(false);
+        }
+    };
 
     // Helper to render brand icons
     const renderLinkIcon = (iconName?: string) => {
@@ -494,6 +573,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     </>
                                 ) : (
                                     <div className="flex flex-col gap-2">
+                                        {isRestrictedViewer ? (
+                                            <Button
+                                                className="w-full bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold py-2 shadow-sm"
+                                                onClick={() => router.push(`/hire?book=${user.id}`)}
+                                            >
+                                                <Lock className="w-4 h-4 mr-2" /> Book Interview
+                                            </Button>
+                                        ) : (
                                         <div className="flex gap-2">
                                             {/* PRIMARY ACTION LOGIC */}
                                             {connStatus === 'CONNECTED' ? (
@@ -540,6 +627,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 </>
                                             )}
                                         </div>
+                                        )}
                                         {/* MORE MENU & VIEW RESUME */}
                                         <div className="flex gap-2">
                                             <DropdownMenu>
@@ -555,8 +643,11 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => setEditSection('share')}>
                                                         <Share2 className="w-4 h-4 text-slate-400" /> Share Profile
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => window.print()}>
-                                                        <Download className="w-4 h-4 text-slate-400" /> Save to PDF
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700"
+                                                        onClick={() => isRestrictedViewer ? setGateAction('download this resume') : handleSaveToPdf()}
+                                                    >
+                                                        <Download className="w-4 h-4 text-slate-400" /> {isSavingPdf ? 'Preparing PDF…' : 'Save to PDF'}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650">
                                                         <Flag className="w-4 h-4 text-red-500" /> Report User
@@ -566,15 +657,25 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                             {/* Resume View for Visitors - Only show for Candidates with resume */}
                                             {user.role !== 'RECRUITER' && user.resumeUrl && (
-                                                <Button
-                                                    variant="outline"
-                                                    asChild
-                                                    className="flex-1 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-semibold transition-all"
-                                                >
-                                                    <Link href={user.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                                        <FileText className="w-4 h-4 mr-2 text-slate-500" /> View Resume
-                                                    </Link>
-                                                </Button>
+                                                isRestrictedViewer ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setGateAction('view this resume')}
+                                                        className="flex-1 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-semibold transition-all"
+                                                    >
+                                                        <Lock className="w-4 h-4 mr-2 text-slate-500" /> View Resume
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        asChild
+                                                        className="flex-1 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 shadow-sm font-semibold transition-all"
+                                                    >
+                                                        <Link href={user.resumeUrl} target="_blank" rel="noopener noreferrer">
+                                                            <FileText className="w-4 h-4 mr-2 text-slate-500" /> View Resume
+                                                        </Link>
+                                                    </Button>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -597,7 +698,18 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                             )}
 
                             <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">Connect</h3>
-                            <div className="space-y-3">
+                            <div className="relative">
+                            {isRestrictedViewer && (user.linkedin || user.github || parsedLinks.length > 0) && (
+                                <button
+                                    onClick={() => setGateAction('view contact & social links')}
+                                    className="absolute inset-0 z-10 flex items-center justify-center rounded-lg"
+                                >
+                                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-sc-purple-600 px-3 py-2 text-xs font-semibold text-white shadow-sm">
+                                        <Lock className="w-3.5 h-3.5" /> Book interview to view
+                                    </span>
+                                </button>
+                            )}
+                            <div className={cn("space-y-3", isRestrictedViewer && (user.linkedin || user.github || parsedLinks.length > 0) && "blur-sm pointer-events-none select-none")}>
                                 {user.linkedin && (
                                     <Link href={user.linkedin} target="_blank" className="block">
                                         <Button variant="outline" className="w-full justify-start border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-body)] hover:text-[var(--text-heading)] font-semibold shadow-sm rounded-lg flex items-center gap-1.5 p-2">
@@ -622,6 +734,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 {(!user.linkedin && !user.github && parsedLinks.length === 0) && (
                                     <p className="text-[var(--text-secondary)] text-xs italic font-medium">No links added.</p>
                                 )}
+                            </div>
                             </div>
                         </div>
 
@@ -981,6 +1094,13 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                     </div>
                 </div>
             </div>
+
+            <RecruiterGate
+                open={!!gateAction}
+                onClose={() => setGateAction(null)}
+                candidate={candidateForGate}
+                action={gateAction || undefined}
+            />
         </div>
     );
 }

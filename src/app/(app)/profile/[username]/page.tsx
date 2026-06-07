@@ -76,11 +76,13 @@ export default async function ProfilePage({ params }: PageProps) {
         console.log("ProfilePage: Username", username);
 
         let isAdmin = false;
+        let callerRole: string | null = null;
         if (session?.user?.id) {
             const caller = await prisma.user.findUnique({
                 where: { id: session.user.id },
                 select: { role: true }
             });
+            callerRole = caller?.role ?? null;
             isAdmin = caller?.role === "ADMIN" || caller?.role === "Admin";
         }
 
@@ -181,6 +183,12 @@ export default async function ProfilePage({ params }: PageProps) {
             connectionStatus = await getConnectionStatus(user.id) as any;
         }
 
+        // Recruiters must book interviews to access a candidate's resume / socials /
+        // direct contact. Candidates and admins are never restricted; viewing your own
+        // profile or another recruiter is unrestricted.
+        const isRestrictedViewer =
+            callerRole === "RECRUITER" && !isOwner && !isAdmin && user.role !== "RECRUITER";
+
         console.log("ProfilePage: Rendering client");
         return (
             <ProfileClient
@@ -191,6 +199,7 @@ export default async function ProfilePage({ params }: PageProps) {
                 posts={user.posts || []}
                 counts={user._count || { followers: 0, following: 0 }}
                 isAdmin={isAdmin}
+                isRestrictedViewer={isRestrictedViewer}
             />
         );
     } catch (e: any) {
