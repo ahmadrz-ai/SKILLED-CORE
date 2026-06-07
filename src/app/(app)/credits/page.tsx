@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { getCredits, getPlan } from "@/app/actions/credits";
 import { Loader2 } from "lucide-react";
 import { PaymentModal } from "@/components/credits/PaymentModal";
+import { CancelPlanModal } from "@/components/credits/CancelPlanModal";
 
 const PlanCard = ({ plan, currentPlan, onSuccess }: any) => {
     const isPro = plan.name === "PRO";
@@ -108,6 +109,7 @@ export default function CreditsPage() {
     const [credits, setCredits] = useState<number | null>(null);
     const [plan, setPlan] = useState<string>("BASIC");
     const [loading, setLoading] = useState(true);
+    const [cancelOpen, setCancelOpen] = useState(false);
 
     const fetchData = async () => {
         const [bal, p] = await Promise.all([getCredits(), getPlan()]);
@@ -187,6 +189,25 @@ export default function CreditsPage() {
                 </div>
             </div>
 
+            {/* Subscription management (premium, minimal) — only when on a paid plan */}
+            {plan !== 'BASIC' && (
+                <div className="bg-bg-card border border-border-card rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sc-card">
+                    <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">Your subscription</p>
+                        <p className="text-base font-bold text-text-heading mt-1">
+                            {plan} plan · <span className="text-text-success">Active</span>
+                        </p>
+                        <p className="text-xs text-text-secondary mt-0.5">Renews monthly · cancel anytime.</p>
+                    </div>
+                    <button
+                        onClick={() => setCancelOpen(true)}
+                        className="text-sm font-semibold text-text-secondary hover:text-sc-red-600 transition-colors"
+                    >
+                        Cancel subscription
+                    </button>
+                </div>
+            )}
+
             {/* Plans display grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                 {PLANS.map((p, i) => (
@@ -233,6 +254,12 @@ export default function CreditsPage() {
                 </div>
             </div>
 
+            <CancelPlanModal
+                open={cancelOpen}
+                onClose={() => setCancelOpen(false)}
+                planName={plan}
+                onCancelled={fetchData}
+            />
         </div>
     );
 }

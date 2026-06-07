@@ -587,3 +587,15 @@ model InterviewTelemetry {
   @@unique([interviewId, messageIndex])
 }
 
+// LinkedIn-style cancellation feedback collected when a user cancels their plan.
+model CancellationFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  plan      String
+  reason    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+

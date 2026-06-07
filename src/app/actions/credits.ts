@@ -83,6 +83,46 @@ export async function getPlan() {
     }
 }
 
+export async function cancelSubscription(reason: string, detail?: string): Promise<{ success: boolean }> {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { plan: true },
+        });
+
+        // Record the LinkedIn-style cancellation feedback (best-effort; table is created
+        // by the deploy build's prisma db push).
+        try {
+            await prisma.cancellationFeedback.create({
+                data: {
+                    userId: session.user.id,
+                    plan: user?.plan || "BASIC",
+                    reason,
+                    detail: detail?.trim() || null,
+                },
+            });
+        } catch (feedbackErr) {
+            console.error("Cancellation feedback save failed (non-fatal):", feedbackErr);
+        }
+
+        // Downgrade to the free tier. (Real proration/billing happens in Round C / Stripe.)
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { plan: "BASIC" },
+        });
+
+        revalidatePath("/credits");
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error) {
+        console.error("Cancel Subscription Error:", error);
+        return { success: false };
+    }
+}
+
 export async function upgradePlan(plan: "BASIC" | "PRO" | "ULTRA") {
     const session = await auth();
     if (!session?.user?.id) return;
