@@ -509,7 +509,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
  
                     {/* The Posting Dialog */}
                     <DialogContent
-                        className="bg-white border-[#E5E7EB] text-[#111827] sm:max-w-4xl p-0 overflow-visible shadow-xl"
+                        className="bg-white border-[#E5E7EB] text-[#111827] w-[calc(100%-1rem)] sm:max-w-4xl p-0 overflow-visible shadow-xl"
                         onOpenAutoFocus={(e) => {
                             e.preventDefault();
                             editorRef.current?.focus();
@@ -785,7 +785,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                             }
                                         }}
                                         onClick={() => insertEmoji(" @")}
-                                        className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
+                                        className="text-[#5B35D5] hover:bg-[#EAE6FD] font-bold px-2.5 rounded-full text-xs h-8 animate-none"
                                     >
                                         @ Mention
                                     </Button>
@@ -907,7 +907,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
 
                         {/* Beautiful Custom Insert Link Dialog Overlay (Absolute constrained inside DialogContent portal) */}
                         {isLinkDialogOpen && (
-                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
+                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#5B35D5]/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
                                 <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-[#111827] transform scale-100 transition-all border-t-4 border-t-[#5B35D5] z-50">
                                     <h3 className="text-base font-extrabold text-[#111827] mb-4 tracking-tight flex items-center gap-2">
                                         <Link2 className="w-4.5 h-4.5 text-[#5B35D5]" />
@@ -976,9 +976,9 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                         setIsOpen(true);
                         setTimeout(() => fileInputRef.current?.click(), 250);
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#EFF6FF] transition-all duration-200 text-[#6B7280] hover:text-[#2563EB] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl hover:bg-[#EAE6FD] transition-all duration-200 text-[#6B7280] hover:text-[#5B35D5] font-semibold text-xs sm:text-sm group flex-1 cursor-pointer"
                 >
-                    <ImageIcon className="w-5 h-5 text-[#2563EB] group-hover:scale-110 transition-transform duration-200" />
+                    <ImageIcon className="w-5 h-5 text-[#5B35D5] group-hover:scale-110 transition-transform duration-200" />
                     <span>Media</span>
                 </button>
  

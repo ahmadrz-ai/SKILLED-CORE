@@ -97,7 +97,7 @@ export function LandingFooter() {
                     <Link
                       href={link.href}
                       style={{ color: "#475569", fontSize: "14px" }}
-                      className="transition-colors duration-150 font-medium hover:text-[#4A28C9]"
+                      className="transition-colors duration-150 font-medium hover:text-[#5B35D5]"
                     >
                       {link.label}
                     </Link>
@@ -117,7 +117,7 @@ export function LandingFooter() {
                 <a
                   href="mailto:contact@skilledcore.com"
                   style={{ color: "#475569", fontSize: "14px" }}
-                  className="transition-colors duration-150 font-medium hover:text-[#4A28C9]"
+                  className="transition-colors duration-150 font-medium hover:text-[#5B35D5]"
                 >
                   contact@skilledcore.com
                 </a>
@@ -126,7 +126,7 @@ export function LandingFooter() {
                 <Link
                   href="/support"
                   style={{ color: "#475569", fontSize: "14px" }}
-                  className="transition-colors duration-150 font-medium hover:text-[#4A28C9]"
+                  className="transition-colors duration-150 font-medium hover:text-[#5B35D5]"
                 >
                   Support Center
                 </Link>
@@ -144,9 +144,9 @@ export function LandingFooter() {
             © {new Date().getFullYear()} SkilledCore. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
-            <Link href="/legal/privacy-policy" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4A28C9]">Privacy</Link>
-            <Link href="/legal/user-agreement" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4A28C9]">Terms</Link>
-            <Link href="/accessibility" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#4A28C9]">Accessibility</Link>
+            <Link href="/legal/privacy-policy" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#5B35D5]">Privacy</Link>
+            <Link href="/legal/user-agreement" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#5B35D5]">Terms</Link>
+            <Link href="/accessibility" style={{ color: "#64748B", fontSize: "13px" }} className="transition-colors font-medium hover:text-[#5B35D5]">Accessibility</Link>
           </div>
         </div>
       </div>

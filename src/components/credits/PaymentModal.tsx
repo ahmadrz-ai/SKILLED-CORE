@@ -35,8 +35,8 @@ interface PaymentModalProps {
 }
 
 const PROVIDERS = [
-    { id: 'CARD', label: 'Credit Card', icon: CreditCard, color: 'text-blue-500', desc: 'Instant activation' },
-    { id: 'PAYONEER', label: 'Payoneer', icon: Wallet, color: 'text-indigo-500', desc: 'Manual review' },
+    { id: 'CARD', label: 'Credit Card', icon: CreditCard, color: 'text-sc-purple-600', desc: 'Instant activation' },
+    { id: 'PAYONEER', label: 'Payoneer', icon: Wallet, color: 'text-sc-purple-600', desc: 'Manual review' },
     { id: 'ALFALAH', label: 'Bank Account', icon: Building2, color: 'text-emerald-500', desc: 'Manual review' },
     { id: 'JAZZCASH', label: 'JazzCash', icon: Smartphone, color: 'text-amber-500', desc: 'Manual review' }
 ];
@@ -419,7 +419,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3.5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-bold uppercase text-gray-400">Expiration Date</label>
                                                 <Input

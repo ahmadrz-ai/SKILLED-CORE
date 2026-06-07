@@ -324,7 +324,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
                 showCloseButton={false}
-                className="sm:max-w-5xl p-0 overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row h-[80vh] max-h-[680px] outline-none rounded-2xl"
+                className="w-[calc(100%-1rem)] sm:max-w-5xl p-0 overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row h-[85vh] max-h-[90vh] sm:max-h-[680px] outline-none rounded-2xl"
             >
                 <DialogTitle className="sr-only">Edit Uploaded Images</DialogTitle>
                 <DialogDescription className="sr-only">
@@ -724,12 +724,12 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                         {activeImg.tags.map((t) => (
                                             <div 
                                                 key={t.userId}
-                                                className="flex items-center gap-1 bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold pl-2 pr-1.5 py-0.5 rounded-full border border-indigo-100 shadow-sm"
+                                                className="flex items-center gap-1 bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold pl-2 pr-1.5 py-0.5 rounded-full border border-[#B4A3F3] shadow-sm"
                                             >
                                                 <span>{t.name}</span>
                                                 <button 
                                                     onClick={() => handleRemoveTag(t.userId)}
-                                                    className="hover:text-red-500 hover:bg-indigo-100/50 p-0.5 rounded-full transition-colors ml-0.5"
+                                                    className="hover:text-red-500 hover:bg-[#B4A3F3]/50 p-0.5 rounded-full transition-colors ml-0.5"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>

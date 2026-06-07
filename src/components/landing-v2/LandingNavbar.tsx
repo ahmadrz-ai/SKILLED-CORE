@@ -74,7 +74,7 @@ export function LandingNavbar() {
               href="/register"
               className="px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
               style={{
-                background: "#4A28C9",
+                background: "var(--sc-purple-600)",
                 color: "#FFFFFF",
               }}
             >
@@ -115,7 +115,7 @@ export function LandingNavbar() {
                 href="/register"
                 onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2.5 text-sm font-semibold text-center rounded-lg transition-colors"
-                style={{ background: "#4A28C9", color: "#FFFFFF" }}
+                style={{ background: "var(--sc-purple-600)", color: "#FFFFFF" }}
               >
                 Get Started
               </Link>

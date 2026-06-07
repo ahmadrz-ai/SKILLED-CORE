@@ -523,7 +523,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 const punctuation = word.substring(cleanTag.length);
                 return (
                     <span key={key}>
-                        <Link href={`/search?q=${encodeURIComponent(cleanTag)}`} className="text-blue-500 hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/search?q=${encodeURIComponent(cleanTag)}`} className="text-[#5B35D5] hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
                             {cleanTag}
                         </Link>
                         {punctuation}
@@ -547,7 +547,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 const href = cleanUrl.startsWith("http") ? cleanUrl : `https://${cleanUrl}`;
                 return (
                     <span key={key}>
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium break-all" onClick={(e) => e.stopPropagation()}>
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#5B35D5] hover:underline font-medium break-all" onClick={(e) => e.stopPropagation()}>
                             {cleanUrl}
                         </a>
                         {punctuation}
@@ -595,7 +595,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 <span className="flex items-center px-1.5 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] text-[10px] font-bold uppercase border border-[#DDD6FE] leading-none">ADMIN</span>
                             )}
                             {post.author.role === 'RECRUITER' && (
-                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EFF6FF] text-[#2563EB] text-[10px] font-bold uppercase border border-[#BFDBFE] leading-none">RECRUITER</span>
+                                <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold uppercase border border-[#B4A3F3] leading-none">RECRUITER</span>
                             )}
                             {post.author.isHiring && (
                                 <span className="flex items-center px-1.5 py-0.5 rounded bg-[#EAE6FD] text-[#5B35D5] text-[10px] font-bold uppercase border border-[#B4A3F3] leading-none">Hiring</span>
@@ -663,7 +663,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 {/* ── Upgraded WYSIWYG Edit Dialog ── */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                     <DialogContent
-                        className="bg-white border-[#E5E7EB] sm:max-w-2xl p-0 overflow-visible shadow-2xl"
+                        className="bg-white border-[#E5E7EB] w-[calc(100%-1rem)] sm:max-w-2xl p-0 overflow-visible shadow-2xl"
                         onOpenAutoFocus={(e) => { e.preventDefault(); editEditorRef.current?.focus(); }}
                     >
                         {/* Header */}
@@ -814,7 +814,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             }
                                         }}
                                         onClick={() => insertEditText(" @")}
-                                        className="text-[#2563EB] hover:bg-[#EFF6FF] font-bold px-2 rounded-full text-xs h-8">
+                                        className="text-[#5B35D5] hover:bg-[#EAE6FD] font-bold px-2 rounded-full text-xs h-8">
                                         @ Mention
                                     </Button>
 
@@ -874,7 +874,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
                         {/* Insert Link overlay */}
                         {editIsLinkDialogOpen && (
-                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-indigo-900/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
+                            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#5B35D5]/10 backdrop-blur-[2px] p-4 rounded-2xl animate-in fade-in duration-200">
                                 <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xl max-w-xs w-full p-5 text-[#111827] border-t-4 border-t-[#5B35D5]">
                                     <h3 className="text-sm font-extrabold text-[#111827] mb-4 flex items-center gap-2">
                                         <Link2 className="w-4 h-4 text-[#5B35D5]" /> Insert link
@@ -1275,7 +1275,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                 <div className="flex items-center gap-0.5 mt-3 pt-3 border-t border-[#F3F4F6]">
                     <button onClick={handleLike}
                         className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all font-medium cursor-pointer",
-                            isLiked ? "text-[#2563EB] bg-[#EFF6FF]" : "text-[#6B7280] md:hover:text-[#2563EB] md:hover:bg-[#EFF6FF]")}>
+                            isLiked ? "text-[#5B35D5] bg-[#EAE6FD]" : "text-[#6B7280] md:hover:text-[#5B35D5] md:hover:bg-[#EAE6FD]")}>
                         <ThumbsUp className={cn("w-3.5 h-3.5", isLiked && "fill-current")} />
                         <span>{likesCount}</span>
                     </button>
@@ -1290,7 +1290,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
                     </button>
                     <button onClick={() => setIsShareModalOpen(true)}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#2563EB] md:hover:bg-[#EFF6FF] transition-all font-medium cursor-pointer">
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#5B35D5] md:hover:bg-[#EAE6FD] transition-all font-medium cursor-pointer">
                         <Send className="w-3.5 h-3.5" /><span>Send</span>
                     </button>
                 </div>

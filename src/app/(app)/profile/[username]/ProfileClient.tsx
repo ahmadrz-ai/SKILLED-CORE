@@ -406,10 +406,10 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
             </div>
 
             <div className="max-w-6xl mx-auto px-6 relative -mt-32">
-                <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
 
                     {/* --- LEFT COLUMN: IDENTITY & SIDEBAR --- */}
-                    <div className="w-full md:w-80 space-y-6">
+                    <div className="w-full lg:w-80 lg:flex-shrink-0 space-y-6">
 
                         {/* Identity Card */}
                         <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm relative overflow-hidden group">
@@ -486,14 +486,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     onClick={() => setListType('followers')}
                                     className="text-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
                                 >
-                                    <div className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{followerCount}</div>
+                                    <div className="font-bold text-slate-900 text-lg group-hover:text-sc-purple-600 transition-colors">{followerCount}</div>
                                     <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Followers</div>
                                 </button>
                                 <button
                                     onClick={() => setListType('following')}
                                     className="text-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
                                 >
-                                    <div className="font-bold text-slate-900 text-lg group-hover:text-indigo-600 transition-colors">{counts.following}</div>
+                                    <div className="font-bold text-slate-900 text-lg group-hover:text-sc-purple-600 transition-colors">{counts.following}</div>
                                     <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Following</div>
                                 </button>
                             </div>
@@ -541,9 +541,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                                 <Button
                                                                     variant="outline"
                                                                     onClick={() => openModal('resume')}
-                                                                    className="flex-1 border border-indigo-200 text-indigo-600 bg-indigo-50/30 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 shadow-sm font-medium transition-all"
+                                                                    className="flex-1 border border-sc-purple-200 text-sc-purple-600 bg-sc-purple-50/30 hover:bg-sc-purple-50 hover:text-sc-purple-700 hover:border-sc-purple-300 shadow-sm font-medium transition-all"
                                                                 >
-                                                                    <FileText className="w-4 h-4 mr-2 text-indigo-500" /> Update
+                                                                    <FileText className="w-4 h-4 mr-2 text-sc-purple-500" /> Update
                                                                 </Button>
                                                             </TooltipTrigger>
                                                             <TooltipContent className="bg-slate-800 border-white/10 text-slate-300 text-xs shadow-xl">
@@ -599,7 +599,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     <CheckCircle2 className="w-4 h-4 mr-2 text-slate-400" /> Pending
                                                 </Button>
                                             ) : connStatus === 'PENDING_RECEIVED' ? (
-                                                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-sm" onClick={() => router.push('/network')}>
+                                                <Button className="flex-1 bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold py-2 shadow-sm" onClick={() => router.push('/network')}>
                                                     <CheckCircle2 className="w-4 h-4 mr-2" /> Respond
                                                 </Button>
                                             ) : (
@@ -608,7 +608,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     {/* If OPEN Node & Not Recruiter -> Primary Connect */}
                                                     {user.nodeType !== 'BROADCAST' && user.role !== 'RECRUITER' ? (
                                                         <Button
-                                                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-md shadow-indigo-100"
+                                                            className="flex-1 bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold py-2 shadow-md shadow-indigo-100"
                                                             onClick={handleConnect}
                                                             disabled={isConnectLoading}
                                                         >
@@ -819,14 +819,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         onClick={() => setActiveTab(tab)}
                                         className={cn(
                                             "pb-4 text-sm font-bold tracking-wide transition-all relative uppercase",
-                                            activeTab === tab ? "text-indigo-650" : "text-slate-500 hover:text-slate-800"
+                                            activeTab === tab ? "text-sc-purple-700" : "text-slate-500 hover:text-slate-800"
                                         )}
                                     >
                                         {tab === 'interviews' ? 'AI Interviews' : tab}
                                         {activeTab === tab && (
                                             <motion.div
                                                 layoutId="activeTab"
-                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-650"
+                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-sc-purple-700"
                                             />
                                         )}
                                     </button>
@@ -931,14 +931,14 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     className="space-y-6"
                                 >
                                     {isOwner && (
-                                        <Button onClick={() => openModal('projects')} className="w-full border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-500 hover:text-indigo-650 font-semibold py-8 transition-all shadow-sm">
+                                        <Button onClick={() => openModal('projects')} className="w-full border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-500 hover:text-sc-purple-700 font-semibold py-8 transition-all shadow-sm">
                                             <Plus className="w-5 h-5 mr-2" /> Add New Project
                                         </Button>
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {user.projects && user.projects.map((project: any) => (
-                                            <div key={project.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden group relative hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col shadow-sm">
+                                            <div key={project.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden group relative hover:border-sc-purple-300 hover:shadow-sm transition-all flex flex-col shadow-sm">
                                                 {isOwner && (
                                                     <Button
                                                         variant="secondary"
@@ -966,13 +966,13 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                                 <div className="p-4 flex flex-col flex-1">
                                                     <Link href={`/project/${project.id}`}>
-                                                        <h3 className="font-bold text-lg text-slate-900 mb-1 hover:text-indigo-650 transition-colors">{project.title}</h3>
+                                                        <h3 className="font-bold text-lg text-slate-900 mb-1 hover:text-sc-purple-700 transition-colors">{project.title}</h3>
                                                     </Link>
 
                                                     <p className="text-slate-650 text-sm mb-4 line-clamp-3 flex-1 font-medium">{project.description}</p>
 
                                                     <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-100">
-                                                        <Link href={`/project/${project.id}`} className="text-xs text-indigo-600 hover:text-indigo-755 font-bold flex items-center transition-colors">
+                                                        <Link href={`/project/${project.id}`} className="text-xs text-sc-purple-600 hover:text-sc-purple-800 font-bold flex items-center transition-colors">
                                                             View Details
                                                         </Link>
                                                         {project.link && (
@@ -988,7 +988,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                     {(!user.projects || user.projects.length === 0) && !isOwner && (
                                         <div className="text-center py-20 text-slate-400 font-medium">
-                                            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-indigo-600" />
+                                            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-sc-purple-600" />
                                             <p>No projects declassified.</p>
                                         </div>
                                     )}
@@ -1034,9 +1034,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                                                 for (let i = 1; i <= 5; i++) {
                                                     if (i <= roundedFull) {
-                                                        stars.push(<Star key={i} size={15} className="fill-indigo-500 text-indigo-500 stroke-indigo-650" />);
+                                                        stars.push(<Star key={i} size={15} className="fill-sc-purple-500 text-sc-purple-500 stroke-sc-purple-700" />);
                                                     } else if (i === roundedFull + 1 && hasHalf) {
-                                                        stars.push(<StarHalf key={i} size={15} className="fill-indigo-500 text-indigo-500 stroke-indigo-650" />);
+                                                        stars.push(<StarHalf key={i} size={15} className="fill-sc-purple-500 text-sc-purple-500 stroke-sc-purple-700" />);
                                                     } else {
                                                         stars.push(<Star key={i} size={15} className="text-slate-200 fill-slate-100 stroke-slate-200" />);
                                                     }
@@ -1045,16 +1045,16 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                             };
 
                                             return (
-                                                <div key={interview.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col h-full shadow-sm">
+                                                <div key={interview.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-sc-purple-300 hover:shadow-sm transition-all flex flex-col h-full shadow-sm">
                                                     {/* Top banner graphic */}
-                                                    <div className="w-full h-24 bg-gradient-to-br from-indigo-50/50 via-slate-50 to-teal-50/50 relative flex flex-col justify-end p-4 border-b border-slate-150 overflow-hidden">
-                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
+                                                    <div className="w-full h-24 bg-gradient-to-br from-sc-purple-50/50 via-slate-50 to-teal-50/50 relative flex flex-col justify-end p-4 border-b border-slate-150 overflow-hidden">
+                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sc-purple-500/5 via-transparent to-transparent pointer-events-none" />
                                                         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-sm">
                                                             <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest font-bold">
                                                                 AI EVALUATED
                                                             </span>
                                                         </div>
-                                                        <div className="text-[10px] font-mono text-indigo-600 uppercase tracking-widest font-bold mb-1">
+                                                        <div className="text-[10px] font-mono text-sc-purple-600 uppercase tracking-widest font-bold mb-1">
                                                             SkilledCore Talent AI
                                                         </div>
                                                     </div>
@@ -1062,13 +1062,13 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     {/* Card Content */}
                                                     <div className="p-5 flex-1 flex flex-col justify-between">
                                                         <div>
-                                                            <h3 className="font-bold text-lg text-slate-900 font-heading tracking-tight leading-snug group-hover:text-indigo-650 transition-colors">
+                                                            <h3 className="font-bold text-lg text-slate-900 font-heading tracking-tight leading-snug group-hover:text-sc-purple-700 transition-colors">
                                                                 {roleTitle}
                                                             </h3>
                                                             
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 {renderStars()}
-                                                                <span className="text-xs font-mono font-bold text-indigo-600 pl-1">
+                                                                <span className="text-xs font-mono font-bold text-sc-purple-600 pl-1">
                                                                     {starRating.toFixed(1)} / 5.0
                                                                 </span>
                                                             </div>
@@ -1084,11 +1084,11 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                         <div className="border-t border-slate-100 mt-5 pt-4 flex items-center justify-between">
                                                             <Link 
                                                                 href={`/interview/${interview.id}`}
-                                                                className="text-sm font-bold text-indigo-600 hover:text-indigo-755 flex items-center gap-1.5 transition-colors group/btn"
+                                                                className="text-sm font-bold text-sc-purple-600 hover:text-sc-purple-800 flex items-center gap-1.5 transition-colors group/btn"
                                                             >
-                                                                <FileText className="w-4 h-4 text-indigo-500" />
+                                                                <FileText className="w-4 h-4 text-sc-purple-500" />
                                                                 Open Interview Details
-                                                                <ArrowRight className="w-4 h-4 text-indigo-500 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                                <ArrowRight className="w-4 h-4 text-sc-purple-500 group-hover/btn:translate-x-0.5 transition-transform" />
                                                             </Link>
 
                                                             <div className="flex items-center gap-2">
@@ -1118,7 +1118,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         })}
                                         {(!(user as any).interviews || (user as any).interviews.length === 0) && (
                                             <div className="col-span-full text-center py-20 text-slate-400 bg-white border border-slate-200 border-dashed rounded-2xl">
-                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-indigo-600" />
+                                                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-30 text-sc-purple-600" />
                                                 <p className="font-mono text-sm tracking-widest uppercase font-semibold">No interview simulations recorded.</p>
                                             </div>
                                         )}

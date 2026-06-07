@@ -145,7 +145,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                                 onClick={() => handleVote(comment.id, 'UP')}
                                 className={cn(
                                     "text-xs font-bold flex items-center gap-1 transition-colors",
-                                    userVote === 'UP' ? "text-blue-400" : "text-zinc-500 hover:text-blue-400"
+                                    userVote === 'UP' ? "text-[#5B35D5]" : "text-zinc-500 hover:text-[#5B35D5]"
                                 )}
                             >
                                 <ThumbsUp className={cn("w-3 h-3", userVote === 'UP' && "fill-current")} />
@@ -153,7 +153,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                             </button>
 
                             {(score > 0 || userVote === 'UP') && (
-                                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">
+                                <span className="text-[10px] bg-[#5B35D5]/10 text-[#5B35D5] px-1.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">
                                     <ThumbsUp className="w-2 h-2 fill-current" /> {score}
                                 </span>
                             )}
