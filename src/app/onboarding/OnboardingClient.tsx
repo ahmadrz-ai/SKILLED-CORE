@@ -408,16 +408,22 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
             });
 
             if (!res.ok) {
-                const errorText = await res.text();
-                console.error("API Error Details:", errorText);
+                const data = await res.json().catch(() => ({} as any));
+                console.error("Resume parse API error:", res.status, data);
 
                 if (res.status === 429) {
-                    toast.error("AI usage limit reached. Please wait a minute and try again.");
+                    toast.error('AI usage limit reached. Please wait a minute and try again, or use "Skip & Complete" to finish without a resume.');
                     setUploadStatus('idle');
                     return;
                 }
 
-                throw new Error("Parse failed: " + res.statusText);
+                // Surface the server's specific reason (e.g. scanned-image PDF) instead of
+                // a generic message, and remind the user they are not stuck — they can retry
+                // with another file or finish without a resume. Their entered data is kept.
+                const reason = (data && data.error) ? data.error : "We couldn't read this resume.";
+                toast.error(`${reason} You can try another file or use "Skip & Complete".`);
+                setUploadStatus('idle');
+                return;
             }
 
             const json = await res.json();
@@ -452,7 +458,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
         } catch (error) {
             console.error(error);
             setUploadStatus('idle');
-            toast.error("Failed to parse resume");
+            toast.error('Could not process the resume. You can try again, or use "Skip & Complete" to finish without one.');
         }
     };
 
