@@ -49,27 +49,27 @@ export default function StorageBrowser({
                     name: 'Neon DB',
                     used: dbStats?.dbSize || 0,
                     total: NEON_CAPACITY,
-                    colorClass: 'bg-violet-500',
-                    gradientClass: 'from-violet-500 to-purple-600',
-                    textClass: 'text-violet-400',
+                    colorClass: 'bg-sc-purple-600',
+                    gradientClass: 'from-sc-purple-500 to-sc-purple-700',
+                    textClass: 'text-sc-purple-600',
                 };
             case 'uploadthing':
                 return {
                     name: 'Documents Repository',
                     used: utFiles.reduce((acc, f) => acc + (f.size || 0), 0),
                     total: UT_CAPACITY,
-                    colorClass: 'bg-blue-500',
-                    gradientClass: 'from-blue-500 to-indigo-600',
-                    textClass: 'text-blue-400',
+                    colorClass: 'bg-sc-purple-600',
+                    gradientClass: 'from-sc-purple-500 to-sc-purple-700',
+                    textClass: 'text-sc-purple-600',
                 };
             case 'cloudinary':
                 return {
                     name: 'Cloudinary',
                     used: clFiles.reduce((acc, f) => acc + (f.size || 0), 0),
                     total: CLOUDINARY_CAPACITY,
-                    colorClass: 'bg-cyan-500',
-                    gradientClass: 'from-cyan-500 to-sky-600',
-                    textClass: 'text-cyan-400',
+                    colorClass: 'bg-sc-purple-600',
+                    gradientClass: 'from-sc-purple-500 to-sc-purple-700',
+                    textClass: 'text-sc-purple-600',
                 };
         }
     };
@@ -185,18 +185,18 @@ export default function StorageBrowser({
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Tab Switcher */}
-                <div className="flex p-1 bg-zinc-900/60 border border-zinc-800/80 rounded-xl w-fit relative overflow-hidden">
+                <div className="flex p-1 bg-bg-secondary-panel border border-border-default rounded-xl w-fit relative overflow-hidden">
                     <button
                         onClick={() => handleTabChange('neon')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
-                            activeTab === 'neon' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                            activeTab === 'neon' ? "text-white" : "text-text-tertiary hover:text-text-body"
                         )}
                     >
                         {activeTab === 'neon' && (
                             <motion.div 
                                 layoutId="active-tab-indicator" 
-                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25" 
+                                className="absolute inset-0 bg-sc-purple-600 rounded-lg -z-10 shadow-lg shadow-sc-sm" 
                                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
                             />
                         )}
@@ -206,13 +206,13 @@ export default function StorageBrowser({
                         onClick={() => handleTabChange('uploadthing')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
-                            activeTab === 'uploadthing' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                            activeTab === 'uploadthing' ? "text-white" : "text-text-tertiary hover:text-text-body"
                         )}
                     >
                         {activeTab === 'uploadthing' && (
                             <motion.div 
                                 layoutId="active-tab-indicator" 
-                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
+                                className="absolute inset-0 bg-sc-purple-600 rounded-lg -z-10 shadow-lg shadow-sc-sm"
                                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
                             />
                         )}
@@ -222,13 +222,13 @@ export default function StorageBrowser({
                         onClick={() => handleTabChange('cloudinary')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all relative z-10",
-                            activeTab === 'cloudinary' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                            activeTab === 'cloudinary' ? "text-white" : "text-text-tertiary hover:text-text-body"
                         )}
                     >
                         {activeTab === 'cloudinary' && (
                             <motion.div 
                                 layoutId="active-tab-indicator" 
-                                className="absolute inset-0 bg-violet-600 rounded-lg -z-10 shadow-lg shadow-violet-900/25"
+                                className="absolute inset-0 bg-sc-purple-600 rounded-lg -z-10 shadow-lg shadow-sc-sm"
                                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
                             />
                         )}
@@ -241,13 +241,13 @@ export default function StorageBrowser({
                 {activeTab !== 'neon' && (
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <div className="relative flex-1 sm:flex-initial sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                             <input
                                 type="text"
                                 placeholder={`Search ${activeTab === 'uploadthing' ? 'documents' : 'media'}...`}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-zinc-900/50 border border-zinc-800/80 rounded-xl py-2 pl-9 pr-4 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 transition-all font-sans"
+                                className="w-full bg-bg-input border border-border-default rounded-xl py-2 pl-9 pr-4 text-sm text-text-body placeholder:text-text-placeholder focus:outline-none focus:border-sc-purple-300 transition-all font-sans"
                             />
                         </div>
 
@@ -283,12 +283,12 @@ export default function StorageBrowser({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-zinc-950/40 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden"
+                className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-bg-card border border-border-default rounded-2xl p-6 backdrop-blur-md relative overflow-hidden"
             >
                 {/* Visual Accent/Glow behind */}
                 <div className={cn(
                     "absolute -right-24 -top-24 w-48 h-48 rounded-full filter blur-[80px] opacity-20 pointer-events-none transition-all duration-500",
-                    activeTab === 'neon' ? "bg-violet-500" : activeTab === 'uploadthing' ? "bg-blue-500" : activeTab === 'cloudinary' ? "bg-cyan-500" : "bg-amber-500"
+                    activeTab === 'neon' ? "bg-sc-purple-600" : activeTab === 'uploadthing' ? "bg-sc-purple-600" : activeTab === 'cloudinary' ? "bg-sc-purple-600" : "bg-amber-500"
                 )} />
 
                 {/* Storage Meter Column */}
@@ -296,20 +296,20 @@ export default function StorageBrowser({
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className={cn(
-                                "text-xs font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-zinc-950 font-sans",
-                                activeTab === 'neon' ? "text-violet-400 border-violet-500/25" :
-                                activeTab === 'uploadthing' ? "text-blue-400 border-blue-500/25" :
-                                activeTab === 'cloudinary' ? "text-cyan-400 border-cyan-500/25" :
+                                "text-xs font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-bg-secondary-panel font-sans",
+                                activeTab === 'neon' ? "text-sc-purple-600 border-sc-purple-200" :
+                                activeTab === 'uploadthing' ? "text-sc-purple-600 border-sc-purple-200" :
+                                activeTab === 'cloudinary' ? "text-sc-purple-600 border-sc-purple-200" :
                                 "text-amber-400 border-amber-500/25"
                             )}>
                                 Active Allocation
                             </span>
-                            <span className="text-zinc-500 text-xs font-mono">• {stats.name} Capacity</span>
+                            <span className="text-text-tertiary text-xs font-mono">• {stats.name} Capacity</span>
                         </div>
-                        <h2 className="text-2xl font-black text-white tracking-tight font-sans">
+                        <h2 className="text-2xl font-black text-text-heading tracking-tight font-sans">
                             Storage Overview
                         </h2>
-                        <p className="text-sm text-zinc-400 mt-1 max-w-md font-sans">
+                        <p className="text-sm text-text-secondary mt-1 max-w-md font-sans">
                             {activeTab === 'neon' && "Real-time database footprints tracking operational records and tables."}
                             {activeTab === 'uploadthing' && "Active file upload bandwidth representing onboarding documents and recruiter attachments."}
                             {activeTab === 'cloudinary' && "Visual media storage showing branding elements, profile banners, and recruiters images."}
@@ -320,8 +320,8 @@ export default function StorageBrowser({
                     <div className="space-y-3">
                         <div className="flex justify-between items-baseline">
                             <div className="flex items-baseline gap-1.5 font-sans">
-                                <span className="text-3xl font-extrabold text-white">{formatBytes(stats.used)}</span>
-                                <span className="text-zinc-500 text-xs font-medium">used out of {formatBytes(stats.total)}</span>
+                                <span className="text-3xl font-extrabold text-text-heading">{formatBytes(stats.used)}</span>
+                                <span className="text-text-tertiary text-xs font-medium">used out of {formatBytes(stats.total)}</span>
                             </div>
                             <span className={cn("text-lg font-black font-mono", stats.textClass)}>
                                 {percent.toFixed(2)}%
@@ -329,16 +329,16 @@ export default function StorageBrowser({
                         </div>
 
                         {/* Linear Progress Bar */}
-                        <div className="h-3 w-full bg-zinc-900 border border-zinc-800/80 rounded-full overflow-hidden p-0.5">
+                        <div className="h-3 w-full bg-bg-secondary-panel border border-border-default rounded-full overflow-hidden p-0.5">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${percent}%` }}
                                 transition={{ duration: 0.8, ease: "easeOut" }}
-                                className={cn("h-full rounded-full bg-gradient-to-r shadow-lg shadow-violet-500/10", stats.gradientClass)}
+                                className={cn("h-full rounded-full bg-gradient-to-r shadow-lg shadow-sc-sm", stats.gradientClass)}
                             />
                         </div>
 
-                        <div className="flex justify-between text-xs font-mono text-zinc-500">
+                        <div className="flex justify-between text-xs font-mono text-text-tertiary">
                             <span>0% (Empty)</span>
                             <span>Remaining: {formatBytes(Math.max(0, stats.total - stats.used))}</span>
                             <span>100% (Limit)</span>
@@ -347,7 +347,7 @@ export default function StorageBrowser({
                 </div>
 
                 {/* SVG Pie Chart Column */}
-                <div className="flex flex-col items-center justify-center p-4 border-t lg:border-t-0 lg:border-l border-zinc-800/60 min-h-[220px]">
+                <div className="flex flex-col items-center justify-center p-4 border-t lg:border-t-0 lg:border-l border-border-default min-h-[220px]">
                     <div className="relative w-36 h-36 flex items-center justify-center">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                             {/* SVG Gradients definitions */}
@@ -357,12 +357,12 @@ export default function StorageBrowser({
                                     <stop offset="100%" stopColor="#c084fc" />
                                 </linearGradient>
                                 <linearGradient id="utGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#3b82f6" />
-                                    <stop offset="100%" stopColor="#60a5fa" />
+                                    <stop offset="0%" stopColor="#5B35D5" />
+                                    <stop offset="100%" stopColor="#8b5cf6" />
                                 </linearGradient>
                                 <linearGradient id="clGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#06b6d4" />
-                                    <stop offset="100%" stopColor="#22d3ee" />
+                                    <stop offset="0%" stopColor="#5B35D5" />
+                                    <stop offset="100%" stopColor="#8b5cf6" />
                                 </linearGradient>
                             </defs>
 
@@ -371,7 +371,7 @@ export default function StorageBrowser({
                                 cx="50"
                                 cy="50"
                                 r="38"
-                                className="stroke-zinc-900 fill-none"
+                                className="stroke-gray-200 fill-none"
                                 strokeWidth="8"
                             />
                             
@@ -380,7 +380,7 @@ export default function StorageBrowser({
                                 cx="50"
                                 cy="50"
                                 r="38"
-                                className="stroke-zinc-800/40 fill-none"
+                                className="stroke-gray-200 fill-none"
                                 strokeWidth="8.5"
                             />
 
@@ -406,20 +406,20 @@ export default function StorageBrowser({
 
                         {/* Center text of Doughnut Pie Chart */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest font-sans">Used</span>
-                            <span className="text-lg font-black text-white font-mono">{percent.toFixed(1)}%</span>
-                            <span className="text-zinc-400 text-[9px] font-medium font-sans mt-0.5">{formatBytes(stats.used)}</span>
+                            <span className="text-text-tertiary text-[10px] uppercase font-bold tracking-widest font-sans">Used</span>
+                            <span className="text-lg font-black text-text-heading font-mono">{percent.toFixed(1)}%</span>
+                            <span className="text-text-secondary text-[9px] font-medium font-sans mt-0.5">{formatBytes(stats.used)}</span>
                         </div>
                     </div>
 
                     <div className="mt-4 flex gap-4 text-xs font-mono">
                         <div className="flex items-center gap-1.5">
                             <span className={cn("w-2.5 h-2.5 rounded-full", stats.colorClass)} />
-                            <span className="text-zinc-300">Used ({percent.toFixed(1)}%)</span>
+                            <span className="text-text-secondary">Used ({percent.toFixed(1)}%)</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800" />
-                            <span className="text-zinc-500">Free ({(100 - percent).toFixed(1)}%)</span>
+                            <span className="w-2.5 h-2.5 rounded-full bg-bg-secondary-panel border border-border-default" />
+                            <span className="text-text-tertiary">Free ({(100 - percent).toFixed(1)}%)</span>
                         </div>
                     </div>
                 </div>
@@ -441,20 +441,20 @@ export default function StorageBrowser({
                             <StatCard label="Applications" value={dbStats.applications} icon={FileText} color="emerald" />
                             <StatCard label="Total Posts" value={dbStats.posts} icon={FileText} color="amber" />
 
-                            <div className="col-span-full mt-4 p-6 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl backdrop-blur-md">
-                                <h3 className="text-base font-bold text-white mb-4 tracking-tight">Database Connectivity</h3>
+                            <div className="col-span-full mt-4 p-6 bg-bg-card border border-border-default rounded-2xl backdrop-blur-md">
+                                <h3 className="text-base font-bold text-text-heading mb-4 tracking-tight">Database Connectivity</h3>
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-sm border-b border-zinc-800/40 pb-2.5">
-                                        <span className="text-zinc-400">Connection Pool</span>
+                                    <div className="flex justify-between items-center text-sm border-b border-border-subtle pb-2.5">
+                                        <span className="text-text-secondary">Connection Pool</span>
                                         <span className="text-emerald-400 font-sans font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded text-xs">OPTIMAL</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm border-b border-zinc-800/40 pb-2.5">
-                                        <span className="text-zinc-400">Query Latency</span>
+                                    <div className="flex justify-between items-center text-sm border-b border-border-subtle pb-2.5">
+                                        <span className="text-text-secondary">Query Latency</span>
                                         <span className="text-emerald-400 font-sans font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded text-xs">12ms (avg)</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-400">Region</span>
-                                        <span className="text-white font-mono font-medium">us-east-1 (AWS)</span>
+                                        <span className="text-text-secondary">Region</span>
+                                        <span className="text-text-heading font-mono font-medium">us-east-1 (AWS)</span>
                                     </div>
                                 </div>
                             </div>
@@ -486,29 +486,29 @@ export default function StorageBrowser({
                                     </button>
                                 </div>
                             )}
-                            <div className="bg-zinc-900/10 border border-zinc-800/60 rounded-xl overflow-hidden backdrop-blur-md">
-                                <div className="p-4 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/30">
+                            <div className="bg-bg-card border border-border-default rounded-xl overflow-hidden backdrop-blur-md">
+                                <div className="p-4 border-b border-border-default flex justify-between items-center bg-bg-secondary-panel">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={toggleSelectAll}
-                                            className="text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                                            className="text-text-tertiary hover:text-text-body transition-colors cursor-pointer"
                                             title="Select All"
                                         >
                                             {selectedKeys.size > 0 && selectedKeys.size === filteredFiles.length ? (
-                                                <CheckSquare className="w-5 h-5 text-violet-500" />
+                                                <CheckSquare className="w-5 h-5 text-sc-purple-600" />
                                             ) : (
                                                 <Square className="w-5 h-5" />
                                             )}
                                         </button>
-                                        <h3 className="font-bold text-white text-sm font-sans tracking-tight">
+                                        <h3 className="font-bold text-text-heading text-sm font-sans tracking-tight">
                                             {activeTab === 'uploadthing' ? 'Documents Repository' : 'Cloudinary Assets'}
                                         </h3>
                                     </div>
-                                    <span className="text-xs font-mono text-zinc-500">{filteredFiles.length} OF {activeFiles.length} FILES</span>
+                                    <span className="text-xs font-mono text-text-tertiary">{filteredFiles.length} OF {activeFiles.length} FILES</span>
                                 </div>
                                 <div className="divide-y divide-zinc-800/60 max-h-[500px] overflow-y-auto">
                                     {filteredFiles.length === 0 ? (
-                                        <div className="p-12 text-center text-zinc-500 italic text-sm">No files found matching search.</div>
+                                        <div className="p-12 text-center text-text-tertiary italic text-sm">No files found matching search.</div>
                                     ) : filteredFiles.map((file) => {
                                          const isSelected = selectedKeys.has(file.key);
                                          const fileUrl = activeTab === 'uploadthing' ? `https://utfs.io/f/${file.key}` : file.url;
@@ -518,22 +518,22 @@ export default function StorageBrowser({
                                             <div
                                                 key={file.key}
                                                 className={cn(
-                                                    "p-4 flex items-center justify-between hover:bg-zinc-900/30 transition-colors group cursor-pointer border-l-2 border-transparent",
-                                                    isSelected && "bg-violet-500/5 border-violet-500"
+                                                    "p-4 flex items-center justify-between hover:bg-bg-sidebar-hover transition-colors group cursor-pointer border-l-2 border-transparent",
+                                                    isSelected && "bg-sc-purple-50 border-sc-purple-600"
                                                 )}
                                                 onClick={() => toggleSelect(file.key)}
                                             >
                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                     <div onClick={(e) => { e.stopPropagation(); toggleSelect(file.key); }}>
                                                         {isSelected ? (
-                                                            <CheckSquare className="w-5 h-5 text-violet-500" />
+                                                            <CheckSquare className="w-5 h-5 text-sc-purple-600" />
                                                         ) : (
-                                                            <Square className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400" />
+                                                            <Square className="w-5 h-5 text-text-placeholder group-hover:text-text-secondary" />
                                                         )}
                                                     </div>
                                                     
                                                     {/* Dynamic Preview Thumbnail */}
-                                                    <div className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-800/80 flex items-center justify-center text-zinc-400 overflow-hidden relative flex-shrink-0">
+                                                    <div className="w-10 h-10 rounded-lg bg-bg-secondary-panel border border-border-default flex items-center justify-center text-text-secondary overflow-hidden relative flex-shrink-0">
                                                         {fileIsImage ? (
                                                             <img 
                                                                 src={fileUrl} 
@@ -545,15 +545,15 @@ export default function StorageBrowser({
                                                                 }}
                                                             />
                                                         ) : (
-                                                            <FileText className="w-5 h-5 text-zinc-500" />
+                                                            <FileText className="w-5 h-5 text-text-tertiary" />
                                                         )}
                                                     </div>
 
                                                     <div className="min-w-0 flex-1">
-                                                        <p className={cn("text-sm font-medium transition-colors truncate max-w-[200px] md:max-w-[400px]", isSelected ? "text-violet-300 font-semibold" : "text-white")}>
+                                                        <p className={cn("text-sm font-medium transition-colors truncate max-w-[200px] md:max-w-[400px]", isSelected ? "text-sc-purple-700 font-semibold" : "text-text-heading")}>
                                                             {file.name}
                                                         </p>
-                                                        <p className="text-[10px] text-zinc-500 font-mono truncate max-w-[250px] md:max-w-[500px]" title={file.key}>{file.key}</p>
+                                                        <p className="text-[10px] text-text-tertiary font-mono truncate max-w-[250px] md:max-w-[500px]" title={file.key}>{file.key}</p>
                                                     </div>
                                                 </div>
 
@@ -569,11 +569,15 @@ export default function StorageBrowser({
                                                             </span>
                                                         )
                                                     )}
-                                                    <span className="text-xs text-zinc-500 font-mono hidden md:block">
+                                                    <span className="text-xs text-text-tertiary font-mono hidden md:block">
                                                         {formatBytes(file.size)}
                                                     </span>
-                                                    <span className="text-xs text-zinc-600 font-mono hidden lg:block">
-                                                        {new Date(file.createdAt).toLocaleDateString()}
+                                                    <span className="text-xs text-text-placeholder font-mono hidden lg:block">
+                                                        {(() => {
+                                                            const ts = file.createdAt || file.uploadedAt;
+                                                            const d = ts ? new Date(ts) : null;
+                                                            return d && !isNaN(d.getTime()) ? d.toLocaleDateString() : '—';
+                                                        })()}
                                                     </span>
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -581,7 +585,7 @@ export default function StorageBrowser({
                                                                 e.stopPropagation();
                                                                 copyToClipboard(fileUrl, file.key);
                                                             }}
-                                                            className="p-2 hover:bg-zinc-850 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                                                            className="p-2 hover:bg-bg-sidebar-hover rounded-lg text-text-tertiary hover:text-text-heading transition-colors cursor-pointer"
                                                             title="Copy direct link"
                                                         >
                                                             {copiedKey === file.key ? (
@@ -594,7 +598,7 @@ export default function StorageBrowser({
                                                             href={fileUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="p-2 hover:bg-zinc-850 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                                                            className="p-2 hover:bg-bg-sidebar-hover rounded-lg text-text-tertiary hover:text-text-heading transition-colors cursor-pointer"
                                                             onClick={(e) => e.stopPropagation()}
                                                             title="View file"
                                                         >
@@ -617,8 +621,8 @@ export default function StorageBrowser({
 
 function StatCard({ label, value, icon: Icon, color }: any) {
     const colors = {
-        violet: "text-violet-400 bg-violet-500/5 border-violet-500/20",
-        blue: "text-blue-400 bg-blue-500/5 border-blue-500/20",
+        violet: "text-sc-purple-600 bg-sc-purple-50 border-sc-purple-200",
+        blue: "text-sc-purple-600 bg-sc-purple-50 border-sc-purple-200",
         emerald: "text-emerald-400 bg-emerald-500/5 border-emerald-500/20",
         amber: "text-amber-400 bg-amber-500/5 border-amber-500/20",
     };
@@ -627,12 +631,12 @@ function StatCard({ label, value, icon: Icon, color }: any) {
     const theme = colors[color] || colors.violet;
 
     return (
-        <div className={cn("p-6 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all hover:bg-zinc-900/30 hover:scale-[1.02] bg-zinc-900/10 backdrop-blur-md", theme)}>
-            <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 mb-2">
+        <div className={cn("p-6 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all hover:bg-bg-sidebar-hover hover:scale-[1.02] bg-bg-card backdrop-blur-md", theme)}>
+            <div className="p-3 rounded-xl bg-bg-secondary-panel border border-border-default mb-2">
                 <Icon className="w-6 h-6 opacity-90" />
             </div>
-            <h3 className="text-3xl font-black text-white font-sans tracking-tight">{value}</h3>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-sans font-semibold">{label}</p>
+            <h3 className="text-3xl font-black text-text-heading font-sans tracking-tight">{value}</h3>
+            <p className="text-[10px] uppercase tracking-widest text-text-secondary font-sans font-semibold">{label}</p>
         </div>
     );
 }
