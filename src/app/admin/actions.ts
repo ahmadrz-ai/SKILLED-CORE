@@ -336,6 +336,110 @@ export async function deleteFiles(fileKeys: string[], provider?: 'uploadthing' |
 }
 
 
+// Extract a Cloudinary public_id from a secure URL (mirror of lib/storage logic).
+function cloudinaryPublicIdFromUrl(url: string): string | null {
+    const parts = url.split("/upload/");
+    if (parts.length < 2) return null;
+    let path = parts[1];
+    if (path.startsWith("v")) {
+        const slash = path.indexOf("/");
+        if (slash !== -1) path = path.substring(slash + 1);
+    }
+    const dot = path.lastIndexOf(".");
+    return dot !== -1 ? path.substring(0, dot) : path;
+}
+
+function uploadthingKeyFromUrl(url: string): string | null {
+    return url.split("?")[0].split("/").filter(Boolean).pop() || null;
+}
+
+/**
+ * Scans UploadThing + Cloudinary storage and classifies every file as LIVE
+ * (referenced somewhere in the database) or ORPHAN (no DB reference — i.e. an old
+ * copy left behind by a re-upload). The live file is NEVER marked, so deleting the
+ * returned orphans can't break a user's profile/post/resume. This is the
+ * "find duplicates but protect the one that's actually in use" scanner.
+ */
+export async function scanStorageForOrphans() {
+    try {
+        await ensureAdmin();
+
+        // 1. Collect every file URL the app currently references.
+        const [users, messages, projects, posts, verifications, companies, applications] = await Promise.all([
+            prisma.user.findMany({ select: { image: true, bannerUrl: true, resumeUrl: true } }),
+            prisma.message.findMany({ where: { attachmentUrl: { not: null } }, select: { attachmentUrl: true } }),
+            prisma.project.findMany({ where: { imageUrl: { not: null } }, select: { imageUrl: true } }),
+            prisma.post.findMany({ where: { image: { not: null } }, select: { image: true } }),
+            prisma.verificationRequest.findMany({ select: { documentUrl: true } }),
+            prisma.company.findMany({ where: { logo: { not: null } }, select: { logo: true } }),
+            prisma.application.findMany({ where: { resumeUrl: { not: null } }, select: { resumeUrl: true } }),
+        ]);
+
+        const referencedUrls = new Set<string>();
+        const add = (u?: string | null) => { if (u && u.trim()) referencedUrls.add(u.trim()); };
+        users.forEach(u => { add(u.image); add(u.bannerUrl); add(u.resumeUrl); });
+        messages.forEach(m => add(m.attachmentUrl));
+        projects.forEach(p => add(p.imageUrl));
+        posts.forEach(p => add(p.image));
+        verifications.forEach(v => add(v.documentUrl));
+        companies.forEach(c => add(c.logo));
+        applications.forEach(a => add(a.resumeUrl));
+
+        // 2. Reduce referenced URLs to provider-native identifiers (UT key / Cloudinary id).
+        const referencedUtKeys = new Set<string>();
+        const referencedCloudIds = new Set<string>();
+        for (const url of referencedUrls) {
+            if (url.includes("cloudinary.com")) {
+                const id = cloudinaryPublicIdFromUrl(url);
+                if (id) referencedCloudIds.add(id);
+            } else if (url.includes("utfs.io") || url.includes("ufs.sh") || url.includes("uploadthing")) {
+                const key = uploadthingKeyFromUrl(url);
+                if (key) referencedUtKeys.add(key);
+            }
+        }
+
+        // 3. List storage and classify each file.
+        const [utList, clRes] = await Promise.all([
+            utapi.listFiles({ limit: 500 }).catch(() => ({ files: [] as any[] })),
+            cloudinary.api.resources({ resource_type: "image", type: "upload", max_results: 500 }).catch(() => ({ resources: [] as any[] })),
+        ]);
+
+        const utFiles = ((utList as any).files || []).map((f: any) => ({
+            provider: "uploadthing" as const,
+            key: f.key,
+            name: f.name,
+            size: f.size,
+            live: referencedUtKeys.has(f.key),
+        }));
+
+        const clFiles = ((clRes as any).resources || []).map((f: any) => ({
+            provider: "cloudinary" as const,
+            key: f.public_id,
+            name: (f.public_id.split("/").pop() || f.public_id) + "." + f.format,
+            size: f.bytes,
+            live: referencedCloudIds.has(f.public_id),
+        }));
+
+        const all = [...utFiles, ...clFiles];
+        const orphans = all.filter(f => !f.live);
+        const orphanBytes = orphans.reduce((sum, f) => sum + (f.size || 0), 0);
+
+        return {
+            success: true,
+            total: all.length,
+            liveCount: all.length - orphans.length,
+            orphanCount: orphans.length,
+            orphanBytes,
+            // keys the admin can safely delete (live files excluded by construction)
+            orphanKeys: orphans.map(f => ({ key: f.key, provider: f.provider })),
+            files: all,
+        };
+    } catch (error: any) {
+        console.error("scanStorageForOrphans failed:", error);
+        return { success: false, total: 0, liveCount: 0, orphanCount: 0, orphanBytes: 0, orphanKeys: [], files: [] as any[] };
+    }
+}
+
 export async function getPendingReportsCount() {
     try {
         await ensureAdmin();

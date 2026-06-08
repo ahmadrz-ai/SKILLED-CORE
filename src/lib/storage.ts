@@ -53,11 +53,15 @@ export async function deleteFileFromStorage(url: string) {
         }
         
         // 2. UploadThing Asset Detection & Deletion
-        if (url.includes("utfs.io") || url.includes("uploadthing.com")) {
-            // UploadThing URL format: https://utfs.io/f/[fileKey] or https://utfs.io/a/[appId]/[fileKey]
-            const fileKey = url.split('/').pop();
+        // Match ALL UploadThing domains. Older uploads use utfs.io / uploadthing.com,
+        // but current SDK versions return the newer `<appId>.ufs.sh` domain — missing
+        // that here is why old resumes/avatars were never actually deleted on re-upload.
+        if (url.includes("utfs.io") || url.includes("ufs.sh") || url.includes("uploadthing")) {
+            // URL formats: https://utfs.io/f/<key>, https://<appId>.ufs.sh/f/<key>,
+            // or https://utfs.io/a/<appId>/<key>. The key is the last path segment.
+            const fileKey = url.split("?")[0].split("/").filter(Boolean).pop();
             if (!fileKey) return { success: false, message: "Invalid UploadThing URL" };
-            
+
             console.log(`[Storage Helper] Deleting UploadThing asset: ${fileKey}`);
             const res = await utapi.deleteFiles(fileKey);
             return { success: res.success, message: `UploadThing status: ${res.success}` };
