@@ -20,8 +20,16 @@ export function NotificationBell() {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 5000); // Poll every 5s for near real-time
-        return () => clearInterval(interval);
+        // Bug 6: 5s was too aggressive and kept the network from ever going idle on
+        // every page (inflating measured load times). 20s aligns with the AppShell
+        // badge poller and is still near-real-time for a notifications dropdown.
+        const interval = setInterval(fetchNotifications, 20000);
+        const onFocus = () => { if (document.visibilityState === "visible") fetchNotifications(); };
+        document.addEventListener("visibilitychange", onFocus);
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener("visibilitychange", onFocus);
+        };
     }, []);
 
     const unreadCount = notifications.filter(n => !n.read).length;

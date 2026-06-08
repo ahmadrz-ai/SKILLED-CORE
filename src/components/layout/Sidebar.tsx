@@ -143,6 +143,11 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
             <Link
               key={item.path}
               href={item.path}
+              // Bug 6/15: the sidebar renders on every page; default prefetch would
+              // prefetch the RSC payload of all ~14 nav routes (incl. the current one,
+              // logged as a "self-refetch") on every load. Gate it — Next still
+              // prefetches on hover/touch, so navigation stays fast.
+              prefetch={false}
               onClick={(e) => {
                 handleBadgeClick(badgeKey);
                 if (isProtected) handleProtectedNav(e, item.path, "RECRUITER");
@@ -257,12 +262,12 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
             <DropdownMenuLabel className="text-text-heading font-semibold text-xs">My Account</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border-subtle" />
             <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
-              <Link href="/profile/me">
+              <Link href="/profile/me" prefetch={false}>
                 <Users className="w-4 h-4 mr-2 text-icon-default" /> Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
-              <Link href="/settings">
+              <Link href="/settings" prefetch={false}>
                 <Settings className="w-4 h-4 mr-2 text-icon-default" /> Settings
               </Link>
             </DropdownMenuItem>
