@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Database, HardDrive, Cloud, FileText, Download, Trash2, 
-    ExternalLink, CheckSquare, Square, Loader2, Search, Copy, Check, Image
+import {
+    Database, HardDrive, Cloud, FileText, Download, Trash2,
+    ExternalLink, CheckSquare, Square, Loader2, Search, Copy, Check, Image,
+    ScanSearch, ShieldCheck, AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { deleteFiles } from '@/app/admin/actions';
+import { deleteFiles, scanStorageForOrphans } from '@/app/admin/actions';
 
 interface StorageBrowserProps {
     uploadthingFiles: any[];
@@ -28,6 +29,13 @@ export default function StorageBrowser({
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+    // Orphan scan: keys flagged not-referenced-in-DB (safe to delete). Live files are
+    // never included, so the admin can never accidentally delete the in-use copy.
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanned, setScanned] = useState(false);
+    const [orphanKeys, setOrphanKeys] = useState<Set<string>>(new Set());
+    const [orphanBytes, setOrphanBytes] = useState(0);
 
     // Plan capacities in bytes
     const NEON_CAPACITY = 512 * 1024 * 1024;       // 512 MB
@@ -130,6 +138,28 @@ export default function StorageBrowser({
         setSearchQuery('');
     };
 
+    const handleScan = async () => {
+        setIsScanning(true);
+        const res = await scanStorageForOrphans();
+        setIsScanning(false);
+        if (!res.success) {
+            toast.error("Scan failed. Please try again.");
+            return;
+        }
+        const keys = new Set<string>(res.orphanKeys.map((o: any) => o.key));
+        setOrphanKeys(keys);
+        setOrphanBytes(res.orphanBytes || 0);
+        setScanned(true);
+        toast.success(`${res.orphanCount} orphan file(s) found across storage — live files are protected.`);
+    };
+
+    // Select only the orphan files visible in the current tab (never live files).
+    const selectOrphansInTab = () => {
+        const tabOrphans = filteredFiles.filter(f => orphanKeys.has(f.key)).map(f => f.key);
+        setSelectedKeys(new Set(tabOrphans));
+        if (tabOrphans.length === 0) toast.info("No orphan files in this tab.");
+    };
+
     const copyToClipboard = (url: string, key: string) => {
         navigator.clipboard.writeText(url);
         setCopiedKey(key);
@@ -220,6 +250,16 @@ export default function StorageBrowser({
                                 className="w-full bg-zinc-900/50 border border-zinc-800/80 rounded-xl py-2 pl-9 pr-4 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 transition-all font-sans"
                             />
                         </div>
+
+                        <button
+                            onClick={handleScan}
+                            disabled={isScanning}
+                            title="Scan storage and mark duplicate/orphan files that are no longer referenced in the database. Live files are never marked."
+                            className="bg-sc-purple-600 hover:bg-sc-purple-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-semibold cursor-pointer h-[38px] transition-colors shrink-0"
+                        >
+                            {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanSearch className="w-4 h-4" />}
+                            <span className="hidden md:inline">Scan Duplicates</span>
+                        </button>
 
                         {selectedKeys.size > 0 && (
                             <motion.button
@@ -427,6 +467,25 @@ export default function StorageBrowser({
                             exit={{ opacity: 0, y: -10 }}
                             className="space-y-4"
                         >
+                            {scanned && (
+                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+                                    <div className="flex items-center gap-2.5 text-sm">
+                                        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                                        <span className="font-semibold text-amber-200">
+                                            {filteredFiles.filter(f => orphanKeys.has(f.key)).length} orphan file(s) in this tab
+                                        </span>
+                                        <span className="text-amber-200/70 font-mono text-xs">
+                                            • ~{formatBytes(orphanBytes)} reclaimable across all storage • live files protected
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={selectOrphansInTab}
+                                        className="text-xs font-bold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg px-3 py-1.5 transition-colors cursor-pointer"
+                                    >
+                                        Select orphans
+                                    </button>
+                                </div>
+                            )}
                             <div className="bg-zinc-900/10 border border-zinc-800/60 rounded-xl overflow-hidden backdrop-blur-md">
                                 <div className="p-4 border-b border-zinc-800/60 flex justify-between items-center bg-zinc-900/30">
                                     <div className="flex items-center gap-3">
@@ -499,6 +558,17 @@ export default function StorageBrowser({
                                                 </div>
 
                                                 <div className="flex items-center gap-4 ml-4">
+                                                    {scanned && (
+                                                        orphanKeys.has(file.key) ? (
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/15 border border-amber-500/40 rounded-full px-2 py-0.5">
+                                                                <AlertTriangle className="w-3 h-3" /> Orphan
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 rounded-full px-2 py-0.5">
+                                                                <ShieldCheck className="w-3 h-3" /> Live
+                                                            </span>
+                                                        )
+                                                    )}
                                                     <span className="text-xs text-zinc-500 font-mono hidden md:block">
                                                         {formatBytes(file.size)}
                                                     </span>
