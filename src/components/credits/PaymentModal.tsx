@@ -29,7 +29,8 @@ const Slider = (props: any) => {
 interface PaymentModalProps {
     children?: React.ReactNode;
     mode?: 'CREDITS' | 'PLAN';
-    planName?: string;
+    planName?: string;          // Display name shown to the user (e.g. "Elite")
+    planCode?: string;          // Backend/legacy entitlement code (e.g. "ULTRA"). Defaults to planName.
     fixedPrice?: number; // In Dollars
     onSuccess?: () => void;
 }
@@ -41,7 +42,9 @@ const PROVIDERS = [
     { id: 'JAZZCASH', label: 'JazzCash', icon: Smartphone, color: 'text-amber-500', desc: 'Manual review' }
 ];
 
-export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice, onSuccess }: PaymentModalProps) {
+export function PaymentModal({ children, mode = 'CREDITS', planName, planCode, fixedPrice, onSuccess }: PaymentModalProps) {
+    // The backend gates on the legacy plan code; the UI shows the friendly name.
+    const backendPlan = planCode ?? planName;
     const [isOpen, setIsOpen] = useState(false);
     const [view, setView] = useState<'CHECKOUT' | 'HISTORY'>('CHECKOUT');
     const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -181,7 +184,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                             price * 100,
                             mode === 'PLAN' ? 0 : creditAmount,
                             mode,
-                            planName
+                            backendPlan
                         );
                     } else {
                         // Manual verification
@@ -191,7 +194,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, fixedPrice,
                             trxId,
                             selectedMethod,
                             mode,
-                            planName
+                            backendPlan
                         );
                     }
 

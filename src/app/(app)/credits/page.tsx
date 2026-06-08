@@ -66,7 +66,7 @@ function PlanCard({ plan, isCurrent, onSuccess }: { plan: PlanDef; isCurrent: bo
                         {plan.cta} <ArrowRight className="w-4 h-4" />
                     </Link>
                 ) : (
-                    <PaymentModal mode="PLAN" planName={legacy} fixedPrice={plan.priceMonthly} onSuccess={onSuccess}>
+                    <PaymentModal mode="PLAN" planName={plan.name} planCode={legacy} fixedPrice={plan.priceMonthly} onSuccess={onSuccess}>
                         <button className={cn(
                             "w-full py-2.5 rounded-lg text-sm font-bold transition-colors",
                             plan.highlight ? "bg-sc-purple-600 hover:bg-sc-purple-700 text-white" : "border border-border-default text-text-heading hover:bg-sc-purple-50 hover:text-sc-purple-800"
