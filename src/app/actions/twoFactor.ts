@@ -383,13 +383,15 @@ export async function verify2FAAndLogin(
       return { success: false, error: 'Invalid authenticator or backup code.' };
     }
 
-    // Create standard NextAuth OTP verification request (expires in 30 seconds)
+    // Create a single-use NextAuth OTP token, consumed by the credentials provider's
+    // 2FA branch in authorize(). 120s window: long enough to survive a Neon cold-start
+    // between this action returning and signIn() completing, short enough to stay safe.
     const otpToken = Math.random().toString(36).substring(2, 12).toUpperCase();
     await prisma.verificationToken.create({
       data: {
         identifier: user.email!.toLowerCase().trim(),
         token: otpToken,
-        expires: new Date(Date.now() + 30000) // 30 seconds
+        expires: new Date(Date.now() + 120000) // 120 seconds
       }
     });
 

@@ -198,14 +198,69 @@ const nextAuth = NextAuth({
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                password: { label: "Password", type: "password" },
+                otp: { label: "One-time code", type: "text" }
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) return null;
+                if (!credentials?.email) return null;
 
                 try {
                     const email = credentials.email as string;
                     const cleanEmail = email.toLowerCase().trim();
+
+                    // ── 2FA COMPLETION PATH (passwordless) ───────────────────────────
+                    // After the password + TOTP steps, verify2FAAndLogin() mints a
+                    // single-use VerificationToken and the client calls signIn with
+                    // { email, otp } and NO password. Consume that token here. Without
+                    // this branch the credentials provider rejects the passwordless 2FA
+                    // login, so signIn always errors and the user can never get past
+                    // /verify-2fa (Bug 3).
+                    if (credentials.otp && !credentials.password) {
+                        const otp = (credentials.otp as string).trim();
+
+                        const vt = await prisma.verificationToken.findFirst({
+                            where: { identifier: cleanEmail, token: otp },
+                        });
+
+                        // One-time use: delete the token as soon as it's looked up,
+                        // regardless of whether it turns out to be expired.
+                        if (vt) {
+                            await prisma.verificationToken.deleteMany({
+                                where: { identifier: cleanEmail, token: otp },
+                            });
+                        }
+
+                        if (!vt || vt.expires < new Date()) return null;
+
+                        const otpUser = await prisma.user.findFirst({
+                            where: {
+                                OR: [
+                                    { email: { equals: cleanEmail, mode: 'insensitive' } },
+                                    { username: { equals: cleanEmail, mode: 'insensitive' } }
+                                ]
+                            },
+                            select: {
+                                id: true, email: true, name: true, role: true, plan: true,
+                                image: true, username: true, emailVerified: true, twoFactorEnabled: true,
+                            }
+                        });
+                        if (!otpUser) return null;
+
+                        return {
+                            id: otpUser.id,
+                            email: otpUser.email,
+                            name: otpUser.name,
+                            role: otpUser.role,
+                            plan: otpUser.plan,
+                            image: otpUser.image,
+                            username: otpUser.username,
+                            isVerified: !!otpUser.emailVerified,
+                            twoFactorEnabled: otpUser.twoFactorEnabled,
+                        };
+                    }
+
+                    // ── STANDARD EMAIL + PASSWORD PATH ───────────────────────────────
+                    if (!credentials.password) return null;
 
                     const user = await prisma.user.findFirst({
                         where: {

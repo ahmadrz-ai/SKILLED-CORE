@@ -37,14 +37,25 @@ export default function Verify2FAPage() {
         });
 
         if (nextAuthRes?.error) {
-          setError('Failed to establish session. Please log in again.');
-          setIsLoading(false);
+          // The one-time OTP and the temp 2FA cookie have already been consumed, so
+          // retrying on this screen is futile. Route the user cleanly back to the
+          // password step instead of dead-ending here.
+          setError('Could not complete sign-in. Redirecting you to log in again…');
+          setTimeout(() => { window.location.href = '/login'; }, 1500);
         } else {
           window.location.href = '/feed';
         }
       } else {
+        const sessionExpired = /expired|sign(?:ing)? in again/i.test(res.error || '');
         setError(res.error || 'Invalid code. Please try again.');
-        setIsLoading(false);
+        if (sessionExpired) {
+          // Pending 2FA session is gone — send them back to the password step rather
+          // than leaving them stuck on a screen that can never succeed.
+          setTimeout(() => { window.location.href = '/login'; }, 1500);
+        } else {
+          // Invalid code: keep them here with their input so they can retry.
+          setIsLoading(false);
+        }
       }
     } catch (err: any) {
       setError('An error occurred during verification. Please try again.');
