@@ -69,14 +69,14 @@ export function RecommendationsWidget({ isFolded = false, isCollapsed = false }:
 
     const renderUser = (item: RecommendedUser, isFirst = false) => (
         <div key={item.id} className={`flex gap-3 items-start ${isFirst ? '' : 'pt-2'}`}>
-            <Link href={`/profile/${item.username || item.id}`} className="flex-shrink-0 mt-0.5 hover:opacity-90 transition-opacity">
+            <Link prefetch={false} href={`/profile/${item.username || item.id}`} className="flex-shrink-0 mt-0.5 hover:opacity-90 transition-opacity">
                 <Avatar className="w-10 h-10 border border-[#E5E7EB] shadow-sm">
                     <AvatarImage src={item.image} />
                     <AvatarFallback className="bg-[#EAE6FD] text-[#5B35D5] font-extrabold text-sm">{item.name[0]}</AvatarFallback>
                 </Avatar>
             </Link>
             <div className="flex-1 min-w-0">
-                <Link href={`/profile/${item.username || item.id}`} className="hover:underline">
+                <Link prefetch={false} href={`/profile/${item.username || item.id}`} className="hover:underline">
                     <div className="font-bold text-sm text-[#111827] truncate hover:text-[#5B35D5] transition-colors flex items-center gap-1.5">
                         {item.name}
                         {item.isPremium && (
@@ -142,7 +142,7 @@ export function RecommendationsWidget({ isFolded = false, isCollapsed = false }:
 
             {/* Destination button — always visible */}
             {suggestions.length > 0 && (
-                <Link href="/network" className="flex items-center justify-center gap-1.5 p-3 text-center border-t border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors text-xs text-[#5B35D5] font-bold tracking-wider uppercase">
+                <Link prefetch={false} href="/network" className="flex items-center justify-center gap-1.5 p-3 text-center border-t border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors text-xs text-[#5B35D5] font-bold tracking-wider uppercase">
                     Grow your network <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
             )}

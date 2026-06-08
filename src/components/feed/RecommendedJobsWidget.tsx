@@ -46,7 +46,7 @@ export function RecommendedJobsWidget({ jobs, isFolded = false, isCollapsed = fa
                     ) : (
                         <>
                             {/* Top job — always visible */}
-                            <Link href={`/jobs/${jobs[0].id}`} className="block">
+                            <Link prefetch={false} href={`/jobs/${jobs[0].id}`} className="block">
                                 <li className="group cursor-pointer p-3 rounded-xl hover:bg-[#F9FAFB] transition-all border border-transparent hover:border-[#E5E7EB] duration-200">
                                     <h3 className="font-bold text-sm text-[#111827] group-hover:text-[#5B35D5] transition-colors leading-snug">
                                         {jobs[0].title}
@@ -77,7 +77,7 @@ export function RecommendedJobsWidget({ jobs, isFolded = false, isCollapsed = fa
                                         className="overflow-hidden flex flex-col gap-3 pt-1"
                                     >
                                         {jobs.slice(1).map((job) => (
-                                            <Link href={`/jobs/${job.id}`} key={job.id} className="block">
+                                            <Link prefetch={false} href={`/jobs/${job.id}`} key={job.id} className="block">
                                                 <li className="group cursor-pointer p-3 rounded-xl hover:bg-[#F9FAFB] transition-all border border-transparent hover:border-[#E5E7EB] duration-200">
                                                     <h3 className="font-bold text-sm text-[#111827] group-hover:text-[#5B35D5] transition-colors leading-snug">
                                                         {job.title}
@@ -106,7 +106,7 @@ export function RecommendedJobsWidget({ jobs, isFolded = false, isCollapsed = fa
 
                 {/* Destination button — always visible */}
                 <div className="pt-3.5 mt-2 border-t border-[#E5E7EB] text-center">
-                    <Link href="/jobs" className="text-xs text-[#5B35D5] hover:text-[#4A28C9] font-bold tracking-wider uppercase flex items-center justify-center gap-1 hover:underline transition-all">
+                    <Link prefetch={false} href="/jobs" className="text-xs text-[#5B35D5] hover:text-[#4A28C9] font-bold tracking-wider uppercase flex items-center justify-center gap-1 hover:underline transition-all">
                         View all jobs <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                 </div>

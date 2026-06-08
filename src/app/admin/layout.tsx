@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
     LayoutDashboard, Users, Shield, AlertTriangle, Activity, CreditCard,
@@ -44,7 +44,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         // @ts-ignore - Role is added in auth.config
         if (session?.user?.role !== 'ADMIN') {
-            router.replace('/feed');
+            // Bug 10: a silent redirect to /feed hid the access boundary (and made a
+            // working admin look "broken" when role propagation failed). Render a real
+            // 404 so /admin is honest: real home for admins, not-found for everyone else.
+            notFound();
             return;
         }
 

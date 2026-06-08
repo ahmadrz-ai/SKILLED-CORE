@@ -41,7 +41,7 @@ export function ProfileSideWidget({ user, stats }: ProfileSideWidgetProps) {
 
             {/* Identity */}
             <div className="pt-12 px-5 pb-5">
-                <Link href={`/profile/${user.username || 'me'}`} className="block group">
+                <Link prefetch={false} href={`/profile/${user.username || 'me'}`} className="block group">
                     <h3 className="font-bold text-[#111827] group-hover:text-[#5B35D5] group-hover:underline transition-all cursor-pointer text-lg leading-tight tracking-tight">
                         {user.name}
                     </h3>
