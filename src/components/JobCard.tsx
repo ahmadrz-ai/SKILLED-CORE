@@ -92,14 +92,16 @@ export default function JobCard({ job, index, onApply }: JobCardProps) {
     useEffect(() => {
         const detectGeo = async () => {
             try {
-                const res = await fetch("https://ipapi.co/json/");
+                // Bug 8: timeout so a hanging/blocked geo lookup can't keep a request
+                // pending. Non-fatal — the card renders with the job's own currency.
+                const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(3500) });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.country_name) setDetectedCountry(data.country_name);
                     if (data.currency) setDetectedCurrency(data.currency);
                 }
             } catch (err) {
-                console.error("Failed to detect country/currency from IP in JobCard:", err);
+                console.warn("Geo/currency detection unavailable in JobCard; using default currency.", err);
             }
         };
         detectGeo();

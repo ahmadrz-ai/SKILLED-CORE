@@ -140,7 +140,10 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
     useEffect(() => {
         const detectGeo = async () => {
             try {
-                const res = await fetch("https://ipapi.co/json/");
+                // Bug 8: timeout so a hanging/blocked geo lookup can't keep a request
+                // pending. Failure is non-fatal — listings already render from
+                // initialJobs and currency falls back to the PKR default below.
+                const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(3500) });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.country_name) {
@@ -151,7 +154,7 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                     }
                 }
             } catch (err) {
-                console.error("Failed to detect country/currency from IP:", err);
+                console.warn("Geo/currency detection unavailable; using default currency.", err);
             }
         };
         detectGeo();
