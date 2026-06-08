@@ -9,7 +9,9 @@ export default function LearningPage() {
     const [plan, setPlan] = useState<string | null>(null);
 
     useEffect(() => {
-        getPlan().then(setPlan);
+        // Bug 9: a failed getPlan() must not leave plan=null forever (permanent blank).
+        // Fall back to the most-restrictive view so the page always renders something.
+        getPlan().then(setPlan).catch(() => setPlan("BASIC"));
     }, []);
 
     if (plan === null) return null;

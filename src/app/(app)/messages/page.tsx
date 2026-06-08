@@ -131,26 +131,34 @@ export default function MessagesPage() {
 
     async function loadConversations(silent = false) {
         if (!silent) setLoading(true);
-        const res = await getConversations();
-        if (res.success) {
-            setConversations(res.conversations);
-            setCurrentUserRole(res.userRole || 'User');
-            if (tempContact) {
-                const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
-                if (inList) setTempContact(null);
-            }
-            // Auto-open the first conversation only on desktop. On mobile the list
-            // is the landing view (list↔thread toggle), so we don't pre-select.
-            const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
-            if (isDesktop && !selectedContactId && res.conversations.length > 0 && !initialUserId && !isSelectionInitialized.current) {
-                const firstContact = res.conversations[0];
-                if (firstContact) {
-                    setSelectedContactId(firstContact.contactId);
-                    isSelectionInitialized.current = true;
+        // Bug 9: guard with try/finally so a thrown getConversations() (e.g. a DB
+        // hiccup) can never leave the conversation list spinner stuck forever — it
+        // resolves to the empty state instead.
+        try {
+            const res = await getConversations();
+            if (res.success) {
+                setConversations(res.conversations);
+                setCurrentUserRole(res.userRole || 'User');
+                if (tempContact) {
+                    const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
+                    if (inList) setTempContact(null);
+                }
+                // Auto-open the first conversation only on desktop. On mobile the list
+                // is the landing view (list↔thread toggle), so we don't pre-select.
+                const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+                if (isDesktop && !selectedContactId && res.conversations.length > 0 && !initialUserId && !isSelectionInitialized.current) {
+                    const firstContact = res.conversations[0];
+                    if (firstContact) {
+                        setSelectedContactId(firstContact.contactId);
+                        isSelectionInitialized.current = true;
+                    }
                 }
             }
+        } catch (err) {
+            console.error("Failed to load conversations:", err);
+        } finally {
+            if (!silent) setLoading(false);
         }
-        if (!silent) setLoading(false);
     }
 
     const activeContactIdRef = useRef<string | null>(null);
