@@ -152,7 +152,7 @@ export default function HelpPage() {
                             placeholder="Search for answers..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 focus:outline-none focus:border-sc-purple-500 focus:ring-2 focus:ring-sc-purple-100 transition-all placeholder:text-slate-400 shadow-sm font-medium"
+                            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 focus:outline-none focus:border-sc-purple-500 focus:ring-2 focus:ring-sc-purple-100 transition-all placeholder:text-slate-500 shadow-sm font-medium"
                         />
                     </div>
                 </div>
@@ -231,32 +231,32 @@ export default function HelpPage() {
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Name</label>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Name</label>
                                             <input 
                                                 type="text" 
                                                 required
                                                 placeholder="Your Name"
                                                 value={name}
                                                 onChange={e => setName(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email</label>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Email</label>
                                             <input 
                                                 type="email" 
                                                 required
                                                 placeholder="you@domain.com"
                                                 value={email}
                                                 onChange={e => setEmail(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Category</label>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Category</label>
                                             <select 
                                                 value={category}
                                                 onChange={e => setCategory(e.target.value)}
@@ -270,7 +270,7 @@ export default function HelpPage() {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Severity</label>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Severity</label>
                                             <select 
                                                 value={severity}
                                                 onChange={e => setSeverity(e.target.value as any)}
@@ -285,26 +285,26 @@ export default function HelpPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Subject</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Subject</label>
                                         <input 
                                             type="text" 
                                             required
                                             placeholder="What's going on?"
                                             value={subject}
                                             onChange={e => setSubject(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold shadow-sm"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Description</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Description</label>
                                         <textarea 
                                             rows={4}
                                             required
                                             placeholder="Explain the anomaly..."
                                             value={description}
                                             onChange={e => setDescription(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold resize-none shadow-sm"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-sc-purple-500/50 transition-colors text-sm font-semibold resize-none shadow-sm"
                                         />
                                     </div>
 

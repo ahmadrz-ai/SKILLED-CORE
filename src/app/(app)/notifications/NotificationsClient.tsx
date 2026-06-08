@@ -187,9 +187,10 @@ export function NotificationsClient({ initialData }: { initialData: Notification
                                 {/* Content */}
                                 <div className="flex-1 min-w-0 pr-6">
                                     <div className="text-sm text-[var(--text-body-strong)] leading-relaxed">
-                                        {notification.actor && (
-                                            <span className="font-bold text-[var(--text-heading)] mr-1">{notification.actor.name}</span>
-                                        )}
+                                        {/* Bug 11: every notification message already embeds the actor's
+                                            name (e.g. "<strong>AHMAD</strong> started following you"), so
+                                            prepending notification.actor.name here rendered it twice. The
+                                            message is the single source of truth; the avatar shows the actor. */}
                                         <span dangerouslySetInnerHTML={{ __html: notification.message }} />
                                     </div>
                                     <div className="mt-1 flex items-center gap-2">

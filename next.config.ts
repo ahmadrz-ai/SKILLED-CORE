@@ -18,6 +18,14 @@ const nextConfig: any = {
         ],
     },
 
+    // Bug 13: the feature is "/bookings"; "Interviews" is just its label. Redirect the
+    // legacy/guessable "/interviews" path so a stray link or bookmark never 404s.
+    async redirects() {
+        return [
+            { source: "/interviews", destination: "/bookings", permanent: true },
+        ];
+    },
+
     // FIX-016: Security headers on all responses
     async headers() {
         return [
