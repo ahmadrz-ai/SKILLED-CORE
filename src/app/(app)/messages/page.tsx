@@ -7,7 +7,7 @@ import {
     Search, Phone, Video, MoreVertical, Paperclip, Send,
     Check, CheckCircle2, Circle, MessageSquare, CheckCheck,
     Smile, CornerUpLeft, Trash2, Copy, AlertCircle, Heart,
-    ThumbsUp
+    ThumbsUp, ArrowLeft
 } from 'lucide-react';
 import { EmojiPicker } from '@/components/shared/EmojiPicker';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,17 @@ export default function MessagesPage() {
         const params = new URLSearchParams(searchParams.toString());
         params.set('userId', contactId);
         router.replace(`?${params.toString()}`);
+    };
+
+    // Mobile: return from an open thread to the conversation list.
+    const handleBack = () => {
+        isSelectionInitialized.current = true; // prevent auto-reselect of the first conversation
+        setSelectedContactId(null);
+        setTempContact(null);
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('userId');
+        const qs = params.toString();
+        router.replace(qs ? `?${qs}` : window.location.pathname);
     };
 
     const [conversations, setConversations] = useState<any[]>([]);
@@ -128,7 +139,10 @@ export default function MessagesPage() {
                 const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
                 if (inList) setTempContact(null);
             }
-            if (!selectedContactId && res.conversations.length > 0 && !initialUserId && !isSelectionInitialized.current) {
+            // Auto-open the first conversation only on desktop. On mobile the list
+            // is the landing view (list↔thread toggle), so we don't pre-select.
+            const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+            if (isDesktop && !selectedContactId && res.conversations.length > 0 && !initialUserId && !isSelectionInitialized.current) {
                 const firstContact = res.conversations[0];
                 if (firstContact) {
                     setSelectedContactId(firstContact.contactId);
@@ -262,7 +276,10 @@ export default function MessagesPage() {
     return (
         <div className="h-[calc(100vh-64px)] w-full flex bg-bg-page text-text-body overflow-hidden font-sans">
             {/* Sidebar */}
-            <div className="w-80 lg:w-96 border-r border-border-sidebar bg-bg-sidebar flex flex-col flex-shrink-0 z-10">
+            <div className={cn(
+                "w-full md:w-80 lg:w-96 border-r border-border-sidebar bg-bg-sidebar flex-col flex-shrink-0 z-10",
+                selectedContact ? "hidden md:flex" : "flex"
+            )}>
                 <div className="p-4 lg:p-6 border-b border-border-sidebar flex flex-col gap-4 bg-bg-sidebar relative z-20">
                     <h2 className="text-xl font-bold text-text-heading tracking-tight">
                         Messages
@@ -323,8 +340,15 @@ export default function MessagesPage() {
             {selectedContact ? (
                 <div className="flex-1 flex flex-col bg-bg-secondary-panel relative">
                     {/* Header */}
-                    <div className="h-[73px] px-6 border-b border-border-default flex items-center justify-between bg-bg-page z-20 shadow-sc-sm">
-                        <div className="flex items-center gap-4">
+                    <div className="h-[73px] px-4 md:px-6 border-b border-border-default flex items-center justify-between bg-bg-page z-20 shadow-sc-sm">
+                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                            <button
+                                onClick={handleBack}
+                                aria-label="Back to conversations"
+                                className="md:hidden -ml-1 p-1.5 rounded-full text-text-secondary hover:text-text-heading hover:bg-bg-sidebar-hover transition-colors shrink-0"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </button>
                             <Avatar className="w-10 h-10 border border-border-default">
                                 <AvatarImage src={selectedContact.avatar} />
                                 <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
@@ -374,7 +398,7 @@ export default function MessagesPage() {
                                     <ContextMenu>
                                         <ContextMenuTrigger>
                                             <div className={cn(
-                                                "max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
+                                                "max-w-[75%] md:max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
                                                 isMe
                                                     ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-sc-purple-600 text-text-inverse force-white-text rounded-l-2xl`
                                                     : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-bg-card border border-border-default text-text-body rounded-r-2xl`,
@@ -499,7 +523,7 @@ export default function MessagesPage() {
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center bg-bg-secondary-panel">
+                <div className="flex-1 flex-col items-center justify-center bg-bg-secondary-panel hidden md:flex">
                     <EmptyState
                         icon={MessageSquare}
                         title="No conversations yet"

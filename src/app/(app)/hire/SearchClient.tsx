@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Sparkles, Search, SearchX, Compass, BookOpen, User, UserCheck } from "lucide-react";
+import { Sparkles, Search, SearchX, Compass, BookOpen, User, UserCheck, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { searchTalent } from "@/app/actions/talentSearch";
 import { TalentSearchResults } from "@/components/hire/TalentSearchResults";
 import { QueryIntentBanner } from "@/components/hire/QueryIntentBanner";
@@ -23,6 +24,7 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     const [hasSearched, setHasSearched] = useState(false);
     const [showQueryBanner, setShowQueryBanner] = useState(false);
     const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [filters, setFilters] = useState<SearchFilters>({
         experienceLevel: 'any',
         planType: 'all',
@@ -175,6 +177,13 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     // Check if entire results lists return zero candidates
     const hasResults = hasSearched ? filteredRows.length > 0 : filteredInitialCandidates.length > 0;
 
+    // Count of active refinement filters (for the mobile trigger badge)
+    const activeFilterCount =
+        (filters.experienceLevel !== 'any' ? 1 : 0) +
+        (filters.planType !== 'all' ? 1 : 0) +
+        (filters.location.trim() !== '' ? 1 : 0) +
+        (filters.verifiedOnly ? 1 : 0);
+
     return (
         <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans">
             
@@ -242,17 +251,58 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
             </div>
 
             {/* Pattern B Page Layout: Left panel w-72 refinement filters + Right matches lists */}
-            <div className="flex-1 flex flex-col lg:flex-row max-w-full mx-auto w-full p-4 lg:p-8 gap-8">
-                
-                {/* Sidebar Filter Panel */}
-                <LeftFilterPanel
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                    onClearAll={handleClearAll}
-                />
+            <div className="flex-1 flex flex-col lg:flex-row max-w-full mx-auto w-full p-4 lg:p-8 gap-4 lg:gap-8">
+
+                {/* Mobile backdrop for the filter drawer */}
+                {mobileFiltersOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                        onClick={() => setMobileFiltersOpen(false)}
+                        aria-hidden
+                    />
+                )}
+
+                {/* Filter Panel — inline sidebar on desktop, slide-in drawer on mobile */}
+                <div className={cn(
+                    "lg:block lg:static lg:w-72 lg:flex-shrink-0 lg:self-start lg:p-0 lg:bg-transparent lg:shadow-none lg:overflow-visible lg:max-w-none",
+                    mobileFiltersOpen
+                        ? "fixed inset-y-0 left-0 z-50 w-[88%] max-w-sm overflow-y-auto p-3 bg-[var(--sc-gray-100)] shadow-2xl"
+                        : "hidden"
+                )}>
+                    <div className="flex items-center justify-between mb-3 lg:hidden">
+                        <span className="text-sm font-bold text-[var(--sc-gray-900)]">Filters</span>
+                        <button
+                            onClick={() => setMobileFiltersOpen(false)}
+                            aria-label="Close filters"
+                            className="p-1.5 rounded-full hover:bg-[var(--sc-gray-200)] text-[var(--sc-gray-600)]"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <LeftFilterPanel
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        onClearAll={handleClearAll}
+                    />
+                </div>
 
                 {/* Main Results Listing Container */}
                 <main className="flex-1 min-w-0">
+
+                    {/* Mobile-only trigger to open the filter drawer */}
+                    <button
+                        onClick={() => setMobileFiltersOpen(true)}
+                        className="lg:hidden mb-4 inline-flex items-center gap-2 bg-white border border-[var(--sc-gray-200)] rounded-lg px-3.5 py-2 text-sm font-semibold text-[var(--sc-gray-700)] shadow-sm"
+                    >
+                        <SlidersHorizontal className="w-4 h-4 text-[var(--sc-purple-600)]" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[var(--sc-purple-600)] text-white text-[11px] font-bold">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+
                     
                     {/* Pulsing Sparkles Telemetry Loading State */}
                     {isSearching ? (

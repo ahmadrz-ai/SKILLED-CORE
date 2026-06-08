@@ -145,9 +145,9 @@ export default function NetworkPage() {
         <div className="min-h-screen bg-bg-secondary-panel text-text-body flex flex-col md:flex-row">
 
             {/* MANAGER SIDEBAR (Left) — sticky so it stays visible while the list scrolls */}
-            <div className="w-full md:w-64 bg-bg-sidebar border-r border-border-sidebar p-6 flex-shrink-0 shadow-sc-xs md:sticky md:top-14 md:self-start">
-                <h2 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-6 px-2">Manage Network</h2>
-                <nav className="space-y-1">
+            <div className="w-full md:w-64 bg-bg-sidebar border-b md:border-b-0 md:border-r border-border-sidebar p-4 md:p-6 flex-shrink-0 shadow-sc-xs md:sticky md:top-14 md:self-start">
+                <h2 className="hidden md:block text-xs font-bold text-text-secondary uppercase tracking-widest mb-6 px-2">Manage Network</h2>
+                <nav className="flex md:flex-col gap-2 md:gap-1 overflow-x-auto md:overflow-visible -mx-1 px-1 md:mx-0 md:px-0 custom-scrollbar">
                     {[
                         { label: 'Connections', count: data.stats.connections, icon: Users, active: true },
                         { label: 'Following', count: data.stats.following, icon: UserPlus, active: false },
@@ -159,7 +159,7 @@ export default function NetworkPage() {
                             key={item.label}
                             onClick={() => handleNavigation(item.label)}
                             className={cn(
-                                "w-full flex items-center justify-between p-3 rounded-lg text-sm font-semibold transition-all border group cursor-pointer",
+                                "flex-shrink-0 md:flex-shrink md:w-full flex items-center justify-between gap-2 p-3 rounded-lg text-sm font-semibold transition-all border group cursor-pointer whitespace-nowrap",
                                 activeTab === item.label
                                     ? "bg-bg-sidebar-active text-text-sidebar-active border-border-selected"
                                     : "text-text-sidebar-inactive border-transparent hover:bg-bg-sidebar-hover hover:text-text-sidebar-hover"
@@ -178,7 +178,7 @@ export default function NetworkPage() {
                     ))}
                 </nav>
 
-                <div className="mt-8 pt-8 border-t border-border-sidebar">
+                <div className="hidden md:block mt-8 pt-8 border-t border-border-sidebar">
                     <h3 className="text-xs font-bold text-text-secondary mb-4 px-2 uppercase tracking-wider">Personal Links</h3>
                     <div className="space-y-2">
                         <Link href="/profile/me">

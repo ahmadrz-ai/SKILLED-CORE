@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User as UserIcon, Shield, ShieldCheck, Mail, Lock, Key, Bell, Briefcase, Eye, EyeOff,
   Database, RefreshCw, AlertTriangle, Monitor, Smartphone, Check, HelpCircle, ChevronRight,
-  Loader2, Trash2, ArrowRight, FileText
+  Loader2, Trash2, ArrowRight, FileText, ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -82,6 +82,7 @@ export default function SettingsPage() {
   const { data: sessionContext, update: updateClientSession } = useSession();
   
   const [activeTab, setActiveTab] = useState('profile');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // User details state
@@ -1046,9 +1047,33 @@ export default function SettingsPage() {
           GLOBAL SETTINGS
         </h1>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start">
+          {/* MOBILE NAV TRIGGER — collapses the full category list into a single dropdown */}
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(o => !o)}
+            aria-expanded={mobileNavOpen}
+            className="lg:hidden w-full flex items-center justify-between gap-3 bg-bg-sidebar border border-border-default rounded-xl px-4 py-3 text-sm font-semibold text-text-heading"
+          >
+            <span className="flex items-center gap-2.5 min-w-0">
+              {(() => {
+                const active = filteredTabs.find(t => t.id === activeTab);
+                const Icon = active?.icon;
+                return Icon ? <Icon className="w-4 h-4 text-sc-purple-600 shrink-0" /> : null;
+              })()}
+              <span className="truncate">{filteredTabs.find(t => t.id === activeTab)?.label || 'Settings'}</span>
+            </span>
+            <ChevronDown className={cn("w-4 h-4 text-text-secondary transition-transform shrink-0", mobileNavOpen && "rotate-180")} />
+          </button>
+
           {/* LEFT SUB-NAVIGATION PANEL (Sticky Sidebar Nav - Pattern B) */}
-          <nav className="w-full lg:w-64 shrink-0 bg-bg-sidebar border border-border-default rounded-2xl p-4 space-y-4 lg:sticky lg:top-6">
+          <nav
+            onClick={() => setMobileNavOpen(false)}
+            className={cn(
+              "w-full lg:w-64 shrink-0 bg-bg-sidebar border border-border-default rounded-2xl p-4 space-y-4 lg:sticky lg:top-6",
+              mobileNavOpen ? "block" : "hidden lg:block"
+            )}
+          >
             
             {/* ACCOUNT CATEGORY */}
             <div className="space-y-1">

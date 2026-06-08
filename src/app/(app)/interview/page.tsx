@@ -243,7 +243,7 @@ export default function InterviewPage() {
     const isUIUXRole = classification ? classification.category === 'UX/UI Design & Research' : false;
 
     return (
-        <div className="min-h-[100dvh] bg-transparent p-4 lg:p-6 flex flex-col" style={{ height: '100dvh', overflow: 'hidden' }}>
+        <div className="bg-transparent p-4 lg:p-6 flex flex-col min-h-[calc(100dvh-3.5rem)] lg:h-[calc(100dvh-3.5rem)] overflow-y-auto lg:overflow-hidden">
 
             {/* Header */}
             <header className="flex-none mb-4 flex items-center justify-between border-b border-border-default pb-4">
@@ -252,7 +252,7 @@ export default function InterviewPage() {
                         <MessageSquarePlus className="w-6 h-6 text-text-brand" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-heading font-black text-text-heading tracking-tight flex items-center gap-2">
+                        <h1 className="text-lg sm:text-xl font-heading font-black text-text-heading tracking-tight flex items-center gap-2 min-w-0">
                             {sessionActive ? (
                                 <>
                                     <span className="bg-gradient-to-r from-sc-purple-650 via-sc-purple-700 to-sc-purple-800 bg-clip-text text-transparent">{sessionTitle}</span>
@@ -359,8 +359,10 @@ export default function InterviewPage() {
 
                     {/* Chat Column */}
                     <div className={cn(
-                        "h-[55vh] lg:h-full flex flex-col min-h-0 transition-all duration-500",
-                        isRightPanelOpen ? "lg:col-span-4" : "lg:col-span-2"
+                        "flex flex-col min-h-0 transition-all duration-500 lg:h-full",
+                        isRightPanelOpen
+                            ? "h-[60vh] lg:col-span-4"
+                            : "h-[calc(100dvh-13rem)] lg:col-span-2"
                     )}>
                         <ChatInterface
                             key={sessionId}
@@ -379,7 +381,7 @@ export default function InterviewPage() {
 
                     {/* Adaptive Workspace Column */}
                     {isRightPanelOpen && (
-                        <div className="lg:col-span-8 h-[35vh] lg:h-full flex flex-col min-h-0 animate-in fade-in slide-in-from-right-10 duration-500">
+                        <div className="lg:col-span-8 h-[60vh] lg:h-full flex flex-col min-h-0 animate-in fade-in slide-in-from-right-10 duration-500">
                              {requiresCodingSandbox ? (
                                  <CodeEditorPanel
                                     language="javascript"
