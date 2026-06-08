@@ -287,12 +287,13 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                     throw new Error(data.error || "Failed to save profile");
                 }
 
-                // Redirect
+                // Redirect only on a confirmed successful save
                 router.push('/feed');
             } catch (error: any) {
                 console.error(error);
                 toast.error(error.message || "Failed to save profile");
-                router.push('/feed');
+                // Do NOT redirect on failure — keep the user on this step with their
+                // entered data intact so they can fix the issue and retry.
             }
         }
     };
@@ -331,7 +332,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || "Failed to finalize onboarding.");
-            router.push('/feed');
+            // Do NOT redirect on failure — keep the user here with their data intact.
         } finally {
             setIsSkipping(false);
         }
