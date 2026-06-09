@@ -94,7 +94,7 @@ export function AdminReportModal({ report, isOpen, onClose, onStatusUpdated }: A
               ) : (
                 <LifeBuoy className="w-4 h-4 text-sc-purple-650" />
               )}
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-bold">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-tertiary font-bold">
                 Ticket Diagnostics
               </span>
             </div>
@@ -137,7 +137,7 @@ export function AdminReportModal({ report, isOpen, onClose, onStatusUpdated }: A
                 {currentReport.aiSummary}
               </div>
             ) : (
-              <div className="p-4 rounded-xl border border-dashed border-zinc-200 text-center text-xs text-text-secondary">
+              <div className="p-4 rounded-xl border border-dashed border-border-default text-center text-xs text-text-secondary">
                 No diagnostics summary generated. Click "Re-Analyze" below to trigger.
               </div>
             )}
@@ -150,7 +150,7 @@ export function AdminReportModal({ report, isOpen, onClose, onStatusUpdated }: A
               {currentReport.fixPrompt && (
                 <button
                   onClick={handleCopyPrompt}
-                  className="px-2.5 py-1 rounded bg-[#E8E8F0] hover:bg-[#D8D8E0] text-zinc-800 border-none cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all shrink-0"
+                  className="px-2.5 py-1 rounded bg-[#E8E8F0] hover:bg-[#D8D8E0] text-text-heading border-none cursor-pointer flex items-center gap-1 text-[10px] font-bold transition-all shrink-0"
                 >
                   {isCopied ? (
                     <>
@@ -167,15 +167,15 @@ export function AdminReportModal({ report, isOpen, onClose, onStatusUpdated }: A
               )}
             </h4>
             {isAnalyzing ? (
-              <div className="h-[120px] rounded-xl bg-zinc-900 animate-pulse border border-zinc-800" />
+              <div className="h-[120px] rounded-xl bg-bg-secondary-panel animate-pulse border border-border-default" />
             ) : currentReport.fixPrompt ? (
               <div className="relative group">
-                <pre className="p-4 rounded-xl bg-zinc-950 text-emerald-400 font-mono text-[11px] leading-relaxed overflow-x-auto select-text border border-zinc-900 max-h-[200px]">
+                <pre className="p-4 rounded-xl bg-zinc-950 text-emerald-400 font-mono text-[11px] leading-relaxed overflow-x-auto select-text border border-border-default max-h-[200px]">
                   {currentReport.fixPrompt}
                 </pre>
               </div>
             ) : (
-              <div className="p-4 rounded-xl border border-dashed border-zinc-200 text-center text-xs text-text-secondary">
+              <div className="p-4 rounded-xl border border-dashed border-border-default text-center text-xs text-text-secondary">
                 No fix prompt generated.
               </div>
             )}
@@ -205,7 +205,7 @@ export function AdminReportModal({ report, isOpen, onClose, onStatusUpdated }: A
               onClick={handleAnalyze}
               disabled={isAnalyzing}
               variant="outline"
-              className="flex-1 sm:flex-initial h-10 text-xs font-bold border border-zinc-300 hover:bg-zinc-50 rounded-xl"
+              className="flex-1 sm:flex-initial h-10 text-xs font-bold border border-border-default hover:bg-zinc-50 rounded-xl"
             >
               <Wrench className="w-3.5 h-3.5 mr-1" /> Re-Analyze
             </Button>

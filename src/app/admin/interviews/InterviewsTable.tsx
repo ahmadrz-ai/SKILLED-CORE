@@ -41,15 +41,15 @@ function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
     for (let i = 1; i <= 5; i++) {
         if (i <= roundedFull) {
             stars.push(
-                <Star key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+                <Star key={i} size={size} className="fill-violet-400 text-sc-purple-600 stroke-[#5B35D5]" />
             );
         } else if (i === roundedFull + 1 && hasHalf) {
             stars.push(
-                <StarHalf key={i} size={size} className="fill-violet-400 text-violet-400 stroke-violet-500" />
+                <StarHalf key={i} size={size} className="fill-violet-400 text-sc-purple-600 stroke-[#5B35D5]" />
             );
         } else {
             stars.push(
-                <Star key={i} size={size} className="text-zinc-700 fill-zinc-800/40 stroke-zinc-700" />
+                <Star key={i} size={size} className="text-text-heading fill-zinc-800/40 stroke-gray-200" />
             );
         }
     }
@@ -166,111 +166,111 @@ export default function InterviewsTable({ interviews }: InterviewsTableProps) {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Total Simulations</span>
-                    <span className="text-2xl font-bold text-white font-mono mt-1">{totalCount}</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">Total Simulations</span>
+                    <span className="text-2xl font-bold text-text-heading font-mono mt-1">{totalCount}</span>
                 </div>
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Average Platform Score</span>
-                    <span className="text-2xl font-bold text-violet-400 font-mono mt-1">{averageScore}/100</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">Average Platform Score</span>
+                    <span className="text-2xl font-bold text-sc-purple-600 font-mono mt-1">{averageScore}/100</span>
                 </div>
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">High Performers (80+ Score)</span>
-                    <span className="text-2xl font-bold text-teal-400 font-mono mt-1">{excellentCount}</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">High Performers (80+ Score)</span>
+                    <span className="text-2xl font-bold text-emerald-600 font-mono mt-1">{excellentCount}</span>
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center justify-between bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                     <input
                         type="text"
                         placeholder="Search by candidate, role or feedback..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-black/50 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 w-80"
+                        className="bg-bg-input border border-border-default rounded-lg pl-10 pr-4 py-2 text-sm text-text-body placeholder:text-text-placeholder focus:outline-none focus:border-border-focus w-80"
                     />
                 </div>
-                <div className="text-xs text-zinc-500 font-mono">
+                <div className="text-xs text-text-tertiary font-mono">
                     TOTAL SESSIONS: {interviews.length}
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-bg-secondary-panel border border-border-subtle rounded-xl overflow-hidden">
                 <table className="w-full text-left text-sm">
                     <thead>
-                        <tr className="border-b border-white/5 bg-white/5">
+                        <tr className="border-b border-border-subtle bg-bg-secondary-panel">
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('candidate')}
                             >
                                 <div className="flex items-center gap-1.5">
                                     Candidate
                                     {sortField === 'candidate' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'candidate' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('role')}
                             >
                                 <div className="flex items-center gap-1.5">
                                     Role Type
                                     {sortField === 'role' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'role' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('score')}
                             >
                                 <div className="flex items-center gap-1.5">
                                     AI Score
                                     {sortField === 'score' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'score' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('date')}
                             >
                                 <div className="flex items-center gap-1.5">
                                     Completed Date
                                     {sortField === 'date' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'date' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
-                            <th className="p-4 font-medium text-zinc-400 text-right">Actions</th>
+                            <th className="p-4 font-medium text-text-secondary text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {sortedInterviews.map((item) => (
-                            <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <tr key={item.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
                                             {item.user?.image ? (
                                                 <img src={item.user.image} alt="" className="w-full h-full object-cover" />
                                             ) : (
@@ -278,33 +278,33 @@ export default function InterviewsTable({ interviews }: InterviewsTableProps) {
                                             )}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-white flex items-center gap-1.5">
+                                            <div className="font-bold text-text-heading flex items-center gap-1.5">
                                                 {item.user?.name || "Unknown"}
                                                 {item.user?.username && (
-                                                    <span className="text-[10px] text-zinc-550 font-mono">@{item.user.username}</span>
+                                                    <span className="text-[10px] text-text-tertiary font-mono">@{item.user.username}</span>
                                                 )}
                                             </div>
-                                            <div className="text-xs text-zinc-500">{item.user?.email || "No email"}</div>
+                                            <div className="text-xs text-text-tertiary">{item.user?.email || "No email"}</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-4 font-semibold text-zinc-200">
+                                <td className="p-4 font-semibold text-text-body">
                                     {formatRoleName(item.role)}
                                 </td>
                                 <td className="p-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <StarRating rating={item.score / 20} />
-                                            <span className="text-xs font-mono font-bold text-violet-400">
+                                            <span className="text-xs font-mono font-bold text-sc-purple-600">
                                                 {(item.score / 20).toFixed(1)}/5.0
                                             </span>
                                         </div>
-                                        <span className="inline-flex items-center text-[10px] font-mono font-bold text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                                        <span className="inline-flex items-center text-[10px] font-mono font-bold text-text-secondary bg-bg-secondary-panel border border-border-default px-2 py-0.5 rounded-md">
                                             SCORE: {item.score}/100
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-xs font-mono text-zinc-400">
+                                <td className="p-4 text-xs font-mono text-text-secondary">
                                     {new Date(item.createdAt).toLocaleString(undefined, {
                                         dateStyle: 'medium',
                                         timeStyle: 'short'
@@ -316,7 +316,7 @@ export default function InterviewsTable({ interviews }: InterviewsTableProps) {
                                             variant="ghost"
                                             size="icon"
                                             asChild
-                                            className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-white/5 rounded-md border border-white/5 hover:border-white/10 transition-all compact-btn"
+                                            className="h-8 w-8 text-text-secondary hover:text-text-heading hover:bg-bg-sidebar-hover rounded-md border border-border-subtle hover:border-border-default transition-all compact-btn"
                                             title="View Details"
                                         >
                                             <Link href={`/interview/${item.id}`}>
@@ -344,7 +344,7 @@ export default function InterviewsTable({ interviews }: InterviewsTableProps) {
                         ))}
                         {sortedInterviews.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="text-center py-10 text-zinc-500 italic bg-zinc-900/10 border-t border-white/5">
+                                <td colSpan={5} className="text-center py-10 text-text-tertiary italic bg-bg-secondary-panel/10 border-t border-border-subtle">
                                     No interview simulation sessions found matching search query.
                                 </td>
                             </tr>

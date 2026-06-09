@@ -70,7 +70,7 @@ export default function AdminBillingPage() {
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 animate-spin text-zinc-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
         </div>
     );
 
@@ -78,18 +78,18 @@ export default function AdminBillingPage() {
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold font-heading text-white">Billing Requests</h1>
-                    <p className="text-zinc-400">Manage incoming payments and plan upgrades.</p>
+                    <h1 className="text-3xl font-bold font-heading text-text-heading">Billing Requests</h1>
+                    <p className="text-text-secondary">Manage incoming payments and plan upgrades.</p>
                 </div>
                 <div className="flex gap-2">
-                    <div className="flex bg-zinc-900 border border-white/10 p-1 rounded-lg">
+                    <div className="flex bg-bg-secondary-panel border border-border-default p-1 rounded-lg">
                         {(['PENDING', 'HISTORY', 'ALL'] as const).map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={cn(
                                     "px-4 py-1.5 rounded-md text-xs font-bold transition-all",
-                                    filter === f ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                                    filter === f ? "bg-sc-purple-600 text-white shadow-sm" : "text-text-tertiary hover:text-text-body"
                                 )}
                             >
                                 {f}
@@ -103,9 +103,9 @@ export default function AdminBillingPage() {
                 </div>
             </div>
 
-            <div className="bg-zinc-950/50 border border-white/10 rounded-xl overflow-hidden">
+            <div className="bg-bg-card border border-border-default rounded-xl overflow-hidden">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-zinc-900/50 text-zinc-400 border-b border-white/5">
+                    <thead className="bg-bg-secondary-panel text-text-secondary border-b border-border-subtle">
                         <tr>
                             <th className="p-4 font-medium uppercase text-xs">User</th>
                             <th className="p-4 font-medium uppercase text-xs">Request</th>
@@ -118,22 +118,22 @@ export default function AdminBillingPage() {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {filteredTransactions.map((tx) => (
-                            <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                            <tr key={tx.id} className="hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <Avatar className="w-8 h-8 rounded-lg border border-white/10">
+                                        <Avatar className="w-8 h-8 rounded-lg border border-border-default">
                                             <AvatarImage src={tx.user?.image} />
                                             <AvatarFallback>{tx.user?.name?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-bold text-white max-w-[150px] truncate">{tx.user?.name}</p>
-                                            <p className="text-xs text-zinc-500 max-w-[150px] truncate">{tx.user?.email}</p>
+                                            <p className="font-bold text-text-heading max-w-[150px] truncate">{tx.user?.name}</p>
+                                            <p className="text-xs text-text-tertiary max-w-[150px] truncate">{tx.user?.email}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="p-4">
                                     {tx.type === 'PLAN' ? (
-                                        <span className="inline-flex items-center px-2 py-1 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 text-xs font-bold">
+                                        <span className="inline-flex items-center px-2 py-1 rounded bg-sc-purple-50 text-sc-purple-600 border border-sc-purple-200 text-xs font-bold">
                                             UPGRADE: {tx.planName}
                                         </span>
                                     ) : (
@@ -143,16 +143,16 @@ export default function AdminBillingPage() {
                                     )}
                                 </td>
                                 <td className="p-4">
-                                    <div className="font-bold text-white">${tx.amount / 100}</div>
-                                    <div className="text-xs text-zinc-500 uppercase">{tx.provider}</div>
+                                    <div className="font-bold text-text-heading">${tx.amount / 100}</div>
+                                    <div className="text-xs text-text-tertiary uppercase">{tx.provider}</div>
                                 </td>
-                                <td className="p-4 font-mono text-zinc-400 text-xs">
+                                <td className="p-4 font-mono text-text-secondary text-xs">
                                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => { navigator.clipboard.writeText(tx.refId || ''); toast.success("Copied ID"); }}>
                                         {tx.refId}
-                                        <Copy className="w-3 h-3 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Copy className="w-3 h-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </td>
-                                <td className="p-4 text-zinc-500 text-xs">
+                                <td className="p-4 text-text-tertiary text-xs">
                                     {new Date(tx.createdAt).toLocaleDateString()} <br />
                                     {new Date(tx.createdAt).toLocaleTimeString()}
                                 </td>
@@ -174,7 +174,7 @@ export default function AdminBillingPage() {
                                                 variant="ghost"
                                                 disabled={!!actionLoading}
                                                 onClick={() => handleAction(tx.id, 'REJECT')}
-                                                className="h-8 w-8 p-0 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
+                                                className="h-8 w-8 p-0 text-text-tertiary hover:text-red-500 hover:bg-red-500/10"
                                             >
                                                 <X className="w-4 h-4" />
                                             </Button>
@@ -183,7 +183,7 @@ export default function AdminBillingPage() {
                                                 variant="ghost"
                                                 disabled={!!actionLoading}
                                                 onClick={() => handleAction(tx.id, 'APPROVE')}
-                                                className="h-8 w-8 p-0 text-zinc-500 hover:text-green-500 hover:bg-green-500/10"
+                                                className="h-8 w-8 p-0 text-text-tertiary hover:text-green-500 hover:bg-green-500/10"
                                             >
                                                 {actionLoading === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                             </Button>
@@ -194,7 +194,7 @@ export default function AdminBillingPage() {
                         ))}
                         {filteredTransactions.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="p-8 text-center text-zinc-500 italic">No transactions found in this filter.</td>
+                                <td colSpan={7} className="p-8 text-center text-text-tertiary italic">No transactions found in this filter.</td>
                             </tr>
                         )}
                     </tbody>

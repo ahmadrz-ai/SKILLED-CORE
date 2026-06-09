@@ -21,7 +21,7 @@ export default async function AdminInterviewsPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-white mb-2">AI Interview Simulations</h1>
+            <h1 className="text-2xl font-bold text-text-heading mb-2">AI Interview Simulations</h1>
             <InterviewsTable interviews={interviews} />
         </div>
     );

@@ -34,42 +34,42 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-white/5">
-                <div className="flex items-center gap-2 text-zinc-400">
+            <div className="flex items-center justify-between bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle">
+                <div className="flex items-center gap-2 text-text-secondary">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm font-medium">PENDING REVIEW</span>
                 </div>
-                <div className="text-xs text-zinc-500 font-mono">
+                <div className="text-xs text-text-tertiary font-mono">
                     QUEUE SIZE: {requests.length}
                 </div>
             </div>
 
-            <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-bg-secondary-panel border border-border-subtle rounded-xl overflow-hidden">
                 <table className="w-full text-left text-sm">
                     <thead>
-                        <tr className="border-b border-white/5 bg-white/5">
-                            <th className="p-4 font-medium text-zinc-400">Applicant</th>
-                            <th className="p-4 font-medium text-zinc-400">Type</th>
-                            <th className="p-4 font-medium text-zinc-400">Document</th>
-                            <th className="p-4 font-medium text-zinc-400 text-right">Verdict</th>
+                        <tr className="border-b border-border-subtle bg-bg-secondary-panel">
+                            <th className="p-4 font-medium text-text-secondary">Applicant</th>
+                            <th className="p-4 font-medium text-text-secondary">Type</th>
+                            <th className="p-4 font-medium text-text-secondary">Document</th>
+                            <th className="p-4 font-medium text-text-secondary text-right">Verdict</th>
                         </tr>
                     </thead>
                     <tbody>
                         {requests.map((req) => (
-                            <tr key={req.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <tr key={req.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
                                             {req.user.image ? <img src={req.user.image} alt="" className="w-full h-full object-cover" /> : req.user.name?.charAt(0)}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-white">{req.user.name}</div>
-                                            <div className="text-xs text-zinc-500">{req.user.email}</div>
+                                            <div className="font-bold text-text-heading">{req.user.name}</div>
+                                            <div className="text-xs text-text-tertiary">{req.user.email}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="p-4">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-zinc-800 text-zinc-300 border-zinc-700">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-bg-secondary-panel text-text-secondary border-border-default">
                                         {req.type}
                                     </span>
                                 </td>
@@ -77,7 +77,7 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                                     {req.type === 'ROLE_CHANGE' ? (
                                         <a
                                             href={`mailto:${req.documentUrl}`}
-                                            className="flex items-center gap-2 text-violet-400 hover:text-violet-300 hover:underline font-mono text-xs"
+                                            className="flex items-center gap-2 text-sc-purple-600 hover:text-sc-purple-700 hover:underline font-mono text-xs"
                                         >
                                             <FileText className="w-4 h-4" />
                                             <span>Work Email: {req.documentUrl}</span>
@@ -88,7 +88,7 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                                             href={req.user.username ? `/profile/${req.user.username}` : '#'}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-violet-400 hover:text-violet-300 hover:underline"
+                                            className="flex items-center gap-2 text-sc-purple-600 hover:text-sc-purple-700 hover:underline"
                                         >
                                             <FileText className="w-4 h-4" />
                                             <span>View Profile</span>
@@ -100,7 +100,7 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                                     <button
                                         onClick={() => handleAction(req.id, 'APPROVED')}
                                         disabled={!!isLoading}
-                                        className="p-2 hover:bg-teal-500/10 rounded-lg transition-colors text-zinc-400 hover:text-teal-500 disabled:opacity-50"
+                                        className="p-2 hover:bg-emerald-50 rounded-lg transition-colors text-text-secondary hover:text-emerald-600 disabled:opacity-50"
                                         title="Approve"
                                     >
                                         <Check className="w-4 h-4" />
@@ -108,7 +108,7 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                                     <button
                                         onClick={() => handleAction(req.id, 'REJECTED')}
                                         disabled={!!isLoading}
-                                        className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-zinc-400 hover:text-red-500 disabled:opacity-50"
+                                        className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-text-secondary hover:text-red-500 disabled:opacity-50"
                                         title="Reject"
                                     >
                                         <X className="w-4 h-4" />
@@ -120,7 +120,7 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                 </table>
 
                 {requests.length === 0 && (
-                    <div className="p-12 text-center text-zinc-500">
+                    <div className="p-12 text-center text-text-tertiary">
                         No pending verifications. The queue is clear.
                     </div>
                 )}

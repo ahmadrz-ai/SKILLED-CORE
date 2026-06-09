@@ -65,7 +65,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
             case 'CRITICAL': return 'text-red-500 bg-red-500/10 border-red-500/20';
             case 'HIGH': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
             case 'MEDIUM': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-            default: return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+            default: return 'text-sc-purple-600 bg-sc-purple-50 border-sc-purple-200';
         }
     };
 
@@ -78,27 +78,27 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center justify-between bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle">
                 <div className="flex items-center gap-2 text-red-500">
                     <AlertTriangle className="w-4 h-4" />
                     <span className="text-sm font-medium">MODERATION QUEUE</span>
                 </div>
-                <div className="text-xs text-zinc-500 font-mono">
+                <div className="text-xs text-text-tertiary font-mono">
                     ACTIVE REPORTS: {reports.length}
                 </div>
             </div>
 
-            <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-bg-secondary-panel border border-border-subtle rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="border-b border-white/5 bg-white/5">
-                                <th className="p-4 font-medium text-zinc-400 w-10"></th>
-                                <th className="p-4 font-medium text-zinc-400">Type</th>
-                                <th className="p-4 font-medium text-zinc-400">Severity</th>
-                                <th className="p-4 font-medium text-zinc-400">Reporter</th>
-                                <th className="p-4 font-medium text-zinc-400">Subject</th>
-                                <th className="p-4 font-medium text-zinc-400 text-right">Action</th>
+                            <tr className="border-b border-border-subtle bg-bg-secondary-panel">
+                                <th className="p-4 font-medium text-text-secondary w-10"></th>
+                                <th className="p-4 font-medium text-text-secondary">Type</th>
+                                <th className="p-4 font-medium text-text-secondary">Severity</th>
+                                <th className="p-4 font-medium text-text-secondary">Reporter</th>
+                                <th className="p-4 font-medium text-text-secondary">Subject</th>
+                                <th className="p-4 font-medium text-text-secondary text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,15 +115,15 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                             key={report.id}
                                             onClick={() => toggleExpand(report.id)}
                                             className={cn(
-                                                "border-b border-white/5 transition-colors cursor-pointer",
-                                                isExpanded ? "bg-white/5" : "hover:bg-white/5"
+                                                "border-b border-border-subtle transition-colors cursor-pointer",
+                                                isExpanded ? "bg-bg-secondary-panel" : "hover:bg-bg-sidebar-hover"
                                             )}
                                         >
-                                            <td className="p-4 text-zinc-500">
+                                            <td className="p-4 text-text-tertiary">
                                                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                             </td>
                                             <td className="p-4">
-                                                <div className="flex items-center gap-2 text-zinc-300">
+                                                <div className="flex items-center gap-2 text-text-secondary">
                                                     {getTypeIcon(report.targetType)}
                                                     <span className="capitalize">{report.targetType.replace(/_/g, ' ').toLowerCase()}</span>
                                                     {report.status === 'UNDER_REVIEW' && (
@@ -140,21 +140,21 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs">
+                                                    <div className="w-6 h-6 rounded-full bg-bg-secondary-panel flex items-center justify-center text-xs">
                                                         {report.reporter.name?.charAt(0)}
                                                     </div>
-                                                    <span className="text-zinc-300 truncate max-w-[100px]">{report.reporter.name}</span>
+                                                    <span className="text-text-secondary truncate max-w-[100px]">{report.reporter.name}</span>
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="max-w-xs truncate text-zinc-100 font-medium">
+                                                <div className="max-w-xs truncate text-text-heading font-medium">
                                                     {report.reason}
                                                 </div>
                                             </td>
                                             <td className="p-4 text-right space-x-2" onClick={e => e.stopPropagation()}>
                                                 <Link
                                                     href={`/admin/reports/${report.id}`}
-                                                    className="p-2 hover:bg-sc-purple-500/10 rounded-lg transition-colors text-zinc-400 hover:text-sc-purple-600 disabled:opacity-50 inline-flex"
+                                                    className="p-2 hover:bg-sc-purple-500/10 rounded-lg transition-colors text-text-secondary hover:text-sc-purple-600 disabled:opacity-50 inline-flex"
                                                     title="Open report (AI triage + reply thread)"
                                                 >
                                                     <ArrowUpRight className="w-4 h-4" />
@@ -162,7 +162,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 <button
                                                     onClick={() => handleAction(report.id, 'RESOLVED')}
                                                     disabled={!!isLoading}
-                                                    className="p-2 hover:bg-teal-500/10 rounded-lg transition-colors text-zinc-400 hover:text-teal-500 disabled:opacity-50"
+                                                    className="p-2 hover:bg-emerald-50 rounded-lg transition-colors text-text-secondary hover:text-emerald-600 disabled:opacity-50"
                                                     title="Resolve"
                                                 >
                                                     <CheckCircle className="w-4 h-4" />
@@ -170,7 +170,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 <button
                                                     onClick={() => handleAction(report.id, 'DISMISSED')}
                                                     disabled={!!isLoading}
-                                                    className="p-2 hover:bg-zinc-500/10 rounded-lg transition-colors text-zinc-400 hover:text-white disabled:opacity-50"
+                                                    className="p-2 hover:bg-bg-secondary-panel rounded-lg transition-colors text-text-secondary hover:text-text-heading disabled:opacity-50"
                                                     title="Dismiss"
                                                 >
                                                     <XCircle className="w-4 h-4" />
@@ -189,14 +189,14 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                             exit={{ height: 0, opacity: 0 }}
                                                             className="overflow-hidden"
                                                         >
-                                                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-white/5">
+                                                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-border-subtle">
                                                                 <div className="space-y-4">
-                                                                    <h4 className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Description</h4>
-                                                                    <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                                                    <h4 className="text-xs font-mono text-text-tertiary uppercase tracking-widest">Description</h4>
+                                                                    <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
                                                                         {details.description || "No detailed description provided."}
                                                                     </p>
 
-                                                                    <div className="pt-4 flex gap-4 text-xs text-zinc-500 font-mono">
+                                                                    <div className="pt-4 flex gap-4 text-xs text-text-tertiary font-mono">
                                                                         <span>ID: {report.id}</span>
                                                                         <span>CREATED: {new Date(report.createdAt).toLocaleString()}</span>
                                                                     </div>
@@ -204,7 +204,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
 
                                                                 {details.files && details.files.length > 0 && (
                                                                     <div className="space-y-4">
-                                                                        <h4 className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Attachments</h4>
+                                                                        <h4 className="text-xs font-mono text-text-tertiary uppercase tracking-widest">Attachments</h4>
                                                                         <div className="grid grid-cols-2 gap-3">
                                                                             {details.files.map((file: string, i: number) => {
                                                                                 const isVideo = file.startsWith('data:video/') || file.match(/\.(mp4|webm|mov)($|\?)/i);
@@ -213,10 +213,10 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                                 return (
                                                                                     <div
                                                                                         key={i}
-                                                                                        className="group relative bg-zinc-900 border border-white/10 rounded-xl overflow-hidden hover:border-violet-500/50 transition-all duration-300"
+                                                                                        className="group relative bg-bg-secondary-panel border border-border-default rounded-xl overflow-hidden hover:border-sc-purple-300 transition-all duration-300"
                                                                                     >
                                                                                         {/* Preview */}
-                                                                                        <div className="aspect-video bg-black/50 relative overflow-hidden">
+                                                                                        <div className="aspect-video bg-bg-input relative overflow-hidden">
                                                                                             {isVideo ? (
                                                                                                 <video
                                                                                                     src={file}
@@ -231,7 +231,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                                                 />
                                                                                             ) : (
                                                                                                 <div className="w-full h-full flex items-center justify-center">
-                                                                                                    <FileText className="w-12 h-12 text-zinc-700" />
+                                                                                                    <FileText className="w-12 h-12 text-text-heading" />
                                                                                                 </div>
                                                                                             )}
 
@@ -245,7 +245,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                                                             return newSet;
                                                                                                         });
                                                                                                     }}
-                                                                                                    className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-violet-500/30"
+                                                                                                    className="w-full bg-gradient-to-r from-sc-purple-500 to-sc-purple-700 hover:from-sc-purple-600 hover:to-sc-purple-700 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-sc-sm"
                                                                                                 >
                                                                                                     <span className="w-4 h-4">🔍</span>
                                                                                                     Click to Enlarge
@@ -254,10 +254,10 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                                         </div>
 
                                                                                         {/* Info bar */}
-                                                                                        <div className="p-2 bg-zinc-900/50 border-t border-white/5">
+                                                                                        <div className="p-2 bg-bg-secondary-panel border-t border-border-subtle">
                                                                                             <div className="flex items-center gap-2">
-                                                                                                <FileText className="w-3 h-3 text-violet-400" />
-                                                                                                <span className="text-[10px] text-zinc-400 truncate">Attachment {i + 1}</span>
+                                                                                                <FileText className="w-3 h-3 text-sc-purple-600" />
+                                                                                                <span className="text-[10px] text-text-secondary truncate">Attachment {i + 1}</span>
                                                                                             </div>
                                                                                         </div>
 
@@ -296,7 +296,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                 </div>
 
                 {reports.length === 0 && (
-                    <div className="p-12 text-center text-zinc-500">
+                    <div className="p-12 text-center text-text-tertiary">
                         All quiet. No active reports.
                     </div>
                 )}

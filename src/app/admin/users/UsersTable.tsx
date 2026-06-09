@@ -107,120 +107,120 @@ export default function UsersTable({ users }: UsersTableProps) {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Total Operatives</span>
-                    <span className="text-2xl font-bold text-white font-mono mt-1">{users.length}</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">Total Operatives</span>
+                    <span className="text-2xl font-bold text-text-heading font-mono mt-1">{users.length}</span>
                 </div>
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Ghosted IDs (Stealth Mode)</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">Ghosted IDs (Stealth Mode)</span>
                     <span className="text-2xl font-bold text-amber-500 font-mono mt-1">{users.filter(u => u.ghostMode).length}</span>
                 </div>
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex flex-col justify-center">
-                    <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Live in Find Talent (Visible)</span>
-                    <span className="text-2xl font-bold text-teal-400 font-mono mt-1">{users.filter(u => !u.ghostMode).length}</span>
+                <div className="bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle flex flex-col justify-center">
+                    <span className="text-[10px] text-text-tertiary font-mono tracking-widest uppercase">Live in Find Talent (Visible)</span>
+                    <span className="text-2xl font-bold text-emerald-600 font-mono mt-1">{users.filter(u => !u.ghostMode).length}</span>
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center justify-between bg-bg-secondary-panel p-4 rounded-xl border border-border-subtle">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                     <input
                         type="text"
                         placeholder="Search operatives..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-black/50 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 w-64"
+                        className="bg-bg-input border border-border-default rounded-lg pl-10 pr-4 py-2 text-sm text-text-body placeholder:text-text-placeholder focus:outline-none focus:border-border-focus w-64"
                     />
                 </div>
-                <div className="text-xs text-zinc-500 font-mono">
+                <div className="text-xs text-text-tertiary font-mono">
                     TOTAL OPERATIVES: {users.length}
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden">
+            <div className="bg-bg-secondary-panel border border-border-subtle rounded-xl overflow-hidden">
                 <table className="w-full text-left text-sm">
                     <thead>
-                        <tr className="border-b border-white/5 bg-white/5">
+                        <tr className="border-b border-border-subtle bg-bg-secondary-panel">
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('identity')}
                                 title="Click to sort alphabetically"
                             >
                                 <div className="flex items-center gap-1.5">
                                     Identity
                                     {sortField === 'identity' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'identity' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('role')}
                                 title="Click to sort by Role"
                             >
                                 <div className="flex items-center gap-1.5">
                                     Role
                                     {sortField === 'role' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'role' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('status')}
                                 title="Click to sort by Status"
                             >
                                 <div className="flex items-center gap-1.5">
                                     Status
                                     {sortField === 'status' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'status' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
                             <th 
-                                className="p-4 font-medium text-zinc-400 cursor-pointer select-none hover:text-white transition-colors"
+                                className="p-4 font-medium text-text-secondary cursor-pointer select-none hover:text-text-heading transition-colors"
                                 onClick={() => handleSort('ghost')}
                                 title="Click to sort by Ghost Protocol status"
                             >
                                 <div className="flex items-center gap-1.5">
                                     Ghost Protocol
                                     {sortField === 'ghost' && sortDirection === 'asc' ? (
-                                        <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowUp className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : sortField === 'ghost' && sortDirection === 'desc' ? (
-                                        <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
+                                        <ArrowDown className="w-3.5 h-3.5 text-sc-purple-600" />
                                     ) : (
-                                        <ArrowUpDown className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-400" />
+                                        <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary hover:text-text-secondary" />
                                     )}
                                 </div>
                             </th>
-                            <th className="p-4 font-medium text-zinc-400 text-right">Actions</th>
+                            <th className="p-4 font-medium text-text-secondary text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {sortedUsers.map((user) => (
-                            <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <tr key={user.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
                                             {user.image ? <img src={user.image} alt="" className="w-full h-full object-cover" /> : user.name?.charAt(0)}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-white">{user.name}</div>
-                                            <div className="text-xs text-zinc-500">{user.email}</div>
+                                            <div className="font-bold text-text-heading">{user.name}</div>
+                                            <div className="text-xs text-text-tertiary">{user.email}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -230,14 +230,14 @@ export default function UsersTable({ users }: UsersTableProps) {
                                         ${(user as any).role === 'ADMIN'
                                             ? 'bg-red-500/10 text-red-500 border-red-500/20'
                                             : (user as any).role === 'RECRUITER'
-                                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                                : 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'}
+                                                ? 'bg-sc-purple-50 text-sc-purple-600 border-sc-purple-200'
+                                                : 'bg-bg-secondary-panel text-text-tertiary border-border-default'}
                                     `}>
                                         {(user as any).role || 'CANDIDATE'}
                                     </span>
                                 </td>
                                 <td className="p-4">
-                                    <div className="flex items-center text-teal-500 text-xs">
+                                    <div className="flex items-center text-emerald-600 text-xs">
                                         <CheckCircle2 className="w-3 h-3 mr-1" />
                                         Active
                                     </div>
@@ -249,7 +249,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                                         className={`px-3 py-1 rounded-lg text-xs font-mono font-bold tracking-wider transition-all duration-300 border flex items-center gap-1.5 ${
                                             user.ghostMode
                                                 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20'
-                                                : 'bg-teal-500/10 text-teal-400 border-teal-500/20 hover:bg-teal-500/20'
+                                                : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
                                         }`}
                                         title={user.ghostMode ? "Unghost this user (make them live)" : "Ghost this user (hide them from organizations)"}
                                     >
@@ -267,7 +267,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                                     <button
                                         onClick={() => handleRoleToggle(user.id, (user as any).role || 'CANDIDATE')}
                                         disabled={isLoading === user.id}
-                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white disabled:opacity-50"
+                                        className="p-2 hover:bg-bg-sidebar-hover rounded-lg transition-colors text-text-secondary hover:text-text-heading disabled:opacity-50"
                                         title="Toggle Role (Candidate <-> Recruiter)"
                                     >
                                         <RefreshCw className={`w-4 h-4 ${isLoading === user.id ? 'animate-spin' : ''}`} />
@@ -275,7 +275,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                                     <button
                                         onClick={() => handleDelete(user.id)}
                                         disabled={isLoading === user.id}
-                                        className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-zinc-400 hover:text-red-500 disabled:opacity-50"
+                                        className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-text-secondary hover:text-red-500 disabled:opacity-50"
                                         title="Delete User"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -287,7 +287,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                 </table>
 
                 {filteredUsers.length === 0 && (
-                    <div className="p-12 text-center text-zinc-500">
+                    <div className="p-12 text-center text-text-tertiary">
                         No operatives found matching search parameters.
                     </div>
                 )}
