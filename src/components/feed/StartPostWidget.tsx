@@ -280,11 +280,11 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                 }
                 return editedImages[0];
             });
-            // Bug 5: on mobile the photo can be added from the collapsed widget, so the
-            // compose dialog may never have been opened. Without this, finishing the
-            // image editor closed everything and stranded the image with no way to
-            // publish. Ensure the composer is open so the user can write + post.
-            setIsOpen(true);
+            // M1: the editor (a Radix Dialog) closes in the same tick this runs, and
+            // opening the composer (another Radix Dialog) simultaneously races on mobile —
+            // the composer often fails to open (and body pointer-events can stick), so
+            // "Done" looked like a no-op. Defer the open until after the editor unmounts.
+            setTimeout(() => setIsOpen(true), 80);
         }
         if (fileInputRef.current) {
             fileInputRef.current.value = "";

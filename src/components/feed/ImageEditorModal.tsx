@@ -95,14 +95,10 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
             setActiveIdx(0);
             setSidebarTab("sequence");
         }
-
-        return () => {
-            // cleanup previews on unmount
-            images.forEach(img => {
-                if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
-                if (img.croppedUrl && img.croppedUrl !== img.previewUrl) URL.revokeObjectURL(img.croppedUrl);
-            });
-        };
+        // NOTE: deliberately no object-URL revocation here. This effect re-runs when the
+        // editor closes (isOpen -> false), and revoking would kill the previewUrl we just
+        // handed to the composer on "Done", breaking the attached image. The composer owns
+        // the committed image and revokes it when replaced/unmounted.
     }, [isOpen, initialFiles]);
 
     const activeImg = images[activeIdx];
