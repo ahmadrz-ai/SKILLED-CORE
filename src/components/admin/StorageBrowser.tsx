@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { deleteFiles, scanStorageForOrphans } from '@/app/admin/actions';
+import { deleteFiles, scanStorageForOrphans, getStorageFiles, getCloudinaryFiles } from '@/app/admin/actions';
 
 interface StorageBrowserProps {
     uploadthingFiles: any[];
@@ -36,6 +36,12 @@ export default function StorageBrowser({
     const [scanned, setScanned] = useState(false);
     const [orphanKeys, setOrphanKeys] = useState<Set<string>>(new Set());
     const [orphanBytes, setOrphanBytes] = useState(0);
+
+    // Lazy-load: storage listings are fetched the first time their tab is opened,
+    // not on dashboard load (Phase 4 — keeps /admin fast).
+    const [utLoaded, setUtLoaded] = useState(initialUtFiles.length > 0);
+    const [clLoaded, setClLoaded] = useState(initialClFiles.length > 0);
+    const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
     // Plan capacities in bytes
     const NEON_CAPACITY = 512 * 1024 * 1024;       // 512 MB
@@ -132,10 +138,25 @@ export default function StorageBrowser({
         }
     };
 
-    const handleTabChange = (tab: 'neon' | 'uploadthing' | 'cloudinary') => {
+    const handleTabChange = async (tab: 'neon' | 'uploadthing' | 'cloudinary') => {
         setActiveTab(tab);
         setSelectedKeys(new Set());
         setSearchQuery('');
+
+        // Fetch the provider's files the first time its tab is opened.
+        if (tab === 'uploadthing' && !utLoaded) {
+            setIsLoadingFiles(true);
+            const res = await getStorageFiles();
+            if (res.success) setUtFiles([...res.files]);
+            setUtLoaded(true);
+            setIsLoadingFiles(false);
+        } else if (tab === 'cloudinary' && !clLoaded) {
+            setIsLoadingFiles(true);
+            const res = await getCloudinaryFiles();
+            if (res.success) setClFiles(res.files);
+            setClLoaded(true);
+            setIsLoadingFiles(false);
+        }
     };
 
     const handleScan = async () => {
@@ -507,7 +528,11 @@ export default function StorageBrowser({
                                     <span className="text-xs font-mono text-text-tertiary">{filteredFiles.length} OF {activeFiles.length} FILES</span>
                                 </div>
                                 <div className="divide-y divide-zinc-800/60 max-h-[500px] overflow-y-auto">
-                                    {filteredFiles.length === 0 ? (
+                                    {isLoadingFiles ? (
+                                        <div className="p-12 flex items-center justify-center gap-2 text-text-tertiary text-sm">
+                                            <Loader2 className="w-4 h-4 animate-spin" /> Loading files…
+                                        </div>
+                                    ) : filteredFiles.length === 0 ? (
                                         <div className="p-12 text-center text-text-tertiary italic text-sm">No files found matching search.</div>
                                     ) : filteredFiles.map((file) => {
                                          const isSelected = selectedKeys.has(file.key);

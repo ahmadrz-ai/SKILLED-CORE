@@ -456,7 +456,11 @@ export async function getDashboardData() {
     try {
         await ensureAdmin();
 
-        const [verifications, reports, stats, utFiles, clFiles] = await Promise.all([
+        // Storage listings (UploadThing + Cloudinary) are deliberately NOT fetched here:
+        // they are two external API round-trips that used to block every admin load even
+        // though the dashboard opens on the Neon tab. StorageBrowser now lazy-loads them
+        // when the admin actually opens those tabs (Phase 4 latency fix).
+        const [verifications, reports, stats] = await Promise.all([
             prisma.verificationRequest.findMany({
                 where: { status: 'PENDING' },
                 take: 5,
@@ -470,8 +474,6 @@ export async function getDashboardData() {
                 include: { reporter: { select: { name: true } } }
             }),
             getAdminStats(),
-            getStorageFiles(),
-            getCloudinaryFiles()
         ]);
 
         return {
@@ -493,8 +495,9 @@ export async function getDashboardData() {
                     severity: r.severity
                 })),
                 stats: stats.stats,
-                uploadthingFiles: utFiles.files || [],
-                cloudinaryFiles: clFiles.files || []
+                // Loaded lazily by StorageBrowser when its tabs are opened.
+                uploadthingFiles: [],
+                cloudinaryFiles: []
             }
         };
 
