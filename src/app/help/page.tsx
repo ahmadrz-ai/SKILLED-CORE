@@ -145,6 +145,9 @@ export default function HelpPage() {
                         How can we <span className="text-sc-purple-600">help</span> you?
                     </h1>
                     <p className="text-slate-500 font-medium">Search our knowledge base or submit a high-priority support ticket below.</p>
+                    <Link href="/support/reports" className="inline-flex items-center gap-1.5 text-sm font-bold text-sc-purple-600 hover:text-sc-purple-700 hover:underline">
+                        View my tickets &amp; replies →
+                    </Link>
                     <div className="relative max-w-xl mx-auto">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
