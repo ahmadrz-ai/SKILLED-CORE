@@ -320,7 +320,7 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
                 showCloseButton={false}
-                className="w-[calc(100%-1rem)] sm:max-w-5xl p-0 overflow-y-auto md:overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row h-[90vh] md:h-[85vh] max-h-[90vh] sm:max-h-[680px] outline-none rounded-2xl"
+                className="w-[calc(100%-1rem)] sm:max-w-5xl p-0 overflow-y-auto md:overflow-hidden bg-white text-[#111827] border-[#E5E7EB] shadow-2xl flex flex-col md:flex-row top-[4.5rem] translate-y-0 sm:top-[50%] sm:translate-y-[-50%] h-[calc(100dvh-5.5rem)] sm:h-[90vh] md:h-[85vh] max-h-[calc(100dvh-5.5rem)] sm:max-h-[680px] outline-none rounded-2xl"
             >
                 <DialogTitle className="sr-only">Edit Uploaded Images</DialogTitle>
                 <DialogDescription className="sr-only">
@@ -486,8 +486,8 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                 </div>
                             </div>
 
-                            {/* Sidebar Footer */}
-                            <div className="mt-4 pt-4 border-t border-[#E5E7EB] flex justify-between gap-3">
+                            {/* Sidebar Footer — sticky so Cancel/Done stay reachable on mobile (M2) */}
+                            <div className="sticky bottom-0 z-10 bg-[#F9FAFB] -mx-4 px-4 mt-4 pt-4 pb-1 border-t border-[#E5E7EB] flex justify-between gap-3">
                                 <Button 
                                     variant="outline" 
                                     onClick={onClose}
