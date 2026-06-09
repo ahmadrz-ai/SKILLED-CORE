@@ -35,6 +35,76 @@ export function GlobalAiAssistant() {
     // Local state for input to be safe
     const [inputValue, setInputValue] = useState("");
 
+    // ── Draggable FAB (CR1) ──────────────────────────────────────────────────
+    // Drag the orb anywhere, keep it in-viewport, snap to the nearest side edge,
+    // and persist the position. A movement threshold keeps a drag from firing the
+    // open/close tap.
+    const FAB_SIZE = 56;     // h-14 / w-14
+    const EDGE_MARGIN = 16;
+    const HEADER_H = 56;     // fixed app header height — never sit under it
+    const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+    const draggingRef = useRef(false);
+    const movedRef = useRef(false);
+    const startRef = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+
+    const clampPos = (x: number, y: number) => {
+        if (typeof window === "undefined") return { x, y };
+        const maxX = window.innerWidth - FAB_SIZE - EDGE_MARGIN;
+        const maxY = window.innerHeight - FAB_SIZE - EDGE_MARGIN;
+        return {
+            x: Math.min(Math.max(EDGE_MARGIN, x), Math.max(EDGE_MARGIN, maxX)),
+            y: Math.min(Math.max(HEADER_H + EDGE_MARGIN, y), Math.max(HEADER_H + EDGE_MARGIN, maxY)),
+        };
+    };
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        let next: { x: number; y: number } | null = null;
+        try {
+            const saved = localStorage.getItem("sc-qodee-pos");
+            if (saved) next = JSON.parse(saved);
+        } catch { /* ignore */ }
+        if (!next) next = { x: window.innerWidth - FAB_SIZE - 24, y: window.innerHeight - FAB_SIZE - 24 };
+        setPos(clampPos(next.x, next.y));
+        const onResize = () => setPos((p) => (p ? clampPos(p.x, p.y) : p));
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    const onFabPointerDown = (e: React.PointerEvent) => {
+        if (!pos) return;
+        draggingRef.current = true;
+        movedRef.current = false;
+        startRef.current = { px: e.clientX, py: e.clientY, ox: pos.x, oy: pos.y };
+        try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    };
+    const onFabPointerMove = (e: React.PointerEvent) => {
+        if (!draggingRef.current || !startRef.current) return;
+        const dx = e.clientX - startRef.current.px;
+        const dy = e.clientY - startRef.current.py;
+        if (Math.abs(dx) + Math.abs(dy) > 6) movedRef.current = true;
+        setPos(clampPos(startRef.current.ox + dx, startRef.current.oy + dy));
+    };
+    const onFabPointerUp = (e: React.PointerEvent) => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+        if (movedRef.current && pos) {
+            const snappedX = pos.x + FAB_SIZE / 2 < window.innerWidth / 2
+                ? EDGE_MARGIN
+                : window.innerWidth - FAB_SIZE - EDGE_MARGIN;
+            const snapped = clampPos(snappedX, pos.y);
+            setPos(snapped);
+            try { localStorage.setItem("sc-qodee-pos", JSON.stringify(snapped)); } catch { /* ignore */ }
+        } else {
+            // No real movement → treat as a tap and toggle the assistant.
+            setIsOpen((o) => !o);
+        }
+    };
+
+    // Open upward by default; align the panel to whichever side the orb sits on.
+    const sideRight = typeof window === "undefined" || !pos || (pos.x + FAB_SIZE / 2) >= window.innerWidth / 2;
+
     // Auto-scroll to bottom
     useEffect(() => {
         if (scrollRef.current) {
@@ -101,8 +171,20 @@ export function GlobalAiAssistant() {
     // Hide on messages page - MOVED HERE TO FIX HOOKS ORDER
     if (pathname?.startsWith('/messages')) return null;
 
+    // Flip the chat panel to whichever vertical side of the orb has room, and cap
+    // its height to that space so it never leaves the viewport. (The panel is
+    // absolutely positioned off the orb — the orb itself never moves when opening.)
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const openDown = pos ? pos.y + FAB_SIZE / 2 < vh / 2 : false;
+    const panelMaxH = pos
+        ? Math.max(280, (openDown ? vh - pos.y - FAB_SIZE - 32 : pos.y - 24))
+        : Math.round(vh * 0.8);
+
     return (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end pointer-events-none">
+        <div
+            className={cn("fixed z-[100] pointer-events-none")}
+            style={pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : { right: 24, bottom: 24 }}
+        >
 
             {/* CHAT WINDOW */}
             <AnimatePresence>
@@ -111,7 +193,12 @@ export function GlobalAiAssistant() {
                         initial={{ opacity: 0, y: 20, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                        className="pointer-events-auto mb-4 w-[380px] h-[600px] max-h-[80vh] bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5"
+                        style={{ maxHeight: panelMaxH }}
+                        className={cn(
+                            "pointer-events-auto absolute w-[380px] max-w-[calc(100vw-2rem)] h-[600px] bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5",
+                            openDown ? "top-[4.5rem]" : "bottom-[4.5rem]",
+                            sideRight ? "right-0" : "left-0"
+                        )}
                     >
                         {/* Header */}
                         <div 
@@ -262,12 +349,14 @@ export function GlobalAiAssistant() {
 
             {/* FAB TRIGGER */}
             <motion.button
-                layout
-                onClick={() => setIsOpen(!isOpen)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                onPointerDown={onFabPointerDown}
+                onPointerMove={onFabPointerMove}
+                onPointerUp={onFabPointerUp}
+                onPointerCancel={onFabPointerUp}
+                style={{ touchAction: "none" }}
+                aria-label={isOpen ? "Close assistant" : "Open assistant"}
                 className={cn(
-                    "pointer-events-auto h-14 w-14 rounded-full shadow-[0_4px_20px_rgba(139,92,246,0.3)] border border-white/10 flex items-center justify-center transition-all duration-300 relative group overflow-hidden",
+                    "pointer-events-auto h-14 w-14 rounded-full shadow-[0_4px_20px_rgba(139,92,246,0.3)] border border-white/10 flex items-center justify-center transition-colors duration-300 relative group overflow-hidden cursor-grab active:cursor-grabbing select-none",
                     isOpen ? "bg-zinc-800" : "bg-zinc-900"
                 )}
             >
