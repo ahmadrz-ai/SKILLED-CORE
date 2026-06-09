@@ -97,7 +97,7 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-bold text-text-heading">Mandatory Voice Intro</h4>
                                             <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
-                                                At session startup, you must complete a voice introduction between **45 seconds** and **90 seconds** to calibrate acoustic assessment models.
+                                                At session startup, you must complete a voice introduction between <strong className="font-semibold text-text-heading">45 seconds</strong> and <strong className="font-semibold text-text-heading">90 seconds</strong> to calibrate acoustic assessment models.
                                             </p>
                                         </div>
                                     </div>
@@ -110,7 +110,7 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-bold text-text-error">Tab Switching Warning</h4>
                                             <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
-                                                Losing window focus, switching tabs, or changing screens will trigger an automatic compliance flag. **One warning is granted;** a second infraction permanently records a **"Cheated / Non-Compliant"** status on your profile.
+                                                Losing window focus, switching tabs, or changing screens will trigger an automatic compliance flag. <strong className="font-semibold text-text-heading">One warning is granted;</strong> a second infraction permanently records a <strong className="font-semibold text-text-heading">&quot;Cheated / Non-Compliant&quot;</strong> status on your profile.
                                             </p>
                                             <p className="text-[11px] md:text-xs text-sc-red-700 font-extrabold mt-1 select-none leading-normal">
                                                 ⚠ CRITICAL WARNING: If your interview session is voided due to non-compliant behavior, the 1 credit used to start the interview will be permanently lost.
@@ -126,7 +126,7 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-bold text-text-warning">Revoked Interactions</h4>
                                             <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
-                                                Copy and paste actions are **strictly disabled** within both the chat input field and the Monaco coding sandbox.
+                                                Copy and paste actions are <strong className="font-semibold text-text-heading">strictly disabled</strong> within both the chat input field and the Monaco coding sandbox.
                                             </p>
                                         </div>
                                     </div>
@@ -288,7 +288,7 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                                     Add Resume context
                                                 </Label>
                                                 <p className="text-[11px] text-text-secondary leading-relaxed">
-                                                    Enable Grill Mode: The AI will fetch your profile resume and challenge you on your skills, demanding you write code inside the integrated **Sandbox**.
+                                                    Enable Grill Mode: The AI will fetch your profile resume and challenge you on your skills, demanding you write code inside the integrated <strong className="font-semibold text-text-heading">Sandbox</strong>.
                                                 </p>
                                             </div>
                                         </div>

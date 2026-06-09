@@ -270,7 +270,7 @@ export function Scorecard({
                                             <div className="space-y-0.5 text-left select-none">
                                                 <h4 className="text-xs font-extrabold uppercase tracking-wide">COMPLIANCE PROTOCOL VOIDED</h4>
                                                 <p className="text-[11px] text-text-error font-medium leading-relaxed">
-                                                    This session was flagged for non-compliant behaviors (repeated screen/tab swapping or copy-paste actions). Integrity has failed. The final grade is permanently marked as **VOID**.
+                                                    This session was flagged for non-compliant behaviors (repeated screen/tab swapping or copy-paste actions). Integrity has failed. The final grade is permanently marked as <strong className="font-extrabold">VOID</strong>.
                                                 </p>
                                             </div>
                                         </div>
