@@ -45,21 +45,35 @@ export async function getNotifications() {
 
 // Lightweight unread counts for the sidebar/topbar badges. Polled client-side so
 // badges update live as events occur, without a full page navigation.
-export async function getBadgeCounts(): Promise<{ network: number; notifications: number; messages: number }> {
+export type BadgeCounts = {
+    network: number;
+    notifications: number;
+    messages: number;
+    bookings: number;
+    support: number;
+};
+
+const EMPTY_BADGES: BadgeCounts = { network: 0, notifications: 0, messages: 0, bookings: 0, support: 0 };
+
+export async function getBadgeCounts(): Promise<BadgeCounts> {
     const session = await auth();
-    if (!session?.user?.id) return { network: 0, notifications: 0, messages: 0 };
+    if (!session?.user?.id) return EMPTY_BADGES;
 
     try {
         const uid = session.user.id;
-        const [network, notifications, messages] = await Promise.all([
+        const [network, notifications, messages, bookings, support] = await Promise.all([
             prisma.connection.count({ where: { addresseeId: uid, status: "PENDING" } }),
             prisma.notification.count({ where: { userId: uid, read: false } }),
             prisma.conversationParticipant.count({ where: { userId: uid, hasUnread: true } }),
+            // Incoming interview requests awaiting the candidate's response.
+            prisma.booking.count({ where: { candidateId: uid, status: "REQUESTED" } }),
+            // Unread support-thread replies from the team.
+            prisma.notification.count({ where: { userId: uid, read: false, type: "REPORT_REPLY" } }),
         ]);
-        return { network, notifications, messages };
+        return { network, notifications, messages, bookings, support };
     } catch (error) {
         console.error("getBadgeCounts failed:", error);
-        return { network: 0, notifications: 0, messages: 0 };
+        return EMPTY_BADGES;
     }
 }
 
