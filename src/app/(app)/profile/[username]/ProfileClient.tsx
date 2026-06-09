@@ -465,7 +465,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 <BadgeCheck className="w-5 h-5 text-sky-500 fill-sky-500/10" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>{user.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
+                                                <p>{user.plan === 'ULTRA' ? 'Elite Verified' : 'Verified Pro'}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>

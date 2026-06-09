@@ -586,7 +586,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             <BadgeCheck className="w-4 h-4 text-sky-500 fill-sky-500/10" />
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>{post.author.plan === 'ULTRA' ? 'Ultra Verified' : 'Verified Pro'}</p>
+                                            <p>{post.author.plan === 'ULTRA' ? 'Elite Verified' : 'Verified Pro'}</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>

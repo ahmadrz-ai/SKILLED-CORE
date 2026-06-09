@@ -26,12 +26,12 @@ export default function SalaryPage() {
                     <div>
                         <h1 className="text-3xl font-sans font-bold text-text-heading mb-2">Restricted Access</h1>
                         <p className="text-text-secondary">
-                            Salary Insights are exclusive to <span className="text-sc-purple-600 font-bold">ULTRA</span> operatives. Upgrade to view global compensation data and market trends.
+                            Salary Insights are exclusive to <span className="text-sc-purple-600 font-bold">Elite</span> operatives. Upgrade to view global compensation data and market trends.
                         </p>
                     </div>
                     <Link href="/credits" className="block">
                         <button className="w-full py-4 bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold rounded-xl transition-all shadow-sc-sm">
-                            UPGRADE TO ULTRA
+                            UPGRADE TO ELITE
                         </button>
                     </Link>
                 </div>
@@ -57,7 +57,7 @@ export default function SalaryPage() {
                 </span>
                 <h2 className="text-lg font-bold text-text-heading">Salary insights are coming soon</h2>
                 <p className="text-sm text-text-secondary mt-1 max-w-md">
-                    We&apos;re building real, sourced compensation data with interactive charts and filters by role, seniority, and region. Your ULTRA plan will include it at launch.
+                    We&apos;re building real, sourced compensation data with interactive charts and filters by role, seniority, and region. Your Elite plan will include it at launch.
                 </p>
             </div>
         </div>

@@ -91,7 +91,7 @@ export function TalentSearchResults({ rows, hasSearched }: TalentSearchResultsPr
 
             {/* Mandated Footnote by Correction 7 */}
             <div className="text-xs text-[#9CA3AF] text-center mt-4 pb-4">
-                ULTRA members may appear higher in search results
+                Elite members may appear higher in search results
             </div>
         </div>
     );

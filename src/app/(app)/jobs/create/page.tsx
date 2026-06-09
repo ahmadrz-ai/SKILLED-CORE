@@ -405,7 +405,7 @@ export default function JobWizardPage() {
             return;
         }
         if (userPlan === 'BASIC') {
-            toast.error("Upgrade to PRO or ULTRA to access Neural Rewrite.");
+            toast.error("Upgrade to Pro or Elite to access Neural Rewrite.");
             return;
         }
         // If not Ultra, they must have credits
@@ -991,7 +991,7 @@ export default function JobWizardPage() {
 
                                 <p className="text-text-secondary text-sm mb-6 leading-relaxed">
                                     {userPlan === 'ULTRA' 
-                                        ? "This action will rewrite and optimize your job description using advanced AI models. (Free with Ultra Plan)"
+                                        ? "This action will rewrite and optimize your job description using advanced AI models. (Free with Elite Plan)"
                                         : "This action will consume 1 Credit to rewrite and optimize your job description using advanced AI models."
                                     }
                                 </p>

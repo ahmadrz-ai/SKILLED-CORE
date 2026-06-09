@@ -134,7 +134,7 @@ export async function rewriteJobDescription(currentDescription: string) {
         return { 
             success: true, 
             description: text, 
-            message: isUltra ? "Content enhanced (Free with Ultra Plan)!" : "Content enhanced (1 Credit used)." 
+            message: isUltra ? "Content enhanced (Free with Elite Plan)!" : "Content enhanced (1 Credit used)."
         };
     } catch (error: any) {
         console.error("AI Rewrite Error:", error);

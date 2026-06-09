@@ -26,12 +26,12 @@ export default function LearningPage() {
                     <div>
                         <h1 className="text-3xl font-sans font-bold text-text-heading mb-2">Restricted Access</h1>
                         <p className="text-text-secondary">
-                            The Learning Academy is exclusive to <span className="text-sc-purple-600 font-bold">ULTRA</span> operatives. Upgrade to access premium recruitment courses and certifications.
+                            The Learning Academy is exclusive to <span className="text-sc-purple-600 font-bold">Elite</span> operatives. Upgrade to access premium recruitment courses and certifications.
                         </p>
                     </div>
                     <Link href="/credits" className="block">
                         <button className="w-full py-4 bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold rounded-xl transition-all shadow-sc-sm">
-                            UPGRADE TO ULTRA
+                            UPGRADE TO ELITE
                         </button>
                     </Link>
                 </div>
@@ -57,7 +57,7 @@ export default function LearningPage() {
                 </span>
                 <h2 className="text-lg font-bold text-text-heading">Courses are coming soon</h2>
                 <p className="text-sm text-text-secondary mt-1 max-w-md">
-                    We&apos;re curating a library of practical, skill-focused courses with real video lessons and progress tracking. Your ULTRA plan will include full access at launch.
+                    We&apos;re curating a library of practical, skill-focused courses with real video lessons and progress tracking. Your Elite plan will include full access at launch.
                 </p>
             </div>
         </div>

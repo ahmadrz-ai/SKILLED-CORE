@@ -90,7 +90,7 @@ export function LeftFilterPanel({ filters, onFiltersChange, onClearAll }: LeftFi
                 <div className="flex flex-wrap gap-1.5">
                     {(['all', 'ultra', 'pro-ultra'] as const).map((plan) => {
                         const isActive = filters.planType === plan;
-                        const labelText = plan === 'all' ? 'All Members' : plan === 'ultra' ? 'ULTRA Only' : 'PRO & ULTRA';
+                        const labelText = plan === 'all' ? 'All Members' : plan === 'ultra' ? 'Elite Only' : 'Pro & Elite';
                         return (
                             <button
                                 key={plan}
