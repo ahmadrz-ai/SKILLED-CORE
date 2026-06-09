@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyUser } from "@/lib/ably";
 
 type Role = "ADMIN" | "RECRUITER" | "CANDIDATE" | string;
 
@@ -85,6 +86,7 @@ export async function createBooking(input: {
         } catch (e) {
             console.error("Booking notification failed:", e);
         }
+        await notifyUser(input.candidateId); // realtime badge nudge
 
         revalidatePath("/bookings");
         revalidatePath("/", "layout");

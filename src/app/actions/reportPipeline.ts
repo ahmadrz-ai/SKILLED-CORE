@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
+import { notifyUser } from "@/lib/ably";
 
 // ─── Authorization helpers ───────────────────────────────────────────────────
 async function getSession() {
@@ -170,6 +171,7 @@ export async function sendReportMessage(reportId: string, body: string) {
                     },
                 });
             } catch { /* notification is best-effort */ }
+            await notifyUser(report.reporterId); // realtime badge nudge (support)
         }
 
         revalidatePath(`/admin/reports/${reportId}`);

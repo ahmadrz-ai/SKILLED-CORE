@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyUser } from "@/lib/ably";
 
 export async function getNetworkData() {
     console.log("getNetworkData: Starting");
@@ -273,6 +274,8 @@ export async function sendConnectionRequest(targetUserId: string) {
             // Don't fail the request just because notification failed
         }
 
+        await notifyUser(targetUserId); // realtime badge nudge
+
         revalidatePath('/network');
         revalidatePath(`/profile/${targetUserId}`);
         revalidatePath('/', 'layout');
@@ -339,6 +342,7 @@ export async function updateConnectionStatus(connectionId: string, status: 'ACCE
             } catch (notifyErr) {
                 console.error("Connection-accepted notification failed:", notifyErr);
             }
+            await notifyUser(conn.requesterId); // realtime badge nudge
         }
         revalidatePath('/network');
         revalidatePath('/', 'layout');

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { containsProfanity } from '@/lib/content-safety';
+import { notifyUser } from '@/lib/ably';
 
 export async function updatePost(postId: string, content: string) {
     const session = await auth();
@@ -155,6 +156,7 @@ export async function toggleLike(postId: string) {
                         read: false
                     }
                 });
+                await notifyUser(post.userId); // realtime badge nudge
             }
 
             revalidatePath('/feed');
@@ -216,6 +218,7 @@ export async function addComment(postId: string, content: string, parentId?: str
                     read: false
                 }
             });
+            await notifyUser(post.userId); // realtime badge nudge
         }
 
         revalidatePath('/feed');
@@ -689,6 +692,7 @@ export async function toggleFollow(targetUserId: string) {
             } catch (notifyErr) {
                 console.error("Follow notification failed:", notifyErr);
             }
+            await notifyUser(targetUserId); // realtime badge nudge
 
             revalidatePath('/feed');
             revalidatePath('/', 'layout');

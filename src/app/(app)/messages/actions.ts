@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
+import { notifyUser } from '@/lib/ably';
 
 
 export async function getConversations() {
@@ -219,6 +220,8 @@ export async function sendMessage(recipientId: string, content: string | null, a
                 read: false
             }
         });
+
+        await notifyUser(recipientId); // realtime badge nudge
 
         revalidatePath('/messages');
         revalidatePath('/', 'layout');
