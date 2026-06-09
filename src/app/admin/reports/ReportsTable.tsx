@@ -2,10 +2,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Report, User } from '@prisma/client';
 import {
     AlertTriangle, CheckCircle, XCircle, Shield, MessageSquare,
-    ChevronDown, ChevronUp, Bug, Lightbulb, FileText
+    ChevronDown, ChevronUp, Bug, Lightbulb, FileText, ArrowUpRight
 } from 'lucide-react';
 import { updateReportStatus, startReviewingReport } from '../actions';
 import { toast } from 'sonner';
@@ -151,6 +152,13 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 </div>
                                             </td>
                                             <td className="p-4 text-right space-x-2" onClick={e => e.stopPropagation()}>
+                                                <Link
+                                                    href={`/admin/reports/${report.id}`}
+                                                    className="p-2 hover:bg-sc-purple-500/10 rounded-lg transition-colors text-zinc-400 hover:text-sc-purple-600 disabled:opacity-50 inline-flex"
+                                                    title="Open report (AI triage + reply thread)"
+                                                >
+                                                    <ArrowUpRight className="w-4 h-4" />
+                                                </Link>
                                                 <button
                                                     onClick={() => handleAction(report.id, 'RESOLVED')}
                                                     disabled={!!isLoading}
