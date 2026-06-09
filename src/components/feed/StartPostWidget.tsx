@@ -731,7 +731,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                     setIsEditorOpen(true);
                                                 }}
                                                 disabled={isUploading}
-                                                className="absolute top-2 left-2 bg-white/90 hover:bg-[#5B35D5] text-[#374151] hover:text-white border border-[#E5E7EB] p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                className="absolute top-2 left-2 bg-control-chip hover:bg-control-chip-hover text-text-inverse p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                                 title="Edit Image"
                                             >
                                                 <Edit className="w-3.5 h-3.5" />
@@ -741,7 +741,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                                 type="button"
                                                 onClick={handleRemoveDraftImage}
                                                 disabled={isUploading}
-                                                className="absolute top-2 right-2 bg-white/90 hover:bg-[#EF4444] text-[#374151] hover:text-white border border-[#E5E7EB] p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
+                                                className="absolute top-2 right-2 bg-control-chip hover:bg-control-chip-hover text-text-inverse p-1.5 rounded-full backdrop-blur-sm transition-colors shadow-md z-20"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
@@ -758,8 +758,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             </div>
  
                             {/* Bottom Bar: Tools & Post Button */}
-                            <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB] shrink-0">
-                                <div className="flex items-center gap-1">
+                            <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-[#E5E7EB] shrink-0">
+                                <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto no-scrollbar">
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -885,7 +885,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                     </Button>
                                 </div>
  
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 shrink-0">
                                     <span className={cn("text-xs font-mono font-bold transition-colors hidden sm:inline",
                                         (3000 - textLength) < 0 ? "text-red-500" :
                                             (3000 - textLength) < 200 ? "text-yellow-500" : "text-[#9CA3AF]"
@@ -1246,7 +1246,7 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                     {/* Backdrop – closes picker when clicking outside it.
                         stopPropagation prevents Radix DismissableLayer from also closing the dialog. */}
                     <div
-                        style={{ position: "fixed", inset: 0, zIndex: 2147483646 }}
+                        style={{ position: "fixed", inset: 0, zIndex: 2147483646, pointerEvents: "auto" }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => setShowEmojiPicker(false)}
@@ -1259,6 +1259,10 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             zIndex: 2147483647,
                             top: emojiPickerPos.top,
                             left: emojiPickerPos.left,
+                            // Re-enable interaction: the picker is portaled to <body>, outside the
+                            // Radix modal Dialog, which otherwise neutralizes pointer events here
+                            // (emojis/scroll/Close looked dead on mobile).
+                            pointerEvents: "auto",
                         }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}

@@ -80,6 +80,9 @@
   --color-bg-input-disabled: var(--bg-input-disabled);
   --color-bg-modal: var(--bg-modal);
   --color-bg-overlay: var(--bg-overlay);
+  /* dark chip behind on-image controls (edit/remove) so icons read on any photo */
+  --color-control-chip: var(--control-chip-bg);
+  --color-control-chip-hover: var(--control-chip-bg-hover);
 
   --color-text-heading: var(--text-heading);
   --color-text-body: var(--text-body);
@@ -244,6 +247,8 @@
   --bg-input-disabled:      var(--sc-gray-100);
   --bg-modal:               var(--sc-white);
   --bg-overlay:             rgba(14,14,20,0.45);
+  --control-chip-bg:        rgba(14,14,20,0.62);
+  --control-chip-bg-hover:  rgba(14,14,20,0.80);
   --bg-tooltip:             var(--sc-gray-900);
   --bg-dropdown:            var(--sc-white);
 
