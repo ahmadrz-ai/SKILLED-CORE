@@ -293,8 +293,25 @@ model Report {
   updatedAt      DateTime @updatedAt
   category       String   @default("OTHER")
   severity       String   @default("LOW")
+  // Reports pipeline (Phase 3): AI triage + admin↔user support thread.
+  aiSummary      String?         @db.Text   // AI technical summary of the report
+  fixPrompt      String?         @db.Text   // copy-paste coding-AI fix prompt
+  threadStatus   String          @default("OPEN") // OPEN | CLOSED (admin closes the conversation)
   reportedUser   User?    @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
   reporter       User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  messages       ReportMessage[]
+}
+
+model ReportMessage {
+  id         String   @id @default(uuid())
+  reportId   String
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  senderId   String   // user id of the author
+  senderRole String   // 'ADMIN' | 'USER'
+  body       String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([reportId])
 }
 
 model Notification {
