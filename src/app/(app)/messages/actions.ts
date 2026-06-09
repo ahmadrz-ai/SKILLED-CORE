@@ -107,7 +107,7 @@ export async function getMessages(conversationId: string) {
                     select: {
                         id: true,
                         content: true,
-                        sender: { select: { name: true } }
+                        sender: { select: { name: true, image: true } }
                     }
                 }
             }
@@ -130,7 +130,8 @@ export async function getMessages(conversationId: string) {
                 replyTo: m.replyTo ? {
                     id: m.replyTo.id,
                     content: m.replyTo.content,
-                    senderName: m.replyTo.sender.name
+                    senderName: m.replyTo.sender.name,
+                    senderImage: m.replyTo.sender.image
                 } : null
             })),
             isReadByRecipient

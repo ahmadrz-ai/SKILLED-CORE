@@ -226,7 +226,7 @@ export default function MessagesPage() {
             sender: 'me',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             status: 'sent',
-            replyTo: currentReply ? { id: currentReply.id, content: currentReply.text, senderName: currentReply.sender === 'me' ? 'You' : selectedContact?.name } : null
+            replyTo: currentReply ? { id: currentReply.id, content: currentReply.text, senderName: currentReply.sender === 'me' ? 'You' : selectedContact?.name, senderImage: currentReply.sender === 'me' ? undefined : selectedContact?.avatar } : null
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
@@ -404,9 +404,9 @@ export default function MessagesPage() {
                                     )}
 
                                     <ContextMenu>
-                                        <ContextMenuTrigger>
+                                        <ContextMenuTrigger asChild>
                                             <div className={cn(
-                                                "max-w-[75%] md:max-w-[500px] relative px-4 py-2.5 text-[15px] shadow-sm",
+                                                "max-w-[75%] md:max-w-[500px] w-fit relative px-4 py-2.5 text-[15px] shadow-sm",
                                                 isMe
                                                     ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-sc-purple-600 text-text-inverse force-white-text rounded-l-2xl`
                                                     : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-bg-card border border-border-default text-text-body rounded-r-2xl`,
@@ -415,11 +415,17 @@ export default function MessagesPage() {
                                                 {/* Reply Context */}
                                                 {msg.replyTo && (
                                                     <div className={cn(
-                                                        "mb-2 pl-3 border-l-2 text-xs opacity-90 py-1 rounded",
+                                                        "mb-2 pl-2 pr-2.5 border-l-2 text-xs opacity-90 py-1 rounded flex items-center gap-2",
                                                         isMe ? "border-text-inverse/50 bg-sc-purple-700/50" : "border-border-brand bg-bg-secondary-panel text-text-secondary"
                                                     )}>
-                                                        <p className={cn("font-semibold mb-0.5", isMe ? "text-text-inverse" : "text-text-brand")}>{msg.replyTo.senderName}</p>
-                                                        <p className="truncate">{msg.replyTo.content}</p>
+                                                        <Avatar className="w-5 h-5 flex-shrink-0">
+                                                            <AvatarImage src={msg.replyTo.senderImage || undefined} />
+                                                            <AvatarFallback className="text-[8px]">{(msg.replyTo.senderName || 'U').charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="min-w-0">
+                                                            <p className={cn("font-semibold leading-tight", isMe ? "text-text-inverse" : "text-text-brand")}>{msg.replyTo.senderName}</p>
+                                                            <p className="truncate leading-tight">{msg.replyTo.content}</p>
+                                                        </div>
                                                     </div>
                                                 )}
 
