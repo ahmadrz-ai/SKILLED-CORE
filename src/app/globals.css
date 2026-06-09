@@ -435,7 +435,9 @@ html:not(.admin-dark) [class*="text-zinc-5"] {
   color: #6B7280 !important;
 }
 html:not(.admin-dark) [class*="text-zinc-6"] {
-  color: #9CA3AF !important;
+  /* Was #9CA3AF (~2.5:1 on white — failed WCAG and made admin icons/labels look
+     unreadable). Darkened to gray-500 so faint zinc-600 icons/text pass AA. */
+  color: #6B7280 !important;
 }
 
 /* 4. White-border/divider patterns → light borders */
