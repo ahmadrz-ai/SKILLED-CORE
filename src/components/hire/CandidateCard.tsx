@@ -190,7 +190,7 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                                 "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider",
                                 isUltra ? "bg-[#5B35D5] text-white" : "bg-[#2563EB] text-white"
                             )}>
-                                {candidate.plan}
+                                {isUltra ? 'Elite' : 'Pro'}
                             </span>
                         )}
                     </div>
