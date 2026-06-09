@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlanBadge } from "@/components/credits/PlanBadge";
+import { useBadges } from "@/components/realtime/RealtimeBadgeProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,8 +57,9 @@ interface SidebarProps {
   plan?: string;
 }
 
-export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileClose, counts, plan }: SidebarProps) {
+export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileClose, plan }: SidebarProps) {
   const pathname = usePathname();
+  const { counts: rt } = useBadges();
   const { data: session } = useSession();
   const user = session?.user;
   const recruiterGuard = useRoleGuard("RECRUITER");
@@ -129,14 +131,17 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
           const showHighlight = item.highlight || (item.highlightRole && (user as any)?.role === item.highlightRole);
 
           const badges = {
-            jobs: counts?.jobs || 0,
-            salary: counts?.salary || false,
-            learning: counts?.learning || 0,
-            analytics: counts?.analytics || false,
+            jobs: rt.jobs || 0,
+            salary: rt.salary || false,
+            learning: rt.learning || 0,
+            analytics: rt.analytics || false,
             credits: (user as any)?.credits && (user as any).credits < 3 ? "low" : null,
-            network: counts?.network || 0,
-            messages: counts?.messages || 0,
-            notifications: counts?.notifications || 0,
+            network: rt.network || 0,
+            messages: rt.messages || 0,
+            notifications: rt.notifications || 0,
+            // Realtime core tabs (CR2)
+            interviews: rt.bookings || 0,
+            support: rt.support || 0,
           };
 
           const badgeKey = item.label.toLowerCase();

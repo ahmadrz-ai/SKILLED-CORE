@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getBadgeCounts } from "@/app/actions/notifications";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { RealtimeBadgeProvider } from "@/components/realtime/RealtimeBadgeProvider";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,36 +23,15 @@ interface AppShellProps {
   };
   plan?: string;
   credits?: number;
+  userId?: string;
 }
 
-export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppShellProps) {
+export function AppShell({ children, counts, plan = "BASIC", credits = 0, userId }: AppShellProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Live badge counts: seed from the server-rendered counts, then refresh on an
-  // interval and on window focus so sidebar/topbar badges update as events occur
-  // (new notifications, messages, connection requests) without a full navigation.
-  const [liveCounts, setLiveCounts] = useState(counts);
-  useEffect(() => {
-    let active = true;
-    const refresh = async () => {
-      try {
-        const fresh = await getBadgeCounts();
-        if (active) setLiveCounts(prev => ({ ...prev, ...fresh }));
-      } catch { /* ignore transient errors */ }
-    };
-    refresh();
-    const interval = setInterval(refresh, 20000);
-    const onFocus = () => { if (document.visibilityState === "visible") refresh(); };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      active = false;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-    };
-  }, []);
+  // Live badge counts now live in RealtimeBadgeProvider (Ably-backed, seeded from
+  // the server `counts`), consumed by the Sidebar + bell via useBadges().
 
   // Auto-collapse logic per Correction 3
   const getInitialCollapseState = (path: string) => {
@@ -179,15 +158,15 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
 
   // MODE 3: FULL SHELL (full topbar + sidebar)
   return (
+    <RealtimeBadgeProvider userId={userId} initial={counts as Record<string, number | boolean>}>
     <div className="min-h-screen bg-bg-secondary-panel text-text-body font-sans flex relative">
-      
+
       {/* Desktop Sidebar — Fixed Left */}
       <Sidebar
         isCollapsed={isCollapsed}
         onToggle={handleToggle}
         isMobileOpen={isMobileOpen}
         onMobileClose={() => setIsMobileOpen(false)}
-        counts={liveCounts}
         plan={plan}
       />
 
@@ -219,5 +198,6 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0 }: AppS
         </main>
       </div>
     </div>
+    </RealtimeBadgeProvider>
   );
 }

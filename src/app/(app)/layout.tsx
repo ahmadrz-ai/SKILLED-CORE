@@ -90,6 +90,7 @@ export default async function AppLayout({
             }}
             plan={plan}
             credits={user?.credits || 0}
+            userId={session?.user?.id}
         >
             {children}
         </AppShell>

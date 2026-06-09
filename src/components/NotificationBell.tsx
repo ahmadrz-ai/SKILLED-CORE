@@ -6,12 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/actions/feedback";
 import { useRouter } from "next/navigation";
+import { useBadges, NavBadge } from "@/components/realtime/RealtimeBadgeProvider";
 
 export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const { counts, clear, refresh } = useBadges();
 
     const fetchNotifications = async () => {
         const res = await getNotifications();
@@ -32,7 +34,9 @@ export function NotificationBell() {
         };
     }, []);
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const localUnread = notifications.filter(n => !n.read).length;
+    // Realtime count from the shared store, falling back to the locally-derived list.
+    const unreadCount = Math.max(Number(counts.notifications) || 0, localUnread);
 
     // Close on click outside
     useEffect(() => {
@@ -56,7 +60,9 @@ export function NotificationBell() {
 
     const handleMarkAllRead = async () => {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        clear("notifications");      // optimistic badge clear
         await markAllNotificationsRead();
+        refresh();                   // reconcile with server (also clears support subset if read)
     };
 
     return (
@@ -72,7 +78,9 @@ export function NotificationBell() {
                 )} />
 
                 {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-sc-red-500 rounded-full box-content border-2 border-bg-topbar" />
+                    <span className="absolute -top-0.5 -right-0.5">
+                        <NavBadge count={unreadCount} className="border-2 border-bg-topbar" />
+                    </span>
                 )}
             </button>
 
