@@ -86,9 +86,9 @@
   /* unread notification badge (Branding §182: bg #E5484D, text white) */
   --color-badge-danger: var(--badge-danger);
 
-  /* Status color ramps + semantics — defined in :root but previously never exposed
-     as utilities, so bg-sc-red-*/text-error/etc. rendered nothing. Register them so
-     danger/success/warning utilities work app-wide (Branding status colors). */
+  /* Status color ramps + semantics — defined in :root but never exposed as theme
+     utilities, so the danger/success/warning color classes generated nothing.
+     Register them here so those utilities work app-wide (Branding status colors). */
   --color-sc-red-700: var(--sc-red-700);
   --color-sc-red-600: var(--sc-red-600);
   --color-sc-red-500: var(--sc-red-500);
