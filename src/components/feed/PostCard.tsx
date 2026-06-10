@@ -35,6 +35,68 @@ import { ReportPostModal } from "./ReportPostModal";
 import { SharePostModal } from "./SharePostModal";
 import { Tag as SharedTag } from "@/components/ui/tag";
 
+// ─── Inline badge + hashtag decoration (shared by both render paths) ──────────
+// Branding.md colors; gold is the exact AI-verified-skill gold (--verified-gold*).
+const BADGE_CLASSES: Record<string, string> = {
+    '+': 'bg-bg-card border-border-strong text-text-heading',
+    ':': 'bg-sc-red-50 border-sc-red-200 text-sc-red-600',
+    '/': 'bg-verified-gold-tint border-verified-gold-border text-verified-gold',
+    '~': 'bg-sc-purple-100 border-sc-purple-200 text-sc-purple-800',
+};
+const BADGE_BASE = 'inline-flex items-center align-baseline px-2 py-0.5 rounded-md text-xs font-bold border';
+
+/**
+ * Decorates rich (WYSIWYG/HTML) post content: converts badge tokens and
+ * hashtags inside TEXT segments into styled spans / search links. Posts created
+ * with the rich composer are stored as HTML and rendered via
+ * dangerouslySetInnerHTML — they never pass through parseContent, so without
+ * this they got NO badges and NO clickable hashtags. Pure string transform
+ * (identical on server and client → no hydration mismatch); skips the inside of
+ * <a>, <code> and <pre> so links/snippets are never corrupted.
+ */
+function decorateHtmlContent(html: string): string {
+    const tokens = html.split(/(<[^>]+>)/g);
+    let skipDepth = 0;
+    return tokens.map((tok) => {
+        if (tok.startsWith('<')) {
+            const m = tok.match(/^<\s*(\/?)\s*(a|code|pre)\b/i);
+            if (m) skipDepth = Math.max(0, skipDepth + (m[1] ? -1 : 1));
+            return tok;
+        }
+        if (skipDepth > 0 || !tok) return tok;
+        return decorateTextSegment(tok);
+    }).join('');
+}
+
+function badgeHtml(text: string, trigger: string): string {
+    return `<span class="${BADGE_BASE} ${BADGE_CLASSES[trigger] || BADGE_CLASSES['+']}">${text}</span>`;
+}
+
+function decorateTextSegment(text: string): string {
+    // 1. Multi-word quoted badges: "/multi word badge", "multi word /badge",
+    //    "multi /word badge" — the first trigger designates; only IT is removed.
+    let out = text.replace(/"([^"<>]+)"/g, (full, quoted: string) => {
+        const sym = quoted.match(/[+:/~]/);
+        if (!sym) return full;
+        const badgeText = quoted.replace(sym[0], '').replace(/\s+/g, ' ').trim();
+        if (!badgeText) return full;
+        return badgeHtml(badgeText, sym[0]);
+    });
+
+    // 2. Single-word badges: trigger stuck to the text (+black yes, + black no);
+    //    boundary = segment start, whitespace, or &nbsp; (contentEditable spaces).
+    out = out.replace(/(^|\s|&nbsp;)([+:/~])([A-Za-z0-9][\w-]*)/g,
+        (_full, lead: string, trigger: string, word: string) => `${lead}${badgeHtml(word, trigger)}`);
+
+    // 3. Clickable hashtags (the container's onClick already stops propagation
+    //    for anchor tags).
+    out = out.replace(/(^|\s|&nbsp;)#([A-Za-z0-9_]+)/g,
+        (_full, lead: string, tag: string) =>
+            `${lead}<a href="/search?q=%23${encodeURIComponent(tag)}" class="text-[#5B35D5] hover:underline font-semibold">#${tag}</a>`);
+
+    return out;
+}
+
 export interface PostProps {
     id: string;
     content: string;
@@ -391,27 +453,13 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         }
     };
 
-    // Inline post badges. Colors come straight from Branding.md tokens (the old
-    // zinc/red-400/yellow-400 set rendered near-invisible on the light theme — e.g.
-    // yellow-400 text on a 10%-opacity yellow fill — which is why badges "weren't
-    // working"). Gold reuses the exact AI-verified-skill gold (--verified-gold*).
-    const renderBadge = (text: string, type: string) => {
-        const styles: Record<string, string> = {
-            // + clean dark-text badge
-            '+': 'bg-bg-card border-border-strong text-text-heading',
-            // : high-visibility red alert
-            ':': 'bg-sc-red-50 border-sc-red-200 text-sc-red-600',
-            // / gold highlight — identical to the verified skill badge gold
-            '/': 'bg-verified-gold-tint border-verified-gold-border text-verified-gold',
-            // ~ signature SkilledCore purple
-            '~': 'bg-sc-purple-100 border-sc-purple-200 text-sc-purple-800',
-        };
-        return (
-            <span className={`inline-flex items-center align-baseline px-2 py-0.5 rounded-md text-xs font-bold border ${styles[type] || styles['+']}`}>
-                {text}
-            </span>
-        );
-    };
+    // Inline post badges (plain-text path) — same shared Branding classes as the
+    // HTML path's decorateHtmlContent, so both render identically.
+    const renderBadge = (text: string, type: string) => (
+        <span className={`${BADGE_BASE} ${BADGE_CLASSES[type] || BADGE_CLASSES['+']}`}>
+            {text}
+        </span>
+    );
 
     const parseContent = (content: string) => {
         const parts: React.ReactNode[] = [];
@@ -973,7 +1021,7 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                             "[&_code]:bg-[#F3F4F6] [&_code]:border [&_code]:border-[#E5E7EB] [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-red-600",
                                             !isExpanded && shouldFold && "line-clamp-4"
                                         )}
-                                        dangerouslySetInnerHTML={{ __html: content }}
+                                        dangerouslySetInnerHTML={{ __html: decorateHtmlContent(content) }}
                                         onClick={(e) => {
                                             // Make links clickable without propagating to post click
                                             const target = e.target as HTMLElement;
