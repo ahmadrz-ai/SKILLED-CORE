@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ChevronLeft, Loader2, Send, Lock, Bot, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getReportDetail, sendReportMessage } from "@/app/actions/reportPipeline";
+import { reportStatusLabel, reportStatusClasses } from "@/lib/reportStatus";
 
 export default function UserReportThread({ reportId }: { reportId: string }) {
     const [report, setReport] = useState<any>(null);
@@ -59,7 +60,7 @@ export default function UserReportThread({ reportId }: { reportId: string }) {
             <div className="bg-bg-card border border-border-card rounded-2xl p-5 shadow-sc-card">
                 <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sc-purple-50 text-sc-purple-700 border border-sc-purple-200">{report.category}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{report.status}</span>
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border", reportStatusClasses(report.status))}>{reportStatusLabel(report.status)}</span>
                 </div>
                 <h1 className="text-lg font-bold text-text-heading">{report.reason}</h1>
                 {report.body && <p className="text-sm text-text-secondary whitespace-pre-wrap mt-2 border-t border-border-subtle pt-3">{report.body}</p>}

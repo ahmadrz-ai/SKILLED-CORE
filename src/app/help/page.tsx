@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { submitSupportTicket, SupportTicketInput, getUserSupportTickets } from "@/app/actions/support";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { reportStatusLabel, reportStatusClasses, normalizeReportStatus } from "@/lib/reportStatus";
 import { AppShell } from "@/components/layout/AppShell";
 
 const KNOWLEDGE_ARTICLES = [
@@ -388,18 +389,14 @@ export default function HelpPage() {
                                 <p className="text-xs text-slate-500 font-medium">Real-time connection telemetry to our Core Operations queue.</p>
                             </div>
                             <span className="text-xs font-mono font-bold bg-sc-purple-50 text-sc-purple-700 px-2.5 py-1.5 rounded-full border border-sc-purple-100">
-                                ACTIVE TICKETS: {myTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'DISMISSED').length}
+                                ACTIVE TICKETS: {myTickets.filter(t => !['COMPLETED', 'JUNK'].includes(normalizeReportStatus(t.status))).length}
                             </span>
                         </div>
 
                         <div className="space-y-4">
                             {myTickets.map((ticket) => {
-                                const isPending = ticket.status === 'PENDING';
-                                const isReviewing = ticket.status === 'UNDER_REVIEW';
-                                const isResolved = ticket.status === 'RESOLVED';
-                                
                                 return (
-                                    <div key={ticket.id} className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <Link key={ticket.id} href={`/support/reports/${ticket.id}`} className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 hover:bg-slate-50 hover:border-sc-purple-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer">
                                         <div className="space-y-2 max-w-xl">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="text-xs font-mono font-bold bg-slate-200/60 text-slate-650 px-2 py-0.5 rounded">
@@ -430,28 +427,14 @@ export default function HelpPage() {
                                                 <p className="text-xs font-semibold text-slate-600">{new Date(ticket.createdAt).toLocaleDateString()}</p>
                                             </div>
                                             
-                                            <div className={cn(
-                                                "px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-sm",
-                                                isPending ? "bg-slate-100 text-slate-650 border-slate-200" :
-                                                isReviewing ? "bg-amber-50 text-amber-600 border-amber-200 animate-pulse" :
-                                                isResolved ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
-                                                "bg-zinc-100 text-zinc-650 border-zinc-200"
+                                            <span className={cn(
+                                                "px-3 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wide shadow-sm",
+                                                reportStatusClasses(ticket.status)
                                             )}>
-                                                {isPending && (
-                                                    <>
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-450" /> PENDING TRIAGE
-                                                    </>
-                                                )}
-                                                {isReviewing && (
-                                                    <>
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" /> TEAM REVIEWING
-                                                    </>
-                                                )}
-                                                {isResolved && "✅ COMPLETED / RESOLVED"}
-                                                {ticket.status === 'DISMISSED' && "📋 DISMISSED"}
-                                            </div>
+                                                {reportStatusLabel(ticket.status)}
+                                            </span>
                                         </div>
-                                    </div>
+                                    </Link>
                                 );
                             })}
                         </div>

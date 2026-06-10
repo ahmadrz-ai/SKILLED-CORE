@@ -11,6 +11,7 @@ import {
 import { updateReportStatus, startReviewingReport } from '../actions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { REPORT_STATUSES, normalizeReportStatus, reportStatusLabel, reportStatusClasses, type ReportStatusKey } from '@/lib/reportStatus';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageLightbox } from '@/components/admin/ImageLightbox';
 
@@ -26,6 +27,7 @@ interface ReportsTableProps {
 export default function ReportsTable({ reports }: ReportsTableProps) {
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [statusFilter, setStatusFilter] = useState<'ALL' | ReportStatusKey>('ALL');
 
     const toggleExpand = async (id: string) => {
         const newSet = new Set(expandedIds);
@@ -48,17 +50,19 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
         }
     };
 
-    const handleAction = async (reportId: string, status: 'RESOLVED' | 'DISMISSED') => {
+    const handleSetStatus = async (reportId: string, status: ReportStatusKey) => {
         setIsLoading(reportId);
         const result = await updateReportStatus(reportId, status);
         setIsLoading(null);
-
-        if (result.success) {
-            toast.success(result.message);
-        } else {
-            toast.error(result.message);
-        }
+        if (result.success) toast.success(result.message);
+        else toast.error(result.message);
     };
+
+    const visibleReports = statusFilter === 'ALL'
+        ? reports
+        : reports.filter(r => normalizeReportStatus(r.status) === statusFilter);
+
+    const statusCount = (key: ReportStatusKey) => reports.filter(r => normalizeReportStatus(r.status) === key).length;
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
@@ -84,8 +88,33 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                     <span className="text-sm font-medium">MODERATION QUEUE</span>
                 </div>
                 <div className="text-xs text-text-tertiary font-mono">
-                    ACTIVE REPORTS: {reports.length}
+                    SHOWING: {visibleReports.length} / {reports.length}
                 </div>
+            </div>
+
+            {/* Status filter / sort */}
+            <div className="flex flex-wrap items-center gap-2">
+                <button
+                    onClick={() => setStatusFilter('ALL')}
+                    className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-bold border transition-colors",
+                        statusFilter === 'ALL' ? "bg-sc-purple-600 text-white border-sc-purple-600" : "bg-bg-card text-text-secondary border-border-default hover:bg-bg-sidebar-hover"
+                    )}
+                >
+                    All <span className="opacity-70">({reports.length})</span>
+                </button>
+                {REPORT_STATUSES.map(s => (
+                    <button
+                        key={s.key}
+                        onClick={() => setStatusFilter(s.key)}
+                        className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-bold border transition-colors",
+                            statusFilter === s.key ? "bg-sc-purple-600 text-white border-sc-purple-600" : "bg-bg-card text-text-secondary border-border-default hover:bg-bg-sidebar-hover"
+                        )}
+                    >
+                        {s.label} <span className="opacity-70">({statusCount(s.key)})</span>
+                    </button>
+                ))}
             </div>
 
             <div className="bg-bg-secondary-panel border border-border-subtle rounded-xl overflow-hidden">
@@ -102,7 +131,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {reports.map((report) => {
+                            {visibleReports.map((report) => {
                                 const isExpanded = expandedIds.has(report.id);
                                 let details: any = {};
                                 try {
@@ -126,11 +155,9 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 <div className="flex items-center gap-2 text-text-secondary">
                                                     {getTypeIcon(report.targetType)}
                                                     <span className="capitalize">{report.targetType.replace(/_/g, ' ').toLowerCase()}</span>
-                                                    {report.status === 'UNDER_REVIEW' && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold border text-yellow-500 bg-yellow-500/10 border-yellow-500/20 uppercase tracking-widest font-mono animate-pulse">
-                                                            Reviewing
-                                                        </span>
-                                                    )}
+                                                    <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wide", reportStatusClasses(report.status))}>
+                                                        {reportStatusLabel(report.status)}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="p-4">
@@ -159,22 +186,17 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 >
                                                     <ArrowUpRight className="w-4 h-4" />
                                                 </Link>
-                                                <button
-                                                    onClick={() => handleAction(report.id, 'RESOLVED')}
+                                                <select
+                                                    value={normalizeReportStatus(report.status)}
                                                     disabled={!!isLoading}
-                                                    className="p-2 hover:bg-emerald-50 rounded-lg transition-colors text-text-secondary hover:text-emerald-600 disabled:opacity-50"
-                                                    title="Resolve"
+                                                    onChange={(e) => handleSetStatus(report.id, e.target.value as ReportStatusKey)}
+                                                    className="text-xs font-semibold border border-border-default rounded-lg bg-bg-card text-text-body px-2 py-1.5 cursor-pointer disabled:opacity-50 align-middle"
+                                                    title="Set ticket status"
                                                 >
-                                                    <CheckCircle className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAction(report.id, 'DISMISSED')}
-                                                    disabled={!!isLoading}
-                                                    className="p-2 hover:bg-bg-secondary-panel rounded-lg transition-colors text-text-secondary hover:text-text-heading disabled:opacity-50"
-                                                    title="Dismiss"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
+                                                    {REPORT_STATUSES.map(s => (
+                                                        <option key={s.key} value={s.key}>{s.label}</option>
+                                                    ))}
+                                                </select>
                                             </td>
                                         </tr>
 

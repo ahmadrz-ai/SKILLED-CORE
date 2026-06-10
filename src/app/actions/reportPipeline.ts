@@ -143,7 +143,7 @@ export async function sendReportMessage(reportId: string, body: string) {
         if (!text) return { success: false, message: "Message is empty" };
         if (text.length > 4000) return { success: false, message: "Message too long" };
 
-        const report = await prisma.report.findUnique({ where: { id: reportId }, select: { reporterId: true, threadStatus: true } });
+        const report = await prisma.report.findUnique({ where: { id: reportId }, select: { reporterId: true, threadStatus: true, status: true } });
         if (!report) return { success: false, message: "Report not found" };
 
         const admin = isAdmin(session);
@@ -172,6 +172,14 @@ export async function sendReportMessage(reportId: string, body: string) {
                 });
             } catch { /* notification is best-effort */ }
             await notifyUser(report.reporterId); // realtime badge nudge (support)
+
+            // Auto-advance an untouched ticket to RESOLVING when support first replies.
+            // Don't override a terminal state (COMPLETED/JUNK).
+            if (["PENDING", "UNDER_REVIEW"].includes(report.status)) {
+                try {
+                    await prisma.report.update({ where: { id: reportId }, data: { status: "RESOLVING" } });
+                } catch { /* best-effort */ }
+            }
         }
 
         revalidatePath(`/admin/reports/${reportId}`);

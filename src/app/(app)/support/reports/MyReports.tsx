@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2, MessageSquare, ChevronRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMyReports } from "@/app/actions/reportPipeline";
+import { reportStatusLabel, reportStatusClasses } from "@/lib/reportStatus";
 
 export default function MyReports() {
     const [reports, setReports] = useState<any[]>([]);
@@ -47,10 +48,8 @@ export default function MyReports() {
                                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sc-purple-50 text-sc-purple-700 border border-sc-purple-200">{r.category}</span>
                                         <span className={cn(
                                             "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                                            r.status === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                            : r.status === "DISMISSED" ? "bg-bg-secondary-panel text-text-tertiary border-border-default"
-                                            : "bg-amber-50 text-amber-700 border-amber-200"
-                                        )}>{r.status}</span>
+                                            reportStatusClasses(r.status)
+                                        )}>{reportStatusLabel(r.status)}</span>
                                         {r.threadStatus === "CLOSED" && (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-text-tertiary"><Lock className="w-3 h-3" /> closed</span>
                                         )}

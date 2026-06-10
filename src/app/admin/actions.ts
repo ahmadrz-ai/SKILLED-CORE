@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { v2 as cloudinary } from "cloudinary";
+import { notifyUser } from "@/lib/ably";
 
 
 cloudinary.config({
@@ -173,9 +174,17 @@ export async function updateVerificationStatus(requestId: string, status: 'APPRO
     }
 }
 
-export async function updateReportStatus(reportId: string, status: 'RESOLVED' | 'DISMISSED', notes?: string) {
+type ReportStatus = 'PENDING' | 'RESOLVING' | 'COMPLETED' | 'JUNK' | 'RESOLVED' | 'DISMISSED';
+
+export async function updateReportStatus(reportId: string, status: ReportStatus, notes?: string) {
     try {
         const session = await ensureAdmin();
+
+        // Normalize legacy values onto the canonical 4-status set.
+        const canonical: ReportStatus =
+            status === 'RESOLVED' ? 'COMPLETED' :
+            status === 'DISMISSED' ? 'JUNK' :
+            status;
 
         // Fetch the report with reporter info
         const report = await prisma.report.findUnique({
@@ -191,29 +200,33 @@ export async function updateReportStatus(reportId: string, status: 'RESOLVED' | 
         await prisma.report.update({
             where: { id: reportId },
             data: {
-                status,
-                adminNotes: notes,
+                status: canonical,
+                ...(notes !== undefined ? { adminNotes: notes } : {}),
                 resolvedBy: session.user?.id
             }
         });
 
-        // Create notification for the reporter
-        const notificationMessages = {
-            RESOLVED: "✅ Your Report Successfully Reviewed!\n\nYour report has been successfully reviewed and implemented by the author. You can enjoy the features now. Thank you for helping us improve! 🎉",
-            DISMISSED: "📋 Report Update\n\nYour suggestion/report has been revoked due to insufficient evidence or incorrect information. If you believe this was an error, please submit additional details. Thank you for your understanding."
+        // Notify the reporter only on terminal transitions.
+        const notificationMessages: Record<string, string> = {
+            COMPLETED: "✅ Your report has been resolved!\n\nOur team has actioned your report. Thank you for helping us improve! 🎉",
+            JUNK: "📋 Report update\n\nYour report was closed without action (insufficient detail or out of scope). If you think this was a mistake, reply in the ticket with more details.",
         };
-
-        await prisma.notification.create({
-            data: {
-                userId: report.reporterId,
-                type: 'SYSTEM',
-                message: notificationMessages[status],
-                read: false
-            }
-        });
+        if (notificationMessages[canonical]) {
+            await prisma.notification.create({
+                data: {
+                    userId: report.reporterId,
+                    type: 'SYSTEM',
+                    message: notificationMessages[canonical],
+                    read: false
+                }
+            });
+            await notifyUser(report.reporterId);
+        }
 
         revalidatePath('/admin/reports');
-        return { success: true, message: `Report marked as ${status}` };
+        revalidatePath(`/admin/reports/${reportId}`);
+        revalidatePath(`/support/reports/${reportId}`);
+        return { success: true, message: `Report marked as ${canonical}` };
     } catch (error) {
         console.error("Failed to update report:", error);
         return { success: false, message: "Failed to update report status" };
