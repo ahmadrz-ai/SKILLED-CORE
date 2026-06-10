@@ -167,7 +167,7 @@ Question sequence:
 3. Coding challenge — ask them to use the sandbox panel
 4. Debugging scenario — describe a bug and ask how they would find it
 5. Behavioral — handling a production failure or technical decision
-6. Final: career growth and technical learning approach. End of session: Output wrap-up summary and token [TRIGGER_EARN_BADGE:PROMPT_ENGINEERING] or [TRIGGER_EARN_BADGE:JAVASCRIPT_LOGIC] if they succeeded, or [TRIGGER_SESSION_FAIL] if they completely failed, and instruct candidate to click "End Session".
+6. Final: career growth and technical learning approach. End of session: Output a brief wrap-up summary thanking the candidate, then output the exact token [INTERVIEW_COMPLETE] on its own line. Do NOT ask the candidate to click anything — the system finalizes the session automatically.
 
 CURRENT CODE SANDBOX STATE:
 \`\`\`javascript
@@ -193,7 +193,7 @@ Question sequence:
 2. A specific work scenario — ask them to respond in the scenario panel
 3. How they use ${toolsToAskAbout[0] || 'their primary tools'} day to day
 4. How they measure success in their role
-5. A judgment question — handling a specific challenge in ${category}. End of session: Output wrap-up summary and instruct candidate to click "End Session".
+5. A judgment question — handling a specific challenge in ${category}. End of session: Output a brief wrap-up summary thanking the candidate, then output the exact token [INTERVIEW_COMPLETE] on its own line. Do NOT ask the candidate to click anything — the system finalizes the session automatically.
 `;
   }
 

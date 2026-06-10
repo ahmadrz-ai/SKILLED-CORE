@@ -2,10 +2,11 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Star, StarHalf, X, FileText, ArrowRight, Brain, MessageSquare, BookOpen, UserCheck, Sparkles, CheckCircle2, Shield, Fingerprint } from "lucide-react";
+import { Loader2, Star, StarHalf, X, FileText, ArrowRight, Brain, MessageSquare, BookOpen, UserCheck, Sparkles, CheckCircle2, Shield, Fingerprint, Award, XCircle, RefreshCw } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { generateAnalysis, saveInterview } from "@/app/actions/interview";
+import { finalizeInterview } from "@/app/actions/interview";
+import { INTERVIEW_PASS_THRESHOLD } from "@/lib/interviewScoring";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -91,6 +92,8 @@ export function Scorecard({
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [scanStep, setScanStep] = useState(0);
+    const [evalError, setEvalError] = useState<string | null>(null);
+    const [outcome, setOutcome] = useState<{ passed: boolean; badge: { name: string; score: number } | null } | null>(null);
     const hasTriggeredRef = useRef(false);
 
     const roleName = formatRoleName(config?.role || "General");
@@ -134,41 +137,44 @@ export function Scorecard({
             return;
         }
 
-        console.log("Scorecard: Triggering auto-analysis & save sequence with", actualMessages.length, "messages.");
+        console.log("Scorecard: Triggering server-side finalize sequence with", actualMessages.length, "messages.");
         hasTriggeredRef.current = true; // Lock immediately so no concurrent run can start
         setIsSaving(true);
         setScanStep(0);
+        setEvalError(null);
 
-        // Generate analysis from transcript, passing sandbox code and run outputs!
-        generateAnalysis(actualMessages, config?.role || "General", config?.difficulty || 3, sandboxCode, sandboxOutput)
-            .then(async (result) => {
-                if (result.success) {
+        // Evaluation + save + pass/fail gate + badge issuance happen in ONE
+        // server action — the score never round-trips through the client.
+        finalizeInterview(
+            config?.interviewId || "",
+            actualMessages,
+            durationSeconds,
+            cheated,
+            sandboxCode,
+            sandboxOutput
+        )
+            .then((result: any) => {
+                if (result.success && result.data) {
                     setAnalysisData(result.data);
-
-                    // Auto-save generated report to profile DB, passing cheated flag!
-                    const saveResult = await saveInterview(
-                        config?.interviewId || "",
-                        result.data,
-                        actualMessages,
-                        durationSeconds,
-                        cheated
-                    );
-                    if (saveResult.success && saveResult.id) {
-                        setSavedId(saveResult.id);
-                        setSessionSaved(true);
-                        toast.success("Interview report archived to profile.");
+                    setOutcome({ passed: !!result.passed, badge: result.badge || null });
+                    setSavedId(result.id);
+                    setSessionSaved(true);
+                    if (result.passed && result.badge) {
+                        toast.success(`Passed! Verified Skill Badge earned: ${result.badge.name}`);
+                    } else if (result.passed) {
+                        toast.success("Interview passed and archived to profile.");
                     } else {
-                        toast.error("Evaluation completed, but profile sync failed.");
+                        toast.info("Interview archived. The pass bar was not met this time.");
                     }
                 } else {
-                    toast.error("Failed to generate interview metrics.");
+                    setEvalError(result.error || "Failed to generate interview metrics.");
+                    hasTriggeredRef.current = false; // allow retry
                 }
             })
             .catch((err) => {
-                console.error("Scorecard generation error:", err);
-                toast.error("An unexpected error occurred during grading.");
-                // Allow retry on error by releasing the lock
-                hasTriggeredRef.current = false;
+                console.error("Scorecard finalize error:", err);
+                setEvalError("An unexpected error occurred during grading. Please retry.");
+                hasTriggeredRef.current = false; // allow retry
             })
             .finally(() => {
                 setIsSaving(false);
@@ -255,14 +261,72 @@ export function Scorecard({
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400 to-transparent w-1/3 animate-scan-pulse" />
                                     </div>
                                 </motion.div>
+                            ) : evalError && !analysisData ? (
+                                /* Honest evaluation-failure state — no fake scores, just retry */
+                                <motion.div
+                                    key="eval-error"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="flex flex-col items-center justify-center py-12 space-y-4 text-center"
+                                >
+                                    <div className="w-14 h-14 rounded-full bg-sc-red-50 border border-sc-red-200 flex items-center justify-center">
+                                        <XCircle className="w-7 h-7 text-text-error" />
+                                    </div>
+                                    <div className="space-y-1 max-w-sm">
+                                        <h3 className="font-bold text-base text-text-heading">Evaluation Failed</h3>
+                                        <p className="text-xs text-text-secondary leading-relaxed">{evalError}</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => { setEvalError(null); setSessionSaved(false); }}
+                                        className="bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold rounded-xl px-6 h-10 cursor-pointer"
+                                    >
+                                        <RefreshCw className="w-4 h-4 mr-2" /> Retry Grading
+                                    </Button>
+                                </motion.div>
                             ) : (
                                 /* Assessment Data Presentation */
-                                <motion.div 
+                                <motion.div
                                     key="result"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-6"
                                 >
+                                    {/* Pass / Fail outcome + Verified Skill Badge */}
+                                    {outcome && !cheated && (
+                                        outcome.passed ? (
+                                            <div className="p-4 rounded-xl bg-sc-green-50 border border-sc-green-100 flex items-start gap-3 shadow-sm text-left">
+                                                <div className="w-10 h-10 rounded-full bg-white border border-sc-green-100 flex items-center justify-center shrink-0">
+                                                    <Award className="w-5 h-5 text-text-success" />
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <h4 className="text-sm font-extrabold text-text-success uppercase tracking-wide">
+                                                        Passed — Verified Skill Earned
+                                                    </h4>
+                                                    <p className="text-xs text-text-secondary leading-relaxed">
+                                                        Score ≥ {INTERVIEW_PASS_THRESHOLD}/100.{" "}
+                                                        {outcome.badge
+                                                            ? <>The <strong className="font-bold text-text-heading">{outcome.badge.name}</strong> verified skill badge is now on your profile and visible to recruiters.</>
+                                                            : "Your verified assessment has been recorded on your profile."}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 rounded-xl bg-sc-amber-50 border border-sc-amber-100 flex items-start gap-3 shadow-sm text-left">
+                                                <div className="w-10 h-10 rounded-full bg-white border border-sc-amber-100 flex items-center justify-center shrink-0">
+                                                    <XCircle className="w-5 h-5 text-sc-amber-700" />
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <h4 className="text-sm font-extrabold text-sc-amber-700 uppercase tracking-wide">
+                                                        Not Passed
+                                                    </h4>
+                                                    <p className="text-xs text-text-secondary leading-relaxed">
+                                                        This attempt scored below the {INTERVIEW_PASS_THRESHOLD}/100 pass bar, so no verified skill badge was granted. The full report below shows exactly where to improve — you can retake the interview anytime.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+
                                     {/* Integrity Warning Block */}
                                     {cheated && (
                                         <div className="p-4 rounded-xl bg-sc-red-50 border border-sc-red-200 text-text-error flex items-start gap-2.5 shadow-sm">

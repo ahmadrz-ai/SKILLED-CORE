@@ -568,10 +568,15 @@ model VerifiedSkill {
   status         String       @default("VERIFIED")
   verifiedAt     DateTime     @default(now())
   depthScore     Int          @default(90)
+  // The PASSING interview that earned this badge (issuance gate, 2026-06).
+  // Nullable for legacy rows; the backfill links/revokes those.
+  interviewId    String?
   skillDetailsId String?
   skillDetails   SkillDetail? @relation(fields: [skillDetailsId], references: [id], onDelete: SetNull)
 
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
 }
 
 model SkillDetail {
