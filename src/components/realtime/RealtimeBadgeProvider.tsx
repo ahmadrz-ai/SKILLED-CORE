@@ -90,7 +90,7 @@ export function NavBadge({ count, className }: { count?: number | boolean; class
     return (
         <span
             className={
-                "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-sc-red-600 text-white text-[10px] font-bold leading-none shadow-sm " +
+                "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-badge-danger text-white text-[10px] font-bold leading-none shadow-sm " +
                 (className || "")
             }
         >
