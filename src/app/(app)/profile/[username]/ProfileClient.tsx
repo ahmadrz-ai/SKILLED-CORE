@@ -28,6 +28,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteInterview } from '@/app/actions/interview';
+import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
+import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
 
@@ -156,9 +158,16 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
     };
 
     // AI-Verified signal (public — this is what makes recruiters book an interview).
+    // ONLY passing interviews count as verified (B4): failed/terminated/cheated
+    // sessions never appear here and never inflate the verified count.
     const aiInterviews: any[] = (user as any).interviews || [];
-    const topInterviewScore = aiInterviews.length ? Math.max(...aiInterviews.map((i: any) => i.score || 0)) : 0;
-    const interviewRoles = Array.from(new Set(aiInterviews.map((i: any) => i.role).filter(Boolean)));
+    const verifiedSkillBadges: any[] = ((user as any).verifiedSkills || []);
+    const passedInterviews = aiInterviews.filter((i: any) =>
+        (i.score || 0) >= INTERVIEW_PASS_THRESHOLD && !(i.radarData as any)?.cheated
+    );
+    const topInterviewScore = passedInterviews.length ? Math.max(...passedInterviews.map((i: any) => i.score || 0)) : 0;
+    // De-duped verified skill names (one badge per skill).
+    const verifiedSkillNames = new Set(verifiedSkillBadges.map((b: any) => (b.name || '').toLowerCase()));
 
     // Build resume data from the loaded profile and generate a real, text-based PDF
     // via the SkilledCore template (replaces the old window.print() screenshot).
@@ -690,8 +699,11 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                             </div>
                         </div>
 
-                        {/* AI-Verified highlight — the recruiter-facing signal (never gated) */}
-                        {user.role !== 'RECRUITER' && aiInterviews.length > 0 && (
+                        {/* AI-Verified highlight — the recruiter-facing signal (never gated).
+                            Shows ONLY passed/verified interviews (B4): the verified count is
+                            passed interviews, the badges are gate-issued golden skills, and
+                            failed/terminated attempts never appear here. */}
+                        {user.role !== 'RECRUITER' && (passedInterviews.length > 0 || verifiedSkillBadges.length > 0) && (
                             <div className="bg-white rounded-xl border border-[var(--sc-purple-200)] p-6 shadow-sm">
                                 <div className="flex items-center gap-2 mb-3">
                                     <BadgeCheck className="w-5 h-5 text-[var(--sc-purple-600)]" />
@@ -702,12 +714,26 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     <span className="text-sm text-[var(--text-secondary)] mb-1">/ 100 top score</span>
                                 </div>
                                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                                    {aiInterviews.length} verified assessment{aiInterviews.length > 1 ? 's' : ''}
+                                    {passedInterviews.length} verified assessment{passedInterviews.length === 1 ? '' : 's'}
                                 </p>
-                                {interviewRoles.length > 0 && (
+                                {verifiedSkillBadges.length > 0 && (
                                     <div className="flex flex-wrap gap-1.5 mt-3">
-                                        {interviewRoles.slice(0, 4).map((r: any, idx: number) => (
-                                            <span key={idx} className="text-[10px] font-bold uppercase tracking-wider bg-[var(--sc-purple-50)] text-[var(--sc-purple-700)] border border-[var(--sc-purple-100)] px-2 py-0.5 rounded">{r}</span>
+                                        {verifiedSkillBadges.map((b: any) => (
+                                            <GoldenSkillBadge key={b.id} name={b.name} score={b.depthScore} interviewId={b.interviewId} size="sm" />
+                                        ))}
+                                    </div>
+                                )}
+                                {/* Passed interview details: skill · score · date */}
+                                {passedInterviews.length > 0 && (
+                                    <div className="mt-3 space-y-1.5 border-t border-[var(--border-subtle)] pt-3">
+                                        {passedInterviews.slice(0, 4).map((iv: any) => (
+                                            <Link key={iv.id} href={`/interview/${iv.id}`} className="flex items-center justify-between text-[11px] no-underline group/iv">
+                                                <span className="font-bold uppercase tracking-wide text-[var(--text-body)] group-hover/iv:text-[var(--sc-purple-700)] truncate">{iv.role}</span>
+                                                <span className="flex items-center gap-2 shrink-0 text-[var(--text-secondary)] font-mono">
+                                                    <span className="font-bold text-[var(--text-success)]">{iv.score}/100</span>
+                                                    {new Date(iv.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </Link>
                                         ))}
                                     </div>
                                 )}
@@ -880,21 +906,28 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                             {isOwner && <Button variant="ghost" size="icon" onClick={() => openModal('skills')} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 opacity-0 group-hover:opacity-100 rounded-full transition-all"><Pencil className="w-4 h-4" /></Button>}
                                             <h2 className="text-lg font-bold text-slate-900 mb-4">Skills & Arsenal</h2>
                                             <div className="flex flex-wrap gap-2">
-                                                {parsedSkills.map((skill, i) => {
-                                                    const isVerified = skill.includes("(Verified)");
-                                                    const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "");
-                                                    return (
-                                                        <SharedTag 
-                                                            key={i} 
-                                                            variant={isVerified ? "branded" : "neutral"}
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            {cleanSkill}
-                                                            {isVerified && <CheckCircle2 className="w-3 h-3" />}
-                                                        </SharedTag>
-                                                    );
-                                                })}
-                                                {parsedSkills.length === 0 && <p className="text-slate-400 text-xs italic">No skills listed.</p>}
+                                                {/* Verified (golden) skills FIRST — interview-earned credentials (B5) */}
+                                                {verifiedSkillBadges.map((b: any) => (
+                                                    <GoldenSkillBadge key={b.id} name={b.name} score={b.depthScore} interviewId={b.interviewId} />
+                                                ))}
+                                                {/* Then regular skills — skipping ones already shown as golden */}
+                                                {parsedSkills
+                                                    .filter(skill => !verifiedSkillNames.has(skill.replace(/\s*\(Verified\)/gi, '').trim().toLowerCase()))
+                                                    .map((skill, i) => {
+                                                        const isVerified = skill.includes("(Verified)");
+                                                        const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "");
+                                                        return (
+                                                            <SharedTag
+                                                                key={i}
+                                                                variant={isVerified ? "branded" : "neutral"}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                {cleanSkill}
+                                                                {isVerified && <CheckCircle2 className="w-3 h-3" />}
+                                                            </SharedTag>
+                                                        );
+                                                    })}
+                                                {parsedSkills.length === 0 && verifiedSkillBadges.length === 0 && <p className="text-slate-400 text-xs italic">No skills listed.</p>}
                                             </div>
                                         </section>
                                     )}

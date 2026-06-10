@@ -171,6 +171,12 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
             if (filters.location && !c.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
 
             return true;
+        })
+        // Verified-badge holders always rank first in browse mode (B7) — then by
+        // the computed profile-strength match score.
+        .sort((a, b) => {
+            if (!!b.verified !== !!a.verified) return b.verified ? 1 : -1;
+            return (b.matchScore || 0) - (a.matchScore || 0);
         });
     }, [initialCandidates, filters]);
 
@@ -358,9 +364,9 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center pb-1">
                                                 <h2 className="text-lg font-bold text-[#111827]">
-                                                    Available Candidates 
+                                                    {filters.verifiedOnly ? "Verified Skills" : "Available Candidates"}
                                                     <span className="text-[#6B7280] font-normal text-xs ml-2">
-                                                        ({filteredInitialCandidates.length} active profiles)
+                                                        ({filteredInitialCandidates.length} {filters.verifiedOnly ? "verified-badge holders" : "active profiles"})
                                                     </span>
                                                 </h2>
                                                 <div className="text-xs text-[#9CA3AF] font-medium uppercase tracking-wider">

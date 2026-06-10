@@ -121,6 +121,11 @@ export default async function ProfilePage({ params }: PageProps) {
                         where: (isOwner || isAdmin) ? undefined : { isPublic: true },
                         orderBy: { createdAt: 'desc' }
                     },
+                    // Interview-earned golden badges (issuance gated server-side, B1)
+                    verifiedSkills: {
+                        where: { status: 'VERIFIED' },
+                        orderBy: { depthScore: 'desc' }
+                    },
                     posts: {
                         orderBy: { createdAt: 'desc' },
                         include: {

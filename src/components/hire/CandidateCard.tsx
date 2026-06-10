@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { BookingModal } from "./BookingModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { unlockConversation } from "@/app/actions/chatActions";
+import { GoldenSkillBadge } from "@/components/skills/GoldenSkillBadge";
 import { toast } from "sonner";
 
 interface SkillDetail {
@@ -92,6 +93,9 @@ interface CandidateCardProps {
         requirementScores?: { requirementLabel: string; score: number }[];
         matchedTerms?: string[];
         verifiedBadges?: string[];
+        /** Interview-earned golden skills — rendered FIRST in the skills area. */
+        verifiedSkills?: { name: string; score: number; interviewId?: string | null }[];
+        goldenSkills?: { name: string; score: number; interviewId?: string | null }[];
         experienceCount?: number;
         projectCount?: number;
     };
@@ -224,6 +228,18 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
                         </div>
                     )}
 
+                    {/* Verified (golden) skills FIRST — interview-earned (B6) */}
+                    {(() => {
+                        const golden = candidate.goldenSkills || candidate.verifiedSkills || [];
+                        return golden.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 mt-3" onClick={(e) => e.stopPropagation()}>
+                                {golden.slice(0, 3).map((g, i) => (
+                                    <GoldenSkillBadge key={i} name={g.name} score={g.score} interviewId={g.interviewId} size="sm" />
+                                ))}
+                            </div>
+                        ) : null;
+                    })()}
+
                     {/* Matched skills chips */}
                     {candidate.matchedTerms && candidate.matchedTerms.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3">
@@ -346,6 +362,23 @@ export function CandidateCard({ candidate, hasSearched = false, layout = 'grid' 
 
             {/* Structured Skills Container */}
             <div className="w-full flex flex-col gap-2.5 mb-3 flex-1">
+                {/* Verified (golden) skills FIRST — interview-earned credentials (B6) */}
+                {(() => {
+                    const golden = candidate.goldenSkills || candidate.verifiedSkills || [];
+                    return golden.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-bold text-verified-gold uppercase tracking-wider text-left">
+                                Verified Skills
+                            </span>
+                            <div className="flex flex-wrap gap-1 justify-start" onClick={(e) => e.stopPropagation()}>
+                                {golden.slice(0, 4).map((g, i) => (
+                                    <GoldenSkillBadge key={i} name={g.name} score={g.score} interviewId={g.interviewId} size="sm" />
+                                ))}
+                            </div>
+                        </div>
+                    ) : null;
+                })()}
+
                 {/* Professional Skills */}
                 {professionalSkills.length > 0 && (
                     <div className="flex flex-col gap-1">

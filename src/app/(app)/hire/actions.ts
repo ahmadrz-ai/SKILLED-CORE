@@ -15,6 +15,8 @@ export interface Candidate {
     skills: string[];
     matchScore: number;
     verified: boolean;
+    /** Interview-earned golden skills (server-gated VerifiedSkill rows). */
+    verifiedSkills: { name: string; score: number; interviewId?: string | null }[];
     connections: number;
     bio: string;
     avatar?: string | null;
@@ -97,6 +99,12 @@ export async function getCandidates(): Promise<Candidate[]> {
                 orderBy: { startDate: 'desc' },
                 take: 10
             },
+            // Interview-earned golden badges (issuance gated server-side, B1)
+            verifiedSkills: {
+                where: { status: 'VERIFIED' },
+                select: { name: true, depthScore: true, interviewId: true },
+                orderBy: { depthScore: 'desc' }
+            },
             _count: {
                 select: {
                     receivedConnections: { where: { status: 'ACCEPTED' } },
@@ -148,12 +156,27 @@ export async function getCandidates(): Promise<Candidate[]> {
             };
             const skillsArray = parseSkillsString(user.skills);
             const connectionCount = (user._count.receivedConnections || 0) + (user._count.sentConnections || 0);
+            const goldenSkills = (user.verifiedSkills || []).map(vs => ({
+                name: vs.name,
+                score: vs.depthScore,
+                interviewId: vs.interviewId ?? null,
+            }));
 
-            // Deterministic match score based on user ID hash (not random — avoids re-render flicker)
-            let matchScore = 70 + (user.id.charCodeAt(0) + user.id.charCodeAt(1)) % 30;
-            if (user.openToWork) {
-                matchScore = Math.min(100, matchScore + 10);
-            }
+            // Real profile-strength score (replaces the old user-ID-hash fake):
+            // profile completeness + verified interview evidence + experience depth.
+            const completenessScore = calcCompleteness({
+                image: user.image, bio: user.bio, skills: user.skills,
+                experience: user.experience, location: user.location, name: user.name
+            });
+            const bestVerified = goldenSkills.length ? Math.max(...goldenSkills.map(g => g.score)) : 0;
+            let matchScore = Math.round(
+                completenessScore * 0.4 +                          // 0–40: profile quality
+                (bestVerified * 0.35) +                            // 0–35: verified interview evidence
+                Math.min(user.experience?.length || 0, 4) * 3 +    // 0–12: experience entries
+                Math.min(skillsArray.length, 6) * 1                // 0–6: declared skill breadth
+            );
+            if (user.openToWork) matchScore = Math.min(100, matchScore + 7);
+            matchScore = Math.max(10, Math.min(100, matchScore));
 
             let yearsOfExperience = 0;
             if (user.experience && user.experience.length > 0) {
@@ -204,7 +227,8 @@ export async function getCandidates(): Promise<Candidate[]> {
                     company: '🔒 Hidden from your organization',
                     skills: skillsArray,
                     matchScore: matchScore,
-                    verified: false,
+                    verified: goldenSkills.length > 0,
+                    verifiedSkills: goldenSkills,
                     connections: 0,
                     bio: 'This candidate has Ghost Protocol enabled and is hidden from your organization.',
                     avatar: null,
@@ -223,7 +247,8 @@ export async function getCandidates(): Promise<Candidate[]> {
                 company: company,
                 skills: skillsArray.length > 0 ? skillsArray : ['Generalist'],
                 matchScore: matchScore,
-                verified: false,
+                verified: goldenSkills.length > 0,
+                verifiedSkills: goldenSkills,
                 connections: connectionCount,
                 bio: user.bio || 'No bio provided.',
                 avatar: user.image,

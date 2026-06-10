@@ -280,11 +280,26 @@ One primary color across the app. Variants:
 - **Composer:** pill input (full radius) on `--bg-input` with `--border-input`; send button
   40px circle `--sc-purple-600` (disabled: `--bg-input-disabled` + `--text-placeholder`).
 
+### 6.15.1 Verified gold (credential color)
+Earned-credential accent — ONLY for interview-verified skill badges, never decorative:
+`--verified-gold` `#B8860B` (text/icon), `--verified-gold-strong` `#8B6508` (hover),
+`--verified-gold-tint` `#FDF6E3` (chip bg), `--verified-gold-border` `#E5C56A` (outline).
+All four are registered in `@theme`.
+
 ### 6.16 Floating assistant orb (Qodee)
 - 56px circle, `bg-zinc-900` (allowed dark exception), purple glow shadow, draggable
   anywhere with free drop; position persists; clamped to viewport and below the 56px
   topbar. Tap = toggle panel; drag threshold 6px so taps never misfire as drags.
 - Panel opens toward the side/vertical with available room; max height caps to viewport.
+
+### 6.17 Golden Skill Badge (verified skills)
+- One reusable component: `src/components/skills/GoldenSkillBadge.tsx`. Pill chip on
+  `--verified-gold-tint` with `--verified-gold-border` outline, `--verified-gold` text +
+  BadgeCheck icon, optional score, links to the verifying interview.
+- Issuance is gated server-side: score ≥ `INTERVIEW_PASS_THRESHOLD` (`src/lib/interviewScoring.ts`).
+  Failed/terminated/cheated interviews NEVER render gold.
+- Ordering rule everywhere skills appear (profile Skills & Arsenal, /hire cards): verified
+  golden badges FIRST, then normal chips. Normal (unverified) chips must never use gold.
 
 ---
 

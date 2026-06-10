@@ -33,6 +33,8 @@ interface ScoredCandidate {
     requirementScores: { requirementLabel: string; score: number }[];
     matchedTerms: string[];
     verifiedBadges: string[];
+    /** Interview-earned golden skills (server-gated VerifiedSkill rows). */
+    goldenSkills: { name: string; score: number; interviewId: string | null }[];
     experienceCount: number;
     projectCount: number;
     role: string;
@@ -43,7 +45,7 @@ interface ScoredCandidate {
 interface ResultRow {
     id: string;
     label: string;
-    type: 'perfect' | 'slight' | 'requirement';
+    type: 'verified' | 'perfect' | 'slight' | 'requirement';
     requirementPriority?: number;
     candidates: ScoredCandidate[];
 }
@@ -251,6 +253,7 @@ async function executeDatabaseSearch(searchQuery: string): Promise<ResultRow[]> 
             requirementScores: [],
             matchedTerms: [],
             verifiedBadges: [],
+            goldenSkills: [],
             experienceCount: user.experience.length,
             projectCount: user.projects?.length || 0,
             role,
@@ -373,6 +376,12 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
                         }
                     }
                 }
+            },
+            // Interview-earned golden badges — issuance is server-gated (B1)
+            verifiedSkills: {
+                where: { status: 'VERIFIED' },
+                select: { name: true, depthScore: true, interviewId: true },
+                orderBy: { depthScore: 'desc' }
             }
         }
     });
@@ -549,6 +558,15 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
                 depthBonus += 25;
             }
             depthBonus = Math.min(depthBonus, 30);
+            // Interview-verified golden skill matching this requirement — the
+            // strongest credential signal we have; added AFTER the generic cap.
+            const hasGoldenMatch = (candidate.verifiedSkills || []).some(vs => {
+                const n = vs.name.toLowerCase();
+                return searchTermsLower.some(term => n.includes(term) || term.includes(n));
+            });
+            if (hasGoldenMatch) {
+                depthBonus += 30;
+            }
 
             let reqScore = skillScore + expScore + projScore + bioHeadlineScore + depthBonus;
 
@@ -608,7 +626,17 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
             parsedSkills.push('Generalist');
         }
 
-        const verifiedBadges = candidate.assessments.map(ass => ass.assessment.title);
+        const goldenSkills = (candidate.verifiedSkills || []).map(vs => ({
+            name: vs.name,
+            score: vs.depthScore,
+            interviewId: vs.interviewId ?? null,
+        }));
+        // verifiedBadges feeds the "Verified only" filter — golden interview skills
+        // count as verification alongside legacy assessment titles.
+        const verifiedBadges = [
+            ...candidate.assessments.map(ass => ass.assessment.title),
+            ...goldenSkills.map(g => g.name),
+        ];
 
         return {
             id: candidate.id,
@@ -625,6 +653,7 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
             requirementScores,
             matchedTerms: Array.from(matchedTermsSet),
             verifiedBadges,
+            goldenSkills,
             experienceCount: candidate.experience.length,
             projectCount: candidate.projects.length,
             role,
@@ -682,7 +711,28 @@ async function executeScoreCandidates(requirements: Requirement[]): Promise<Resu
         });
     };
 
+    // Row 1 — Verified Skills (B8): candidates whose interview-verified golden
+    // skill matches the search, ranked by verified score then overall match.
+    const allSearchTermsLower = requirements.flatMap(r => r.searchTerms.map(t => t.toLowerCase()));
+    const verifiedSkillHolders = scoredCandidates
+        .filter(c => c.goldenSkills.some(g => {
+            const n = g.name.toLowerCase();
+            return allSearchTermsLower.some(term => n.includes(term) || term.includes(n));
+        }))
+        .sort((a, b) => {
+            const bestA = Math.max(...a.goldenSkills.map(g => g.score), 0);
+            const bestB = Math.max(...b.goldenSkills.map(g => g.score), 0);
+            if (bestB !== bestA) return bestB - bestA;
+            return b.totalScore - a.totalScore;
+        });
+
     const resultRows = [
+        {
+            id: 'verified-skills',
+            label: '🏅 Verified Skills',
+            type: 'verified',
+            candidates: verifiedSkillHolders.slice(0, 10)
+        },
         {
             id: 'perfect-matches',
             label: '⭐ Perfect Matches',
