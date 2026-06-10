@@ -22,6 +22,31 @@ export function userChannelName(userId: string) {
     return `user:${userId}`;
 }
 
+export function conversationChannelName(conversationId: string) {
+    return `conversation:${conversationId}`;
+}
+
+/**
+ * Publish a realtime event into a conversation channel so the other participant's
+ * open thread updates instantly (no polling). Fire-and-forget — a realtime hiccup
+ * never breaks the DB write that triggered it; the slow fallback poll reconciles.
+ *
+ * Events: "message" | "reaction" | "unsend" | "read".
+ */
+export async function publishToConversation(
+    conversationId: string,
+    event: string,
+    data: Record<string, unknown>,
+) {
+    try {
+        const client = getRest();
+        if (!client) return;
+        await client.channels.get(conversationChannelName(conversationId)).publish(event, data);
+    } catch (err: any) {
+        console.error("[ably] publishToConversation failed:", err?.message || err);
+    }
+}
+
 /**
  * Nudge a user's client to refresh its nav badge counts. We publish a tiny signal
  * (not the counts themselves) and let the client refetch getBadgeCounts — keeps the

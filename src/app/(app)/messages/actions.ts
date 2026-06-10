@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
-import { notifyUser } from '@/lib/ably';
+import { notifyUser, publishToConversation } from '@/lib/ably';
 
 
 export async function getConversations() {
@@ -14,7 +14,7 @@ export async function getConversations() {
         // Fetch current user role for UI permissions
         const currentUser = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { role: true }
+            select: { role: true, name: true, username: true }
         });
 
         const conversations = await prisma.conversation.findMany({
@@ -68,7 +68,7 @@ export async function getConversations() {
             };
         }).filter(Boolean);
 
-        return { success: true, conversations: formatted, userRole: currentUser?.role || 'User' };
+        return { success: true, conversations: formatted, userRole: currentUser?.role || 'User', userId: session.user.id, userName: currentUser?.name || currentUser?.username || 'Someone' };
     } catch (error) {
         console.error("Get Conversations Error:", error);
         return { success: false, conversations: [] };
@@ -201,6 +201,15 @@ export async function sendMessage(recipientId: string, content: string | null, a
                 senderId: userId,
                 conversationId,
                 replyToId
+            },
+            include: {
+                replyTo: {
+                    select: {
+                        id: true,
+                        content: true,
+                        sender: { select: { name: true, image: true } }
+                    }
+                }
             }
         });
 
@@ -210,6 +219,24 @@ export async function sendMessage(recipientId: string, content: string | null, a
             select: { name: true, username: true }
         });
         const senderName = sender?.name || sender?.username || "A user";
+
+        // Live-deliver into the open thread so the recipient sees it instantly
+        // (the recipient's client maps senderId → 'them'). DB stays authoritative.
+        await publishToConversation(conversationId, "message", {
+            id: newMessage.id,
+            content: newMessage.content,
+            attachmentUrl: newMessage.attachmentUrl,
+            attachmentType: newMessage.attachmentType,
+            senderId: userId,
+            userId,
+            createdAt: newMessage.createdAt,
+            replyTo: newMessage.replyTo ? {
+                id: newMessage.replyTo.id,
+                content: newMessage.replyTo.content,
+                senderName: newMessage.replyTo.sender.name,
+                senderImage: newMessage.replyTo.sender.image,
+            } : null,
+        });
 
         await prisma.notification.create({
             data: {
@@ -257,8 +284,15 @@ export async function reactToMessage(messageId: string, emoji: string) {
             where: { id: messageId },
             data: { reactions: newReactions }
         });
+
+        await publishToConversation(message.conversationId, "reaction", {
+            messageId,
+            reactions: newReactions,
+            userId: session.user.id,
+        });
+
         revalidatePath('/messages');
-        return { success: true };
+        return { success: true, reactions: newReactions };
     } catch (e) {
         console.error(e);
         return { success: false };
@@ -277,6 +311,12 @@ export async function unsendMessage(messageId: string) {
             where: { id: messageId },
             data: { isDeleted: true, content: "Message unsent", attachmentUrl: null }
         });
+
+        await publishToConversation(message.conversationId, "unsend", {
+            messageId,
+            userId: session.user.id,
+        });
+
         revalidatePath('/messages');
         return { success: true };
     } catch (e) {

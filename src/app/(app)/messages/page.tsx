@@ -25,6 +25,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import ReactMarkdown from 'react-markdown';
+import { usePresence, useConversationChannel } from '@/hooks/useChat';
+import { getAblyClient } from '@/lib/ablyClient';
 
 const EMOJI_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
@@ -62,6 +64,8 @@ export default function MessagesPage() {
     const [loading, setLoading] = useState(true);
     const [chatLoading, setChatLoading] = useState(false);
     const [currentUserRole, setCurrentUserRole] = useState<string>('User');
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [currentUserName, setCurrentUserName] = useState<string>('Someone');
     const scrollRef = useRef<HTMLDivElement>(null);
     const isNearBottomRef = useRef(true);
     const [replyingTo, setReplyingTo] = useState<any | null>(null);
@@ -139,6 +143,8 @@ export default function MessagesPage() {
             if (res.success) {
                 setConversations(res.conversations);
                 setCurrentUserRole(res.userRole || 'User');
+                if (res.userId) setCurrentUserId(res.userId);
+                if (res.userName) setCurrentUserName(res.userName);
                 if (tempContact) {
                     const inList = res.conversations.find((c: any) => c.contactId === tempContact.contactId);
                     if (inList) setTempContact(null);
@@ -192,13 +198,15 @@ export default function MessagesPage() {
         };
         load();
         
+        // Slow reconciliation poll — realtime (below) handles instant delivery;
+        // this only heals missed events if the socket ever drops.
         const interval = setInterval(async () => {
             const conversation = conversations.find(c => c.contactId === selectedContactId);
             if (conversation) {
                 const res = await getMessages(conversation.id);
                 if (res.success) setMessages(res.messages);
             }
-        }, 3000);
+        }, 15000);
         return () => clearInterval(interval);
     }, [selectedContactId, conversations, tempContact]);
 
@@ -207,6 +215,62 @@ export default function MessagesPage() {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, selectedContactId, replyingTo]);
+
+    // ---- Realtime (hybrid Ably layer) ----------------------------------------
+    const onlineIds = usePresence(currentUserId);
+
+    const activeConversation = conversations.find(c => c.contactId === selectedContactId);
+    const activeConversationId = activeConversation?.id || null;
+
+    const { typingUsers, sendTyping, publishRead, publishDelivered } = useConversationChannel(
+        activeConversationId,
+        currentUserId,
+        currentUserName,
+        {
+            // A new message arrived in the open thread.
+            onMessage: (d) => {
+                setMessages(prev => {
+                    if (prev.some(m => m.id === d.id)) return prev; // dedupe vs optimistic/poll
+                    return [...prev, {
+                        id: d.id,
+                        text: d.content,
+                        attachmentUrl: d.attachmentUrl,
+                        attachmentType: d.attachmentType,
+                        sender: d.senderId === currentUserId ? 'me' : 'them',
+                        senderId: d.senderId,
+                        time: new Date(d.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        status: 'delivered',
+                        reactions: [],
+                        isDeleted: false,
+                        replyTo: d.replyTo || null,
+                    }];
+                });
+                // Ack delivery, and since the thread is open, mark read immediately.
+                publishDelivered(d.id);
+                publishRead();
+                loadConversations(true);
+            },
+            onReaction: (d) => {
+                setMessages(prev => prev.map(m => m.id === d.messageId ? { ...m, reactions: d.reactions || [] } : m));
+            },
+            onUnsend: (d) => {
+                setMessages(prev => prev.map(m => m.id === d.messageId ? { ...m, isDeleted: true, text: "Message unsent", attachmentUrl: null } : m));
+            },
+            // The other side read the thread → flip our sent messages to 'read'.
+            onRead: () => {
+                setMessages(prev => prev.map(m => m.sender === 'me' ? { ...m, status: 'read' } : m));
+            },
+            // The other side's client received one of our messages → 'delivered'.
+            onDelivered: (messageId) => {
+                setMessages(prev => prev.map(m => (m.id === messageId && m.status !== 'read') ? { ...m, status: 'delivered' } : m));
+            },
+        },
+    );
+
+    // When we open a thread (or its messages load), tell the other side we've read it.
+    useEffect(() => {
+        if (activeConversationId && messages.length > 0) publishRead();
+    }, [activeConversationId, messages.length, publishRead]);
 
 
     const handleSend = async (e?: React.FormEvent, attachmentUrl?: string, attachmentType?: string) => {
@@ -218,8 +282,9 @@ export default function MessagesPage() {
         setMessageInput('');
         setReplyingTo(null);
 
+        const tempId = 'temp-' + Date.now();
         const optimisticMsg = {
-            id: 'temp-' + Date.now(),
+            id: tempId,
             text: currentInput || (attachmentUrl ? "Sent an attachment" : ""),
             attachmentUrl,
             attachmentType,
@@ -230,9 +295,21 @@ export default function MessagesPage() {
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
+        // If this is a brand-new conversation, our existing Ably token predates the
+        // new channel — re-authorize so live delivery/typing work without a reload.
+        const wasNewConversation = !conversations.some(c => c.contactId === selectedContactId);
+
         const res = await sendMessage(selectedContactId, currentInput, attachmentUrl, attachmentType, currentReply?.id);
         if (res.success) {
             isNearBottomRef.current = true; // Force scroll to bottom when sending
+            // Swap the optimistic temp id for the real DB id so delivered/read acks match.
+            const realId = (res.message && typeof res.message === 'object') ? (res.message as any).id : null;
+            if (realId) {
+                setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: realId } : m));
+            }
+            if (wasNewConversation) {
+                try { getAblyClient()?.auth.authorize(); } catch { /* token refreshes on next connect */ }
+            }
             loadConversations(true);
         } else {
             toast.error("Failed to send");
@@ -240,18 +317,12 @@ export default function MessagesPage() {
     };
 
     const handleReaction = async (msgId: string, emoji: string) => {
-        // Optimistic update
-        setMessages(prev => prev.map(m => {
-            if (m.id === msgId) {
-                const current = (m.reactions || []) as any[];
-                const exists = current.find(r => r.userId === 'ME_PLACEHOLDER' || r.userId === selectedContact?.contactId); // Ideally needs real session ID but for optimistic we toggle abstractly
-                // This is hard to do perfectly optimistic without Session ID, relying on fast server refresh for now or simple toggle visual
-                return m;
-            }
-            return m;
-        }));
-        await reactToMessage(msgId, emoji);
-        // Polling will catch it shortly
+        const res = await reactToMessage(msgId, emoji);
+        // Apply the authoritative reaction set; the realtime "reaction" event keeps
+        // the other participant's view in sync.
+        if (res.success && res.reactions) {
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, reactions: res.reactions } : m));
+        }
     };
 
     const handleUnsend = async (msgId: string) => {
@@ -323,7 +394,7 @@ export default function MessagesPage() {
                                     <AvatarImage src={contact.avatar} />
                                     <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{contact.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                {contact.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-bg-sidebar rounded-full" />}
+                                {onlineIds.has(contact.contactId) && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-bg-sidebar rounded-full" />}
                             </div>
                             <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex justify-between items-baseline mb-0.5">
@@ -357,13 +428,22 @@ export default function MessagesPage() {
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
-                            <Avatar className="w-10 h-10 border border-border-default">
-                                <AvatarImage src={selectedContact.avatar} />
-                                <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                                <Avatar className="w-10 h-10 border border-border-default">
+                                    <AvatarImage src={selectedContact.avatar} />
+                                    <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{selectedContact.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {onlineIds.has(selectedContact.contactId) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-bg-page rounded-full" />}
+                            </div>
                             <div>
                                 <h3 className="font-semibold text-base text-text-heading">{selectedContact.name}</h3>
-                                <p className="text-xs text-text-secondary">{selectedContact.role || 'Active now'}</p>
+                                {typingUsers.length > 0 ? (
+                                    <p className="text-xs text-text-brand font-medium animate-pulse">typing…</p>
+                                ) : onlineIds.has(selectedContact.contactId) ? (
+                                    <p className="text-xs text-green-600 font-medium">Online</p>
+                                ) : (
+                                    <p className="text-xs text-text-secondary">{selectedContact.role || 'Offline'}</p>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
@@ -453,12 +533,40 @@ export default function MessagesPage() {
                                         </ContextMenuContent>
                                     </ContextMenu>
 
+                                    {isMe && isLast && !msg.isDeleted && <MessageStatus status={msg.status} />}
+
                                     {/* Action Helper (Right for Theirs, Left for Mine) */}
                                     {!isMe && <MessageActions msg={msg} onReply={() => setReplyingTo(msg)} onReact={(emoji: string) => handleReaction(msg.id, emoji)} onCopy={handleCopy} />}
 
                                 </motion.div>
                             );
                         })}
+
+                        {/* Typing indicator bubble */}
+                        <AnimatePresence>
+                            {typingUsers.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 6 }}
+                                    className="flex items-end mb-1 justify-start"
+                                >
+                                    <div className="w-8 mr-2 flex-shrink-0">
+                                        <Avatar className="w-7 h-7">
+                                            <AvatarImage src={selectedContact.avatar} />
+                                            <AvatarFallback>{selectedContact.name[0]}</AvatarFallback>
+                                        </Avatar>
+                                    </div>
+                                    <div className="bg-bg-card border border-border-default rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                                        <div className="flex items-center gap-1">
+                                            <span className="w-2 h-2 bg-text-placeholder rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                            <span className="w-2 h-2 bg-text-placeholder rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                            <span className="w-2 h-2 bg-text-placeholder rounded-full animate-bounce" />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Input Area */}
@@ -494,7 +602,7 @@ export default function MessagesPage() {
 
                                 <textarea
                                     value={messageInput}
-                                    onChange={e => setMessageInput(e.target.value)}
+                                    onChange={e => { setMessageInput(e.target.value); sendTyping(); }}
                                     onKeyDown={handleKeyPress}
                                     placeholder="Type your message..."
                                     className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-text-body resize-none max-h-32 min-h-[24px] py-1 placeholder:text-text-placeholder custom-scrollbar leading-relaxed"
@@ -616,6 +724,17 @@ function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean
         )
     }
     return renderText(msg.text || '');
+}
+
+// WhatsApp-style delivery ticks for outgoing messages.
+function MessageStatus({ status }: { status?: string }) {
+    if (status === 'read') {
+        return <CheckCheck className="w-3.5 h-3.5 ml-1 self-end mb-1 text-sc-purple-600 shrink-0" aria-label="Read" />;
+    }
+    if (status === 'delivered') {
+        return <CheckCheck className="w-3.5 h-3.5 ml-1 self-end mb-1 text-text-placeholder shrink-0" aria-label="Delivered" />;
+    }
+    return <Check className="w-3.5 h-3.5 ml-1 self-end mb-1 text-text-placeholder shrink-0" aria-label="Sent" />;
 }
 
 function MessageActions({ msg, onReply, onReact, onUnsend, onCopy }: any) {
