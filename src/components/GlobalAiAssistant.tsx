@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, ChevronDown, Sparkles, User, Globe, Code, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,18 +36,25 @@ export function GlobalAiAssistant() {
     const [inputValue, setInputValue] = useState("");
 
     // ── Draggable FAB (CR1) ──────────────────────────────────────────────────
-    // Drag the orb anywhere, keep it in-viewport, snap to the nearest side edge,
-    // and persist the position. A movement threshold keeps a drag from firing the
-    // open/close tap.
+    // Drag the orb ANYWHERE and drop it in place (free placement, just clamped to
+    // the viewport — no forced edge snap). The drag is driven by window-level
+    // pointer listeners so it can never lose the pointer mid-drag if the button's
+    // DOM node re-renders. A movement threshold keeps a drag from firing the tap.
     const FAB_SIZE = 56;     // h-14 / w-14
     const EDGE_MARGIN = 16;
     const HEADER_H = 56;     // fixed app header height — never sit under it
     const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+    const posRef = useRef<{ x: number; y: number } | null>(null);
     const draggingRef = useRef(false);
     const movedRef = useRef(false);
     const startRef = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
 
-    const clampPos = (x: number, y: number) => {
+    const applyPos = (next: { x: number; y: number }) => {
+        posRef.current = next;
+        setPos(next);
+    };
+
+    const clampPos = useCallback((x: number, y: number) => {
         if (typeof window === "undefined") return { x, y };
         const maxX = window.innerWidth - FAB_SIZE - EDGE_MARGIN;
         const maxY = window.innerHeight - FAB_SIZE - EDGE_MARGIN;
@@ -55,7 +62,32 @@ export function GlobalAiAssistant() {
             x: Math.min(Math.max(EDGE_MARGIN, x), Math.max(EDGE_MARGIN, maxX)),
             y: Math.min(Math.max(HEADER_H + EDGE_MARGIN, y), Math.max(HEADER_H + EDGE_MARGIN, maxY)),
         };
-    };
+    }, []);
+
+    const handleMove = useCallback((e: PointerEvent) => {
+        if (!draggingRef.current || !startRef.current) return;
+        const dx = e.clientX - startRef.current.px;
+        const dy = e.clientY - startRef.current.py;
+        if (Math.abs(dx) + Math.abs(dy) > 6) movedRef.current = true;
+        applyPos(clampPos(startRef.current.ox + dx, startRef.current.oy + dy));
+    }, [clampPos]);
+
+    const handleUp = useCallback(() => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+        window.removeEventListener("pointercancel", handleUp);
+        if (movedRef.current) {
+            // Free drop — persist exactly where the user left it (clamped to view).
+            if (posRef.current) {
+                try { localStorage.setItem("sc-qodee-pos", JSON.stringify(posRef.current)); } catch { /* ignore */ }
+            }
+        } else {
+            // No real movement → treat as a tap and toggle the assistant.
+            setIsOpen((o) => !o);
+        }
+    }, [handleMove]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -65,41 +97,27 @@ export function GlobalAiAssistant() {
             if (saved) next = JSON.parse(saved);
         } catch { /* ignore */ }
         if (!next) next = { x: window.innerWidth - FAB_SIZE - 24, y: window.innerHeight - FAB_SIZE - 24 };
-        setPos(clampPos(next.x, next.y));
-        const onResize = () => setPos((p) => (p ? clampPos(p.x, p.y) : p));
+        applyPos(clampPos(next.x, next.y));
+        const onResize = () => { if (posRef.current) applyPos(clampPos(posRef.current.x, posRef.current.y)); };
         window.addEventListener("resize", onResize);
-        return () => window.removeEventListener("resize", onResize);
-    }, []);
+        return () => {
+            window.removeEventListener("resize", onResize);
+            // Safety: never leave drag listeners attached if we unmount mid-drag.
+            window.removeEventListener("pointermove", handleMove);
+            window.removeEventListener("pointerup", handleUp);
+            window.removeEventListener("pointercancel", handleUp);
+        };
+    }, [clampPos, handleMove, handleUp]);
 
     const onFabPointerDown = (e: React.PointerEvent) => {
-        if (!pos) return;
+        if (!posRef.current) return;
+        e.preventDefault();
         draggingRef.current = true;
         movedRef.current = false;
-        startRef.current = { px: e.clientX, py: e.clientY, ox: pos.x, oy: pos.y };
-        try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* ignore */ }
-    };
-    const onFabPointerMove = (e: React.PointerEvent) => {
-        if (!draggingRef.current || !startRef.current) return;
-        const dx = e.clientX - startRef.current.px;
-        const dy = e.clientY - startRef.current.py;
-        if (Math.abs(dx) + Math.abs(dy) > 6) movedRef.current = true;
-        setPos(clampPos(startRef.current.ox + dx, startRef.current.oy + dy));
-    };
-    const onFabPointerUp = (e: React.PointerEvent) => {
-        if (!draggingRef.current) return;
-        draggingRef.current = false;
-        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-        if (movedRef.current && pos) {
-            const snappedX = pos.x + FAB_SIZE / 2 < window.innerWidth / 2
-                ? EDGE_MARGIN
-                : window.innerWidth - FAB_SIZE - EDGE_MARGIN;
-            const snapped = clampPos(snappedX, pos.y);
-            setPos(snapped);
-            try { localStorage.setItem("sc-qodee-pos", JSON.stringify(snapped)); } catch { /* ignore */ }
-        } else {
-            // No real movement → treat as a tap and toggle the assistant.
-            setIsOpen((o) => !o);
-        }
+        startRef.current = { px: e.clientX, py: e.clientY, ox: posRef.current.x, oy: posRef.current.y };
+        window.addEventListener("pointermove", handleMove);
+        window.addEventListener("pointerup", handleUp);
+        window.addEventListener("pointercancel", handleUp);
     };
 
     // Open upward by default; align the panel to whichever side the orb sits on.
@@ -350,9 +368,6 @@ export function GlobalAiAssistant() {
             {/* FAB TRIGGER */}
             <motion.button
                 onPointerDown={onFabPointerDown}
-                onPointerMove={onFabPointerMove}
-                onPointerUp={onFabPointerUp}
-                onPointerCancel={onFabPointerUp}
                 style={{ touchAction: "none" }}
                 aria-label={isOpen ? "Close assistant" : "Open assistant"}
                 className={cn(
