@@ -119,7 +119,15 @@ Return this exact structure:
       'QA & Testing'
     ];
     
-    const codingKeywords = ['engineer', 'developer', 'programmer', 'coder', 'architect', 'devops', 'sysadmin', 'scientist', 'ml', 'ai'];
+    // Bare role names like "frontend" or "react" must count as coding roles — the
+    // audit's "frontend" interview fell through this gate and got served an
+    // administrative SOP scenario (bug I2).
+    const codingKeywords = [
+        'engineer', 'developer', 'programmer', 'coder', 'architect', 'devops', 'sysadmin', 'scientist', 'ml', 'ai',
+        'frontend', 'front-end', 'front end', 'backend', 'back-end', 'back end', 'fullstack', 'full-stack', 'full stack',
+        'web dev', 'mobile dev', 'android', 'ios', 'react', 'angular', 'vue', 'node', 'python', 'java', 'golang',
+        'swe', 'sde', 'software', 'programming', 'data eng',
+    ];
     const hasCodingKeyword = codingKeywords.some(keyword => titleLower.includes(keyword));
 
     if (!allowedSandboxCategories.includes(targetCategory) || !hasCodingKeyword) {

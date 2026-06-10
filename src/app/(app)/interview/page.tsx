@@ -97,6 +97,9 @@ export default function InterviewPage() {
     const [sandboxOutput, setSandboxOutput] = useState<string[]>([]);
     const [sessionCheated, setSessionCheated] = useState(false);
     const [lastCodeRun, setLastCodeRun] = useState<{ code: string; output: string[]; timestamp: number } | null>(null);
+    // Scenario panel submission — handed to ChatInterface so the interviewer
+    // automatically reacts to it (audit I5: flow stalled until a manual nudge).
+    const [lastScenarioRun, setLastScenarioRun] = useState<{ title: string; text: string; timestamp: number } | null>(null);
 
     const [telemetry, setTelemetry] = useState<TelemetryData>({
         confidence: 50,
@@ -376,6 +379,7 @@ export default function InterviewPage() {
                             sandboxCode={sandboxCode}
                             sandboxOutput={sandboxOutput}
                             lastCodeRun={lastCodeRun}
+                            lastScenarioRun={lastScenarioRun}
                         />
                     </div>
 
@@ -404,6 +408,8 @@ export default function InterviewPage() {
                                     category={classification?.category || 'General Business & Administration'}
                                     competencies={classification?.coreCompetencies || []}
                                     tools={classification?.toolsToAskAbout || []}
+                                    role={config?.role}
+                                    onSubmitResponse={(title, text) => setLastScenarioRun({ title, text, timestamp: Date.now() })}
                                  />
                              )}
                         </div>

@@ -95,9 +95,9 @@ export function ConfigurationModal({ isOpen, onStart, onClose }: ConfigProps) {
                                             <ShieldCheck className="w-4 h-4 text-text-brand" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-sm font-bold text-text-heading">Mandatory Voice Intro</h4>
+                                            <h4 className="text-sm font-bold text-text-heading">Voice Intro (Optional)</h4>
                                             <p className="text-xs md:text-[13px] text-text-secondary leading-relaxed">
-                                                At session startup, you must complete a voice introduction between <strong className="font-semibold text-text-heading">45 seconds</strong> and <strong className="font-semibold text-text-heading">90 seconds</strong> to calibrate acoustic assessment models.
+                                                If you enable voice mode, your session begins with a spoken introduction between <strong className="font-semibold text-text-heading">45 seconds</strong> and <strong className="font-semibold text-text-heading">90 seconds</strong> to calibrate acoustic assessment models. Text-only interviews skip this step.
                                             </p>
                                         </div>
                                     </div>

@@ -9,9 +9,29 @@ interface ScenarioResponsePanelProps {
   category: string;
   competencies: string[];
   tools: string[];
+  /** The interview's target role/job title — drives role-matched scenario selection. */
+  role?: string;
+  /** Called on submit so the interviewer can react to the response (no manual nudge). */
+  onSubmitResponse?: (scenarioTitle: string, responseText: string) => void;
 }
 
 const DEFAULT_SCENARIOS: Record<string, { title: string; prompt: string }> = {
+  'Software Engineering & Development': {
+    title: 'Production Incident Triage & Architecture Review',
+    prompt: 'A critical feature is failing intermittently in production after the last release. Walk through how you would triage the incident, identify the root cause, decide between hotfix vs rollback, and what you would change in the team\'s review/release process to prevent a recurrence.'
+  },
+  'Data Science, ML & AI': {
+    title: 'Model Performance Regression Investigation',
+    prompt: 'A deployed prediction model\'s accuracy dropped 12% over the last month. Outline your investigation plan: data drift checks, retraining strategy, evaluation methodology, and how you would communicate impact and timelines to stakeholders.'
+  },
+  'DevOps, Cloud & Infrastructure': {
+    title: 'Scaling & Reliability Under Traffic Spikes',
+    prompt: 'Your platform expects a 10x traffic spike next week. Design your preparation plan: load testing, autoscaling strategy, caching layers, observability/alerting, and an incident-response runbook for the launch window.'
+  },
+  'QA & Testing': {
+    title: 'Test Strategy for a High-Risk Release',
+    prompt: 'A major payment-flow refactor ships in two weeks with no existing automated coverage. Design the test strategy: risk-based prioritization, automation vs manual split, regression safety net, and the release/no-release criteria you would enforce.'
+  },
   'Product Management': {
     title: 'Feature Prioritization & Launch Strategy',
     prompt: 'Your engineering team is split between launching a high-demand analytics feature or addressing a large backlog of technical debt. Outline how you would prioritize these, align stakeholders, and measure success.'
@@ -78,11 +98,47 @@ const DEFAULT_SCENARIOS: Record<string, { title: string; prompt: string }> = {
   }
 };
 
-export function ScenarioResponsePanel({ category, competencies, tools }: ScenarioResponsePanelProps) {
+// Role-keyword specializations within engineering, so a "frontend" interview gets a
+// frontend scenario rather than a generic engineering one (audit bug I2).
+const TECH_ROLE_SCENARIOS: Array<{ match: RegExp; title: string; prompt: string }> = [
+  {
+    match: /front[\s-]?end|react|angular|vue|ui engineer|web develop/i,
+    title: 'Frontend Performance & UX Recovery Plan',
+    prompt: 'A core dashboard page has a 6-second load time and a 35% bounce rate. Outline your frontend recovery plan: how you would profile and fix the performance issues (bundle size, rendering strategy, data fetching), improve perceived performance, and which metrics (Core Web Vitals) you would track to prove the fix.'
+  },
+  {
+    match: /back[\s-]?end|api|node|django|spring|server/i,
+    title: 'API Scaling & Data-Integrity Strategy',
+    prompt: 'A public API endpoint is timing out under load and occasionally writing duplicate records. Describe how you would diagnose the bottleneck, redesign for idempotency and scale (caching, queueing, DB indexing), and roll the fix out safely.'
+  },
+  {
+    match: /mobile|android|ios|react native|flutter/i,
+    title: 'Mobile App Stability & Release Strategy',
+    prompt: 'Your app\'s crash-free rate dropped to 97% after the last release and reviews are slipping. Outline your stabilization plan: crash triage, release health monitoring, staged rollouts, and how you would restore user trust.'
+  },
+];
+
+function pickScenario(category: string, role?: string) {
+  // 1. Engineering roles: try a sub-role-specialized scenario first.
+  if (role) {
+    const specialized = TECH_ROLE_SCENARIOS.find(s => s.match.test(role));
+    if (specialized) return specialized;
+  }
+  // 2. Category bank.
+  if (DEFAULT_SCENARIOS[category]) return DEFAULT_SCENARIOS[category];
+  // 3. Last resort: a role-anchored generic scenario — NEVER the billing/SOP
+  //    admin scenario for a role we simply failed to map (audit bug I2).
+  return {
+    title: `${role || 'Professional'} Challenge: Process Improvement Under Pressure`,
+    prompt: `A key workflow in your area as a ${role || 'professional'} is underperforming and leadership wants a turnaround plan within two weeks. Describe how you would diagnose the problem, the concrete changes you would make, how you would get stakeholders aligned, and the metrics you would use to prove improvement.`
+  };
+}
+
+export function ScenarioResponsePanel({ category, competencies, tools, role, onSubmitResponse }: ScenarioResponsePanelProps) {
   const [response, setResponse] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const scenario = DEFAULT_SCENARIOS[category] || DEFAULT_SCENARIOS['General Business & Administration'];
+  const scenario = pickScenario(category, role);
 
   const handleSubmit = () => {
     if (!response.trim() || response.length < 50) {
@@ -91,6 +147,9 @@ export function ScenarioResponsePanel({ category, competencies, tools }: Scenari
     }
     setIsSubmitted(true);
     toast.success('Scenario response submitted successfully!');
+    // Hand the response to the interview chat so the interviewer reacts to it
+    // automatically — previously it was stored locally and the flow stalled (I5).
+    onSubmitResponse?.(scenario.title, response);
   };
 
   return (
@@ -149,10 +208,13 @@ export function ScenarioResponsePanel({ category, competencies, tools }: Scenari
               <span className="text-[10px] text-text-secondary">
                 {response.length} characters
               </span>
+              {/* bg-btn-primary-bg was an UNREGISTERED token (no @theme entry) so the
+                  button rendered with no background at all — invisible (audit I4).
+                  Use the registered brand utilities per Branding.md §6.1. */}
               <Button
                 onClick={handleSubmit}
                 disabled={!response.trim() || response.length < 50}
-                className="bg-btn-primary-bg hover:bg-btn-primary-bg-hover text-white px-5 py-2 h-9 text-xs font-bold rounded-lg border-none shadow-md shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-sc-purple-600 hover:bg-sc-purple-700 active:bg-sc-purple-800 text-white px-5 py-2 h-9 text-xs font-bold rounded-lg border-none shadow-md shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit Response
               </Button>

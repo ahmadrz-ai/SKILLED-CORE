@@ -28,6 +28,7 @@ interface ChatInterfaceProps {
     sandboxCode?: string;
     sandboxOutput?: string[];
     lastCodeRun?: { code: string; output: string[]; timestamp: number } | null;
+    lastScenarioRun?: { title: string; text: string; timestamp: number } | null;
 }
 
 export function ChatInterface({
@@ -40,7 +41,8 @@ export function ChatInterface({
     onTelemetryUpdate,
     sandboxCode = "",
     sandboxOutput = [],
-    lastCodeRun = null
+    lastCodeRun = null,
+    lastScenarioRun = null
 }: ChatInterfaceProps) {
     const { data: session } = useSession();
     const [dbUser, setDbUser] = useState<any>(null);
@@ -98,6 +100,57 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
             sendTelemetryPayload(lastCodeRun.code, lastCodeRun.output);
         }
     }, [lastCodeRun]);
+
+    // Scenario-panel submissions auto-advance the interview: the response is sent
+    // into the conversation as a hidden system payload so the interviewer reacts
+    // immediately — previously the flow stalled until the user typed a nudge (I5).
+    const sendScenarioPayload = async (title: string, text: string) => {
+        if (!sessionActive) return;
+
+        const scenarioMsg: Message = {
+            id: `scenario-${Date.now()}`,
+            role: 'system',
+            content: `[SCENARIO_RESPONSE] The candidate just submitted their written response to the scenario challenge "${title}":\n\n"""\n${text}\n"""\n\nAcknowledge it briefly, ask ONE follow-up question probing the weakest part of their approach, then continue the interview.`,
+            isSubscribedTelemetry: true
+        };
+
+        const updatedMessages = [...messages, scenarioMsg];
+        setMessages(updatedMessages);
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: updatedMessages,
+                    user_role: config.role,
+                    is_grill_mode: config.useResume,
+                    intensity: config.difficulty || 3,
+                    sandbox_code: sandboxCode,
+                    sandbox_output: sandboxOutput,
+                    interviewId: config.interviewId
+                })
+            });
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            if (!response.body) throw new Error("No response body");
+
+            await readStream(response.body);
+        } catch (error) {
+            console.error("Scenario submission error:", error);
+            setMessages(prev => prev.filter(msg => msg.id !== scenarioMsg.id));
+            toast.error("The interviewer didn't receive your scenario response. It is saved — please mention it in chat.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (lastScenarioRun && sessionActive) {
+            sendScenarioPayload(lastScenarioRun.title, lastScenarioRun.text);
+        }
+    }, [lastScenarioRun]);
     const [timer, setTimer] = useState(0);
     const [isListening, setIsListening] = useState(false);
     const initializedRef = useRef(false);
@@ -251,11 +304,22 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
         }
     }, [messages, isLoading]);
 
-    // Timer
+    // Timer — anchored to a wall-clock start timestamp so it begins ticking the
+    // moment the session starts (not after the first message) and survives
+    // background-tab interval throttling (audit I7: timer stuck at 0:00).
+    const sessionStartRef = useRef<number | null>(null);
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (sessionActive) {
-            interval = setInterval(() => setTimer(t => t + 1), 1000);
+            if (!sessionStartRef.current) sessionStartRef.current = Date.now();
+            setTimer(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+            interval = setInterval(() => {
+                if (sessionStartRef.current) {
+                    setTimer(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+                }
+            }, 1000);
+        } else {
+            sessionStartRef.current = null;
         }
         return () => clearInterval(interval);
     }, [sessionActive]);
@@ -309,6 +373,36 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
         window.speechSynthesis.speak(utterance);
     };
 
+    // Display-only guard: while a telemetry block (%%{...}%%) is still streaming in,
+    // its half-arrived prefix must not leak into the visible bubble — and a message
+    // must never LOOK finished while raw markers are pending (audit I6: question
+    // appeared cut off mid-sentence, completing only later).
+    const stripPartialTelemetry = (s: string) => {
+        const lastMarker = s.lastIndexOf('%%');
+        if (lastMarker !== -1 && !s.slice(lastMarker + 2).includes('%%')) {
+            // An opened-but-unclosed %% block: hide it from display until complete.
+            s = s.slice(0, lastMarker);
+        }
+        return s.replace(/%+\s*$/, '').trimEnd();
+    };
+
+    const [streamingMsgIds, setStreamingMsgIds] = useState<Set<string>>(new Set());
+
+    // Strip machine control tokens from any text shown to the candidate.
+    const scrubTokens = (s: string) =>
+        s.replace('[INTERVIEW_TERMINATED_VIOLATION]', '').replace('[INTERVIEW_COMPLETE]', '').trim();
+
+    // B1: when the interviewer wraps up it emits [INTERVIEW_COMPLETE]; the system
+    // finalizes the session automatically — no manual "End Session" click needed.
+    const [autoComplete, setAutoComplete] = useState(false);
+    useEffect(() => {
+        if (!autoComplete || isLoading || !sessionActive) return;
+        toast.success("Interview complete — generating your assessment…");
+        const t = setTimeout(() => onEndSession(messages, timer, cheated), 2500);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autoComplete, isLoading]);
+
     // SHARED STREAM READER LOGIC
     const readStream = async (body: ReadableStream<Uint8Array>) => {
         const reader = body.getReader();
@@ -324,6 +418,9 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
         // Create initial placeholder
         // Defaults to Suggester. If it stays empty, it's hidden.
         setMessages(prev => [...prev, { id: startMsgId, role: 'assistant', content: '', persona: 'suggester' }]);
+        // Mark both potential bubbles as live-streaming so the UI shows a typing
+        // cursor on them until the stream actually completes (I6).
+        setStreamingMsgIds(new Set([startMsgId, startMsgId + "_int"]));
 
         try {
             let chunkCount = 0;
@@ -338,6 +435,10 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                 // Check for violation termination token
                 if (fullStreamContent.includes('[INTERVIEW_TERMINATED_VIOLATION]')) {
                     setIsTerminated(true);
+                }
+                // Wrap-up token: the interviewer concluded — auto-finalize (B1)
+                if (fullStreamContent.includes('[INTERVIEW_COMPLETE]')) {
+                    setAutoComplete(true);
                 }
 
                 // BULLETPROOF TELEMETRY EXTRACTOR (%%{...}%% format)
@@ -379,16 +480,19 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
 
                 // ATOMIC UPDATE
                 setMessages(prev => {
-                    const hasSplit = fullStreamContent.includes("|||");
-                    let suggesterContent = fullStreamContent;
+                    // Display from a partial-telemetry-stripped view of the buffer
+                    // (the raw buffer keeps accumulating; this only affects render).
+                    const displayContent = stripPartialTelemetry(fullStreamContent);
+                    const hasSplit = displayContent.includes("|||");
+                    let suggesterContent = displayContent;
                     let interviewerContent = "";
 
                     if (hasSplit) {
-                        const parts = fullStreamContent.split("|||");
-                        suggesterContent = parts[0].replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
-                        interviewerContent = parts.slice(1).join("|||").replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+                        const parts = displayContent.split("|||");
+                        suggesterContent = scrubTokens(parts[0]);
+                        interviewerContent = scrubTokens(parts.slice(1).join("|||"));
                     } else {
-                        suggesterContent = suggesterContent.replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+                        suggesterContent = scrubTokens(suggesterContent);
                     }
 
                     // 1. Update Suggester Message (Always exists as startMsgId)
@@ -432,10 +536,25 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                 });
             }
 
-            // End of stream - speak the last part (Interviewer)
+            // End of stream — render the FINAL complete content (no partial-strip)
+            // so the last characters are never withheld from the bubble (I6).
+            setMessages(prev => {
+                const hasSplit = fullStreamContent.includes("|||");
+                const parts = fullStreamContent.split("|||");
+                const finalSuggester = scrubTokens(hasSplit ? parts[0] : fullStreamContent);
+                const finalInterviewer = hasSplit ? scrubTokens(parts.slice(1).join("|||")) : "";
+                return prev.map(msg => {
+                    if (msg.id === startMsgId) return { ...msg, content: finalSuggester };
+                    if (msg.id === startMsgId + "_int") return { ...msg, content: finalInterviewer };
+                    return msg;
+                });
+            });
+            setStreamingMsgIds(new Set());
+
+            // Speak the last part (Interviewer)
             const parts = fullStreamContent.split("|||");
             const lastPart = parts.length > 1 ? parts[1] : parts[0];
-            const cleanLastPart = lastPart.replace('[INTERVIEW_TERMINATED_VIOLATION]', '').trim();
+            const cleanLastPart = scrubTokens(lastPart);
             if (cleanLastPart.trim()) speak(cleanLastPart);
 
             // If we successfully finished but read absolutely nothing (or just the split separator without content)
@@ -445,6 +564,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
 
         } catch (err) {
             console.error("Stream reading error:", err);
+            setStreamingMsgIds(new Set());
             // Clean up the placeholder message if it was empty/incomplete
             setMessages(prev => prev.filter(msg => msg.id !== startMsgId && msg.id !== (startMsgId + "_int")));
             toast.error("Stream interrupted or failed to connect.");
@@ -631,6 +751,7 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                     </span>
                                     <div className="p-4 bg-cyan-50/70 dark:bg-cyan-950/20 border border-cyan-200/50 dark:border-cyan-500/20 text-zinc-800 dark:text-zinc-100 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
                                         {renderStyledText(msg.content)}
+                                        {streamingMsgIds.has(msg.id) && <span className="inline-block w-[2px] h-4 ml-0.5 bg-cyan-500 animate-pulse align-text-bottom" aria-hidden />}
                                     </div>
                                 </div>
                             </motion.div>
@@ -654,23 +775,48 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                 </span>
                                 <div className="p-4 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-500/20 text-zinc-800 dark:text-zinc-100 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
                                     {renderStyledText(msg.content)}
+                                    {streamingMsgIds.has(msg.id) && <span className="inline-block w-[2px] h-4 ml-0.5 bg-amber-500 animate-pulse align-text-bottom" aria-hidden />}
                                 </div>
                             </div>
                         </motion.div>
                     );
                 })}
 
-                {/* Loading Indicator */}
+                {/* Loading Indicator — at session start (no messages yet) this is the
+                    INTERVIEWER preparing the opening question, not the Mentor, so the
+                    first thing the candidate sees is a labeled typing bubble instead
+                    of a blank space (audit I7). */}
                 {isLoading && (
-                    <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-cyan-500/30 text-white flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                            <Sparkles className="w-5 h-5 animate-pulse" style={{ color: '#ffffff' }} />
-                        </div>
-                        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl rounded-tl-none p-4 flex items-center gap-1.5 shadow-sm">
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 bg-zinc-400 dark:bg-zinc-900 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
+                    <div className="flex gap-3.5 items-start">
+                        {messages.filter(m => m.content.trim() && !m.isSubscribedTelemetry && m.role !== 'system').length === 0 ? (
+                            <>
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.35)] bg-gradient-to-br from-amber-500 to-rose-600">
+                                    <Bot className="w-5 h-5" style={{ color: '#ffffff' }} />
+                                </div>
+                                <div className="flex flex-col gap-1 items-start">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-450 ml-1.5">
+                                        Interviewer
+                                    </span>
+                                    <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-500/20 rounded-2xl rounded-tl-none p-4 flex items-center gap-2 shadow-sm">
+                                        <span className="text-xs text-zinc-500">Preparing your interview</span>
+                                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-cyan-500/30 text-white flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                                    <Sparkles className="w-5 h-5 animate-pulse" style={{ color: '#ffffff' }} />
+                                </div>
+                                <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-2xl rounded-tl-none p-4 flex items-center gap-1.5 shadow-sm">
+                                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
