@@ -46,7 +46,7 @@ Maps to `--sc-purple-*` in `globals.css`. **`--sc-purple-600` (#5B35D5) is THE b
 | `--sc-purple-800` | `#3B1FA8` | Button **active/pressed** |
 | `--sc-purple-700` | `#4A28C9` | Button **hover** |
 | `--sc-purple-600` | `#5B35D5` | **Primary** — buttons, links, active states, focus ring |
-| `--sc-purple-500` | `#7252E0` | Gradjuated accents, charts |
+| `--sc-purple-500` | `#7252E0` | Graduated accents, charts |
 | `--sc-purple-400` | `#9278EA` | Subtle accents, icons on tint |
 | `--sc-purple-300` | `#B4A3F3` | Borders on brand surfaces |
 | `--sc-purple-200` | `#D4CCF8` | Hover tint, selected ring |
@@ -89,6 +89,22 @@ Calm, desaturated. Each has a solid + a light tint for backgrounds.
 > and must be replaced by the purple/status tokens above. No raw blue in product UI (avoids
 > the dark-text-on-blue readability bug and keeps brand focus).
 
+### 2.3.1 Status utility ramps (`--sc-red/green/amber-*`)
+The status roles above are implemented as full ramps in `globals.css` so Tailwind
+utilities (`text-sc-red-600`, `bg-sc-green-50`, …) generate. Hexes are canon:
+
+| Ramp | 700 | 600 | 500 | 100 | 50 |
+|------|-----|-----|-----|-----|----|
+| `--sc-red-*` (danger) | `#B91C1C` | `#DC2626` | `#EF4444` | `#FEE2E2` | `#FEF2F2` |
+| `--sc-green-*` (success) | `#15803D` | `#16A34A` | — | `#DCFCE7` | `#F0FDF4` |
+| `--sc-amber-*` (warning) | `#B45309` | `#D97706` | — | `#FEF3C7` | `#FFFBEB` |
+
+- **`--badge-danger` = `#E5484D`** is its own token — ALL unread-count badges use
+  `bg-badge-danger` (never `sc-red-600`); the two reds are intentionally different.
+- Shorthand text/border tokens exist: `--text-error/-success/-warning`, `--border-error`.
+- **Tailwind v4 rule:** a `--color-X` line must exist in the `@theme` block or the
+  utility silently doesn't generate. When adding a token, register it in `@theme` too.
+
 ### 2.4 Semantic tokens (use these, not raw hex)
 Components reference semantic CSS variables, never raw `#hex`:
 `--bg-page`, `--bg-card`, `--bg-sidebar`, `--bg-topbar`, `--bg-modal`, `--bg-overlay`,
@@ -102,6 +118,25 @@ Components reference semantic CSS variables, never raw `#hex`:
 - Body text min 4.5:1; large/heading min 3:1; disabled may relax but must remain legible.
 - Buttons: every variant must pass contrast in default + hover + active + disabled.
 - Placeholder text uses `--text-placeholder` (never lighter than `--sc-gray-400`).
+
+### 2.6 Light-shim traps (`globals.css` — read before styling)
+The light theme is enforced by a CSS shim that rewrites legacy dark classes. Two
+rules in it WILL bite you if you don't know them:
+
+1. **`.force-white-text` is absolute.** It applies `color:#FFFFFF !important` to the
+   element AND all children. Only use it on a surface whose background is guaranteed
+   to stay colored (e.g. the purple chat bubble). **Never leave it on an element whose
+   background can become transparent/white in another state** — that's the
+   white-on-white "unsent message" class of bug. When a state (deleted, disabled,
+   ghost) swaps the background to light, the state's class set must REPLACE the
+   colored-surface classes entirely, not layer on top of them.
+2. **Buttons with `bg-*` + any `text-white` substring** (including `hover:text-white`)
+   get forced white text by the shim. A button that visually has a light background
+   must not carry any `text-white` variant anywhere in its class list.
+
+**Conditional-styling rule:** when using `cn()` for stateful surfaces, branch the
+whole class set per state (`deleted ? ghostClasses : normalClasses`) instead of
+appending overrides — `!important` shim rules don't respect class order.
 
 ---
 
@@ -218,6 +253,38 @@ One primary color across the app. Variants:
 ### 6.14 Full pages
 - Consistent shell: sidebar + topbar + content. Content max-width centered, 24–32px gutters,
   section rhythm per §6.4. Loading = skeletons (shimmer), not spinners-on-blank where possible.
+
+### 6.15 Chat & messaging (`/messages`)
+- **Own bubble:** bg `--sc-purple-600`, text `#FFFFFF` (`force-white-text`), 2xl radii with a
+  small corner on the trailing edge of a group. **Their bubble:** bg `--bg-card`, 1px
+  `--border-default`, text `--text-body`. Max width 75% / 500px.
+- **Deleted ("unsent") message:** a neutral ghost for BOTH sides — transparent bg, 1px
+  `--border-default`, `rounded-2xl`, italic `--text-placeholder` text "Message unsent".
+  It must NOT inherit the sender's bubble colors or `force-white-text` (§2.6.1).
+- **Reply context strip:** inside the bubble, 2px left border, 90% opacity; on purple use
+  white-tinted border + `--sc-purple-700/50` fill, on light use `--border-brand` +
+  `--bg-secondary-panel`.
+- **Reactions:** pill anchored to the bubble's bottom corner — bg `--bg-card`, 1px
+  `--border-default`, full radius, emoji at 10px.
+- **Read receipts (WhatsApp-style ticks), outgoing only:** sent = single check
+  `--text-placeholder`; delivered = double check `--text-placeholder`; read = double check
+  `--sc-purple-600`. Never red/blue ticks.
+- **Presence dot:** `bg-green-500` (success family), 2px ring in the surface's bg color
+  (`--bg-sidebar` in the list, `--bg-page` in the header). Online text label uses
+  green-600; "typing…" label uses `--text-brand` with a subtle pulse.
+- **Typing indicator bubble:** their-side ghost bubble with three `--text-placeholder`
+  bouncing dots; auto-expires (never sticks after the peer stops).
+- **Media messages:** thumbnail max 240px, radius 8px, `cursor-zoom-in`; click opens the
+  **in-app lightbox** (dark overlay, download + close controls) — never navigate the tab
+  to the raw CDN URL. Non-media files render as an underlined paperclip link.
+- **Composer:** pill input (full radius) on `--bg-input` with `--border-input`; send button
+  40px circle `--sc-purple-600` (disabled: `--bg-input-disabled` + `--text-placeholder`).
+
+### 6.16 Floating assistant orb (Qodee)
+- 56px circle, `bg-zinc-900` (allowed dark exception), purple glow shadow, draggable
+  anywhere with free drop; position persists; clamped to viewport and below the 56px
+  topbar. Tap = toggle panel; drag threshold 6px so taps never misfire as drags.
+- Panel opens toward the side/vertical with available room; max height caps to viewport.
 
 ---
 
