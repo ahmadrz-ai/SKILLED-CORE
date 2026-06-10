@@ -31,6 +31,10 @@ export default function ReportsDashboard({ incidentReports, systemReports }: Rep
     return r.status === supportFilter;
   });
 
+  // SystemReport has no reply thread — its "needs attention" signal is OPEN
+  // (newly submitted, not yet reviewed). Drives the tab badge + per-card marker.
+  const openSupportCount = reportsList.filter(r => r.status === 'OPEN').length;
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN':
@@ -91,13 +95,18 @@ export default function ReportsDashboard({ incidentReports, systemReports }: Rep
           <button
             onClick={() => setActiveMainTab('support')}
             className={cn(
-              "px-4 py-2 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5",
+              "relative px-4 py-2 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5",
               activeMainTab === 'support'
                 ? "bg-white text-text-heading shadow-xs"
                 : "bg-transparent text-text-secondary hover:text-text-heading"
             )}
           >
             <LifeBuoy className="w-3.5 h-3.5" /> Support Reports ({reportsList.length})
+            {openSupportCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-badge-danger text-[10px] font-bold text-white shadow-sc-sm">
+                {openSupportCount > 99 ? "99+" : openSupportCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -143,8 +152,16 @@ export default function ReportsDashboard({ incidentReports, systemReports }: Rep
                 <div
                   key={report.id}
                   onClick={() => setSelectedReport(report)}
-                  className="bg-bg-secondary-panel/20 border border-border-subtle hover:border-sc-purple-200/20 rounded-xl p-5 hover:bg-bg-sidebar-hover transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4"
+                  className={cn(
+                    "relative bg-bg-secondary-panel/20 border rounded-xl p-5 hover:bg-bg-sidebar-hover transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4",
+                    report.status === 'OPEN' ? "border-badge-danger/40 hover:border-badge-danger/60" : "border-border-subtle hover:border-sc-purple-200/20"
+                  )}
                 >
+                  {report.status === 'OPEN' && (
+                    <span className="absolute -top-2 -right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-badge-danger text-white text-[9px] font-black uppercase tracking-wider shadow-sc-sm">
+                      New
+                    </span>
+                  )}
                   {/* Status, Category & Severity line */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">

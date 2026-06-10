@@ -478,12 +478,15 @@ export async function getAdminReportAlerts() {
     try {
         await ensureAdmin();
 
-        const [reports, userMsgs] = await Promise.all([
+        const [reports, userMsgs, systemOpen] = await Promise.all([
             prisma.report.findMany({ select: { id: true, status: true, adminReadAt: true } }),
             prisma.reportMessage.findMany({
                 where: { senderRole: 'USER' },
                 select: { reportId: true, createdAt: true },
             }),
+            // SystemReport has no reply thread, so its attention signal is simply
+            // tickets still OPEN (newly submitted, not yet reviewed).
+            prisma.systemReport.count({ where: { status: 'OPEN' } }),
         ]);
 
         const readAtById = new Map(reports.map(r => [r.id, r.adminReadAt]));
@@ -496,10 +499,11 @@ export async function getAdminReportAlerts() {
             }
         }
 
-        const count = reports.filter(r => r.status === 'PENDING' || unreadCounts[r.id]).length;
-        return { success: true, count, unreadCounts };
+        const incidentAttention = reports.filter(r => r.status === 'PENDING' || unreadCounts[r.id]).length;
+        const count = incidentAttention + systemOpen;
+        return { success: true, count, unreadCounts, systemOpen };
     } catch (error) {
-        return { success: false, count: 0, unreadCounts: {} as Record<string, number> };
+        return { success: false, count: 0, unreadCounts: {} as Record<string, number>, systemOpen: 0 };
     }
 }
 
