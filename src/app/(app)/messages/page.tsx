@@ -27,6 +27,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import ReactMarkdown from 'react-markdown';
 import { usePresence, useConversationChannel } from '@/hooks/useChat';
 import { getAblyClient } from '@/lib/ablyClient';
+import { ImageLightbox } from '@/components/admin/ImageLightbox';
 
 const EMOJI_REACTIONS = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
 
@@ -487,10 +488,14 @@ export default function MessagesPage() {
                                         <ContextMenuTrigger asChild>
                                             <div className={cn(
                                                 "max-w-[75%] md:max-w-[500px] w-fit relative px-4 py-2.5 text-[15px] shadow-sm",
-                                                isMe
-                                                    ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-sc-purple-600 text-text-inverse force-white-text rounded-l-2xl`
-                                                    : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-bg-card border border-border-default text-text-body rounded-r-2xl`,
-                                                msg.isDeleted && "italic text-text-placeholder bg-transparent border border-border-default shadow-none"
+                                                // A deleted bubble must NOT carry force-white-text: the light-shim
+                                                // forces white on it and all children while the bg goes transparent
+                                                // → unreadable white-on-white. Render it as a neutral ghost instead.
+                                                msg.isDeleted
+                                                    ? "italic text-text-placeholder bg-transparent border border-border-default shadow-none rounded-2xl"
+                                                    : isMe
+                                                        ? `${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'} ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} bg-sc-purple-600 text-text-inverse force-white-text rounded-l-2xl`
+                                                        : `${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'} ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} bg-bg-card border border-border-default text-text-body rounded-r-2xl`
                                             )}>
                                                 {/* Reply Context */}
                                                 {msg.replyTo && (
@@ -660,6 +665,9 @@ export default function MessagesPage() {
 }
 
 function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean; onAccept: () => void }) {
+    // In-app media preview (WhatsApp-style) — never bounce the user out to the raw CDN URL.
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
     if (msg.isDeleted) return <p className="italic text-sm">Message unsent</p>;
 
     if (msg.attachmentType === 'INTERVIEW_INVITE') {
@@ -703,16 +711,33 @@ function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean
     };
 
     if (msg.attachmentUrl) {
-        if (msg.attachmentType === 'image') {
+        const isVideo = msg.attachmentType === 'video' || /\.(mp4|webm|mov)($|\?)/i.test(msg.attachmentUrl);
+        if (msg.attachmentType === 'image' || isVideo) {
             return (
                 <div className="space-y-1">
-                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                        <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[240px] rounded-lg mb-1" />
-                    </a>
+                    <button
+                        type="button"
+                        onClick={() => setLightboxOpen(true)}
+                        className="block p-0 border-none bg-transparent cursor-zoom-in"
+                        aria-label="Open media preview"
+                    >
+                        {isVideo ? (
+                            <video src={msg.attachmentUrl} muted className="max-w-[240px] rounded-lg mb-1" />
+                        ) : (
+                            <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[240px] rounded-lg mb-1 hover:opacity-90 transition-opacity" />
+                        )}
+                    </button>
                     {msg.text && renderText(msg.text)}
+                    <ImageLightbox
+                        isOpen={lightboxOpen}
+                        onClose={() => setLightboxOpen(false)}
+                        imageUrl={msg.attachmentUrl}
+                        title="Shared media"
+                    />
                 </div>
             );
         }
+        // Non-media files (PDFs etc.) still download/open via the CDN link.
         return (
             <div className="space-y-1">
                 <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className={cn("flex items-center gap-2 underline", isMe ? "text-text-inverse/90" : "text-text-body")}>
