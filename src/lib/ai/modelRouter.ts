@@ -88,6 +88,53 @@ export async function callGeminiInterview(
   )
 }
 
+/**
+ * Interviewer generation with CROSS-PROVIDER fallback so the interview can never
+ * "go dead" on a quota wall:
+ *   1. Primary  → Gemini (callGeminiInterview, rotates all Gemini keys)
+ *   2. Fallback → NVIDIA NIM (rotates all NVIDIA keys) when every Gemini key is
+ *      exhausted/erroring.
+ * Returns a normalized { text } shape regardless of which provider answered.
+ */
+export async function generateInterviewerTurn(
+  geminiMessages: { role: 'user' | 'model'; parts: { text: string }[] }[],
+  systemInstruction: string,
+  temperature = 0.7,
+): Promise<{ text: string; provider: 'gemini' | 'nvidia' }> {
+  try {
+    const res = await callGeminiInterview(geminiMessages, temperature, systemInstruction)
+    const text =
+      (res as any)?.text ??
+      (res as any)?.candidates?.[0]?.content?.parts?.[0]?.text ??
+      ''
+    if (!text.trim()) throw new Error('Gemini returned empty interviewer text')
+    return { text, provider: 'gemini' }
+  } catch (geminiErr) {
+    console.warn('[Interviewer] Gemini path failed, falling over to NVIDIA:', (geminiErr as Error)?.message)
+    // Translate Gemini parts-format history → NVIDIA chat-format messages.
+    const nvidiaMessages = [
+      { role: 'system', content: systemInstruction },
+      ...geminiMessages.map(m => ({
+        role: m.role === 'model' ? 'assistant' : 'user',
+        content: m.parts.map(p => p.text).join('\n'),
+      })),
+    ]
+    // Dedicated interviewer-fallback key if provided, else the assistant key pool.
+    const fallbackKey =
+      process.env.NVIDIA_API_KEY_INTERVIEWER ||
+      process.env.NVIDIA_API_KEY_ASSISTANT ||
+      process.env.NVIDIA_API_KEY
+    const res = await callNvidiaNIM(
+      fallbackKey,
+      process.env.NVIDIA_MODEL_INTERVIEWER || FAST_MODEL,
+      nvidiaMessages,
+      { temperature, maxTokens: 1024 },
+    )
+    const text = (res as any)?.choices?.[0]?.message?.content ?? ''
+    return { text, provider: 'nvidia' }
+  }
+}
+
 const NVIDIA_KEYS = [
   process.env.NVIDIA_API_KEY_SEARCH,
   process.env.NVIDIA_API_KEY_ASSISTANT,

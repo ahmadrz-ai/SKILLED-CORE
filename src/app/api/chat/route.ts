@@ -1,4 +1,4 @@
-import { callGeminiInterview, executeAI } from "@/lib/ai/modelRouter";
+import { generateInterviewerTurn, executeAI } from "@/lib/ai/modelRouter";
 import { getSystemResumeContext } from "@/lib/userContext";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -19,20 +19,30 @@ function parseMentorResponse(rawResponse: string): {
   const telemetryPattern = /%%(\{[\s\S]*?\})%%/g;
   const matches = [...rawResponse.matchAll(telemetryPattern)];
 
-  if (matches.length === 0) {
-    return { displayText: rawResponse.trim(), telemetry: null };
-  }
-
   let telemetry: MentorTelemetry | null = null;
-  try {
-    const jsonStr = matches[0][1];
-    telemetry = JSON.parse(jsonStr);
-  } catch (e) {
-    console.warn('[Mentor] Failed to parse telemetry JSON:', e);
+  if (matches.length > 0) {
+    try {
+      telemetry = JSON.parse(matches[0][1]);
+    } catch (e) {
+      console.warn('[Mentor] Failed to parse telemetry JSON:', e);
+    }
   }
 
-  const displayText = rawResponse
-    .replace(telemetryPattern, '')
+  // Robust scrub: strip well-formed %%...%% blocks, AND any malformed remnant —
+  // the model sometimes closes with a single "%" (or never closes), which the
+  // strict pattern above misses and would otherwise leak raw JSON into the bubble.
+  let displayText = rawResponse.replace(telemetryPattern, '');
+  // Try to recover telemetry from a single-%-closed block if we didn't get it above.
+  if (!telemetry) {
+    const loose = displayText.match(/%+\s*(\{[\s\S]*?\})\s*%*/);
+    if (loose) {
+      try { telemetry = JSON.parse(loose[1]); } catch { /* ignore */ }
+    }
+  }
+  // Drop any opened-but-not-cleanly-closed %% ... { ... } remnant.
+  displayText = displayText
+    .replace(/%+\s*\{[\s\S]*?\}\s*%*/g, '')  // malformed/partial telemetry blocks
+    .replace(/%{2,}/g, '')                    // stray %% markers
     .trim();
 
   return { displayText, telemetry };
@@ -370,18 +380,25 @@ Keep them clearly separated — telemetry first, then readable text.`;
             }
           }
 
-          console.log("SERVER: Starting Interviewer generation via callGeminiInterview");
-          const geminiResponse = await callGeminiInterview(
-            interviewerMessages,
-            0.7,
-            interviewerSystemPrompt
-          );
-
-          // Safely extract text from Gemini response — handle multiple SDK shapes
-          const fullInterviewerResponse =
-            geminiResponse?.text ??
-            geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text ??
-            "I apologize, but I encountered a brief interruption. Could you please repeat your last answer?";
+          console.log("SERVER: Starting Interviewer generation (Gemini → NVIDIA fallback)");
+          let fullInterviewerResponse: string;
+          try {
+            const interviewerResult = await generateInterviewerTurn(
+              interviewerMessages,
+              interviewerSystemPrompt,
+              0.7
+            );
+            console.log(`SERVER: Interviewer answered via ${interviewerResult.provider}`);
+            fullInterviewerResponse =
+              interviewerResult.text?.trim() ||
+              "I apologize, but I encountered a brief interruption. Could you please repeat your last answer?";
+          } catch (interviewerErr) {
+            // Both providers exhausted — degrade gracefully instead of killing the
+            // session, so the candidate can retry their turn.
+            console.error("SERVER: All interviewer providers failed:", interviewerErr);
+            fullInterviewerResponse =
+              "I'm having trouble connecting right now. Please send your last answer again in a moment.";
+          }
 
           // Stream interviewer response to the client with premium simulated typing speed
           const words = fullInterviewerResponse.split(" ");
@@ -390,34 +407,10 @@ Keep them clearly separated — telemetry first, then readable text.`;
             await new Promise(resolve => setTimeout(resolve, 20));
           }
 
-          // Parse badge triggers and save to database if present
-          if (session?.user?.id && fullInterviewerResponse.includes('[TRIGGER_EARN_BADGE:')) {
-            const badgeMatches = fullInterviewerResponse.match(/\[TRIGGER_EARN_BADGE:([^\]]+)\]/g);
-            if (badgeMatches) {
-              for (const match of badgeMatches) {
-                const badgeType = match.split(':')[1].replace(']', '');
-                const existing = await prisma.verifiedSkill.findFirst({
-                  where: {
-                    userId: session.user.id,
-                    skillId: badgeType
-                  }
-                });
-                if (!existing) {
-                  await prisma.verifiedSkill.create({
-                    data: {
-                      userId: session.user.id,
-                      skillId: badgeType,
-                      name: badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                      description: `Demonstrated professional-grade skill in ${badgeType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} during live AI Sandbox evaluation.`,
-                      status: 'VERIFIED',
-                      verifiedAt: new Date(),
-                      depthScore: 95
-                    }
-                  });
-                }
-              }
-            }
-          }
+          // NOTE: the legacy [TRIGGER_EARN_BADGE:*] path was REMOVED — it minted
+          // VerifiedSkill records (depthScore 95) mid-conversation with NO pass/fail
+          // gate, bypassing the issuance rule. Badges are now issued ONLY by
+          // finalizeInterview() after a scored, threshold-checked evaluation (B1).
 
           // Check for termination marker and update DB
           if (fullInterviewerResponse.includes('[INTERVIEW_TERMINATED_VIOLATION]')) {
