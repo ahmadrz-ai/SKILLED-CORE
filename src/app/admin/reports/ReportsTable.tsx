@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Report, User } from '@prisma/client';
 import {
     AlertTriangle, CheckCircle, XCircle, Shield, MessageSquare,
     ChevronDown, ChevronUp, Bug, Lightbulb, FileText, ArrowUpRight
 } from 'lucide-react';
-import { updateReportStatus, startReviewingReport } from '../actions';
+import { updateReportStatus, startReviewingReport, getAdminReportAlerts } from '../actions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { REPORT_STATUSES, normalizeReportStatus, reportStatusLabel, reportStatusClasses, type ReportStatusKey } from '@/lib/reportStatus';
@@ -28,6 +28,20 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const [statusFilter, setStatusFilter] = useState<'ALL' | ReportStatusKey>('ALL');
+    // Unread USER thread replies per report (live), so the queue shows which
+    // tickets a user has messaged that support hasn't opened yet.
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const fetchAlerts = () => {
+            getAdminReportAlerts().then(res => {
+                if (res.success) setUnreadCounts(res.unreadCounts || {});
+            });
+        };
+        fetchAlerts();
+        const interval = setInterval(fetchAlerts, 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     const toggleExpand = async (id: string) => {
         const newSet = new Set(expandedIds);
@@ -133,6 +147,7 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                         <tbody>
                             {visibleReports.map((report) => {
                                 const isExpanded = expandedIds.has(report.id);
+                                const unread = unreadCounts[report.id] || 0;
                                 let details: any = {};
                                 try {
                                     details = JSON.parse(report.adminNotes || '{}');
@@ -149,7 +164,12 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                             )}
                                         >
                                             <td className="p-4 text-text-tertiary">
-                                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                <div className="relative w-4 h-4">
+                                                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                    {unread > 0 && (
+                                                        <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-badge-danger ring-2 ring-bg-secondary-panel" aria-label="Unread replies" />
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2 text-text-secondary">
@@ -174,8 +194,16 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="max-w-xs truncate text-text-heading font-medium">
-                                                    {report.reason}
+                                                <div className="flex items-center gap-2">
+                                                    <span className={cn("max-w-xs truncate font-medium", unread > 0 ? "text-text-heading font-semibold" : "text-text-heading")}>
+                                                        {report.reason}
+                                                    </span>
+                                                    {unread > 0 && (
+                                                        <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-badge-danger text-white text-[10px] font-bold shadow-sc-sm">
+                                                            <MessageSquare className="w-3 h-3" />
+                                                            {unread > 99 ? "99+" : unread} new
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-4 text-right space-x-2" onClick={e => e.stopPropagation()}>

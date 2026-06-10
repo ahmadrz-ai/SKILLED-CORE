@@ -465,6 +465,44 @@ export async function getPendingReportsCount() {
     }
 }
 
+/**
+ * Admin attention signal for support tickets. Returns:
+ *  - count:        tickets needing attention = still PENDING OR carrying unread
+ *                  user replies (drives the sidebar Reports badge).
+ *  - unreadCounts: { [reportId]: number of unread USER thread messages } — a USER
+ *                  message is "unread" when it is newer than the ticket's
+ *                  adminReadAt (or the admin has never opened it). Drives the
+ *                  per-row badges in the reports table.
+ */
+export async function getAdminReportAlerts() {
+    try {
+        await ensureAdmin();
+
+        const [reports, userMsgs] = await Promise.all([
+            prisma.report.findMany({ select: { id: true, status: true, adminReadAt: true } }),
+            prisma.reportMessage.findMany({
+                where: { senderRole: 'USER' },
+                select: { reportId: true, createdAt: true },
+            }),
+        ]);
+
+        const readAtById = new Map(reports.map(r => [r.id, r.adminReadAt]));
+        const unreadCounts: Record<string, number> = {};
+        for (const m of userMsgs) {
+            if (!readAtById.has(m.reportId)) continue; // report since deleted
+            const readAt = readAtById.get(m.reportId);
+            if (!readAt || m.createdAt > readAt) {
+                unreadCounts[m.reportId] = (unreadCounts[m.reportId] || 0) + 1;
+            }
+        }
+
+        const count = reports.filter(r => r.status === 'PENDING' || unreadCounts[r.id]).length;
+        return { success: true, count, unreadCounts };
+    } catch (error) {
+        return { success: false, count: 0, unreadCounts: {} as Record<string, number> };
+    }
+}
+
 export async function getDashboardData() {
     try {
         await ensureAdmin();

@@ -9,7 +9,7 @@ import {
     ArrowLeft, Lock, Loader2, Brain, BookOpen, Search, X, FileText, Ticket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getPendingReportsCount } from "./actions";
+import { getAdminReportAlerts } from "./actions";
 
 const ADMIN_MENU = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin" },
@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setIsAuthorized(true);
 
         const fetchCount = () => {
-            getPendingReportsCount().then(res => {
+            getAdminReportAlerts().then(res => {
                 if (res.success) setPendingReports(res.count);
             });
         };
@@ -114,8 +114,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <item.icon className={cn("w-4 h-4", isActive ? "text-sc-purple-600" : "text-sc-gray-400 group-hover:text-sc-gray-600")} />
                                 <span className="flex-1">{item.label}</span>
                                 {item.label === "Reports" && pendingReports > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-sc-red-600 text-[10px] font-bold text-white shadow-sc-sm">
-                                        {pendingReports}
+                                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-badge-danger text-[10px] font-bold text-white shadow-sc-sm">
+                                        {pendingReports > 99 ? "99+" : pendingReports}
                                     </span>
                                 )}
                             </Link>

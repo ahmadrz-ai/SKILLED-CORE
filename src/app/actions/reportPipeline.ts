@@ -95,6 +95,13 @@ export async function getReportDetail(reportId: string) {
             return { success: false, message: "Forbidden" };
         }
 
+        // Opening the thread as an admin clears its unread badge.
+        if (admin) {
+            try {
+                await prisma.report.update({ where: { id: reportId }, data: { adminReadAt: new Date() } });
+            } catch { /* best-effort — badge reconciles on next poll */ }
+        }
+
         // Resolve sender names/avatars for the thread in one query.
         const senderIds = Array.from(new Set(report.messages.map(m => m.senderId)));
         const senders = senderIds.length
@@ -174,12 +181,13 @@ export async function sendReportMessage(reportId: string, body: string) {
             await notifyUser(report.reporterId); // realtime badge nudge (support)
 
             // Auto-advance an untouched ticket to RESOLVING when support first replies.
-            // Don't override a terminal state (COMPLETED/JUNK).
-            if (["PENDING", "UNDER_REVIEW"].includes(report.status)) {
-                try {
-                    await prisma.report.update({ where: { id: reportId }, data: { status: "RESOLVING" } });
-                } catch { /* best-effort */ }
-            }
+            // Don't override a terminal state (COMPLETED/JUNK). Replying also counts as
+            // reading the thread, so clear the admin unread badge.
+            const data: { status?: string; adminReadAt: Date } = { adminReadAt: new Date() };
+            if (["PENDING", "UNDER_REVIEW"].includes(report.status)) data.status = "RESOLVING";
+            try {
+                await prisma.report.update({ where: { id: reportId }, data });
+            } catch { /* best-effort */ }
         }
 
         revalidatePath(`/admin/reports/${reportId}`);
