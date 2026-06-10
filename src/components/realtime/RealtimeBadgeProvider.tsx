@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
-import * as Ably from "ably";
+import type * as Ably from "ably";
+import { getAblyClient } from "@/lib/ablyClient";
 import { getBadgeCounts } from "@/app/actions/notifications";
 
 type Counts = Record<string, number | boolean>;
@@ -59,15 +60,16 @@ export function RealtimeBadgeProvider({
         // Lightweight safety net if the realtime channel ever drops.
         const fallback = setInterval(refresh, 45000);
 
-        let client: Ably.Realtime | null = null;
+        // Reuse the app-wide shared Ably connection (single socket per tab, single
+        // token pipeline with backoff) — never construct a second Realtime client.
         let channel: Ably.RealtimeChannel | null = null;
         if (userId) {
             try {
-                client = new Ably.Realtime({ authUrl: "/api/ably/token", authMethod: "GET" });
-                channel = client.channels.get(`user:${userId}`);
-                channel.subscribe("badge", () => debouncedRefresh());
+                const client = getAblyClient();
+                channel = client?.channels.get(`user:${userId}`) ?? null;
+                channel?.subscribe("badge", () => debouncedRefresh());
             } catch (err) {
-                console.error("[ably] client init failed:", err);
+                console.error("[ably] badge subscribe failed:", err);
             }
         }
 
@@ -75,8 +77,9 @@ export function RealtimeBadgeProvider({
             document.removeEventListener("visibilitychange", onVisible);
             clearInterval(fallback);
             if (debounceRef.current) clearTimeout(debounceRef.current);
+            // Unsubscribe our listener only — the shared connection stays alive for
+            // the rest of the app (chat presence, typing, etc.).
             try { channel?.unsubscribe(); } catch { /* ignore */ }
-            try { client?.close(); } catch { /* ignore */ }
         };
     }, [userId, refresh, debouncedRefresh]);
 
