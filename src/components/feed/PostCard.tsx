@@ -391,15 +391,23 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         }
     };
 
+    // Inline post badges. Colors come straight from Branding.md tokens (the old
+    // zinc/red-400/yellow-400 set rendered near-invisible on the light theme — e.g.
+    // yellow-400 text on a 10%-opacity yellow fill — which is why badges "weren't
+    // working"). Gold reuses the exact AI-verified-skill gold (--verified-gold*).
     const renderBadge = (text: string, type: string) => {
-        const styles = {
-            ':': 'bg-red-500/10 text-red-400 border-red-500/20',
-            '/': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-            '~': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-            '+': 'bg-zinc-800 text-zinc-300 border-zinc-700'
+        const styles: Record<string, string> = {
+            // + clean dark-text badge
+            '+': 'bg-bg-card border-border-strong text-text-heading',
+            // : high-visibility red alert
+            ':': 'bg-sc-red-50 border-sc-red-200 text-sc-red-600',
+            // / gold highlight — identical to the verified skill badge gold
+            '/': 'bg-verified-gold-tint border-verified-gold-border text-verified-gold',
+            // ~ signature SkilledCore purple
+            '~': 'bg-sc-purple-100 border-sc-purple-200 text-sc-purple-800',
         };
         return (
-            <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${styles[type as keyof typeof styles] || styles[':']}`}>
+            <span className={`inline-flex items-center align-baseline px-2 py-0.5 rounded-md text-xs font-bold border ${styles[type] || styles['+']}`}>
                 {text}
             </span>
         );
@@ -416,11 +424,15 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
         let match;
         while ((match = quotedBadgeRegex.exec(content)) !== null) {
             const quotedText = match[1];
-            const symbolMatch = quotedText.match(/([:\/~+])/);
+            // First trigger symbol anywhere in the quote designates the badge type;
+            // works for "/multi word badge", "multi word /badge", "multi /word badge".
+            const symbolMatch = quotedText.match(/[+:/~]/);
 
             if (symbolMatch) {
-                const trigger = symbolMatch[1];
-                const badgeText = quotedText.replace(/[:\/~+]/g, '').replace(/\s+/g, ' ').trim();
+                const trigger = symbolMatch[0];
+                // Remove only the FIRST (designating) trigger so legit symbols in the
+                // phrase survive (e.g. "/CI/CD pipeline" → "CI/CD pipeline").
+                const badgeText = quotedText.replace(trigger, '').replace(/\s+/g, ' ').trim();
 
                 quotedBadges.push({
                     start: match.index,
@@ -460,18 +472,27 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
 
     const parseSingleBadges = (text: string, baseIndex: number, startKeyCounter: number): React.ReactNode[] => {
         const parts: React.ReactNode[] = [];
-        const singleBadgeRegex = /([:\/~+])(\w+)/g;
+        // Trigger must be a standalone token: at string start or after whitespace,
+        // immediately followed (no space) by the word to badge. This enforces the
+        // documented rule — "+black" badges, "+ black" does NOT — and stops false
+        // positives inside URLs (https://), emails (a:b), and a+b arithmetic.
+        const singleBadgeRegex = /(^|\s)([+:/~])([A-Za-z0-9][\w-]*)/g;
         let keyCounter = startKeyCounter;
         let lastPos = 0;
         let match;
 
         while ((match = singleBadgeRegex.exec(text)) !== null) {
-            if (match.index > lastPos) {
-                const textBefore = text.substring(lastPos, match.index);
+            const lead = match[1];                 // preserved whitespace/boundary
+            const trigger = match[2];
+            const word = match[3];
+            const badgeStart = match.index + lead.length;
+
+            if (badgeStart > lastPos) {
+                const textBefore = text.substring(lastPos, badgeStart);
                 parts.push(...parseLinks(textBefore, baseIndex + lastPos));
             }
 
-            parts.push(<span key={`badge-${keyCounter++}`}>{renderBadge(match[2], match[1])}</span>);
+            parts.push(<span key={`badge-${keyCounter++}`}>{renderBadge(word, trigger)}</span>);
             lastPos = match.index + match[0].length;
         }
 
@@ -1022,18 +1043,29 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     </div>
                 )}
 
-                {/* Tags */}
-                {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3 mb-2">
-                        {post.tags.map((tag, i) => (
-                            <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}>
-                                <SharedTag className="hover:bg-sc-purple-100 transition-colors cursor-pointer">
-                                    #{tag.replace('#', '')}
-                                </SharedTag>
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                {/* Tags — only those NOT already written inline in the body. Hashtags
+                    typed in the post are made clickable inline by parseContent, so
+                    rendering post.tags chips for them duplicated every tag (a plain
+                    inline copy + a chip). We now show chips solely for tags that have
+                    no inline counterpart, killing the duplication. */}
+                {(() => {
+                    const bodyLower = (post.content || '').toLowerCase();
+                    const extraTags = (post.tags || []).filter(
+                        (t) => !bodyLower.includes(`#${t.replace('#', '').toLowerCase()}`)
+                    );
+                    if (extraTags.length === 0) return null;
+                    return (
+                        <div className="flex flex-wrap gap-2 mt-3 mb-2">
+                            {extraTags.map((tag, i) => (
+                                <Link key={i} href={`/search?q=%23${tag.replace('#', '')}`}>
+                                    <SharedTag className="hover:bg-sc-purple-100 transition-colors cursor-pointer">
+                                        #{tag.replace('#', '')}
+                                    </SharedTag>
+                                </Link>
+                            ))}
+                        </div>
+                    );
+                })()}
 
                 {/* Code Snippet */}
                 {post.codeSnippet && (
