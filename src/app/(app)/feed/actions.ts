@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { containsProfanity } from '@/lib/content-safety';
 import { notifyUser } from '@/lib/ably';
+import { sanitizeRichHtml } from '@/lib/sanitize';
 
 export async function updatePost(postId: string, content: string) {
     const session = await auth();
@@ -21,7 +22,7 @@ export async function updatePost(postId: string, content: string) {
 
         await prisma.post.update({
             where: { id: postId },
-            data: { content }
+            data: { content: sanitizeRichHtml(content) }  // defense-in-depth: strip XSS at write
         });
 
         revalidatePath("/feed");
@@ -53,7 +54,7 @@ export async function createPost(content: string, codeSnippet?: string, pollOpti
         const uniqueTags = hashtags ? Array.from(new Set(hashtags.map(t => t.replace('#', '')))).join(',') : null;
 
         const postData: any = {
-            content,
+            content: sanitizeRichHtml(content),  // defense-in-depth: strip XSS at write
             codeSnippet,
             userId: session.user.id,
             tags: uniqueTags,

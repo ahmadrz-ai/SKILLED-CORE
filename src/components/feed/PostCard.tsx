@@ -34,6 +34,7 @@ import { InstagramPoll } from "./InstagramPoll";
 import { ReportPostModal } from "./ReportPostModal";
 import { SharePostModal } from "./SharePostModal";
 import { Tag as SharedTag } from "@/components/ui/tag";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 // ─── Inline badge + hashtag decoration (shared by both render paths) ──────────
 // Branding.md colors; gold is the exact AI-verified-skill gold (--verified-gold*).
@@ -55,6 +56,11 @@ const BADGE_BASE = 'inline-flex items-center align-baseline px-2 py-0.5 rounded-
  * <a>, <code> and <pre> so links/snippets are never corrupted.
  */
 function decorateHtmlContent(html: string): string {
+    // SECURITY: strip XSS (script/on*/js: URIs) BEFORE decorating. Runs at the
+    // render chokepoint (server SSR + client), so every post — existing or new —
+    // is sanitized regardless of what was stored. Decoration below only ADDS our
+    // own safe <span>/<a> templates, never re-introduces user markup.
+    html = sanitizeRichHtml(html);
     const tokens = html.split(/(<[^>]+>)/g);
     let skipDepth = 0;
     return tokens.map((tok) => {

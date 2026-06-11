@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { markAsRead, markAllAsRead } from "@/app/actions/notifications";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 import { toast } from "sonner";
 
 interface NotificationItem {
@@ -191,7 +192,7 @@ export function NotificationsClient({ initialData }: { initialData: Notification
                                             name (e.g. "<strong>AHMAD</strong> started following you"), so
                                             prepending notification.actor.name here rendered it twice. The
                                             message is the single source of truth; the avatar shows the actor. */}
-                                        <span dangerouslySetInnerHTML={{ __html: notification.message }} />
+                                        <span dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(notification.message) }} />
                                     </div>
                                     <div className="mt-1 flex items-center gap-2">
                                         <span className="text-[10px] text-[var(--text-tertiary)] font-medium">

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/actions/feedback";
 import { useRouter } from "next/navigation";
 import { useBadges, NavBadge } from "@/components/realtime/RealtimeBadgeProvider";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
@@ -129,7 +130,7 @@ export function NotificationBell() {
                                                             "text-sm leading-snug",
                                                             !notification.read ? "text-text-heading font-medium" : "text-text-secondary"
                                                         )}
-                                                        dangerouslySetInnerHTML={{ __html: notification.message }}
+                                                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(notification.message) }}
                                                     />
                                                     <p className="text-[10px] text-text-tertiary font-mono">
                                                         {new Date(notification.createdAt).toLocaleTimeString()}
