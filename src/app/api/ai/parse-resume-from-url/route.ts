@@ -1,10 +1,28 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
 import * as _pdfParse from "pdf-parse";
+import { guardAiRoute } from "@/lib/apiGuard";
+import { assertSafeRemoteUrl } from "@/lib/ssrf";
 const pdfParse = (_pdfParse as any).default || _pdfParse;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// SSRF-safe fetch of a user-supplied resume URL: validates against private/
+// internal ranges and refuses redirects (which could bounce to an internal host),
+// with a hard timeout and size cap. Returns the PDF bytes + mime.
+async function fetchRemoteResume(rawUrl: string): Promise<{ buffer: Buffer; mime: string }> {
+    const url = assertSafeRemoteUrl(rawUrl);
+    const res = await fetch(url, {
+        redirect: "error",
+        signal: AbortSignal.timeout(15000),
+        headers: { accept: "application/pdf,application/octet-stream,*/*" },
+    });
+    if (!res.ok) throw new Error("fetch failed");
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.byteLength > 15 * 1024 * 1024) throw new Error("file too large"); // 15MB cap
+    return { buffer: buf, mime: res.headers.get("content-type") || "application/pdf" };
+}
 
 const RESUME_EXTRACTION_PROMPT = `You are an expert resume parser and professional profile writer.
 Your job is to extract every piece of information from this resume and structure it perfectly.
@@ -116,6 +134,10 @@ Return exactly this structure:
 }`;
 
 export async function POST(req: Request) {
+    // Auth + rate limit (paid LLM call + server-side fetch).
+    const guard = await guardAiRoute("parse-resume", 15, 60);
+    if (guard instanceof Response) return guard;
+
     try {
         let pdfBuffer: Buffer;
         let mimeType = "application/pdf";
@@ -128,13 +150,9 @@ export async function POST(req: Request) {
                 if (!resumeUrl) {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
                 }
-                const response = await fetch(resumeUrl);
-                if (!response.ok) {
-                    return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
-                }
-                const arrayBuffer = await response.arrayBuffer();
-                pdfBuffer = Buffer.from(arrayBuffer);
-                mimeType = response.headers.get("content-type") || "application/pdf";
+                const { buffer, mime } = await fetchRemoteResume(resumeUrl); // SSRF-guarded
+                pdfBuffer = buffer;
+                mimeType = mime;
             } else {
                 const formData = await req.formData();
                 const file = formData.get("file") as File;
@@ -145,13 +163,9 @@ export async function POST(req: Request) {
                     pdfBuffer = Buffer.from(arrayBuffer);
                     mimeType = file.type || "application/pdf";
                 } else if (resumeUrl) {
-                    const response = await fetch(resumeUrl);
-                    if (!response.ok) {
-                        return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
-                    }
-                    const arrayBuffer = await response.arrayBuffer();
-                    pdfBuffer = Buffer.from(arrayBuffer);
-                    mimeType = response.headers.get("content-type") || "application/pdf";
+                    const { buffer, mime } = await fetchRemoteResume(resumeUrl); // SSRF-guarded
+                    pdfBuffer = buffer;
+                    mimeType = mime;
                 } else {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
                 }
@@ -210,7 +224,7 @@ export async function POST(req: Request) {
                 textResult = retry.choices[0].message.content;
             } catch (retryErr: any) {
                 console.error("Resume import retry also failed:", retryErr?.message || retryErr);
-                return NextResponse.json({ error: "AI parsing failed", details: retryErr.message }, { status: 500 });
+                return NextResponse.json({ error: "AI parsing failed" }, { status: 500 });
             }
         }
 
@@ -220,12 +234,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: true, aiData: mapped });
         } catch (jsonErr: any) {
             console.error("JSON parse failed. Raw text was:", textResult, jsonErr);
-            return NextResponse.json({ error: "Could not parse AI response", raw: textResult }, { status: 500 });
+            return NextResponse.json({ error: "Could not parse AI response" }, { status: 500 });
         }
 
     } catch (error: any) {
         console.error("Fatal Parse Error:", error);
-        return NextResponse.json({ error: "AI parsing failed", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "AI parsing failed" }, { status: 500 });
     }
 }
 
