@@ -1,9 +1,14 @@
 import { streamNvidiaText } from "@/lib/ai/modelRouter";
+import { guardAiRoute } from "@/lib/apiGuard";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+    // Auth + rate limit: this hits a paid LLM, so it must not be open to anon abuse.
+    const guard = await guardAiRoute("qodee-chat", 30, 60);
+    if (guard instanceof Response) return guard;
+
     const { messages } = await req.json();
 
     console.log("Qodee API Request via executeAI:", {
@@ -47,9 +52,10 @@ export async function POST(req: Request) {
         return textStreamResponse;
     } catch (error: any) {
         console.error("Qodee Generation Error:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        // Generic message only — never leak internal error details to the client.
+        return new Response("Assistant is temporarily unavailable.", {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'text/plain' }
         });
     }
 }

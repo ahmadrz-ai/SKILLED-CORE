@@ -53,3 +53,48 @@ export async function checkLoginRateLimit(identifier: string): Promise<{ success
     return { success: true, reset: 0 }
   }
 }
+
+// ── Generic, per-bucket distributed limiter ──────────────────────────────────
+// Used to protect expensive endpoints (paid AI calls) from anonymous/abusive
+// floods. Each `name` gets its own sliding-window limiter, cached per process.
+const buckets = new Map<string, Ratelimit>()
+
+function getBucketLimiter(name: string, limit: number, windowSec: number): Ratelimit | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  const key = `${name}:${limit}:${windowSec}`
+  let rl = buckets.get(key)
+  if (!rl) {
+    rl = new Ratelimit({
+      redis: new Redis({ url, token }),
+      limiter: Ratelimit.slidingWindow(limit, `${windowSec} s`),
+      prefix: `rl:${name}`,
+      analytics: false,
+    })
+    buckets.set(key, rl)
+  }
+  return rl
+}
+
+/**
+ * Rate-limit an arbitrary action bucket. Returns { success } — if Upstash isn't
+ * configured it allows (so dev/local keeps working) but the caller should still
+ * require auth as the primary gate.
+ */
+export async function checkRateLimit(
+  name: string,
+  identifier: string,
+  limit = 20,
+  windowSec = 60,
+): Promise<{ success: boolean; reset: number }> {
+  const rl = getBucketLimiter(name, limit, windowSec)
+  if (!rl) return { success: true, reset: 0 }
+  try {
+    const res = await rl.limit(identifier)
+    return { success: res.success, reset: res.reset }
+  } catch (err) {
+    console.error('[ratelimit] bucket check failed, allowing request:', err)
+    return { success: true, reset: 0 }
+  }
+}

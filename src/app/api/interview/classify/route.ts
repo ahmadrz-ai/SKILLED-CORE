@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeAI, parseAIJson } from '@/lib/ai/modelRouter'
+import { guardAiRoute } from '@/lib/apiGuard'
 import type { RoleClassification } from '@/types/roleClassification'
 
 const CLASSIFIER_SYSTEM_PROMPT = `You are SkilledCore's Role Intelligence Engine.
@@ -62,6 +63,10 @@ const SAFE_FALLBACK: RoleClassification = {
 };
 
 export async function POST(req: NextRequest) {
+  // Auth + rate limit — paid LLM call run at interview start.
+  const guard = await guardAiRoute("interview-classify", 20, 60)
+  if (guard instanceof Response) return guard
+
   try {
     const { jobTitle } = await req.json()
     if (!jobTitle?.trim()) {

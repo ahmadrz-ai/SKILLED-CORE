@@ -1,9 +1,14 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
+import { guardAiRoute } from "@/lib/apiGuard";
 import { NextResponse } from "next/server";
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+    // Auth + rate limit — paid LLM call.
+    const guard = await guardAiRoute("talent-parse-query", 30, 60);
+    if (guard instanceof Response) return guard;
+
     try {
         const body = await req.json();
         const { query } = body;

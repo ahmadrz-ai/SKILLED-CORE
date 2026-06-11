@@ -1,4 +1,5 @@
 import { generateInterviewerTurn, executeAI } from "@/lib/ai/modelRouter";
+import { guardAiRoute } from "@/lib/apiGuard";
 import { getSystemResumeContext } from "@/lib/userContext";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -214,6 +215,12 @@ Question sequence:
 export const maxDuration = 45;
 
 export async function POST(req: Request) {
+  // Auth + rate limit — each request fires up to TWO paid LLM calls (interviewer
+  // + mentor). Previously auth() was read but never enforced, so an anonymous
+  // loop could drain provider budget. Higher limit since a live interview is chatty.
+  const guard = await guardAiRoute("interview-chat", 40, 60);
+  if (guard instanceof Response) return guard;
+
   try {
     const { messages, user_role, is_grill_mode, intensity = 3, sandbox_code, sandbox_output, interviewId } = await req.json();
     console.log("SERVER: Received chat request (Dual-Agent Engine)", { messageCount: messages?.length, role: user_role, intensity, interviewId });
@@ -448,7 +455,8 @@ Keep them clearly separated — telemetry first, then readable text.`;
 
   } catch (error: any) {
     console.error("SERVER: General Route Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    // Generic message only — don't leak internal error details to the client.
+    return new Response(JSON.stringify({ error: "Interview service error" }), { status: 500 });
   }
 }
 
