@@ -10,7 +10,7 @@ import {
     Bold, Italic, Link2, Quote, List, Heading, Image as ImageIcon, Underline, Strikethrough,
     Check, ChevronLeft, ChevronRight, Globe, ShieldAlert, Sparkles, Building2
 } from 'lucide-react';
-import { UploadButton } from "@/lib/uploadthing";
+import { CloudinaryImageButton } from "@/components/ui/CloudinaryImageButton";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,27 +89,14 @@ const MarkdownToolbar = ({
             >
                 <Link2 className="w-4 h-4" />
             </button>
-            <div className="relative group">
-                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity inset-0 flex items-center justify-center z-10">
-                    <UploadButton
-                        endpoint="jobImageUploader"
-                        onClientUploadComplete={(res) => {
-                            if (res && res[0]) onImageUpload(res[0].url);
-                            toast.success("Image uploaded!");
-                        }}
-                        onUploadError={(error: Error) => {
-                            toast.error(`Upload failed: ${error.message}`);
-                        }}
-                        appearance={{
-                            button: "w-full h-full opacity-0 cursor-pointer",
-                            allowedContent: "hidden"
-                        }}
-                    />
-                </div>
-                <button type="button" className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors" title="Upload Image">
-                    <ImageIcon className="w-4 h-4" />
-                </button>
-            </div>
+            <CloudinaryImageButton
+                folder="jobs"
+                title="Upload Image"
+                onUploaded={(url) => onImageUpload(url)}
+                className="p-2 hover:bg-bg-sidebar-hover text-text-secondary hover:text-text-heading rounded-md transition-colors"
+            >
+                <ImageIcon className="w-4 h-4" />
+            </CloudinaryImageButton>
         </div>
     );
 };
@@ -619,22 +606,15 @@ export default function JobWizardPage() {
                                             )}
                                         </div>
                                         {/* Upload Overlay */}
-                                        <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 flex items-center justify-center rounded-xl cursor-pointer">
-                                            <UploadButton
-                                                endpoint="companyLogo"
-                                                onClientUploadComplete={(res) => {
-                                                    if (res && res[0]) {
-                                                        setFormData(p => ({ ...p, companyLogo: res[0].url }));
-                                                        toast.success("Logo uploaded");
-                                                    }
-                                                }}
-                                                onUploadError={(error: Error) => { toast.error(`Error: ${error.message}`); }}
-                                                appearance={{
-                                                    button: "w-full h-full opacity-0 cursor-pointer",
-                                                    allowedContent: "hidden"
-                                                }}
-                                            />
-                                            <PlusCircle className="w-5 h-5 text-white pointer-events-none absolute" />
+                                        <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 flex items-center justify-center rounded-xl">
+                                            <CloudinaryImageButton
+                                                folder="company-logos"
+                                                title="Upload Logo"
+                                                onUploaded={(url) => { setFormData(p => ({ ...p, companyLogo: url })); }}
+                                                className="w-full h-full flex items-center justify-center cursor-pointer"
+                                            >
+                                                <PlusCircle className="w-5 h-5 text-white pointer-events-none" />
+                                            </CloudinaryImageButton>
                                         </div>
                                         <p className="text-[10px] text-text-placeholder text-center mt-1">Logo</p>
                                     </div>

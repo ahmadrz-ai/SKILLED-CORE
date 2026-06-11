@@ -18,7 +18,7 @@ import {
     getUserDetails, reactToMessage, unsendMessage
 } from './actions';
 import { toast } from "sonner";
-import { useUploadThing } from "@/lib/uploadthing";
+import { uploadToCloudinary } from "@/lib/cloudinaryUpload";
 import { Loader2 } from "lucide-react";
 import InvitationCard from "@/components/chat/InvitationCard";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -78,23 +78,20 @@ export default function MessagesPage() {
         }
     };
 
-    // UploadThing
+    // Attachment upload — Cloudinary (UploadThing is resume-PDF-only now).
     const [isUploading, setIsUploading] = useState(false);
-    const { startUpload } = useUploadThing("chatAttachment", {
-        onClientUploadComplete: async (res) => {
-            if (res && res[0]) {
-                const file = res[0];
-                const type = file.type.startsWith('image') ? 'image' : 'file';
-                await handleSend(undefined, file.url, type);
-            }
+    const uploadAttachment = async (file: File) => {
+        setIsUploading(true);
+        try {
+            const res = await uploadToCloudinary(file, { folder: "messages" });
+            const type = res.resourceType === "image" ? "image" : res.resourceType === "video" ? "video" : "file";
+            await handleSend(undefined, res.url, type);
+        } catch (err: any) {
+            toast.error(err?.message || "Upload failed");
+        } finally {
             setIsUploading(false);
-        },
-        onUploadError: () => {
-            toast.error("Upload failed");
-            setIsUploading(false);
-        },
-        onUploadBegin: () => setIsUploading(true)
-    });
+        }
+    };
 
     // ... (Keep existing useEffects for loading/polling/scrolling)
     const lastHandledUserId = useRef<string | null>(null);
@@ -600,7 +597,8 @@ export default function MessagesPage() {
                                     className="hidden"
                                     onChange={(e) => {
                                         if (e.target.files && e.target.files.length > 0) {
-                                            startUpload([e.target.files[0]]);
+                                            uploadAttachment(e.target.files[0]);
+                                            e.target.value = '';
                                         }
                                     }}
                                 />

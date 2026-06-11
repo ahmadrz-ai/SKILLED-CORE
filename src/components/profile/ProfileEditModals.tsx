@@ -60,6 +60,7 @@ const customLinksSchema = z.object({
 // Helper for File Upload
 // Helper for File Upload
 import { useUploadThing } from "@/lib/uploadthing";
+import { uploadToCloudinary } from "@/lib/cloudinaryUpload";
 import ImageCropper from "@/components/ui/image-cropper";
 
 
@@ -86,18 +87,38 @@ export const FileUploadArea = ({
     const acceptedFileTypes = isResume ? "application/pdf" : "image/*";
     const helperText = isResume ? "PDF up to 4MB" : "JPG, PNG, GIF up to 4MB";
 
-    const { startUpload, isUploading } = useUploadThing(endpoint, {
+    // Resume PDFs stay on UploadThing; all images go to Cloudinary.
+    const [imgUploading, setImgUploading] = useState(false);
+    const { startUpload, isUploading } = useUploadThing("resumeUploader", {
         onClientUploadComplete: (res) => {
             if (res && res.length > 0) {
                 onUploadComplete(res[0].url);
-                toast.success(isResume ? "Resume uploaded successfully" : "Image uploaded successfully");
-                setImageSrc(null); // Cleanup
+                toast.success("Resume uploaded successfully");
+                setImageSrc(null);
             }
         },
         onUploadError: (error: Error) => {
             toast.error(`Upload failed: ${error.message}`);
         }
     });
+
+    const cloudinaryFolder =
+        endpoint === "avatarUploader" ? "avatars" :
+        endpoint === "bannerUploader" ? "banners" : "profile";
+
+    const uploadImageToCloudinary = async (file: File) => {
+        setImgUploading(true);
+        try {
+            const res = await uploadToCloudinary(file, { folder: cloudinaryFolder });
+            onUploadComplete(res.url);
+            toast.success("Image uploaded successfully");
+            setImageSrc(null);
+        } catch (error: any) {
+            toast.error(`Upload failed: ${error?.message || error}`);
+        } finally {
+            setImgUploading(false);
+        }
+    };
 
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -128,16 +149,12 @@ export const FileUploadArea = ({
     const handleCropComplete = async (croppedBlob: Blob) => {
         setIsCropperOpen(false);
         const file = new File([croppedBlob], "cropped-image.jpg", { type: "image/jpeg" });
-        try {
-            await startUpload([file]);
-        } catch (error: any) {
-            toast.error(`Upload failed: ${error.message || error}`);
-        }
+        await uploadImageToCloudinary(file);
     };
 
     const isCircular = endpoint === "avatarUploader";
     const cropRatio = aspectRatio || (isCircular ? 1 : 4 / 1);
-    const anyUploading = isUploading;
+    const anyUploading = isResume ? isUploading : imgUploading;
 
     return (
         <div className="space-y-4">
