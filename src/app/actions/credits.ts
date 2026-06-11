@@ -20,20 +20,13 @@ export async function getCredits() {
     }
 }
 
-export async function addCredits(amount: number) {
-    const session = await auth();
-    if (!session?.user?.id) return;
-
-    try {
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { credits: { increment: amount } }
-        });
-        revalidatePath("/credits");
-    } catch (error) {
-        console.error("Add Credits Error:", error);
-    }
-}
+// SECURITY: a public `addCredits(amount)` server action previously let ANY
+// logged-in user grant themselves unlimited credits (self-increment with no
+// payment or admin check) — a total bypass of the paid economy. It had zero
+// callers and has been removed. Credits may only change via:
+//   - server-internal deduction (deductCredits / the interview $transaction), or
+//   - an admin-verified top-up after a confirmed payment.
+// Do NOT reintroduce a client-callable credit-increment action.
 
 export async function deductCredits(amount: number) {
     const session = await auth();
