@@ -65,6 +65,7 @@ const nextAuth = NextAuth({
                 token.username = user.username;
                 token.isVerified = user.isVerified;
                 token.twoFactorEnabled = user.twoFactorEnabled;
+                token.lastSync = Date.now();
                 // 2FA pending state
                 if (user.twoFactorEnabled) {
                     token.twoFactorPending = true;
@@ -74,6 +75,31 @@ const nextAuth = NextAuth({
             // On session update trigger
             if (trigger === 'update' && session) {
                 return { ...token, ...session };
+            }
+
+            // Keep mutable fields (role, plan, verification) FRESH from the DB so an
+            // admin role change or a direct DB edit takes effect within seconds — the
+            // JWT used to cache the sign-in role forever, requiring a re-login. We
+            // re-read at most every 10s to avoid a DB hit on every request.
+            if (token.id) {
+                const SYNC_INTERVAL_MS = 10_000;
+                const last = (token.lastSync as number) || 0;
+                if (Date.now() - last > SYNC_INTERVAL_MS) {
+                    try {
+                        const fresh = await prisma.user.findUnique({
+                            where: { id: token.id as string },
+                            select: { role: true, plan: true },
+                        });
+                        if (fresh) {
+                            token.role = fresh.role;
+                            token.plan = fresh.plan;
+                        }
+                        token.lastSync = Date.now();
+                    } catch (e) {
+                        // Never block auth on a DB hiccup — keep the existing token.
+                        console.error("[auth] jwt role refresh failed:", e);
+                    }
+                }
             }
 
             return token;

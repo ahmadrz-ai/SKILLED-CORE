@@ -31,7 +31,12 @@ export async function toggleUserRole(userId: string, currentRole: string) {
     try {
         await ensureAdmin();
 
-        const newRole = currentRole === 'CANDIDATE' ? 'RECRUITER' : 'CANDIDATE';
+        // Cycle through all assignable roles so ADMIN can be granted from the panel
+        // (it previously only flipped CANDIDATE↔RECRUITER, so ADMIN was unreachable
+        // and admins had to edit Neon directly).
+        const order = ['CANDIDATE', 'RECRUITER', 'ADMIN'];
+        const idx = order.indexOf((currentRole || '').toUpperCase());
+        const newRole = order[(idx + 1) % order.length];
 
         await prisma.user.update({
             where: { id: userId },
@@ -39,6 +44,8 @@ export async function toggleUserRole(userId: string, currentRole: string) {
         });
 
         revalidatePath('/admin/users');
+        // The target's session refreshes its role from the DB within ~10s
+        // (auth jwt sync), so the change takes effect without them re-logging in.
         return { success: true, message: `Role updated to ${newRole}` };
     } catch (error) {
         console.error("Failed to toggle role:", error);

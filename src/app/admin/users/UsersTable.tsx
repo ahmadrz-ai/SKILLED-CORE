@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { User } from '@prisma/client';
 import {
     Search, MoreHorizontal, Shield, ShieldAlert,
@@ -15,6 +16,7 @@ interface UsersTableProps {
 }
 
 export default function UsersTable({ users }: UsersTableProps) {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [sortField, setSortField] = useState<'identity' | 'role' | 'status' | 'ghost' | null>(null);
@@ -72,6 +74,9 @@ export default function UsersTable({ users }: UsersTableProps) {
 
         if (result.success) {
             toast.success(result.message);
+            // Re-render the server component with fresh DB data so the row's role
+            // updates immediately (the toast used to fire while the cell stayed stale).
+            router.refresh();
         } else {
             toast.error(result.message);
         }
