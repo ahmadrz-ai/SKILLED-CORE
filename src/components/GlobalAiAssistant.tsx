@@ -225,7 +225,7 @@ export function GlobalAiAssistant() {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-slate-800 p-1.5 border border-slate-700 flex items-center justify-center">
-                                    <Image src="/logo.png" alt="AI Assistant" width={24} height={24} className="w-full h-full object-contain" />
+                                    <Image src="/logo.png" alt="AI Assistant" width={24} height={24} unoptimized className="w-full h-full object-contain" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white text-sm force-white-text" style={{ color: '#ffffff' }}>Qodee</h3>
@@ -395,7 +395,7 @@ export function GlobalAiAssistant() {
                             exit={{ scale: 0.5, opacity: 0 }}
                             className="p-3 w-full h-full flex items-center justify-center"
                         >
-                            <Image src="/logo.png" alt="AI Assistant" width={32} height={32} className="w-full h-full object-contain drop-shadow-md" />
+                            <Image src="/logo.png" alt="AI Assistant" width={32} height={32} priority unoptimized className="w-full h-full object-contain drop-shadow-md" />
                         </motion.div>
                     )}
                 </AnimatePresence>

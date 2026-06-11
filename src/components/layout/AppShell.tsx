@@ -123,6 +123,8 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0, userId
               alt="SkilledCore"
               width={28}
               height={28}
+              priority
+              unoptimized
               className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
             />
             <div className="flex flex-col leading-none">

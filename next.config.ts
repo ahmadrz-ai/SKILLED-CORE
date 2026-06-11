@@ -68,12 +68,28 @@ const nextConfig: any = {
                             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                             "font-src 'self' https://fonts.gstatic.com",
                             "img-src 'self' data: blob: https: http:",
-                            "media-src 'self' blob:",
-                            "connect-src 'self' https://*.uploadthing.com https://utfs.io https://challenges.cloudflare.com https://*.cloudinary.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://tagassistant.google.com https://www.googletagmanager.com",
+                            "media-src 'self' blob: https://*.cloudinary.com",
+                            "connect-src 'self' https://*.uploadthing.com https://utfs.io https://challenges.cloudflare.com https://api.cloudinary.com https://*.cloudinary.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://tagassistant.google.com https://www.googletagmanager.com",
                             "frame-src https://challenges.cloudflare.com https://tagassistant.google.com https://www.googletagmanager.com",
                             "worker-src 'self' blob:",
                         ].join("; "),
                     },
+                ],
+            },
+            // PERF: long-lived immutable cache for static assets (logo, icons,
+            // fonts, images in /public). These are content-addressed or rarely
+            // change, so caching them aggressively makes repeat loads instant.
+            {
+                source: "/:path*(svg|jpg|jpeg|png|gif|webp|avif|ico|woff|woff2|ttf|otf)",
+                headers: [
+                    { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+                ],
+            },
+            // Next build output is content-hashed → safe to cache forever.
+            {
+                source: "/_next/static/:path*",
+                headers: [
+                    { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
                 ],
             },
         ];
