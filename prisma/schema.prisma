@@ -66,7 +66,13 @@ model User {
   marketingEmails             Boolean               @default(false)
   lastNotificationEmailSentAt DateTime?
   lastLogin                   DateTime?
-  credits                     Int                   @default(10)
+  credits                     Int                   @default(10) // LEGACY single-bucket — kept for back-compat; superseded by the 3 buckets below
+  // Three-bucket credit system (2026-06): plan buckets reset monthly; topUp is permanent.
+  resumeCredits               Int                   @default(3)  // AI Resume → Profile builder
+  interviewCredits            Int                   @default(3)  // AI Interview
+  generalCredits              Int                   @default(4)  // usable anywhere incl. accepting bookings
+  topUpCredits                Int                   @default(0)  // purchased top-ups — NEVER reset, spendable as general
+  creditsResetAt              DateTime?                          // start of the current monthly cycle; null = never granted
   plan                        String                @default("BASIC") // BASIC, PRO, ULTRA
   savedJobs                   SavedJob[]
   jobAlerts                   JobAlert[]
@@ -631,10 +637,14 @@ model Booking {
   recruiterId String
   candidateId String
   jobId       String?
-  status      String   @default("REQUESTED") // REQUESTED, CONFIRMED, DECLINED, CANCELLED, COMPLETED
+  status      String   @default("REQUESTED") // REQUESTED, CONFIRMED, DECLINED, CANCELLED, COMPLETED, EXPIRED
   message     String?
   proposedAt  DateTime
   meetingUrl  String?
+  // Candidate must accept before expiresAt (default createdAt + 7d, or recruiter-set);
+  // accepting costs 1 General credit. acceptCostCharged guards against double-charge.
+  expiresAt        DateTime?
+  acceptCostCharged Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
