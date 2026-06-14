@@ -8,6 +8,7 @@ import { getNotifications, markAllNotificationsRead, markNotificationRead } from
 import { useRouter } from "next/navigation";
 import { useBadges, NavBadge } from "@/components/realtime/RealtimeBadgeProvider";
 import { sanitizeRichHtml } from "@/lib/sanitize";
+import { getNotifMeta } from "@/lib/notificationTypes";
 
 export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
@@ -110,7 +111,10 @@ export function NotificationBell() {
                         <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                             {notifications.length > 0 ? (
                                 <div className="divide-y divide-border-subtle">
-                                    {notifications.map(notification => (
+                                    {notifications.map(notification => {
+                                        const meta = getNotifMeta(notification.type);
+                                        const Icon = meta.Icon;
+                                        return (
                                         <div
                                             key={notification.id}
                                             onClick={() => handleMarkAsRead(notification.id, notification.resourcePath)}
@@ -120,11 +124,10 @@ export function NotificationBell() {
                                             )}
                                         >
                                             <div className="flex gap-3">
-                                                <div className={cn(
-                                                    "mt-1 w-2 h-2 rounded-full flex-shrink-0",
-                                                    !notification.read ? "bg-sc-purple-500" : "bg-transparent"
-                                                )} />
-                                                <div className="space-y-1">
+                                                <div className="mt-0.5 w-8 h-8 rounded-full bg-bg-secondary-panel border border-border-default flex items-center justify-center flex-shrink-0">
+                                                    <Icon className="w-4 h-4" style={{ color: meta.color }} />
+                                                </div>
+                                                <div className="space-y-1 flex-1 min-w-0">
                                                     <p
                                                         className={cn(
                                                             "text-sm leading-snug",
@@ -136,9 +139,13 @@ export function NotificationBell() {
                                                         {new Date(notification.createdAt).toLocaleTimeString()}
                                                     </p>
                                                 </div>
+                                                {!notification.read && (
+                                                    <div className="mt-1 w-2 h-2 rounded-full bg-sc-purple-500 flex-shrink-0" />
+                                                )}
                                             </div>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="p-8 text-center text-text-tertiary text-xs">

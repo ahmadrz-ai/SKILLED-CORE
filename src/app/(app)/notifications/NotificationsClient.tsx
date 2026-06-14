@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Briefcase, MessageSquare, User, Heart, Star, MoreHorizontal, Check, CheckSquare } from "lucide-react";
+import { Bell, MoreHorizontal, CheckSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { markAsRead, markAllAsRead } from "@/app/actions/notifications";
 import { sanitizeRichHtml } from "@/lib/sanitize";
+import { getNotifMeta } from "@/lib/notificationTypes";
 import { toast } from "sonner";
 
 interface NotificationItem {
@@ -53,15 +53,11 @@ export function NotificationsClient({ initialData }: { initialData: Notification
         router.refresh();
     };
 
+    // Icon + accent come from the central registry so every type renders
+    // consistently here and in the topbar bell.
     const getIcon = (type: string) => {
-        switch (type) {
-            case 'CONNECTION_REQUEST': return <User className="w-4 h-4 text-[var(--sc-blue-700)]" />;
-            case 'JOB_ALERT': return <Briefcase className="w-4 h-4 text-[var(--sc-purple-650)]" />;
-            case 'POST_LIKE': return <Heart className="w-4 h-4 text-[var(--sc-red-600)] fill-[var(--sc-red-100)]" />;
-            case 'COMMENT': return <MessageSquare className="w-4 h-4 text-[var(--sc-green-700)]" />;
-            case 'SYSTEM': return <Bell className="w-4 h-4 text-[var(--sc-amber-700)]" />;
-            default: return <Star className="w-4 h-4 text-[var(--sc-gray-500)]" />;
-        }
+        const { Icon, color } = getNotifMeta(type);
+        return <Icon className="w-4 h-4" style={{ color }} />;
     };
 
     return (

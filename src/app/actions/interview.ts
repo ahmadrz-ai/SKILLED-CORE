@@ -400,6 +400,22 @@ export async function finalizeInterview(
                 badge = { name: created.name, score: created.depthScore };
             }
 
+            // Tell the candidate they earned (or upgraded) a verified badge.
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: interview.userId,
+                        type: "BADGE_EARNED",
+                        message: `🏅 You earned a <strong>${display}</strong> verified badge (${finalScore}/100). Congratulations!`,
+                        resourcePath: "/profile/me",
+                    },
+                });
+                const { notifyUser } = await import("@/lib/ably");
+                await notifyUser(interview.userId);
+            } catch (e) {
+                console.error("BADGE_EARNED notification failed (badge still issued):", e);
+            }
+
             // Alert recruiters whose saved searches match this newly-verified skill.
             try {
                 const { alertSavedSearchesForSkill } = await import("@/app/actions/savedSearches");
