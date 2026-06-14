@@ -24,6 +24,11 @@ const GEMINI_KEYS = [
   // de-duplicate so the same key isn't tried twice under two env names
   .filter((k, i, arr) => arr.indexOf(k) === i)
 
+/** First available Gemini/Google key (server-only). Used by the Live token route. */
+export function firstGeminiKey(): string | undefined {
+  return GEMINI_KEYS[0]
+}
+
 function isQuotaError(err: unknown): boolean {
   const msg = String((err as any)?.message ?? err).toLowerCase()
   const status = (err as any)?.status ?? (err as any)?.statusCode ?? 0

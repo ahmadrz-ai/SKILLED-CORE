@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ConfigurationModal } from "@/components/interview/ConfigurationModal";
 import { LiveAnalysisPanel, TelemetryData } from "@/components/interview/LiveAnalysisPanel";
-import { MessageSquarePlus, Code2, Mic, LogOut, FileText, Loader2, Layout } from "lucide-react";
+import { MessageSquarePlus, Code2, Mic, LogOut, FileText, Loader2, Layout, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -284,6 +284,13 @@ export default function InterviewPage() {
                             <button className="flex items-center gap-2 px-3 py-1 rounded-md text-text-secondary hover:text-text-heading hover:bg-bg-card/50 text-xs font-bold transition-all min-h-[44px] md:min-h-0 border-none bg-transparent cursor-pointer">
                                 <FileText className="w-3 h-3 text-text-tertiary" />
                                 Assessments
+                            </button>
+                        </Link>
+                        <Link href="/interview/live">
+                            <button className="flex items-center gap-2 px-3 py-1 rounded-md text-text-secondary hover:text-text-heading hover:bg-bg-card/50 text-xs font-bold transition-all min-h-[44px] md:min-h-0 border-none bg-transparent cursor-pointer">
+                                <Video className="w-3 h-3 text-text-tertiary" />
+                                Live Video
+                                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sc-purple-100 text-sc-purple-700">Beta</span>
                             </button>
                         </Link>
                     </div>
