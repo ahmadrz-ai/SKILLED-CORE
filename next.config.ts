@@ -52,10 +52,11 @@ const nextConfig: any = {
                         key: "Strict-Transport-Security",
                         value: "max-age=31536000; includeSubDomains; preload",
                     },
-                    // FIX-016: Limit browser API access (no location, no camera except interview)
+                    // FIX-016: Limit browser API access. camera+microphone allowed
+                    // for same-origin (self) — required by the live video interview.
                     {
                         key: "Permissions-Policy",
-                        value: "camera=(), microphone=(self), geolocation=(), payment=()",
+                        value: "camera=(self), microphone=(self), geolocation=(), payment=()",
                     },
                     // FIX-016: Content Security Policy
                     // NOTE: 'unsafe-inline' for styles is required by Tailwind CSS v4 + shadcn

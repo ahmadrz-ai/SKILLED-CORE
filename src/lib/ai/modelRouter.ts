@@ -94,6 +94,45 @@ export async function callGeminiInterview(
 }
 
 /**
+ * Multimodal Gemini turn for the FREE live interview: accepts Gemini-format
+ * `contents` (text and/or inline image parts) and rotates all free-tier keys.
+ * Used by the live video interview brain so a single key's quota can't kill it.
+ * Returns the model's text (throws only if every key fails).
+ */
+export async function callGeminiVision(
+  contents: any[],
+  systemInstruction: string,
+  temperature = 0.7,
+): Promise<string> {
+  if (GEMINI_KEYS.length === 0)
+    throw new Error('No Gemini API keys configured.')
+
+  let lastError: unknown = null
+  for (let i = 0; i < GEMINI_KEYS.length; i++) {
+    try {
+      const { GoogleGenAI } = await import('@google/genai')
+      const client = new GoogleGenAI({ apiKey: GEMINI_KEYS[i] })
+      const response = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: { temperature, maxOutputTokens: 400, systemInstruction },
+      })
+      const text =
+        (response as any)?.text ??
+        (response as any)?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join('') ??
+        ''
+      if (!text.trim()) throw new Error('Empty Gemini reply')
+      return text
+    } catch (err) {
+      lastError = err
+      console.warn(`[Gemini Vision] key ${i + 1} failed:`, String((err as any)?.message ?? err).slice(0, 80))
+      continue
+    }
+  }
+  throw new Error(`All Gemini keys exhausted. Last error: ${(lastError as Error)?.message}`)
+}
+
+/**
  * Interviewer generation with CROSS-PROVIDER fallback so the interview can never
  * "go dead" on a quota wall:
  *   1. Primary  → Gemini (callGeminiInterview, rotates all Gemini keys)

@@ -2,183 +2,210 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Mic, Video, VideoOff, MicOff, Loader2, PhoneOff, Radio, AlertTriangle, ArrowLeft, Volume2 } from "lucide-react";
-import { buildLiveConfig, INTERVIEWER_VOICE } from "@/lib/interview/liveConfig";
+import { toast } from "sonner";
+import {
+    Mic, Video, VideoOff, Loader2, PhoneOff, Radio, AlertTriangle, ArrowLeft,
+    Volume2, Send, SkipForward, Award, CheckCircle2, XCircle, Coins,
+} from "lucide-react";
+import { INTERVIEWER_VOICE } from "@/lib/interview/liveConfig";
+import { getInterviewerReply, type LiveTurn } from "@/app/actions/liveInterview";
+import { createInterviewSession, finalizeInterview } from "@/app/actions/interview";
 import { cn } from "@/lib/utils";
 
-type Status = "idle" | "connecting" | "live" | "ended" | "error";
+type Phase = "setup" | "connecting" | "live" | "grading" | "done" | "error";
 type Line = { who: "ai" | "you"; text: string };
 
-// ───────────────────────── audio helpers ─────────────────────────
-/** Float32 (any sample rate) → 16-bit PCM Int16 at 16 kHz (Gemini input format). */
-function downsampleToPCM16(input: Float32Array, inRate: number, outRate = 16000): Int16Array {
-    if (inRate === outRate) {
-        const out = new Int16Array(input.length);
-        for (let i = 0; i < input.length; i++) {
-            const s = Math.max(-1, Math.min(1, input[i]));
-            out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-        }
-        return out;
-    }
-    const ratio = inRate / outRate;
-    const newLen = Math.round(input.length / ratio);
-    const out = new Int16Array(newLen);
-    for (let i = 0; i < newLen; i++) {
-        const s = Math.max(-1, Math.min(1, input[Math.round(i * ratio)] || 0));
-        out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-    }
-    return out;
-}
-
-function bytesToBase64(buf: ArrayBufferLike): string {
-    const bytes = new Uint8Array(buf);
-    let binary = "";
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
-    }
-    return btoa(binary);
-}
-
-function base64ToBytes(b64: string): Uint8Array {
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-}
+const CLASSIFICATION = { category: "General", requiresCodingSandbox: false, coreCompetencies: [], toolsToAskAbout: [] };
 
 export default function LiveInterview() {
-    const [status, setStatus] = useState<Status>("idle");
+    const [phase, setPhase] = useState<Phase>("setup");
+    const [role, setRole] = useState("");
+    const [difficulty, setDifficulty] = useState(3);
     const [error, setError] = useState<string | null>(null);
+
     const [lines, setLines] = useState<Line[]>([]);
     const [aiSpeaking, setAiSpeaking] = useState(false);
+    const [listening, setListening] = useState(false);
+    const [thinking, setThinking] = useState(false);
+    const [answerDraft, setAnswerDraft] = useState("");
     const [elapsed, setElapsed] = useState(0);
     const [camOn, setCamOn] = useState(true);
-    const [micOn, setMicOn] = useState(true);
+    const [sttSupported, setSttSupported] = useState(true);
+
+    const [generalConfirm, setGeneralConfirm] = useState<{ remaining: number } | null>(null);
+    const [result, setResult] = useState<null | { passed: boolean; score: number; badge: { name: string; score: number } | null; feedback: string }>(null);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-    const sessionRef = useRef<any>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const inCtxRef = useRef<AudioContext | null>(null);
-    const outCtxRef = useRef<AudioContext | null>(null);
-    const processorRef = useRef<ScriptProcessorNode | null>(null);
-    const frameTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const nextStartRef = useRef(0);
-    const playingRef = useRef<AudioBufferSourceNode[]>([]);
-    const partialRef = useRef<{ you: string; ai: string }>({ you: "", ai: "" });
+    const recRef = useRef<any>(null);
+    const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+    const interviewIdRef = useRef<string | null>(null);
+    const linesRef = useRef<Line[]>([]);
+    const phaseRef = useRef<Phase>("setup");
+    const speakingRef = useRef(false);
+    const manualStopRef = useRef(false);
+    const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Auto-scroll captions
+    useEffect(() => { phaseRef.current = phase; }, [phase]);
+    useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines, thinking]);
+
+    // Pick the firmest available English voice for the slow/professional tone.
     useEffect(() => {
-        transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [lines]);
-
-    const stopPlayback = useCallback(() => {
-        playingRef.current.forEach((s) => {
-            try { s.stop(); } catch { /* already stopped */ }
-        });
-        playingRef.current = [];
-        nextStartRef.current = 0;
-        setAiSpeaking(false);
-    }, []);
-
-    const enqueueAudio = useCallback((b64: string) => {
-        const ctx = outCtxRef.current;
-        if (!ctx) return;
-        const bytes = base64ToBytes(b64);
-        if (bytes.byteLength < 2) return;
-        const int16 = new Int16Array(bytes.buffer, 0, Math.floor(bytes.byteLength / 2));
-        const float = new Float32Array(int16.length);
-        for (let i = 0; i < int16.length; i++) float[i] = int16[i] / 32768;
-
-        const buffer = ctx.createBuffer(1, float.length, 24000);
-        buffer.getChannelData(0).set(float);
-        const src = ctx.createBufferSource();
-        src.buffer = buffer;
-        src.connect(ctx.destination);
-
-        const now = ctx.currentTime;
-        const start = Math.max(nextStartRef.current, now);
-        src.start(start);
-        nextStartRef.current = start + buffer.duration;
-        setAiSpeaking(true);
-        playingRef.current.push(src);
-        src.onended = () => {
-            playingRef.current = playingRef.current.filter((s) => s !== src);
-            if (playingRef.current.length === 0) setAiSpeaking(false);
+        const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
+        if (!synth) return;
+        const pick = () => {
+            const vs = synth.getVoices();
+            if (!vs.length) return;
+            const en = vs.filter((v) => v.lang?.toLowerCase().startsWith("en"));
+            const male = en.find((v) => /male|david|guy|daniel|google uk english male|mark|fred|rishi|aaron|arthur/i.test(v.name));
+            voiceRef.current = male || en[0] || vs[0];
         };
+        pick();
+        synth.onvoiceschanged = pick;
+        return () => { try { synth.onvoiceschanged = null; } catch { /* noop */ } };
     }, []);
 
-    const handleMessage = useCallback((msg: any) => {
-        const sc = msg?.serverContent;
+    // Detect Web Speech API support.
+    useEffect(() => {
+        if (typeof window !== "undefined" && !((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) {
+            setSttSupported(false);
+        }
+    }, []);
 
-        // Barge-in: model was interrupted by the candidate → drop queued audio.
-        if (sc?.interrupted) stopPlayback();
+    const pushLine = useCallback((who: "ai" | "you", text: string) => {
+        setLines((prev) => {
+            const next = [...prev, { who, text }];
+            linesRef.current = next;
+            return next;
+        });
+    }, []);
 
-        // Output audio — prefer the SDK's concatenated `data`, else walk parts.
-        if (msg?.data) {
-            enqueueAudio(msg.data);
-        } else {
-            const parts = sc?.modelTurn?.parts;
-            if (Array.isArray(parts)) {
-                for (const p of parts) if (p?.inlineData?.data) enqueueAudio(p.inlineData.data);
+    const captureFrame = useCallback((): string | undefined => {
+        const v = videoRef.current, c = canvasRef.current;
+        if (!v || !c || v.videoWidth === 0 || !camOn) return undefined;
+        c.width = 320; c.height = 240;
+        const g = c.getContext("2d");
+        if (!g) return undefined;
+        g.drawImage(v, 0, 0, c.width, c.height);
+        return c.toDataURL("image/jpeg", 0.5).split(",")[1];
+    }, [camOn]);
+
+    // ─────────────── speaking (browser TTS, slow + firm) ───────────────
+    const speakThenListen = useCallback((text: string) => {
+        const synth = window.speechSynthesis;
+        try { synth.cancel(); } catch { /* noop */ }
+        const u = new SpeechSynthesisUtterance(text);
+        if (voiceRef.current) u.voice = voiceRef.current;
+        u.rate = 0.92;  // slow, deliberate
+        u.pitch = 0.9;  // slightly lower → firmer
+        u.volume = 1;
+        speakingRef.current = true;
+        setAiSpeaking(true);
+        const done = () => {
+            speakingRef.current = false;
+            setAiSpeaking(false);
+            if (phaseRef.current === "live") startListening();
+        };
+        u.onend = done;
+        u.onerror = done;
+        synth.speak(u);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // ─────────────── listening (Web Speech STT) ───────────────
+    const startListening = useCallback(() => {
+        if (phaseRef.current !== "live" || speakingRef.current) return;
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SR) { setSttSupported(false); return; }
+        try { recRef.current?.stop?.(); } catch { /* noop */ }
+
+        const rec = new SR();
+        rec.lang = "en-US";
+        rec.continuous = false;
+        rec.interimResults = true;
+        recRef.current = rec;
+        manualStopRef.current = false;
+        let finalText = "";
+
+        rec.onresult = (e: any) => {
+            let interim = "";
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const r = e.results[i];
+                if (r.isFinal) finalText += r[0].transcript;
+                else interim += r[0].transcript;
             }
+            setAnswerDraft((finalText + " " + interim).trim());
+        };
+        rec.onerror = () => { /* no-speech / aborted — handled in onend */ };
+        rec.onend = () => {
+            setListening(false);
+            const t = finalText.trim();
+            if (t) { submitAnswer(t); return; }
+            // Keep the mic open if the candidate just paused.
+            if (!manualStopRef.current && phaseRef.current === "live" && !speakingRef.current) {
+                startListening();
+            }
+        };
+
+        setListening(true);
+        try { rec.start(); } catch { /* already started */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const stopListening = useCallback(() => {
+        manualStopRef.current = true;
+        try { recRef.current?.stop?.(); } catch { /* noop */ }
+        setListening(false);
+    }, []);
+
+    // ─────────────── one interviewer turn ───────────────
+    const askInterviewer = useCallback(async () => {
+        setThinking(true);
+        const history: LiveTurn[] = linesRef.current.map((l) => ({ role: l.who === "ai" ? "model" : "user", text: l.text }));
+        const frame = captureFrame();
+        const res = await getInterviewerReply(history, role, frame);
+        setThinking(false);
+        if ("error" in res) {
+            toast.error(res.error);
+            if (phaseRef.current === "live") startListening();
+            return;
         }
+        pushLine("ai", res.text);
+        speakThenListen(res.text);
+    }, [role, captureFrame, pushLine, speakThenListen, startListening]);
 
-        // Streaming transcripts (deltas).
-        const youDelta = sc?.inputTranscription?.text;
-        const aiDelta = sc?.outputTranscription?.text;
-        if (youDelta) partialRef.current.you += youDelta;
-        if (aiDelta) partialRef.current.ai += aiDelta;
+    const submitAnswer = useCallback((text: string) => {
+        const t = text.trim();
+        if (!t) return;
+        stopListening();
+        setAnswerDraft("");
+        pushLine("you", t);
+        askInterviewer();
+    }, [stopListening, pushLine, askInterviewer]);
 
-        // Flush partials into the transcript when a turn completes.
-        if (sc?.turnComplete) {
-            const { you, ai } = partialRef.current;
-            setLines((prev) => {
-                const next = [...prev];
-                if (you.trim()) next.push({ who: "you", text: you.trim() });
-                if (ai.trim()) next.push({ who: "ai", text: ai.trim() });
-                return next;
-            });
-            partialRef.current = { you: "", ai: "" };
-        }
-    }, [enqueueAudio, stopPlayback]);
-
-    const cleanup = useCallback(() => {
-        try { frameTimerRef.current && clearInterval(frameTimerRef.current); } catch { /* noop */ }
-        try { tickTimerRef.current && clearInterval(tickTimerRef.current); } catch { /* noop */ }
-        try { processorRef.current?.disconnect(); } catch { /* noop */ }
-        try { sessionRef.current?.close?.(); } catch { /* noop */ }
-        try { inCtxRef.current?.close(); } catch { /* noop */ }
-        try { outCtxRef.current?.close(); } catch { /* noop */ }
+    // ─────────────── lifecycle ───────────────
+    const cleanupMedia = useCallback(() => {
+        try { tickRef.current && clearInterval(tickRef.current); } catch { /* noop */ }
+        try { recRef.current?.stop?.(); } catch { /* noop */ }
+        try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
         try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
-        stopPlayback();
-        sessionRef.current = null;
         streamRef.current = null;
-        inCtxRef.current = null;
-        outCtxRef.current = null;
-        processorRef.current = null;
-    }, [stopPlayback]);
+        speakingRef.current = false;
+    }, []);
 
-    useEffect(() => cleanup, [cleanup]);
+    useEffect(() => () => cleanupMedia(), [cleanupMedia]);
 
-    const endSession = useCallback(() => {
-        cleanup();
-        setStatus("ended");
-    }, [cleanup]);
-
-    const start = useCallback(async () => {
+    const beginSession = useCallback(async (confirmGeneral: boolean) => {
         setError(null);
-        setStatus("connecting");
-        setLines([]);
+        setPhase("connecting");
         try {
-            // 1) Camera + mic
+            // 1) Camera + mic first, so the permission prompt fires on the click.
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 640, height: 480 },
-                audio: { echoCancellation: true, noiseSuppression: true },
+                audio: true,
             });
             streamRef.current = stream;
             if (videoRef.current) {
@@ -186,121 +213,78 @@ export default function LiveInterview() {
                 await videoRef.current.play().catch(() => { /* autoplay quirk */ });
             }
 
-            // 2) Ephemeral token (real key stays server-side)
-            const res = await fetch("/api/interview/live-token", { method: "POST" });
-            if (!res.ok) {
-                throw new Error(res.status === 429 ? "You're starting sessions too quickly. Wait a moment." : "Could not start the live interview.");
+            // 2) Credit gate (reuses the text-interview economy).
+            const sess: any = await createInterviewSession(role.trim(), difficulty, CLASSIFICATION, confirmGeneral);
+            if (sess?.needsGeneralConfirm) {
+                cleanupMedia();
+                setGeneralConfirm({ remaining: sess.generalRemaining || 0 });
+                setPhase("setup");
+                return;
             }
-            const { token, model } = await res.json();
+            if (sess?.error || !sess?.id) {
+                cleanupMedia();
+                setError(sess?.error || "Could not start the interview.");
+                setPhase("error");
+                return;
+            }
+            interviewIdRef.current = sess.id;
+            if (sess.usedGeneral) toast.info("Used 1 General credit for this interview.");
 
-            // 3) Connect to Gemini Live with the ephemeral token
-            const { GoogleGenAI, Modality } = await import("@google/genai");
-            const ai = new GoogleGenAI({ apiKey: token, httpOptions: { apiVersion: "v1alpha" } });
-            const config: any = { ...buildLiveConfig(true), responseModalities: [Modality.AUDIO] };
-
-            // Output playback context (Gemini speaks at 24 kHz)
-            const OutCtx: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
-            outCtxRef.current = new OutCtx({ sampleRate: 24000 });
-            await outCtxRef.current.resume().catch(() => { /* noop */ });
-
-            const session = await ai.live.connect({
-                model,
-                config,
-                callbacks: {
-                    onopen: () => {
-                        setStatus("live");
-                        beginCapture(stream);
-                        // Kick the interviewer off so it greets the candidate first.
-                        try {
-                            session.sendClientContent({
-                                turns: [{ role: "user", parts: [{ text: "(The candidate just joined with their camera on. Greet them warmly but professionally and begin the interview.)" }] }],
-                                turnComplete: true,
-                            });
-                        } catch { /* noop */ }
-                    },
-                    onmessage: handleMessage,
-                    onerror: (e: any) => {
-                        console.error("Live error:", e);
-                        setError("The live connection dropped. Please try again.");
-                        setStatus("error");
-                        cleanup();
-                    },
-                    onclose: () => {
-                        if (status === "live") setStatus("ended");
-                    },
-                },
-            });
-            sessionRef.current = session;
-
-            // elapsed timer
-            tickTimerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+            // 3) Go live → Core opens the conversation.
+            setLines([]); linesRef.current = [];
+            setPhase("live");
+            phaseRef.current = "live";
+            tickRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+            askInterviewer();
         } catch (e: any) {
-            console.error(e);
+            cleanupMedia();
             const msg = e?.name === "NotAllowedError"
-                ? "Camera and microphone access is required for the live interview."
+                ? "Camera and microphone access is required. Please allow access and try again."
                 : (e?.message || "Could not start the live interview.");
             setError(msg);
-            setStatus("error");
-            cleanup();
+            setPhase("error");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [handleMessage, cleanup, status]);
+    }, [role, difficulty, cleanupMedia, askInterviewer]);
 
-    // Start streaming mic (downsampled PCM16) + 1 fps video frames to the session.
-    const beginCapture = (stream: MediaStream) => {
-        const InCtx: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
-        const ctx = new InCtx();
-        inCtxRef.current = ctx;
-        const source = ctx.createMediaStreamSource(stream);
-        const processor = ctx.createScriptProcessor(4096, 1, 1);
-        processorRef.current = processor;
+    const endAndGrade = useCallback(async () => {
+        setPhase("grading");
+        phaseRef.current = "grading";
+        cleanupMedia();
+        const id = interviewIdRef.current;
+        const transcript = linesRef.current.map((l) => ({ role: l.who === "ai" ? "assistant" : "user", content: l.text }));
+        if (!id) { setPhase("done"); return; }
+        try {
+            const res: any = await finalizeInterview(id, transcript, elapsed, false);
+            if (res?.error) { toast.error(res.error); setPhase("done"); return; }
+            setResult({
+                passed: !!res.passed,
+                score: res?.data?.score ?? 0,
+                badge: res?.badge ?? null,
+                feedback: res?.data?.feedback ?? "",
+            });
+            setPhase("done");
+        } catch {
+            toast.error("Grading failed — your transcript is safe.");
+            setPhase("done");
+        }
+    }, [cleanupMedia, elapsed]);
 
-        processor.onaudioprocess = (ev) => {
-            if (!sessionRef.current || !micOn) return;
-            const input = ev.inputBuffer.getChannelData(0);
-            const pcm = downsampleToPCM16(input, ctx.sampleRate, 16000);
-            try {
-                sessionRef.current.sendRealtimeInput({
-                    audio: { data: bytesToBase64(pcm.buffer), mimeType: "audio/pcm;rate=16000" },
-                });
-            } catch { /* session closing */ }
-        };
-
-        // Route through a muted gain so the processor fires without echoing the mic.
-        const mute = ctx.createGain();
-        mute.gain.value = 0;
-        source.connect(processor);
-        processor.connect(mute);
-        mute.connect(ctx.destination);
-
-        // Vision: one frame per second keeps bandwidth low (Gemini caps at ~1 fps).
-        frameTimerRef.current = setInterval(() => {
-            const v = videoRef.current, c = canvasRef.current;
-            if (!v || !c || !sessionRef.current || !camOn || v.videoWidth === 0) return;
-            c.width = 320; c.height = 240;
-            const g = c.getContext("2d");
-            if (!g) return;
-            g.drawImage(v, 0, 0, c.width, c.height);
-            const b64 = c.toDataURL("image/jpeg", 0.6).split(",")[1];
-            if (b64) {
-                try {
-                    sessionRef.current.sendRealtimeInput({ video: { data: b64, mimeType: "image/jpeg" } });
-                } catch { /* noop */ }
-            }
-        }, 1000);
+    const onStartClick = () => {
+        if (!role.trim()) { toast.error("Tell Core which role or skill to assess."); return; }
+        beginSession(false);
     };
 
-    const toggleMic = () => {
-        const tracks = streamRef.current?.getAudioTracks() || [];
-        const next = !micOn;
-        tracks.forEach((t) => (t.enabled = next));
-        setMicOn(next);
-    };
     const toggleCam = () => {
         const tracks = streamRef.current?.getVideoTracks() || [];
         const next = !camOn;
         tracks.forEach((t) => (t.enabled = next));
         setCamOn(next);
+    };
+    const skipSpeaking = () => {
+        try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+        speakingRef.current = false;
+        setAiSpeaking(false);
+        startListening();
     };
 
     const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
@@ -319,7 +303,7 @@ export default function LiveInterview() {
                         <p className="text-xs text-text-secondary mt-0.5">Face-to-face with Core, your AI interviewer — voice &amp; vision, in real time.</p>
                     </div>
                 </div>
-                {status === "live" && (
+                {phase === "live" && (
                     <div className="flex items-center gap-2 text-xs font-bold font-mono">
                         <span className="flex items-center gap-1.5 text-sc-red-600"><Radio className="w-3.5 h-3.5 animate-pulse" /> LIVE</span>
                         <span className="text-text-tertiary">{mmss}</span>
@@ -327,90 +311,185 @@ export default function LiveInterview() {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-                {/* Video / stage */}
-                <div className="lg:col-span-3 space-y-4">
-                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-sc-gray-900 border border-border-default shadow-sc-card">
-                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                        <video ref={videoRef} muted playsInline className={cn("w-full h-full object-cover", !camOn && "opacity-0")} />
-                        {!camOn && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-sc-gray-400 gap-2">
-                                <VideoOff className="w-8 h-8" /> <span className="text-xs font-mono">Camera off</span>
-                            </div>
-                        )}
-                        {/* AI presence pill */}
-                        <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-3 py-1.5">
-                            <span className={cn("w-2 h-2 rounded-full", aiSpeaking ? "bg-verified-gold animate-pulse" : "bg-sc-gray-400")} />
-                            <span className="text-[11px] font-bold text-white tracking-wide">Core {aiSpeaking ? "speaking…" : "listening"}</span>
-                            <Volume2 className={cn("w-3.5 h-3.5", aiSpeaking ? "text-verified-gold" : "text-sc-gray-400")} />
-                        </div>
-                        <canvas ref={canvasRef} className="hidden" />
+            {/* SETUP */}
+            {phase === "setup" && (
+                <div className="max-w-lg mx-auto rounded-2xl border border-border-default bg-bg-card shadow-sc-card p-6 space-y-5">
+                    <div className="space-y-1">
+                        <h2 className="text-base font-bold text-text-heading">Set up your interview</h2>
+                        <p className="text-sm text-text-secondary">Core will assess you for the role or skill below and, if you pass, issue a verified badge for it.</p>
                     </div>
-
-                    {/* Controls */}
-                    <div className="flex items-center justify-center gap-3">
-                        {status === "idle" || status === "ended" || status === "error" ? (
-                            <button onClick={start}
-                                className="inline-flex items-center gap-2 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold text-sm px-6 py-3 transition-colors shadow-sc-card">
-                                <Video className="w-4 h-4" /> {status === "ended" || status === "error" ? "Start again" : "Start live interview"}
-                            </button>
-                        ) : status === "connecting" ? (
-                            <div className="inline-flex items-center gap-2 text-sm text-text-secondary font-mono"><Loader2 className="w-4 h-4 animate-spin" /> Connecting to Core…</div>
-                        ) : (
-                            <>
-                                <button onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}
-                                    className={cn("inline-flex items-center justify-center w-12 h-12 rounded-full border transition-colors", micOn ? "bg-bg-card border-border-default text-text-heading hover:bg-sc-gray-50" : "bg-sc-red-100 border-sc-red-200 text-sc-red-700")}>
-                                    {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                                </button>
-                                <button onClick={toggleCam} title={camOn ? "Turn camera off" : "Turn camera on"}
-                                    className={cn("inline-flex items-center justify-center w-12 h-12 rounded-full border transition-colors", camOn ? "bg-bg-card border-border-default text-text-heading hover:bg-sc-gray-50" : "bg-sc-red-100 border-sc-red-200 text-sc-red-700")}>
-                                    {camOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                                </button>
-                                <button onClick={endSession} title="End interview"
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-sc-red-600 hover:bg-sc-red-700 text-white font-bold text-sm px-5 h-12 transition-colors">
-                                    <PhoneOff className="w-4 h-4" /> End
-                                </button>
-                            </>
-                        )}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Role or skill</label>
+                        <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. React Frontend Developer, Prompt Engineering"
+                            className="w-full rounded-xl border border-border-default bg-bg-secondary-panel px-4 py-2.5 text-sm text-text-heading outline-none focus:border-sc-purple-400" />
                     </div>
-
-                    {error && (
-                        <div className="flex items-start gap-2 rounded-xl bg-sc-red-50 border border-sc-red-200 text-sc-red-700 text-sm px-4 py-3">
-                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{error}</span>
-                        </div>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Difficulty</label>
+                        <select value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))}
+                            className="w-full rounded-xl border border-border-default bg-bg-secondary-panel px-4 py-2.5 text-sm text-text-heading outline-none focus:border-sc-purple-400">
+                            <option value={1}>1 — Intro</option>
+                            <option value={2}>2 — Junior</option>
+                            <option value={3}>3 — Mid</option>
+                            <option value={4}>4 — Senior</option>
+                            <option value={5}>5 — Expert</option>
+                        </select>
+                    </div>
+                    {!sttSupported && (
+                        <p className="text-[11px] text-sc-amber-700 bg-sc-amber-100 rounded-lg px-3 py-2">
+                            Your browser doesn&apos;t support live speech input — you can still answer by typing. For voice, use Chrome.
+                        </p>
                     )}
+                    <button onClick={onStartClick}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-bold text-sm px-6 py-3 transition-colors shadow-sc-card">
+                        <Video className="w-4 h-4" /> Start live interview
+                    </button>
+                    <p className="flex items-center gap-1 text-[11px] text-text-tertiary"><Coins className="w-3 h-3" /> Uses 1 AI Interview credit (or 1 General if those run out).</p>
                 </div>
+            )}
 
-                {/* Transcript */}
-                <div className="lg:col-span-2 flex flex-col rounded-2xl border border-border-default bg-bg-card shadow-sc-card overflow-hidden min-h-[360px] max-h-[70vh]">
-                    <div className="px-4 py-3 border-b border-border-default bg-bg-secondary-panel">
-                        <h2 className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Live transcript</h2>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                        {lines.length === 0 && status !== "live" && (
-                            <p className="text-sm text-text-secondary">
-                                You&apos;ll meet <strong className="text-text-heading">Core</strong>, a senior AI interviewer with a calm, professional manner. It speaks with a {INTERVIEWER_VOICE === "Charon" ? "firm, measured" : "natural"} voice, watches your camera for engagement, and adapts to how you sound. Have your headphones on for the best experience.
-                            </p>
-                        )}
-                        {lines.length === 0 && status === "live" && (
-                            <p className="text-sm text-text-secondary font-mono animate-pulse">Core is preparing your first question…</p>
-                        )}
-                        {lines.map((l, i) => (
-                            <div key={i} className={cn("text-sm leading-relaxed", l.who === "ai" ? "" : "text-right")}>
-                                <span className={cn("text-[10px] font-bold uppercase tracking-wider", l.who === "ai" ? "text-sc-purple-600" : "text-text-tertiary")}>
-                                    {l.who === "ai" ? "Core" : "You"}
+            {/* LIVE / CONNECTING / GRADING / DONE */}
+            {phase !== "setup" && (
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                    {/* Stage */}
+                    <div className="lg:col-span-3 space-y-4">
+                        <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-sc-gray-900 border border-border-default shadow-sc-card">
+                            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                            <video ref={videoRef} muted playsInline className={cn("w-full h-full object-cover", !camOn && "opacity-0")} />
+                            {!camOn && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-sc-gray-400 gap-2">
+                                    <VideoOff className="w-8 h-8" /> <span className="text-xs font-mono">Camera off</span>
+                                </div>
+                            )}
+                            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-3 py-1.5">
+                                <span className={cn("w-2 h-2 rounded-full", aiSpeaking ? "bg-verified-gold animate-pulse" : thinking ? "bg-sc-amber-400 animate-pulse" : listening ? "bg-sc-green-400 animate-pulse" : "bg-sc-gray-400")} />
+                                <span className="text-[11px] font-bold text-white tracking-wide">
+                                    Core {aiSpeaking ? "speaking…" : thinking ? "thinking…" : listening ? "listening…" : "ready"}
                                 </span>
-                                <p className={cn("mt-0.5 inline-block rounded-xl px-3 py-2", l.who === "ai" ? "bg-sc-purple-50 text-text-body" : "bg-sc-gray-100 text-text-body")}>{l.text}</p>
+                                <Volume2 className={cn("w-3.5 h-3.5", aiSpeaking ? "text-verified-gold" : "text-sc-gray-400")} />
                             </div>
-                        ))}
-                        <div ref={transcriptEndRef} />
+                            <canvas ref={canvasRef} className="hidden" />
+                        </div>
+
+                        {phase === "connecting" && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-text-secondary font-mono"><Loader2 className="w-4 h-4 animate-spin" /> Starting your session…</div>
+                        )}
+
+                        {phase === "live" && (
+                            <div className="space-y-3">
+                                {/* Answer box (STT fills it; you can also type) */}
+                                <div className="flex items-end gap-2">
+                                    <textarea
+                                        value={answerDraft}
+                                        onChange={(e) => setAnswerDraft(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitAnswer(answerDraft); } }}
+                                        rows={2}
+                                        placeholder={listening ? "Listening… speak your answer (or type)" : "Type your answer, or click the mic"}
+                                        className="flex-1 resize-none rounded-xl border border-border-default bg-bg-card px-3 py-2 text-sm text-text-heading outline-none focus:border-sc-purple-400"
+                                    />
+                                    <button onClick={() => submitAnswer(answerDraft)} disabled={!answerDraft.trim()}
+                                        className="inline-flex items-center gap-1.5 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 disabled:opacity-50 text-white font-bold text-sm px-4 py-2.5 h-[42px]">
+                                        <Send className="w-4 h-4" /> Send
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-center gap-3">
+                                    {!listening && !aiSpeaking && (
+                                        <button onClick={startListening} disabled={!sttSupported}
+                                            className="inline-flex items-center justify-center w-12 h-12 rounded-full border bg-bg-card border-border-default text-text-heading hover:bg-sc-gray-50 disabled:opacity-50" title="Listen">
+                                            <Mic className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                    {aiSpeaking && (
+                                        <button onClick={skipSpeaking} className="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-bg-card px-4 h-12 text-sm font-semibold text-text-heading hover:bg-sc-gray-50" title="Skip to my answer">
+                                            <SkipForward className="w-4 h-4" /> Skip
+                                        </button>
+                                    )}
+                                    <button onClick={toggleCam} className={cn("inline-flex items-center justify-center w-12 h-12 rounded-full border transition-colors", camOn ? "bg-bg-card border-border-default text-text-heading hover:bg-sc-gray-50" : "bg-sc-red-100 border-sc-red-200 text-sc-red-700")} title={camOn ? "Camera off" : "Camera on"}>
+                                        {camOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                                    </button>
+                                    <button onClick={endAndGrade} className="inline-flex items-center justify-center gap-2 rounded-full bg-sc-red-600 hover:bg-sc-red-700 text-white font-bold text-sm px-5 h-12 transition-colors">
+                                        <PhoneOff className="w-4 h-4" /> End &amp; grade
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {phase === "grading" && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-text-secondary font-mono"><Loader2 className="w-4 h-4 animate-spin" /> Core is grading your interview…</div>
+                        )}
+
+                        {/* RESULT */}
+                        {phase === "done" && (
+                            <div className={cn("rounded-2xl border p-5 space-y-3", result?.passed ? "bg-verified-gold-tint border-verified-gold-border" : "bg-bg-card border-border-default")}>
+                                <div className="flex items-center gap-2">
+                                    {result?.passed ? <CheckCircle2 className="w-6 h-6 text-verified-gold" /> : <XCircle className="w-6 h-6 text-text-tertiary" />}
+                                    <h2 className="text-lg font-bold text-text-heading">{result?.passed ? "Passed" : "Not passed yet"} — {result?.score ?? 0}/100</h2>
+                                </div>
+                                {result?.badge && (
+                                    <div className="flex items-center gap-2 text-sm font-bold text-verified-gold">
+                                        <Award className="w-4 h-4" /> Verified badge issued: {result.badge.name} ({result.badge.score}/100)
+                                    </div>
+                                )}
+                                {result?.feedback && <p className="text-sm text-text-secondary leading-relaxed">{result.feedback}</p>}
+                                <div className="flex gap-3 pt-1">
+                                    <button onClick={() => { setResult(null); setLines([]); linesRef.current = []; setElapsed(0); interviewIdRef.current = null; setPhase("setup"); }}
+                                        className="rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold text-sm px-4 py-2">New interview</button>
+                                    <Link href="/profile/me" className="rounded-xl border border-border-default bg-bg-card text-text-heading font-semibold text-sm px-4 py-2">View profile</Link>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && phase === "error" && (
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-2 rounded-xl bg-sc-red-50 border border-sc-red-200 text-sc-red-700 text-sm px-4 py-3">
+                                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{error}</span>
+                                </div>
+                                <button onClick={() => setPhase("setup")} className="rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold text-sm px-4 py-2">Back to setup</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Transcript */}
+                    <div className="lg:col-span-2 flex flex-col rounded-2xl border border-border-default bg-bg-card shadow-sc-card overflow-hidden min-h-[360px] max-h-[70vh]">
+                        <div className="px-4 py-3 border-b border-border-default bg-bg-secondary-panel">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Live transcript</h2>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {lines.length === 0 && (
+                                <p className="text-sm text-text-secondary font-mono animate-pulse">Core is preparing your first question…</p>
+                            )}
+                            {lines.map((l, i) => (
+                                <div key={i} className={cn("text-sm leading-relaxed", l.who === "ai" ? "" : "text-right")}>
+                                    <span className={cn("text-[10px] font-bold uppercase tracking-wider", l.who === "ai" ? "text-sc-purple-600" : "text-text-tertiary")}>{l.who === "ai" ? "Core" : "You"}</span>
+                                    <p className={cn("mt-0.5 inline-block rounded-xl px-3 py-2", l.who === "ai" ? "bg-sc-purple-50 text-text-body" : "bg-sc-gray-100 text-text-body")}>{l.text}</p>
+                                </div>
+                            ))}
+                            {thinking && <p className="text-xs text-text-tertiary font-mono animate-pulse">Core is thinking…</p>}
+                            <div ref={transcriptEndRef} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Consent / privacy note */}
+            {/* "Use a General credit?" confirm */}
+            {generalConfirm && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-bg-overlay backdrop-blur-md p-4">
+                    <div className="bg-bg-modal border border-border-modal p-6 rounded-2xl shadow-sc-modal max-w-md w-full space-y-4 text-center">
+                        <div className="w-12 h-12 rounded-full bg-sc-purple-50 border border-sc-purple-200 flex items-center justify-center mx-auto"><Coins className="w-6 h-6 text-text-brand" /></div>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-text-heading">Out of AI Interview credits</h3>
+                            <p className="text-sm text-text-secondary leading-relaxed">This interview will use <strong className="text-text-heading">1 General credit</strong> instead. You have <strong className="text-text-heading">{generalConfirm.remaining}</strong> left.</p>
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                            <button onClick={() => setGeneralConfirm(null)} className="flex-1 h-10 rounded-xl border border-border-default bg-bg-card text-text-body font-semibold text-sm hover:bg-bg-sidebar-hover">Cancel</button>
+                            <button onClick={() => { setGeneralConfirm(null); beginSession(true); }} className="flex-1 h-10 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold text-sm">Use 1 General credit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Privacy note */}
             <p className="text-[11px] text-text-tertiary leading-relaxed max-w-3xl">
-                By starting, you consent to your camera and microphone being streamed to the AI interviewer for the duration of the session. The camera is used only to gauge presence and engagement — never to judge appearance. This is a Beta feature.
+                By starting, you consent to your camera and microphone being used for the session. The camera is used only to gauge presence and engagement — never to judge appearance. Speech is processed in your browser. Core speaks with a {INTERVIEWER_VOICE === "Charon" ? "firm, measured" : "natural"} voice; headphones recommended. This is a Beta feature.
             </p>
         </div>
     );
