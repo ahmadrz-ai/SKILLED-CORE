@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarClock, Check, X, Video, Loader2, CalendarDays, Clock, Coins } from "lucide-react";
 import { toast } from "sonner";
-import { getMyBookings, respondToBooking, cancelBooking } from "@/app/actions/bookings";
+import { getMyBookings, respondToBooking, cancelBooking, markHired } from "@/app/actions/bookings";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -14,6 +14,7 @@ const STATUS_STYLE: Record<string, string> = {
     CANCELLED: "bg-sc-gray-150 text-sc-gray-600",
     COMPLETED: "bg-sc-purple-100 text-sc-purple-700",
     EXPIRED: "bg-sc-gray-150 text-sc-gray-600",
+    HIRED: "bg-verified-gold-tint text-verified-gold border border-verified-gold-border",
 };
 
 /** Live "time left to accept" clock with a hover tooltip (days-hours-mins-secs). */
@@ -89,6 +90,14 @@ export default function BookingsPage() {
         const res = await cancelBooking(id);
         setBusy(null);
         if (res.success) { toast.success("Booking cancelled"); load(); }
+        else toast.error(res.message || "Action failed");
+    };
+
+    const hire = async (id: string) => {
+        setBusy(id);
+        const res = await markHired(id);
+        setBusy(null);
+        if (res.success) { toast.success("Marked as hired 🎉"); load(); }
         else toast.error(res.message || "Action failed");
     };
 
@@ -206,7 +215,13 @@ export default function BookingsPage() {
                                 {b.message && <p className="mt-2 text-sm text-text-secondary bg-sc-gray-50 rounded-lg p-3">{b.message}</p>}
                                 <MeetingRow b={b} />
                                 {(b.status === "REQUESTED" || b.status === "CONFIRMED") && (
-                                    <div className="mt-4">
+                                    <div className="mt-4 flex items-center gap-4">
+                                        {b.status === "CONFIRMED" && (
+                                            <button onClick={() => hire(b.id)} disabled={busy === b.id}
+                                                className="inline-flex items-center gap-1.5 rounded-lg bg-verified-gold-tint border border-verified-gold-border px-3 py-1.5 text-sm font-bold text-verified-gold hover:bg-verified-gold-tint/70 transition-colors disabled:opacity-60">
+                                                {busy === b.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "✓ Mark as hired"}
+                                            </button>
+                                        )}
                                         <button onClick={() => cancel(b.id)} disabled={busy === b.id}
                                             className="text-sm font-semibold text-text-secondary hover:text-sc-red-600 transition-colors disabled:opacity-60">
                                             {b.status === "REQUESTED" ? "Cancel request" : "Cancel interview"}

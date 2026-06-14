@@ -652,7 +652,8 @@ model Booking {
   recruiterId String
   candidateId String
   jobId       String?
-  status      String   @default("REQUESTED") // REQUESTED, CONFIRMED, DECLINED, CANCELLED, COMPLETED, EXPIRED
+  status      String   @default("REQUESTED") // REQUESTED, CONFIRMED, DECLINED, CANCELLED, COMPLETED, EXPIRED, HIRED
+  hiredAt     DateTime?                        // set when the recruiter marks the candidate hired (outcome loop)
   message     String?
   proposedAt  DateTime
   meetingUrl  String?

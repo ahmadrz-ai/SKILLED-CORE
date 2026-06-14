@@ -240,6 +240,55 @@ export async function respondToBooking(
     }
 }
 
+/** Recruiter marks a confirmed interview as a successful hire (outcome loop). */
+export async function markHired(bookingId: string): Promise<{ success: boolean; message?: string }> {
+    const caller = await getCaller();
+    if (!caller) return { success: false, message: "Unauthorized" };
+
+    try {
+        const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+        if (!booking) return { success: false, message: "Booking not found." };
+        if (booking.recruiterId !== caller.id && caller.role !== "ADMIN") {
+            return { success: false, message: "Only the recruiter can mark this hire." };
+        }
+        if (booking.status !== "CONFIRMED") {
+            return { success: false, message: "You can only mark a confirmed interview as hired." };
+        }
+
+        await prisma.booking.update({ where: { id: bookingId }, data: { status: "HIRED", hiredAt: new Date() } });
+
+        try {
+            await prisma.notification.create({
+                data: {
+                    userId: booking.candidateId,
+                    type: "HIRED",
+                    message: `🎉 <strong>${caller.name || "A recruiter"}</strong> marked you as hired. Congratulations!`,
+                    actorId: caller.id,
+                    resourcePath: "/bookings",
+                },
+            });
+        } catch (e) {
+            console.error("Hire notification failed:", e);
+        }
+        await notifyUser(booking.candidateId);
+
+        revalidatePath("/bookings");
+        return { success: true };
+    } catch (error) {
+        console.error("markHired failed:", error);
+        return { success: false, message: "Could not update the hire status." };
+    }
+}
+
+/** Public social-proof counter: total successful hires made via SkilledCore. */
+export async function getHireCount(): Promise<number> {
+    try {
+        return await prisma.booking.count({ where: { status: "HIRED" } });
+    } catch {
+        return 0;
+    }
+}
+
 /** Either party cancels a booking (recruiter cancels a request, or anyone cancels a confirmed one). */
 export async function cancelBooking(bookingId: string): Promise<{ success: boolean; message?: string }> {
     const caller = await getCaller();

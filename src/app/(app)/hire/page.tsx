@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getCandidates } from "./actions";
+import { getHireCount } from "@/app/actions/bookings";
 import SearchClient from "./SearchClient";
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,7 @@ export default async function HirePage() {
         redirect('/register?role=recruiter&redirect=/hire');
     }
 
-    const candidates = await getCandidates();
+    const [candidates, hireCount] = await Promise.all([getCandidates(), getHireCount()]);
 
     return (
         <Suspense fallback={
@@ -24,7 +25,7 @@ export default async function HirePage() {
                 </div>
             </div>
         }>
-            <SearchClient initialCandidates={candidates} />
+            <SearchClient initialCandidates={candidates} hireCount={hireCount} />
         </Suspense>
     );
 }

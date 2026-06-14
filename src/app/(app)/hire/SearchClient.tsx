@@ -14,9 +14,10 @@ import type { Candidate } from "@/app/(app)/hire/actions";
 
 interface SearchClientProps {
     initialCandidates: Candidate[];
+    hireCount?: number;
 }
 
-export default function SearchClient({ initialCandidates }: SearchClientProps) {
+export default function SearchClient({ initialCandidates, hireCount = 0 }: SearchClientProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchStatus, setSearchStatus] = useState("");
@@ -258,6 +259,13 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                             </Button>
                         </div>
                     </div>
+
+                    {/* Social proof: successful hires made through SkilledCore */}
+                    {hireCount > 0 && (
+                        <p className="mt-2 ml-1 text-xs font-medium text-[var(--sc-green-700)]">
+                            ✓ {hireCount.toLocaleString()} successful hire{hireCount === 1 ? "" : "s"} made via SkilledCore
+                        </p>
+                    )}
 
                     {/* Example searches suggestions below search bar */}
                     {!searchQuery && !hasSearched && (
