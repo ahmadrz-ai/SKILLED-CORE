@@ -3,7 +3,23 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getCreditState, spendCredit, type CreditState } from "@/lib/credits";
+import { getCreditState, spendCredit, getSpendIntent, type CreditState } from "@/lib/credits";
+
+/** Read-only: will an AI-Resume build use a Resume credit, a General one, or none? */
+export async function getResumeSpendIntent() {
+    const session = await auth();
+    if (!session?.user?.id) return { willUse: "none" as const, category: 0, general: 0 };
+    return getSpendIntent(session.user.id, "resume");
+}
+
+/** Charge one Resume credit (Resume → General → topUp). Call after a successful build. */
+export async function consumeResumeCredit() {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+    const res = await spendCredit(session.user.id, "resume", { allowGeneralFallback: true });
+    if (res.success) revalidatePath("/credits");
+    return { success: res.success, usedGeneral: res.used !== "resume" };
+}
 
 /** Total spendable credits (sum of all buckets) — used by the topbar. */
 export async function getCredits() {

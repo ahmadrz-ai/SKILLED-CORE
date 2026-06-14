@@ -229,6 +229,8 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     
     // Parsing states
     const [step, setStep] = useState<'choice' | 'upload' | 'parsing' | 'review'>('choice');
+    // "Use a General credit?" confirm when AI Resume credits are exhausted.
+    const [resumeConfirm, setResumeConfirm] = useState<null | { remaining: number; proceed: () => void }>(null);
     const [progressText, setProgressText] = useState('Initializing scan...');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [fileToUpload, setFileToUpload] = useState<File | null>(null);
@@ -375,8 +377,31 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
         return <Globe className="w-5 h-5 text-white" style={{ color: '#FFFFFF' }} />;
     };
 
+    // Credit gate shared by both build paths: peek the intent, and if it would
+    // dip into General, pop the confirm first. Returns false to halt the build.
+    const gateResumeCredit = async (confirmGeneral: boolean, retry: () => void): Promise<boolean> => {
+        const { getResumeSpendIntent } = await import('@/app/actions/credits');
+        const intent = await getResumeSpendIntent();
+        if (intent.willUse === 'none') {
+            setParseError("You're out of credits. Top up to build your profile.");
+            return false;
+        }
+        if (intent.willUse === 'general' && !confirmGeneral) {
+            setResumeConfirm({ remaining: intent.general, proceed: retry });
+            return false;
+        }
+        return true;
+    };
+
+    const chargeResume = async () => {
+        const { consumeResumeCredit } = await import('@/app/actions/credits');
+        const res = await consumeResumeCredit();
+        if (res.usedGeneral) toast.info("Used 1 General credit for this profile build.");
+    };
+
     // Parse with AI directly from uploaded File
-    const handleParseFile = async (file: File) => {
+    const handleParseFile = async (file: File, confirmGeneral: boolean = false) => {
+        if (!(await gateResumeCredit(confirmGeneral, () => handleParseFile(file, true)))) return;
         try {
             setParseError(null);
             setIsAnalyzing(true);
@@ -400,6 +425,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             }
             
             setProgressText("Calibrating structured items...");
+            await chargeResume();
             loadParsedData(data);
             setStep('review');
         } catch (error: any) {
@@ -421,9 +447,10 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
     };
 
     // Option A: Parse existing resumeUrl from database
-    const handleParseExisting = async () => {
+    const handleParseExisting = async (confirmGeneral: boolean = false) => {
         if (!user?.resumeUrl) return;
-        
+        if (!(await gateResumeCredit(confirmGeneral, () => handleParseExisting(true)))) return;
+
         try {
             setParseError(null);
             setIsAnalyzing(true);
@@ -443,6 +470,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
             }
             
             setProgressText("Refining profile data layers...");
+            await chargeResume();
             // This route wraps the payload as { success, aiData }. Unwrap it so the
             // profile fields actually populate (previously loaded an empty profile).
             loadParsedData(resData.aiData || resData);
@@ -978,6 +1006,22 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
 
     return (
         <>
+            {/* "Use a General credit?" confirm — AI Resume credits exhausted */}
+            {resumeConfirm && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--bg-overlay)] backdrop-blur-md p-4">
+                    <div className="bg-[var(--bg-modal)] border border-[var(--border-modal)] p-6 rounded-2xl shadow-[var(--shadow-modal)] max-w-md w-full space-y-4 text-center">
+                        <h3 className="text-lg font-bold text-[var(--text-heading)]">Out of AI Resume credits</h3>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                            This build will use <strong className="text-[var(--text-heading)]">1 General credit</strong>.
+                            You have <strong className="text-[var(--text-heading)]">{resumeConfirm.remaining}</strong> left.
+                        </p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setResumeConfirm(null)} className="flex-1 h-10 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-body)] font-semibold text-sm hover:bg-[var(--bg-sidebar-hover)]">Cancel</button>
+                            <button onClick={() => { const p = resumeConfirm.proceed; setResumeConfirm(null); p(); }} className="flex-1 h-10 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold text-sm">Use 1 General credit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <Dialog open={isOpen} onOpenChange={() => !isAnalyzing && onClose()}>
                 <DialogContent className="max-w-4xl max-h-[92vh] overflow-hidden flex flex-col p-6 rounded-xl border border-[var(--border-modal)] bg-[var(--bg-modal)] text-[var(--text-body)] shadow-[var(--shadow-modal)] font-sans">
                     <DialogHeader className="border-b border-[var(--border-subtle)] pb-4">
@@ -1018,7 +1062,7 @@ export function ResumeProfileBuilder({ user, isOpen, onClose, context }: ResumeP
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl px-4">
                                 <button
-                                    onClick={handleParseExisting}
+                                    onClick={() => handleParseExisting()}
                                     style={{ border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF', color: '#1F2937' }}
                                     className="p-5 border border-[var(--border-default)] hover:border-[var(--sc-purple-300)] hover:bg-[var(--sc-purple-50)]/50 rounded-xl text-left transition-all group flex flex-col gap-2 bg-transparent cursor-pointer"
                                 >
