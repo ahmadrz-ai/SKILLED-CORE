@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deleteInterview } from '@/app/actions/interview';
 import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
+import { ShareBadge } from '@/components/skills/ShareBadge';
 import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
@@ -717,9 +718,12 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                     {passedInterviews.length} verified assessment{passedInterviews.length === 1 ? '' : 's'}
                                 </p>
                                 {verifiedSkillBadges.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 mt-3">
+                                    <div className="flex flex-col gap-2 mt-3">
                                         {verifiedSkillBadges.map((b: any) => (
-                                            <GoldenSkillBadge key={b.id} name={b.name} score={b.depthScore} interviewId={b.interviewId} size="sm" />
+                                            <div key={b.id} className="flex items-center justify-between gap-2">
+                                                <GoldenSkillBadge name={b.name} score={b.depthScore} interviewId={b.interviewId} size="sm" />
+                                                <ShareBadge badgeId={b.id} skillName={b.name} />
+                                            </div>
                                         ))}
                                     </div>
                                 )}
