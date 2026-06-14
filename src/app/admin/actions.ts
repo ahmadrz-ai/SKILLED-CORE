@@ -255,6 +255,43 @@ export async function updateReportStatus(reportId: string, status: ReportStatus,
         return { success: false, message: "Failed to update report status" };
     }
 }
+
+/** Admin broadcast → an ANNOUNCEMENT notification to the chosen audience. */
+export async function broadcastAnnouncement(
+    message: string,
+    audience: 'ALL' | 'CANDIDATES' | 'RECRUITERS' = 'ALL'
+) {
+    try {
+        await ensureAdmin();
+        const text = (message || '').trim();
+        if (text.length < 3) return { success: false, message: "Message is too short." };
+        if (text.length > 1000) return { success: false, message: "Message is too long (max 1000 chars)." };
+
+        const where =
+            audience === 'CANDIDATES' ? { role: 'CANDIDATE' } :
+            audience === 'RECRUITERS' ? { role: 'RECRUITER' } : {};
+
+        const users = await prisma.user.findMany({ where, select: { id: true } });
+        if (users.length === 0) return { success: false, message: "No recipients for that audience." };
+
+        // Stored message is rendered through sanitizeRichHtml at display time.
+        await prisma.notification.createMany({
+            data: users.map((u) => ({
+                userId: u.id,
+                type: 'ANNOUNCEMENT',
+                message: text,
+                resourcePath: '/notifications',
+                read: false,
+            })),
+        });
+
+        return { success: true, message: `Announcement sent to ${users.length} recipient(s).`, count: users.length };
+    } catch (error) {
+        console.error("broadcastAnnouncement failed:", error);
+        return { success: false, message: "Failed to send announcement." };
+    }
+}
+
 export async function getAdminStats() {
     try {
         await ensureAdmin();

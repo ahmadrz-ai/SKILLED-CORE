@@ -238,11 +238,30 @@ export async function sendMessage(recipientId: string, content: string | null, a
             } : null,
         });
 
+        // First contact from a non-connection reads as a "message request".
+        const isFirstContact = !match; // the conversation didn't exist before this send
+        let notifType = 'MESSAGE';
+        if (isFirstContact) {
+            const connected = await prisma.connection.findFirst({
+                where: {
+                    status: 'ACCEPTED',
+                    OR: [
+                        { requesterId: userId, addresseeId: recipientId },
+                        { requesterId: recipientId, addresseeId: userId },
+                    ],
+                },
+                select: { id: true },
+            });
+            if (!connected) notifType = 'MESSAGE_REQUEST';
+        }
+
         await prisma.notification.create({
             data: {
                 userId: recipientId,
-                type: 'MESSAGE',
-                message: `New message from <strong>${senderName}</strong>`,
+                type: notifType,
+                message: notifType === 'MESSAGE_REQUEST'
+                    ? `<strong>${senderName}</strong> sent you a message request`
+                    : `New message from <strong>${senderName}</strong>`,
                 resourcePath: `/messages?userId=${userId}`,
                 read: false
             }

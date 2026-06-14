@@ -6,7 +6,7 @@ import { usePathname, useRouter, notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
     LayoutDashboard, Users, Shield, AlertTriangle, Activity, CreditCard,
-    ArrowLeft, Lock, Loader2, Brain, BookOpen, Search, X, FileText, Ticket
+    ArrowLeft, Lock, Loader2, Brain, BookOpen, Search, X, FileText, Ticket, Megaphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminReportAlerts } from "./actions";
@@ -19,6 +19,7 @@ const ADMIN_MENU = [
     { icon: AlertTriangle, label: "Reports", href: "/admin/reports" },
     { icon: Activity, label: "System Health", href: "/admin/health" },
     { icon: CreditCard, label: "Billing Requests", href: "/admin/billing" },
+    { icon: Megaphone, label: "Announcements", href: "/admin/announcements" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

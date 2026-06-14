@@ -176,6 +176,22 @@ export async function POST(req: Request) {
             }
         });
 
+        // Welcome the new account (email/password path; OAuth gets it via the
+        // createUser auth event).
+        try {
+            await prisma.notification.create({
+                data: {
+                    userId: user.id,
+                    type: "WELCOME",
+                    message: "👋 Welcome to SkilledCore! Complete your profile and earn your first verified skill badge.",
+                    resourcePath: "/feed",
+                    read: false,
+                },
+            });
+        } catch (e) {
+            console.error("WELCOME notify failed:", e);
+        }
+
         return NextResponse.json({
             success: true,
             user: { id: user.id, email: user.email, username: user.username }

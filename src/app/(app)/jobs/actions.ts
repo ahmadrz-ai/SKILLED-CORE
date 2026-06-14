@@ -48,7 +48,7 @@ export async function createJob(data: {
         }
 
         // 2. Create Job
-        await prisma.job.create({
+        const job = await prisma.job.create({
             data: {
                 title: data.title,
                 location: data.location,
@@ -62,6 +62,39 @@ export async function createJob(data: {
                 userId: userId
             }
         });
+
+        // 3. JOB_MATCH — notify candidates whose skills overlap this job (capped).
+        try {
+            const tokens = Array.from(new Set(
+                (data.skills || "")
+                    .split(/[,|]/)
+                    .map((s) => s.trim().toLowerCase())
+                    .filter((s) => s.length >= 2)
+            )).slice(0, 12);
+            if (tokens.length) {
+                const matches = await prisma.user.findMany({
+                    where: {
+                        role: "CANDIDATE",
+                        OR: tokens.map((t) => ({ skills: { contains: t, mode: "insensitive" as const } })),
+                    },
+                    select: { id: true },
+                    take: 50,
+                });
+                if (matches.length) {
+                    await prisma.notification.createMany({
+                        data: matches.map((m) => ({
+                            userId: m.id,
+                            type: "JOB_MATCH",
+                            message: `💼 A new role matches your skills: <strong>${data.title}</strong> at ${data.companyName}.`,
+                            resourcePath: `/jobs/${job.id}`,
+                            read: false,
+                        })),
+                    });
+                    const { notifyUser } = await import("@/lib/ably");
+                    await Promise.allSettled(matches.map((m) => notifyUser(m.id)));
+                }
+            }
+        } catch (e) { console.error("JOB_MATCH notify failed:", e); }
 
         revalidatePath('/jobs');
         revalidatePath('/feed');
