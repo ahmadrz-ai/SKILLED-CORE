@@ -81,17 +81,29 @@ export async function createJob(data: {
                     take: 50,
                 });
                 if (matches.length) {
-                    await prisma.notification.createMany({
-                        data: matches.map((m) => ({
-                            userId: m.id,
-                            type: "JOB_MATCH",
-                            message: `💼 A new role matches your skills: <strong>${data.title}</strong> at ${data.companyName}.`,
-                            resourcePath: `/jobs/${job.id}`,
-                            read: false,
-                        })),
+                    // Throttle: skip candidates who already got a JOB_MATCH in the
+                    // last 24h, so a recruiter posting several roles can't spam them.
+                    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    const recent = await prisma.notification.findMany({
+                        where: { type: "JOB_MATCH", createdAt: { gte: dayAgo }, userId: { in: matches.map((m) => m.id) } },
+                        select: { userId: true },
                     });
-                    const { notifyUser } = await import("@/lib/ably");
-                    await Promise.allSettled(matches.map((m) => notifyUser(m.id)));
+                    const recentlyNotified = new Set(recent.map((r) => r.userId));
+                    const fresh = matches.filter((m) => !recentlyNotified.has(m.id));
+
+                    if (fresh.length) {
+                        await prisma.notification.createMany({
+                            data: fresh.map((m) => ({
+                                userId: m.id,
+                                type: "JOB_MATCH",
+                                message: `💼 A new role matches your skills: <strong>${data.title}</strong> at ${data.companyName}.`,
+                                resourcePath: `/jobs/${job.id}`,
+                                read: false,
+                            })),
+                        });
+                        const { notifyUser } = await import("@/lib/ably");
+                        await Promise.allSettled(fresh.map((m) => notifyUser(m.id)));
+                    }
                 }
             }
         } catch (e) { console.error("JOB_MATCH notify failed:", e); }

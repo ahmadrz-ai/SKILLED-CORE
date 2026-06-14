@@ -31,7 +31,7 @@ import { deleteInterview } from '@/app/actions/interview';
 import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
 import { ShareBadge } from '@/components/skills/ShareBadge';
 import { EndorseSkillTag } from '@/components/skills/EndorseSkillTag';
-import { submitReport } from '@/app/actions/adminReports';
+import { ReportUserModal } from '@/components/profile/ReportUserModal';
 import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
@@ -253,18 +253,8 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         }
     };
 
-    // Report this user → files a support/abuse report for the team to review.
-    const handleReportUser = async () => {
-        const reason = window.prompt(`Report ${user.name || 'this user'} — briefly describe the issue:`);
-        if (!reason || !reason.trim()) return;
-        const res: any = await submitReport(
-            `User report — @${user.username || user.id} (${user.id}): ${reason.trim()}`,
-            'abuse',
-            'high',
-        );
-        if (res?.success) toast.success('Report submitted. Our team will review it.');
-        else toast.error(res?.error || 'Could not submit the report.');
-    };
+    // Report this user → opens a branded modal (reason + details).
+    const [reportOpen, setReportOpen] = useState(false);
 
     // Helper to render brand icons
     const renderLinkIcon = (iconName?: string) => {
@@ -697,7 +687,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     >
                                                         <Download className="w-4 h-4 text-slate-400" /> {isSavingPdf ? 'Preparing PDF…' : 'Save to PDF'}
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650" onClick={handleReportUser}>
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650" onClick={() => setReportOpen(true)}>
                                                         <Flag className="w-4 h-4 text-red-500" /> Report User
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -1210,6 +1200,11 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                 open={bookingOpen}
                 onClose={() => setBookingOpen(false)}
                 candidate={candidateForGate}
+            />
+            <ReportUserModal
+                open={reportOpen}
+                onClose={() => setReportOpen(false)}
+                user={{ id: user.id, name: user.name, username: user.username }}
             />
         </div>
     );
