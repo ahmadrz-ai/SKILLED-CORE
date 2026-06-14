@@ -222,6 +222,40 @@ export async function addComment(postId: string, content: string, parentId?: str
             await notifyUser(post.userId); // realtime badge nudge
         }
 
+        // Reply to a specific comment → notify that comment's author.
+        if (parentId) {
+            try {
+                const parent = await prisma.comment.findUnique({ where: { id: parentId }, select: { userId: true } });
+                if (parent && parent.userId !== session.user.id && parent.userId !== post?.userId) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: parent.userId,
+                            type: "COMMENT_REPLY",
+                            message: `${session.user.name || "A user"} replied to your comment.`,
+                            resourcePath: `/feed?postId=${postId}`,
+                            read: false,
+                        },
+                    });
+                    await notifyUser(parent.userId);
+                }
+            } catch (e) { console.error("COMMENT_REPLY notify failed:", e); }
+        }
+
+        // @mentions → notify mentioned users (best-effort, max 5).
+        try {
+            const handles = Array.from(new Set((content.match(/@([a-zA-Z0-9_]{2,30})/g) || []).map((h) => h.slice(1).toLowerCase()))).slice(0, 5);
+            if (handles.length) {
+                const mentioned = await prisma.user.findMany({ where: { username: { in: handles } }, select: { id: true } });
+                for (const m of mentioned) {
+                    if (m.id === session.user.id) continue;
+                    await prisma.notification.create({
+                        data: { userId: m.id, type: "MENTION", message: `${session.user.name || "A user"} mentioned you in a comment.`, resourcePath: `/feed?postId=${postId}`, read: false },
+                    });
+                    await notifyUser(m.id);
+                }
+            }
+        } catch (e) { console.error("MENTION notify failed:", e); }
+
         revalidatePath('/feed');
         return { success: true, comment: newComment };
     } catch (error) {
@@ -441,6 +475,20 @@ export async function logProfileView(profileId: string) {
                     profileId
                 }
             });
+            // Notify the profile owner (only fires on a genuinely new 30-day view,
+            // so it's naturally debounced and never spams).
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: profileId,
+                        type: "PROFILE_VIEW",
+                        message: `<strong>${session.user.name || "Someone"}</strong> viewed your profile.`,
+                        resourcePath: "/analytics",
+                        read: false,
+                    },
+                });
+                await notifyUser(profileId);
+            } catch (e) { console.error("PROFILE_VIEW notify failed:", e); }
             // Don't revalidate path generally, as this is a background stat
             return { success: true };
         }

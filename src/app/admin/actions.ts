@@ -158,6 +158,13 @@ export async function updateVerificationStatus(requestId: string, status: 'APPRO
                 })
             ]);
 
+            try {
+                await prisma.notification.create({
+                    data: { userId: request.userId, type: "VERIFICATION_APPROVED", message: "✅ Your recruiter verification was approved. Welcome aboard!", resourcePath: "/hire", read: false },
+                });
+                await notifyUser(request.userId);
+            } catch (e) { console.error("VERIFICATION_APPROVED notify failed:", e); }
+
             revalidatePath('/admin/verifications');
             return { success: true, message: "Recruiter onboarding approved! User promoted and email updated." };
         }
@@ -172,6 +179,15 @@ export async function updateVerificationStatus(requestId: string, status: 'APPRO
                 reviewedAt: new Date()
             }
         });
+
+        if (status === 'APPROVED') {
+            try {
+                await prisma.notification.create({
+                    data: { userId: request.userId, type: "VERIFICATION_APPROVED", message: "✅ Your verification request was approved.", resourcePath: "/settings", read: false },
+                });
+                await notifyUser(request.userId);
+            } catch (e) { console.error("VERIFICATION_APPROVED notify failed:", e); }
+        }
 
         revalidatePath('/admin/verifications');
         return { success: true, message: `Request ${status}` };
@@ -222,7 +238,7 @@ export async function updateReportStatus(reportId: string, status: ReportStatus,
             await prisma.notification.create({
                 data: {
                     userId: report.reporterId,
-                    type: 'SYSTEM',
+                    type: canonical === 'COMPLETED' ? 'REPORT_RESOLVED' : 'SYSTEM',
                     message: notificationMessages[canonical],
                     read: false
                 }

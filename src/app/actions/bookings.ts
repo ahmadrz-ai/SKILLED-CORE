@@ -11,14 +11,32 @@ const DEFAULT_EXPIRY_DAYS = 7;
 /** Mark any REQUESTED bookings whose accept-window has passed as EXPIRED. */
 async function expireStaleBookings(userId: string) {
     try {
+        const stale = await prisma.booking.findMany({
+            where: { candidateId: userId, status: "REQUESTED", expiresAt: { lt: new Date() } },
+            select: { id: true, recruiterId: true, candidate: { select: { name: true } } },
+        });
+        if (stale.length === 0) return;
+
         await prisma.booking.updateMany({
-            where: {
-                candidateId: userId,
-                status: "REQUESTED",
-                expiresAt: { lt: new Date() },
-            },
+            where: { id: { in: stale.map((s) => s.id) } },
             data: { status: "EXPIRED" },
         });
+
+        // Let each recruiter know their request lapsed before it was accepted.
+        for (const b of stale) {
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: b.recruiterId,
+                        type: "BOOKING_EXPIRED",
+                        message: `⏳ Your interview request to <strong>${b.candidate?.name || "a candidate"}</strong> expired before it was accepted.`,
+                        resourcePath: "/bookings",
+                        read: false,
+                    },
+                });
+                await notifyUser(b.recruiterId);
+            } catch (e) { console.error("BOOKING_EXPIRED notify failed:", e); }
+        }
     } catch (e) {
         console.error("expireStaleBookings failed:", e);
     }

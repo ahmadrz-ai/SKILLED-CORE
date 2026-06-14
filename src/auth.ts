@@ -175,6 +175,21 @@ const nextAuth = NextAuth({
                         console.error("Background Login Alert Email dispatch failed:", err);
                     });
                 }
+
+                // Security: in-app new sign-in alert.
+                try {
+                    await prisma.notification.create({
+                        data: {
+                            userId: user.id,
+                            type: "NEW_LOGIN",
+                            message: `🔐 New sign-in from <strong>${device}</strong> · ${location}. If this wasn't you, secure your account.`,
+                            resourcePath: "/settings",
+                            read: false,
+                        },
+                    });
+                } catch (e) {
+                    console.error("NEW_LOGIN notify failed:", e);
+                }
             } catch (err) {
                 console.error("Failed to parse headers or dispatch Login Alert Email:", err);
             }
@@ -213,6 +228,23 @@ const nextAuth = NextAuth({
                         }
                     });
                     console.log(`[OAuth Registration] Created user: ${user.email} with username: ${uniqueName} and role: ${roleToSave}`);
+                }
+
+                // Welcome the new account.
+                try {
+                    if (user.id) {
+                        await prisma.notification.create({
+                            data: {
+                                userId: user.id,
+                                type: "WELCOME",
+                                message: "👋 Welcome to SkilledCore! Complete your profile and earn your first verified skill badge.",
+                                resourcePath: "/feed",
+                                read: false,
+                            },
+                        });
+                    }
+                } catch (e) {
+                    console.error("WELCOME notify failed:", e);
                 }
             } catch (err) {
                 console.error("Failed inside createUser event callback:", err);

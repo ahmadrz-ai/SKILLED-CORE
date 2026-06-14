@@ -442,6 +442,23 @@ export async function finalizeInterview(
             }
         }
 
+        // Didn't pass → still let the candidate know their interview was scored.
+        if (!passed) {
+            try {
+                await prisma.notification.create({
+                    data: {
+                        userId: interview.userId,
+                        type: "INTERVIEW_GRADED",
+                        message: `Your ${skillDisplayName(interview.role)} interview was scored ${finalScore}/100. ${finalScore >= INTERVIEW_PASS_THRESHOLD - 10 ? "So close — review the feedback and try again." : "Review the feedback and keep practicing."}`,
+                        resourcePath: "/profile/me",
+                        read: false,
+                    },
+                });
+                const { notifyUser } = await import("@/lib/ably");
+                await notifyUser(interview.userId);
+            } catch (e) { console.error("INTERVIEW_GRADED notify failed:", e); }
+        }
+
         revalidatePath(`/profile/me`);
         revalidatePath(`/profile/${session.user.id}`);
 

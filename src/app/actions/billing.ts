@@ -107,6 +107,24 @@ export async function approveTransaction(transactionId: string) {
             await grantPlanCredits(trx.userId, trx.planName).catch((e) => console.error("grantPlanCredits failed:", e));
         }
 
+        // Notify the buyer their purchase went through.
+        try {
+            const isPlan = trx.type === 'PLAN' && trx.planName;
+            await prisma.notification.create({
+                data: {
+                    userId: trx.userId,
+                    type: isPlan ? "PLAN_UPGRADED" : "CREDITS_GRANTED",
+                    message: isPlan
+                        ? `🎉 Your <strong>${trx.planName}</strong> plan is now active. Enjoy your upgraded credits!`
+                        : `💰 ${trx.credits} credits were added to your account.`,
+                    resourcePath: isPlan ? "/billing" : "/credits",
+                    read: false,
+                },
+            });
+            const { notifyUser } = await import("@/lib/ably");
+            await notifyUser(trx.userId);
+        } catch (e) { console.error("payment notify failed:", e); }
+
         revalidatePath('/admin/billing');
         return { success: true, message: "Transaction approved." };
     } catch (error) {
@@ -123,10 +141,18 @@ export async function rejectTransaction(transactionId: string) {
         const admin = await prisma.user.findUnique({ where: { id: session.user.id } });
         if (admin?.role !== 'ADMIN') return { success: false, message: "Admins only" };
 
-        await prisma.transaction.update({
+        const rejected = await prisma.transaction.update({
             where: { id: transactionId },
             data: { status: 'REJECTED' }
         });
+
+        try {
+            await prisma.notification.create({
+                data: { userId: rejected.userId, type: "PAYMENT_FAILED", message: "⚠️ Your payment could not be verified and was rejected. If this is a mistake, please contact support.", resourcePath: "/billing", read: false },
+            });
+            const { notifyUser } = await import("@/lib/ably");
+            await notifyUser(rejected.userId);
+        } catch (e) { console.error("PAYMENT_FAILED notify failed:", e); }
 
         revalidatePath('/admin/billing');
         return { success: true, message: "Transaction rejected." };

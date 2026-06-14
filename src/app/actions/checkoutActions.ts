@@ -40,6 +40,13 @@ export async function processDirectCardPayment(
                 where: { id: session.user.id },
                 data: { credits: { increment: credits } }
             });
+            try {
+                await prisma.notification.create({
+                    data: { userId: session.user.id, type: "CREDITS_GRANTED", message: `💰 ${credits} credits were added to your account.`, resourcePath: "/credits", read: false },
+                });
+                const { notifyUser } = await import("@/lib/ably");
+                await notifyUser(session.user.id);
+            } catch (e) { console.error("CREDITS_GRANTED notify failed:", e); }
         }
 
         // Revalidate cache to sync instant UI updates

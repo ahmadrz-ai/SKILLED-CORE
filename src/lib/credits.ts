@@ -137,30 +137,50 @@ export async function spendCredit(
     opts: { allowGeneralFallback?: boolean } = {},
 ): Promise<{ success: boolean; used?: "resume" | "interview" | "general" | "topup"; reason?: string }> {
     await ensureFresh(userId);
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const u = await tx.user.findUnique({
             where: { id: userId },
             select: { resumeCredits: true, interviewCredits: true, generalCredits: true, topUpCredits: true },
         });
-        if (!u) return { success: false, reason: "no-user" };
+        if (!u) return { success: false, reason: "no-user" } as const;
 
         const dec = (field: string) => tx.user.update({ where: { id: userId }, data: { [field]: { decrement: 1 } } });
 
         if (kind === "resume" || kind === "interview") {
             const field = kind === "resume" ? "resumeCredits" : "interviewCredits";
-            if ((u as any)[field] > 0) { await dec(field); return { success: true, used: kind }; }
+            if ((u as any)[field] > 0) { await dec(field); return { success: true, used: kind } as const; }
             if (opts.allowGeneralFallback) {
-                if (u.generalCredits > 0) { await dec("generalCredits"); return { success: true, used: "general" }; }
-                if (u.topUpCredits > 0) { await dec("topUpCredits"); return { success: true, used: "topup" }; }
+                if (u.generalCredits > 0) { await dec("generalCredits"); return { success: true, used: "general" } as const; }
+                if (u.topUpCredits > 0) { await dec("topUpCredits"); return { success: true, used: "topup" } as const; }
             }
-            return { success: false, reason: "no-credits" };
+            return { success: false, reason: "no-credits" } as const;
         }
 
         // general
-        if (u.generalCredits > 0) { await dec("generalCredits"); return { success: true, used: "general" }; }
-        if (u.topUpCredits > 0) { await dec("topUpCredits"); return { success: true, used: "topup" }; }
-        return { success: false, reason: "no-credits" };
+        if (u.generalCredits > 0) { await dec("generalCredits"); return { success: true, used: "general" } as const; }
+        if (u.topUpCredits > 0) { await dec("topUpCredits"); return { success: true, used: "topup" } as const; }
+        return { success: false, reason: "no-credits" } as const;
     });
+
+    // CREDITS_LOW: fire once, exactly when this spend empties the account.
+    if (result.success) {
+        try {
+            const u = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { resumeCredits: true, interviewCredits: true, generalCredits: true, topUpCredits: true },
+            });
+            const total = (u?.resumeCredits || 0) + (u?.interviewCredits || 0) + (u?.generalCredits || 0) + (u?.topUpCredits || 0);
+            if (total === 0) {
+                await prisma.notification.create({
+                    data: { userId, type: "CREDITS_LOW", message: "⚠️ You're out of credits. Top up to keep using interviews, resume builds, and bookings.", resourcePath: "/credits", read: false },
+                });
+                const { notifyUser } = await import("@/lib/ably");
+                await notifyUser(userId);
+            }
+        } catch (e) { console.error("CREDITS_LOW notify failed:", e); }
+    }
+
+    return result;
 }
 
 /** Add purchased (permanent) credits. */

@@ -85,6 +85,14 @@ export async function verifyCode(email: string, code: string) {
             data: { emailVerified: new Date() },
         });
 
+        try {
+            await prisma.notification.create({
+                data: { userId: dbUser.id, type: "EMAIL_VERIFIED", message: "✅ Your email is verified. Your account is fully active.", resourcePath: "/feed", read: false },
+            });
+            const { notifyUser } = await import("@/lib/ably");
+            await notifyUser(dbUser.id);
+        } catch (e) { console.error("EMAIL_VERIFIED notify failed:", e); }
+
         // Delete token
         await prisma.verificationToken.delete({
             where: {
