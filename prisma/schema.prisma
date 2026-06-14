@@ -122,6 +122,9 @@ model User {
   systemReports        SystemReport[]
   bookingsAsRecruiter  Booking[]      @relation("RecruiterBookings")
   bookingsAsCandidate  Booking[]      @relation("CandidateBookings")
+  reposts              Repost[]
+  endorsementsGiven    Endorsement[]  @relation("EndorsementsGiven")
+  endorsementsReceived Endorsement[]  @relation("EndorsementsReceived")
 }
 
 model LoginEvent {
@@ -351,8 +354,34 @@ model Post {
   type        String    @default("TEXT")
   comments    Comment[]
   likes       Like[]
+  reposts     Repost[]
   poll        Poll?
   author      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Repost {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // one repost per user per post (toggle)
+  @@index([postId])
+}
+
+model Endorsement {
+  id         String   @id @default(uuid())
+  endorserId String
+  userId     String // the endorsed user
+  skill      String
+  createdAt  DateTime @default(now())
+  endorser   User     @relation("EndorsementsGiven", fields: [endorserId], references: [id], onDelete: Cascade)
+  user       User     @relation("EndorsementsReceived", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([endorserId, userId, skill]) // one endorsement per skill per endorser
+  @@index([userId])
 }
 
 model Like {
@@ -487,6 +516,7 @@ model Application {
   matchScore Int?
   resumeUrl  String?
   answers    Json? // Answers to screening questions
+  viewedAt   DateTime? // first time the recruiter opened this application (drives APPLICATION_VIEWED)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
   job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -661,6 +691,7 @@ model Booking {
   // accepting costs 1 General credit. acceptCostCharged guards against double-charge.
   expiresAt        DateTime?
   acceptCostCharged Boolean @default(false)
+  reminderSentAt   DateTime?              // set once a BOOKING_REMINDER goes out (cron dedupe)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

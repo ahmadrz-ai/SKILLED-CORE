@@ -106,6 +106,44 @@ export async function createJob(data: {
     }
 }
 
+/** Recruiter opened an application → notify the applicant once (APPLICATION_VIEWED). */
+export async function markApplicationViewed(applicationId: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false };
+        const callerId = session.user.id;
+
+        const application = await prisma.application.findUnique({
+            where: { id: applicationId },
+            select: { id: true, userId: true, viewedAt: true, job: { select: { userId: true, title: true } } },
+        });
+        if (!application) return { success: false };
+        // Only the job's recruiter (or admin) viewing counts, and only once.
+        if (application.job.userId !== callerId) return { success: false };
+        if (application.viewedAt) return { success: true, already: true };
+
+        await prisma.application.update({ where: { id: applicationId }, data: { viewedAt: new Date() } });
+
+        if (application.userId !== callerId) {
+            await prisma.notification.create({
+                data: {
+                    userId: application.userId,
+                    type: "APPLICATION_VIEWED",
+                    message: `👀 A recruiter reviewed your application for <strong>${application.job.title}</strong>.`,
+                    resourcePath: "/applications",
+                    read: false,
+                },
+            });
+            const { notifyUser } = await import("@/lib/ably");
+            await notifyUser(application.userId);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error("markApplicationViewed failed:", error);
+        return { success: false };
+    }
+}
+
 export async function applyToJob(jobId: string) {
     try {
         const session = await auth();

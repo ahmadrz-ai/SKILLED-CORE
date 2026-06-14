@@ -30,6 +30,7 @@ import {
 import { deleteInterview } from '@/app/actions/interview';
 import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
 import { ShareBadge } from '@/components/skills/ShareBadge';
+import { EndorseSkillTag } from '@/components/skills/EndorseSkillTag';
 import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
@@ -70,9 +71,10 @@ interface ProfileClientProps {
     };
     isAdmin?: boolean;
     isRestrictedViewer?: boolean;
+    endorsements?: { counts: Record<string, number>; mine: string[] };
 }
 
-export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false, isRestrictedViewer = false }: ProfileClientProps) {
+export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false, isRestrictedViewer = false, endorsements = { counts: {}, mine: [] } }: ProfileClientProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'interviews'>('overview');
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -918,17 +920,16 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                 {parsedSkills
                                                     .filter(skill => !verifiedSkillNames.has(skill.replace(/\s*\(Verified\)/gi, '').trim().toLowerCase()))
                                                     .map((skill, i) => {
-                                                        const isVerified = skill.includes("(Verified)");
-                                                        const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "");
+                                                        const cleanSkill = skill.replace(" (Verified)", "").replace("(Verified)", "").trim();
                                                         return (
-                                                            <SharedTag
+                                                            <EndorseSkillTag
                                                                 key={i}
-                                                                variant={isVerified ? "branded" : "neutral"}
-                                                                className="flex items-center gap-2"
-                                                            >
-                                                                {cleanSkill}
-                                                                {isVerified && <CheckCircle2 className="w-3 h-3" />}
-                                                            </SharedTag>
+                                                                skill={cleanSkill}
+                                                                targetUserId={user.id}
+                                                                canEndorse={!isOwner}
+                                                                count={endorsements.counts[cleanSkill] || 0}
+                                                                mine={endorsements.mine.includes(cleanSkill)}
+                                                            />
                                                         );
                                                     })}
                                                 {parsedSkills.length === 0 && verifiedSkillBadges.length === 0 && <p className="text-slate-400 text-xs italic">No skills listed.</p>}

@@ -18,7 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { deletePost, reportPost, votePoll, updatePost, toggleFollow, toggleLike } from "@/app/(app)/feed/actions";
+import { deletePost, reportPost, votePoll, updatePost, toggleFollow, toggleLike, repostPost } from "@/app/(app)/feed/actions";
 import { getCloudinarySignature } from "@/app/actions/cloudinary";
 import { CommentSection } from "@/components/feed/CommentSection";
 import {
@@ -1371,7 +1371,11 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                         <MessageCircle className={cn("w-3.5 h-3.5", showComments && "fill-current")} />
                         <span>{post.comments}</span>
                     </button>
-                    <button onClick={() => toast.success("Reposted to your network.")}
+                    <button onClick={async () => {
+                            const res = await repostPost(post.id);
+                            if (res.success) toast.success(res.reposted ? "Reposted to your network." : "Removed repost.");
+                            else toast.error(res.message || "Failed to repost.");
+                        }}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full text-[#6B7280] md:hover:text-[#5B35D5] md:hover:bg-[#EAE6FD] transition-all font-medium cursor-pointer">
                         <Repeat className="w-3.5 h-3.5" /><span>Repost</span>
                     </button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateApplicationStatus } from "@/app/actions/ats";
+import { markApplicationViewed } from "@/app/(app)/jobs/actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoreHorizontal, MessageSquare, FileText, CheckCircle2, User, ChevronRight } from "lucide-react";
@@ -141,7 +142,7 @@ export default function KanbanBoard({ job }: { job: any }) {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className="bg-[var(--bg-dropdown)] border border-[var(--border-dropdown)] text-[var(--text-body)] shadow-md rounded-xl p-1 w-48 z-50">
                                                         <DropdownMenuItem
-                                                            onClick={() => router.push(profileLink)}
+                                                            onClick={() => { markApplicationViewed(app.id).catch(() => {}); router.push(profileLink); }}
                                                             className="hover:bg-[var(--bg-sidebar-hover)] focus:bg-[var(--bg-sidebar-hover)] cursor-pointer rounded-lg px-2.5 py-2 text-xs font-semibold text-[var(--text-body-strong)] flex items-center gap-2"
                                                         >
                                                             <User className="w-3.5 h-3.5 text-[var(--icon-default)]" /> View Profile

@@ -194,6 +194,10 @@ export default async function ProfilePage({ params }: PageProps) {
         const isRestrictedViewer =
             callerRole === "RECRUITER" && !isOwner && !isAdmin && user.role !== "RECRUITER";
 
+        // Skill endorsement counts + which ones the viewer has given.
+        const { getEndorsements } = await import("@/app/actions/endorsements");
+        const endorsements = await getEndorsements(user.id);
+
         console.log("ProfilePage: Rendering client");
         return (
             <ProfileClient
@@ -205,6 +209,7 @@ export default async function ProfilePage({ params }: PageProps) {
                 counts={user._count || { followers: 0, following: 0 }}
                 isAdmin={isAdmin}
                 isRestrictedViewer={isRestrictedViewer}
+                endorsements={endorsements}
             />
         );
     } catch (e: any) {

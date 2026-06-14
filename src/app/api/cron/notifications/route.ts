@@ -115,6 +115,31 @@ export async function GET(req: Request) {
 
         await Promise.allSettled(results);
 
+        // ── BOOKING_REMINDER: confirmed interviews starting within the next hour ──
+        try {
+            const soon = new Date(Date.now() + 60 * 60 * 1000);
+            const upcoming = await prisma.booking.findMany({
+                where: { status: "CONFIRMED", reminderSentAt: null, proposedAt: { gte: new Date(), lte: soon } },
+                select: { id: true, recruiterId: true, candidateId: true, proposedAt: true },
+            });
+            for (const b of upcoming) {
+                const when = new Date(b.proposedAt).toLocaleString();
+                await prisma.notification.createMany({
+                    data: [
+                        { userId: b.candidateId, type: "BOOKING_REMINDER", message: `⏰ Your interview starts soon — ${when}. Join from your bookings.`, resourcePath: "/bookings", read: false },
+                        { userId: b.recruiterId, type: "BOOKING_REMINDER", message: `⏰ Your interview starts soon — ${when}. Join from your bookings.`, resourcePath: "/bookings", read: false },
+                    ],
+                });
+                await prisma.booking.update({ where: { id: b.id }, data: { reminderSentAt: new Date() } });
+                try {
+                    const { notifyUser } = await import("@/lib/ably");
+                    await Promise.allSettled([notifyUser(b.candidateId), notifyUser(b.recruiterId)]);
+                } catch { /* realtime nudge best-effort */ }
+            }
+        } catch (e) {
+            console.error("Booking reminder sweep failed:", e);
+        }
+
         console.log(`Cron: Processed notifications.`);
 
         return NextResponse.json({

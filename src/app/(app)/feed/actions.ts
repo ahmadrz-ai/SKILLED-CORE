@@ -264,6 +264,47 @@ export async function addComment(postId: string, content: string, parentId?: str
     }
 }
 
+/** Toggle a repost of a post. Notifies the author (REPOST) on the first repost. */
+export async function repostPost(postId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Unauthorized' };
+    const userId = session.user.id;
+    try {
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { userId: true } });
+        if (!post) return { success: false, message: 'Post not found' };
+
+        const existing = await prisma.repost.findUnique({ where: { postId_userId: { postId, userId } } });
+        if (existing) {
+            await prisma.repost.delete({ where: { id: existing.id } });
+            const count = await prisma.repost.count({ where: { postId } });
+            revalidatePath('/feed');
+            return { success: true, reposted: false, count };
+        }
+
+        await prisma.repost.create({ data: { postId, userId } });
+        const count = await prisma.repost.count({ where: { postId } });
+
+        if (post.userId !== userId) {
+            await prisma.notification.create({
+                data: {
+                    userId: post.userId,
+                    type: 'REPOST',
+                    message: `${session.user.name || 'A user'} reposted your post.`,
+                    resourcePath: `/feed?postId=${postId}`,
+                    read: false,
+                },
+            });
+            await notifyUser(post.userId);
+        }
+
+        revalidatePath('/feed');
+        return { success: true, reposted: true, count };
+    } catch (error) {
+        console.error('repostPost failed:', error);
+        return { success: false, message: 'Failed to repost' };
+    }
+}
+
 export async function fetchComments(postId: string) {
     try {
         const comments = await prisma.comment.findMany({
