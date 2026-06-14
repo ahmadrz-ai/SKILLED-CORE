@@ -172,6 +172,7 @@ model ConversationParticipant {
   userId         String
   conversationId String
   hasUnread      Boolean  @default(false)
+  accepted       Boolean  @default(true) // false = pending message request for this participant
   lastReadAt     DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)

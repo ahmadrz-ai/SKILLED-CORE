@@ -15,7 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
 import {
     getConversations, getMessages, sendMessage, startConversation,
-    getUserDetails, reactToMessage, unsendMessage
+    getUserDetails, reactToMessage, unsendMessage,
+    acceptMessageRequest, declineMessageRequest
 } from './actions';
 import { toast } from "sonner";
 import { uploadToCloudinary } from "@/lib/cloudinaryUpload";
@@ -349,6 +350,24 @@ export default function MessagesPage() {
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const requestConvos = filteredConversations.filter(c => c.isRequest);
+    const normalConvos = filteredConversations.filter(c => !c.isRequest);
+
+    const handleAcceptRequest = async (conv: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, isRequest: false } : c));
+        const res = await acceptMessageRequest(conv.id);
+        if (res.success) toast.success("Message request accepted");
+        else toast.error("Could not accept the request");
+    };
+    const handleDeclineRequest = async (conv: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setConversations(prev => prev.filter(c => c.id !== conv.id));
+        if (selectedContactId === conv.contactId) setSelectedContactId(null);
+        const res = await declineMessageRequest(conv.id);
+        if (res.success) toast.success("Message request declined");
+        else toast.error("Could not decline the request");
+    };
 
     return (
         <div className="h-[calc(100vh-64px)] w-full flex bg-bg-page text-text-body overflow-hidden font-sans">
@@ -375,7 +394,32 @@ export default function MessagesPage() {
                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-bg-sidebar">
                     {loading ? (
                         <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-text-placeholder" /></div>
-                    ) : filteredConversations.map(contact => (
+                    ) : (<>
+                    {requestConvos.length > 0 && (
+                        <div className="border-b border-border-subtle">
+                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+                                Message requests · {requestConvos.length}
+                            </div>
+                            {requestConvos.map(contact => (
+                                <div key={contact.id} onClick={() => handleSelectContact(contact.contactId)}
+                                    className="flex items-center gap-3 p-4 cursor-pointer hover:bg-bg-sidebar-hover transition-colors">
+                                    <Avatar className="w-10 h-10 border border-border-default">
+                                        <AvatarImage src={contact.avatar} />
+                                        <AvatarFallback className="bg-bg-sidebar-active text-text-sidebar-active font-semibold">{contact.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-sm truncate text-text-heading">{contact.name}</h3>
+                                        <p className="text-xs truncate text-text-secondary">{contact.lastMessage}</p>
+                                        <div className="flex gap-2 mt-2">
+                                            <button onClick={(e) => handleAcceptRequest(contact, e)} className="px-2.5 py-1 rounded-lg bg-sc-purple-600 hover:bg-sc-purple-700 text-white text-[11px] font-bold border-none cursor-pointer">Accept</button>
+                                            <button onClick={(e) => handleDeclineRequest(contact, e)} className="px-2.5 py-1 rounded-lg border border-border-default bg-transparent text-text-secondary hover:bg-bg-sidebar-hover text-[11px] font-bold cursor-pointer">Decline</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {normalConvos.map(contact => (
                         <div
                             key={contact.id}
                             onClick={() => handleSelectContact(contact.contactId)}
@@ -410,6 +454,7 @@ export default function MessagesPage() {
                             </div>
                         </div>
                     ))}
+                    </>)}
                 </div>
             </div>
 

@@ -64,6 +64,7 @@ export async function getConversations() {
                 lastMessage: lastMessage ? lastMessage.content : "Start a conversation",
                 time: lastMessage ? new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
                 unread: myParticipant?.hasUnread ? 1 : 0,
+                isRequest: myParticipant ? myParticipant.accepted === false : false,
                 updatedAt: c.updatedAt
             };
         }).filter(Boolean);
@@ -72,6 +73,43 @@ export async function getConversations() {
     } catch (error) {
         console.error("Get Conversations Error:", error);
         return { success: false, conversations: [] };
+    }
+}
+
+/** Accept a pending message request (the conversation moves into the normal inbox). */
+export async function acceptMessageRequest(conversationId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+    try {
+        await prisma.conversationParticipant.updateMany({
+            where: { conversationId, userId: session.user.id },
+            data: { accepted: true },
+        });
+        revalidatePath('/messages');
+        return { success: true };
+    } catch (error) {
+        console.error("acceptMessageRequest failed:", error);
+        return { success: false };
+    }
+}
+
+/** Decline a pending message request → delete the conversation entirely. */
+export async function declineMessageRequest(conversationId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+    try {
+        // Only allow declining a conversation the caller is a (pending) participant of.
+        const mine = await prisma.conversationParticipant.findFirst({
+            where: { conversationId, userId: session.user.id },
+            select: { id: true },
+        });
+        if (!mine) return { success: false };
+        await prisma.conversation.delete({ where: { id: conversationId } });
+        revalidatePath('/messages');
+        return { success: true };
+    } catch (error) {
+        console.error("declineMessageRequest failed:", error);
+        return { success: false };
     }
 }
 
@@ -152,6 +190,20 @@ export async function sendMessage(recipientId: string, content: string | null, a
     try {
         const userId = session.user.id;
 
+        // Are the two users connected? Drives whether a brand-new conversation
+        // lands in the recipient's inbox or in their "message requests".
+        const connection = await prisma.connection.findFirst({
+            where: {
+                status: 'ACCEPTED',
+                OR: [
+                    { requesterId: userId, addresseeId: recipientId },
+                    { requesterId: recipientId, addresseeId: userId },
+                ],
+            },
+            select: { id: true },
+        });
+        const connected = !!connection;
+
         const existingConversations = await prisma.conversation.findMany({
             where: {
                 participants: {
@@ -172,7 +224,8 @@ export async function sendMessage(recipientId: string, content: string | null, a
                     participants: {
                         create: [
                             { userId: userId },
-                            { userId: recipientId, hasUnread: true }
+                            // Non-connection first contact → pending request for the recipient.
+                            { userId: recipientId, hasUnread: true, accepted: connected }
                         ]
                     }
                 }
@@ -240,20 +293,7 @@ export async function sendMessage(recipientId: string, content: string | null, a
 
         // First contact from a non-connection reads as a "message request".
         const isFirstContact = !match; // the conversation didn't exist before this send
-        let notifType = 'MESSAGE';
-        if (isFirstContact) {
-            const connected = await prisma.connection.findFirst({
-                where: {
-                    status: 'ACCEPTED',
-                    OR: [
-                        { requesterId: userId, addresseeId: recipientId },
-                        { requesterId: recipientId, addresseeId: userId },
-                    ],
-                },
-                select: { id: true },
-            });
-            if (!connected) notifType = 'MESSAGE_REQUEST';
-        }
+        const notifType = (isFirstContact && !connected) ? 'MESSAGE_REQUEST' : 'MESSAGE';
 
         await prisma.notification.create({
             data: {
