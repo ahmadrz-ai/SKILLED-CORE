@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Sparkles, Search, SearchX, Compass, BookOpen, User, UserCheck, SlidersHorizontal, X } from "lucide-react";
+import { Sparkles, Search, SearchX, Compass, BookOpen, User, UserCheck, SlidersHorizontal, X, Bookmark, BookmarkCheck } from "lucide-react";
+import { saveSearch, getSavedSearches, deleteSavedSearch } from "@/app/actions/savedSearches";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { searchTalent } from "@/app/actions/talentSearch";
@@ -25,6 +26,8 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
     const [showQueryBanner, setShowQueryBanner] = useState(false);
     const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    const [saved, setSaved] = useState<{ id: string; query: string }[]>([]);
+    const [savingSearch, setSavingSearch] = useState(false);
     const [filters, setFilters] = useState<SearchFilters>({
         experienceLevel: 'any',
         planType: 'all',
@@ -100,6 +103,31 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
             handleSearch();
         }
     };
+
+    // Saved searches (recruiter only — returns [] otherwise).
+    useEffect(() => { getSavedSearches().then(setSaved).catch(() => {}); }, []);
+
+    const handleSaveSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setSavingSearch(true);
+        const res = await saveSearch(searchQuery.trim());
+        setSavingSearch(false);
+        if (res.success) {
+            getSavedSearches().then(setSaved).catch(() => {});
+        }
+    };
+
+    const runSaved = (q: string) => {
+        setSearchQuery(q);
+        setTimeout(() => document.getElementById("talent-search-submit")?.click(), 50);
+    };
+
+    const removeSaved = async (id: string) => {
+        await deleteSavedSearch(id);
+        setSaved((prev) => prev.filter((s) => s.id !== id));
+    };
+
+    const alreadySaved = saved.some((s) => s.query.toLowerCase() === searchQuery.trim().toLowerCase());
 
     // 3 Clickable Example suggestions
     const exampleSearches = [
@@ -246,6 +274,25 @@ export default function SearchClient({ initialCandidates }: SearchClientProps) {
                             ))}
                         </div>
                     )}
+
+                    {/* Saved searches — save the current query + quick-run/manage saved ones */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2 ml-1">
+                        {hasSearched && searchQuery.trim() && (
+                            <button
+                                onClick={handleSaveSearch}
+                                disabled={savingSearch || alreadySaved}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border border-[var(--sc-purple-200)] text-[var(--sc-purple-700)] bg-[var(--sc-purple-50)] hover:bg-[var(--sc-purple-100)] disabled:opacity-60 transition-colors"
+                            >
+                                {alreadySaved ? <><BookmarkCheck className="w-3.5 h-3.5" /> Saved</> : <><Bookmark className="w-3.5 h-3.5" /> Save this search</>}
+                            </button>
+                        )}
+                        {saved.map((s) => (
+                            <span key={s.id} className="group inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-[var(--sc-gray-100)] border border-[var(--sc-gray-200)] text-[var(--sc-gray-700)]">
+                                <button onClick={() => runSaved(s.query)} className="hover:text-[var(--sc-purple-700)] max-w-[180px] truncate" title={s.query}>{s.query}</button>
+                                <button onClick={() => removeSaved(s.id)} aria-label="Remove saved search" className="text-[var(--sc-gray-400)] hover:text-[var(--sc-red-600)]"><X className="w-3 h-3" /></button>
+                            </span>
+                        ))}
+                    </div>
 
                     {/* Query Intent Summary description under search */}
                     {hasSearched && parsedQuery?.queryIntent && !isSearching && (

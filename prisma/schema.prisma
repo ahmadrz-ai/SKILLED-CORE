@@ -118,6 +118,7 @@ model User {
   openToWork           Boolean      @default(false)
   loginEvents          LoginEvent[] // access audit log
   verifiedSkills       VerifiedSkill[]
+  savedSearches        SavedSearch[]         @relation("RecruiterSavedSearches")
   systemReports        SystemReport[]
   bookingsAsRecruiter  Booking[]      @relation("RecruiterBookings")
   bookingsAsCandidate  Booking[]      @relation("CandidateBookings")
@@ -588,6 +589,20 @@ model VerifiedSkill {
 model SkillDetail {
   id             String          @id @default(uuid())
   verifiedSkills VerifiedSkill[]
+}
+
+// Recruiter saved talent searches — power "alert me when a new verified candidate
+// matches" (fired when a badge is issued, see finalizeInterview).
+model SavedSearch {
+  id          String   @id @default(cuid())
+  recruiterId String
+  query       String
+  createdAt   DateTime @default(now())
+  lastAlertAt DateTime?
+
+  recruiter   User     @relation("RecruiterSavedSearches", fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  @@index([recruiterId])
 }
 
 model SystemReport {

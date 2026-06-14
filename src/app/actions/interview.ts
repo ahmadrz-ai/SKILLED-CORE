@@ -400,6 +400,15 @@ export async function finalizeInterview(
                 badge = { name: created.name, score: created.depthScore };
             }
 
+            // Alert recruiters whose saved searches match this newly-verified skill.
+            try {
+                const { alertSavedSearchesForSkill } = await import("@/app/actions/savedSearches");
+                const candidate = await prisma.user.findUnique({ where: { id: interview.userId }, select: { name: true } });
+                await alertSavedSearchesForSkill(display, candidate?.name || "A candidate", interview.userId);
+            } catch (e) {
+                console.error("Saved-search alert failed (badge still issued):", e);
+            }
+
             // I3: surface the verified skill in the profile's Skills section too.
             try {
                 const user = await prisma.user.findUnique({ where: { id: interview.userId }, select: { skills: true } });
