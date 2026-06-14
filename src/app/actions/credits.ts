@@ -3,20 +3,30 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getCreditState, spendCredit, type CreditState } from "@/lib/credits";
 
+/** Total spendable credits (sum of all buckets) — used by the topbar. */
 export async function getCredits() {
     const session = await auth();
     if (!session?.user?.id) return 0;
-
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { credits: true }
-        });
-        return user?.credits || 0;
+        const state = await getCreditState(session.user.id);
+        return state?.total ?? 0;
     } catch (error) {
         console.error("Get Credits Error (returning 0):", error);
         return 0;
+    }
+}
+
+/** Full per-bucket breakdown — used by the Credits page. */
+export async function getMyCreditState(): Promise<CreditState | null> {
+    const session = await auth();
+    if (!session?.user?.id) return null;
+    try {
+        return await getCreditState(session.user.id);
+    } catch (error) {
+        console.error("getMyCreditState error:", error);
+        return null;
     }
 }
 
@@ -28,50 +38,48 @@ export async function getCredits() {
 //   - an admin-verified top-up after a confirmed payment.
 // Do NOT reintroduce a client-callable credit-increment action.
 
-export async function deductCredits(amount: number) {
+/**
+ * Generic deduction — spends from the General pool (general → topUp). Used by
+ * "anywhere" actions (chat unlock, job posting). For category-specific spends
+ * (interview/resume) call spendCredit() directly with allowGeneralFallback.
+ */
+export async function deductCredits(amount: number = 1) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, remaining: 0 };
-
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { credits: true }
-        });
-
-        if (!user || user.credits < amount) {
-            return { success: false, remaining: user?.credits || 0 };
+        for (let i = 0; i < amount; i++) {
+            const res = await spendCredit(session.user.id, "general");
+            if (!res.success) {
+                const state = await getCreditState(session.user.id);
+                return { success: false, remaining: state?.total ?? 0 };
+            }
         }
-
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { credits: { decrement: amount } }
-        });
-
-        const updatedUser = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { credits: true }
-        });
-
+        const state = await getCreditState(session.user.id);
         revalidatePath("/credits");
-        return { success: true, remaining: updatedUser?.credits || 0 };
+        return { success: true, remaining: state?.total ?? 0 };
     } catch (error) {
         console.error("Deduct Credits Error:", error);
         return { success: false, remaining: 0 };
     }
 }
 
-export async function getBillingContext(): Promise<{ plan: string; role: string; credits: number }> {
+export async function getBillingContext(): Promise<{ plan: string; role: string; credits: number; breakdown: CreditState | null }> {
     const session = await auth();
-    if (!session?.user?.id) return { plan: "BASIC", role: "CANDIDATE", credits: 0 };
+    if (!session?.user?.id) return { plan: "BASIC", role: "CANDIDATE", credits: 0, breakdown: null };
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { plan: true, role: true, credits: true },
-        });
-        return { plan: user?.plan || "BASIC", role: user?.role || "CANDIDATE", credits: user?.credits || 0 };
+        const [user, breakdown] = await Promise.all([
+            prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true, role: true } }),
+            getCreditState(session.user.id),
+        ]);
+        return {
+            plan: user?.plan || "BASIC",
+            role: user?.role || "CANDIDATE",
+            credits: breakdown?.total ?? 0,
+            breakdown,
+        };
     } catch (error) {
         console.error("getBillingContext error:", error);
-        return { plan: "BASIC", role: "CANDIDATE", credits: 0 };
+        return { plan: "BASIC", role: "CANDIDATE", credits: 0, breakdown: null };
     }
 }
 

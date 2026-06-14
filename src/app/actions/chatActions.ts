@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { spendCredit } from "@/lib/credits";
 
 export async function unlockConversation(targetUserId: string) {
     const session = await auth();
@@ -30,24 +31,15 @@ export async function unlockConversation(targetUserId: string) {
             return { success: true, conversationId: existingParticipant.conversationId, alreadyUnlocked: true };
         }
 
-        // 2. No conversation exists. We must charge 1 credit to unlock.
-        // Check balance using a transaction to ensure atomicity
-        const result = await prisma.$transaction(async (tx) => {
-            const user = await tx.user.findUnique({
-                where: { id: currentUserId },
-                select: { credits: true }
-            });
+        // 2. No conversation exists — charge 1 General credit (general → topUp) to unlock.
+        const spend = await spendCredit(currentUserId, "general");
+        if (!spend.success) {
+            throw new Error("Insufficient credits");
+        }
 
-            if (!user || user.credits < 1) {
-                throw new Error("Insufficient credits");
-            }
-
-            // Deduct 1 credit
-            await tx.user.update({
-                where: { id: currentUserId },
-                data: { credits: { decrement: 1 } }
-            });
-
+        let result;
+        try {
+        result = await prisma.$transaction(async (tx) => {
             // Create the new conversation and participants
             const conversation = await tx.conversation.create({
                 data: {
@@ -75,10 +67,16 @@ export async function unlockConversation(targetUserId: string) {
 
             return conversation;
         });
+        } catch (txErr) {
+            // Refund the credit we charged if the unlock couldn't be created.
+            const field = spend.used === "topup" ? "topUpCredits" : "generalCredits";
+            await prisma.user.update({ where: { id: currentUserId }, data: { [field]: { increment: 1 } } }).catch(() => {});
+            throw txErr;
+        }
 
         revalidatePath("/credits");
         revalidatePath("/messages");
-        
+
         return { success: true, conversationId: result.id, alreadyUnlocked: false };
 
     } catch (error: any) {

@@ -2,6 +2,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { getCreditState } from "@/lib/credits";
 
 export default async function AppLayout({
     children,
@@ -77,6 +78,15 @@ export default async function AppLayout({
 
     const plan = user?.plan || "BASIC";
 
+    // Topbar shows the TOTAL across all buckets (resume+interview+general+topUp).
+    let totalCredits = user?.credits || 0;
+    if (session?.user?.id) {
+        try {
+            const state = await getCreditState(session.user.id);
+            if (state) totalCredits = state.total;
+        } catch { /* fall back to legacy field */ }
+    }
+
     return (
         <AppShell
             counts={{
@@ -89,7 +99,7 @@ export default async function AppLayout({
                 salary: false
             }}
             plan={plan}
-            credits={user?.credits || 0}
+            credits={totalCredits}
             userId={session?.user?.id}
         >
             {children}

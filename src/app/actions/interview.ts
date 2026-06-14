@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { INTERVIEW_PASS_THRESHOLD, isPassingScore, skillSlug, skillDisplayName } from "@/lib/interviewScoring";
+import { getSpendIntent, spendCredit } from "@/lib/credits";
 
 // Define the Analysis Response Structure
 interface AnalysisResult {
@@ -185,37 +186,35 @@ export async function generateAnalysis(
 export async function createInterviewSession(
     role: string,
     difficulty: number,
-    roleClassification: any
+    roleClassification: any,
+    confirmGeneral: boolean = false
 ) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
+    const userId = session.user.id;
 
     try {
-        const result = await prisma.$transaction(async (tx) => {
-            // 1. Fetch user's current credit balance
-            const user = await tx.user.findUnique({
-                where: { id: session.user.id },
-                select: { credits: true }
-            });
+        // Spend an INTERVIEW credit; fall back to a General credit only after the
+        // user confirms (the client shows "this will use a General credit").
+        const intent = await getSpendIntent(userId, "interview");
+        if (intent.willUse === "none") {
+            return { error: "You're out of credits. Top up to start an interview." };
+        }
+        if (intent.willUse === "general" && !confirmGeneral) {
+            // No charge, no session — client pops the confirm dialog and retries.
+            return { needsGeneralConfirm: true, generalRemaining: intent.general };
+        }
 
-            if (!user) {
-                throw new Error("User record not found");
-            }
+        const spend = await spendCredit(userId, "interview", { allowGeneralFallback: true });
+        if (!spend.success) {
+            return { error: "You're out of credits. Top up to start an interview." };
+        }
 
-            if (user.credits < 1) {
-                throw new Error("Insufficient credits. Please top up to continue.");
-            }
-
-            // 2. Decrement user's credits by 1
-            await tx.user.update({
-                where: { id: session.user.id },
-                data: { credits: { decrement: 1 } }
-            });
-
-            // 3. Create the interview session
-            const interview = await tx.interview.create({
+        let interviewId: string;
+        try {
+            const interview = await prisma.interview.create({
                 data: {
-                    userId: session.user.id,
+                    userId,
                     role,
                     difficulty,
                     score: 0,
@@ -223,15 +222,20 @@ export async function createInterviewSession(
                     radarData: undefined,
                     transcript: undefined,
                     roleClassification: roleClassification as any,
-                    isPublic: false
-                }
+                    isPublic: false,
+                },
             });
-
-            return interview.id;
-        });
+            interviewId = interview.id;
+        } catch (createErr) {
+            // Refund the exact bucket we charged if the session couldn't be created.
+            const field = spend.used === "interview" ? "interviewCredits"
+                : spend.used === "general" ? "generalCredits" : "topUpCredits";
+            await prisma.user.update({ where: { id: userId }, data: { [field]: { increment: 1 } } }).catch(() => {});
+            throw createErr;
+        }
 
         revalidatePath("/credits");
-        return { success: true, id: result };
+        return { success: true, id: interviewId, usedGeneral: spend.used !== "interview" };
     } catch (error: any) {
         console.error("Create interview session failed:", error);
         return { error: error.message || "Failed to initialize interview session." };

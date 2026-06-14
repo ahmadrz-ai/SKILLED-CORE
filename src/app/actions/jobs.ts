@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { executeAI } from "@/lib/ai/modelRouter";
+import { spendCredit } from "@/lib/credits";
 
 export async function getJobs(searchParams: any) {
     const { query, type, remote, minSalary, experience } = searchParams;
@@ -94,17 +95,12 @@ export async function rewriteJobDescription(currentDescription: string) {
 
     const isUltra = user.plan === "ULTRA";
 
-    // If they are not Ultra, verify they have enough credits
-    if (!isUltra && user.credits < 1) {
-        return { success: false, message: "Insufficient credits. Please top up." };
-    }
-
-    // Only decrement credits if they are not Ultra
+    // Non-Ultra spends 1 General credit (general → topUp) for the Neural Rewrite.
     if (!isUltra) {
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { credits: { decrement: 1 } }
-        });
+        const spent = await spendCredit(session.user.id, "general");
+        if (!spent.success) {
+            return { success: false, message: "Insufficient credits. Please top up." };
+        }
         revalidatePath("/credits");
         revalidatePath("/", "layout"); // Update sidebar/header credits
     }
@@ -171,16 +167,11 @@ export async function createJob(data: {
     if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 
     try {
-        // Deduct 1 Credit for Job Post
-        const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { credits: true } });
-        if (!user || user.credits < 1) {
+        // 1 General credit (general → topUp) to post a job.
+        const spent = await spendCredit(session.user.id, "general");
+        if (!spent.success) {
             return { success: false, message: "Insufficient credits to post a job." };
         }
-
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { credits: { decrement: 1 } }
-        });
         revalidatePath("/credits");
         revalidatePath("/", "layout");
 

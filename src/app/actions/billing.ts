@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
+import { grantPlanCredits } from '@/lib/credits';
 
 export async function createPaymentRequest(
     amount: number,
@@ -91,14 +92,20 @@ export async function approveTransaction(transactionId: string) {
                 data: { plan: trx.planName }
             }));
         } else {
-            // Default to credits
+            // Purchased credits go to the PERMANENT top-up pool (never reset),
+            // not the monthly plan buckets.
             updates.push(prisma.user.update({
                 where: { id: trx.userId },
-                data: { credits: { increment: trx.credits } }
+                data: { topUpCredits: { increment: trx.credits } }
             }));
         }
 
         await prisma.$transaction(updates);
+
+        // A plan purchase (re)grants that plan's monthly buckets.
+        if (trx.type === 'PLAN' && trx.planName) {
+            await grantPlanCredits(trx.userId, trx.planName).catch((e) => console.error("grantPlanCredits failed:", e));
+        }
 
         revalidatePath('/admin/billing');
         return { success: true, message: "Transaction approved." };
