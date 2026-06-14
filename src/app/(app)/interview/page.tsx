@@ -80,6 +80,7 @@ console.log(analyze([1, 2, 3]));`;
 export default function InterviewPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const isAdmin = (session?.user as any)?.role === "ADMIN";
 
     const [configOpen, setConfigOpen] = useState(false);
     const [sessionActive, setSessionActive] = useState(false);
@@ -286,13 +287,22 @@ export default function InterviewPage() {
                                 Assessments
                             </button>
                         </Link>
-                        <Link href="/interview/live">
-                            <button className="flex items-center gap-2 px-3 py-1 rounded-md text-text-secondary hover:text-text-heading hover:bg-bg-card/50 text-xs font-bold transition-all min-h-[44px] md:min-h-0 border-none bg-transparent cursor-pointer">
+                        {isAdmin ? (
+                            <Link href="/interview/live">
+                                <button className="flex items-center gap-2 px-3 py-1 rounded-md text-text-secondary hover:text-text-heading hover:bg-bg-card/50 text-xs font-bold transition-all min-h-[44px] md:min-h-0 border-none bg-transparent cursor-pointer">
+                                    <Video className="w-3 h-3 text-text-tertiary" />
+                                    Live Video
+                                    <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sc-purple-100 text-sc-purple-700">Beta</span>
+                                </button>
+                            </Link>
+                        ) : (
+                            <button disabled title="Coming soon"
+                                className="flex items-center gap-2 px-3 py-1 rounded-md text-text-tertiary text-xs font-bold min-h-[44px] md:min-h-0 border-none bg-transparent opacity-60 cursor-not-allowed">
                                 <Video className="w-3 h-3 text-text-tertiary" />
                                 Live Video
-                                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sc-purple-100 text-sc-purple-700">Beta</span>
+                                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-sc-gray-200 text-sc-gray-600">Soon</span>
                             </button>
-                        </Link>
+                        )}
                     </div>
                 </div>
 
