@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, CreditCard, Coins, Loader2, ArrowRight } from "lucide-react";
+import { Check, CreditCard, Coins, Loader2, ArrowRight, FileText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getBillingContext } from "@/app/actions/credits";
@@ -84,6 +84,7 @@ export default function PlansPage() {
     const [plan, setPlan] = useState("BASIC");
     const [role, setRole] = useState("CANDIDATE");
     const [credits, setCredits] = useState<number>(0);
+    const [breakdown, setBreakdown] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -92,6 +93,7 @@ export default function PlansPage() {
         setPlan(ctx.plan);
         setRole(ctx.role);
         setCredits(ctx.credits);
+        setBreakdown(ctx.breakdown);
         setLoading(false);
     };
     useEffect(() => { fetchData(); }, []);
@@ -127,6 +129,34 @@ export default function PlansPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Credit breakdown — the three buckets that make up the total above */}
+            {breakdown && audience === "candidate" && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                        { label: "Resume / Profile", value: breakdown.resume, icon: FileText, hint: "AI Resume → Profile builder" },
+                        { label: "AI Interview", value: breakdown.interview, icon: Sparkles, hint: "Verified skill interviews" },
+                        { label: "General", value: breakdown.generalTotal, icon: Coins, hint: "Usable anywhere · accept bookings" },
+                    ].map((b) => (
+                        <div key={b.label} className="bg-bg-card border border-border-card rounded-2xl p-5 shadow-sc-card flex items-start justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">{b.label}</p>
+                                <p className="text-3xl font-bold text-text-heading mt-1">{b.value}</p>
+                                <p className="text-[11px] text-text-secondary mt-1">{b.hint}</p>
+                            </div>
+                            <div className="w-9 h-9 rounded-lg bg-sc-purple-50 border border-sc-purple-200 flex items-center justify-center shrink-0">
+                                <b.icon className="w-4 h-4 text-sc-purple-600" />
+                            </div>
+                        </div>
+                    ))}
+                    {breakdown.resetAt && (
+                        <p className="sm:col-span-3 text-[11px] text-text-tertiary">
+                            Plan credits renew on {new Date(new Date(breakdown.resetAt).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}.
+                            {breakdown.topUp > 0 && <> Includes {breakdown.topUp} purchased credit{breakdown.topUp === 1 ? "" : "s"} that never expire.</>}
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Active subscription strip */}
             {onPaidPlan && (
