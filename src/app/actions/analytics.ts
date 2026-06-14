@@ -24,6 +24,13 @@ export interface AnalyticsData {
     }[];
     role: string;
     plan: string;
+    reach: {
+        postViews: number;
+        badges: number;
+        endorsements: number;
+        repostsReceived: number;
+        hires: number;
+    };
     profileStrength: number;
     profileCompleteness: { name: string; completed: boolean }[];
     popularPosts: {
@@ -276,6 +283,17 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
             createdAt: format(t.createdAt, "MMM d, yyyy")
         }));
 
+        // ---------------------------------------------------------
+        // 7. REPUTATION & REACH — digests the newer features
+        // ---------------------------------------------------------
+        const [postViews, badges, endorsements, repostsReceived, hires] = await Promise.all([
+            prisma.postView.count({ where: { post: { userId } } }),
+            prisma.verifiedSkill.count({ where: { userId, status: "VERIFIED" } }),
+            prisma.endorsement.count({ where: { userId } }),
+            prisma.repost.count({ where: { post: { userId } } }),
+            prisma.booking.count({ where: { status: "HIRED", OR: [{ candidateId: userId }, { recruiterId: userId }] } }),
+        ]);
+
         return {
             stats: {
                 impressions: totalImpressions,
@@ -284,6 +302,7 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
                 trend: totalImpressions > 0 ? "+12%" : "+0%",
                 clickTrend: totalClicks > 0 ? "+8%" : "+0%"
             },
+            reach: { postViews, badges, endorsements, repostsReceived, hires },
             trendData,
             demographics,
             recentActivity,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, User, Loader2, LifeBuoy } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus, MousePointerClick, Eye, Briefcase, Sparkles, User, Loader2, LifeBuoy, Award, ThumbsUp, Repeat, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAnalytics, AnalyticsData } from "@/app/actions/analytics";
 import { toast } from "sonner";
@@ -87,7 +87,15 @@ export default function AnalyticsPage() {
 
     if (!data) return <div className="min-h-screen pt-32 px-10 text-text-secondary font-mono bg-bg-secondary-panel">No telemetry signal detected.</div>;
 
-    const { stats, trendData, demographics, recentActivity } = data;
+    const { stats, trendData, demographics, recentActivity, reach } = data;
+
+    const reachTiles = [
+        { label: "Post Views", value: reach.postViews, Icon: Eye, gold: false },
+        { label: "Reposts", value: reach.repostsReceived, Icon: Repeat, gold: false },
+        { label: "Endorsements", value: reach.endorsements, Icon: ThumbsUp, gold: false },
+        { label: "Verified Badges", value: reach.badges, Icon: Award, gold: true },
+        { label: "Hires", value: reach.hires, Icon: Trophy, gold: true },
+    ];
 
     return (
         <div className="min-h-screen p-6 lg:p-10 pt-24 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500 bg-bg-secondary-panel font-sans">
@@ -146,6 +154,31 @@ export default function AnalyticsPage() {
                     trend="Stable"
                     trendDir="flat"
                 />
+            </div>
+
+            {/* Reputation & Reach — digests badges, endorsements, reposts, post views, hires */}
+            <div>
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="h-px flex-1 bg-border-default" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-text-tertiary">Reputation &amp; Reach</span>
+                    <span className="h-px flex-1 bg-border-default" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {reachTiles.map(({ label, value, Icon, gold }) => (
+                        <div
+                            key={label}
+                            className={cn(
+                                "relative overflow-hidden rounded-xl border bg-bg-card p-4 shadow-sc-xs transition-all hover:shadow-sc-card group",
+                                gold ? "border-verified-gold-border" : "border-border-card"
+                            )}
+                        >
+                            <div className={cn("absolute left-0 top-0 bottom-0 w-[3px]", gold ? "bg-verified-gold" : "bg-sc-purple-500")} />
+                            <Icon className={cn("w-4 h-4 mb-3 transition-transform group-hover:scale-110", gold ? "text-verified-gold" : "text-text-brand")} />
+                            <div className="text-2xl font-heading font-black text-text-heading leading-none tabular-nums">{value}</div>
+                            <div className="mt-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-text-tertiary">{label}</div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Charts Section */}
