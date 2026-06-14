@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Repeat, Heart, MessageCircle, FileText, Eye, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { sanitizeRichHtml } from "@/lib/sanitize";
+import { PostInsightsModal } from "@/components/profile/PostInsightsModal";
 
 type AuthorLite = { name?: string | null; image?: string | null; username?: string | null; headline?: string | null };
 type PostLite = {
@@ -31,6 +33,8 @@ export function ActivityFeed({
     ownerName: string;
     isOwner: boolean;
 }) {
+    const [insightsPostId, setInsightsPostId] = useState<string | null>(null);
+
     const items = [
         ...posts.map((p) => ({ kind: "post" as const, post: p, time: new Date(p.createdAt).getTime() })),
         ...reposts.filter((r) => r.post).map((r) => ({ kind: "repost" as const, post: r.post as PostLite, time: new Date(r.createdAt).getTime() })),
@@ -46,6 +50,7 @@ export function ActivityFeed({
     }
 
     return (
+        <>
         <div className="space-y-4">
             {items.map((it, i) => {
                 const p = it.post;
@@ -94,11 +99,16 @@ export function ActivityFeed({
                                 <BarChart3 className="w-3.5 h-3.5 text-sc-purple-500" />
                                 <span className="inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {p._count?.views ?? 0} views</span>
                                 <span className="inline-flex items-center gap-1"><Repeat className="w-3.5 h-3.5" /> {p._count?.reposts ?? 0} reposts</span>
+                                <button onClick={() => setInsightsPostId(p.id)} className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-sc-purple-50 hover:bg-sc-purple-100 text-sc-purple-700 border-none cursor-pointer">
+                                    View insights
+                                </button>
                             </div>
                         )}
                     </div>
                 );
             })}
         </div>
+        {insightsPostId && <PostInsightsModal postId={insightsPostId} onClose={() => setInsightsPostId(null)} />}
+        </>
     );
 }

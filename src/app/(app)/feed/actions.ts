@@ -569,6 +569,81 @@ export async function logPostView(postId: string) {
     }
 }
 
+export type PostInsights = {
+    totals: { views: number; likes: number; comments: number; reposts: number };
+    series: { date: string; count: number }[];
+    isPro: boolean;
+    viewers: { id: string; name: string | null; image: string | null; role: string; username: string | null; headline: string | null; viewedAt: string }[];
+};
+
+/**
+ * Per-post insights for the OWNER: totals, a 7-day view trend, and (Pro/Ultra
+ * only) the recent distinct viewers. Returns null if the caller isn't the author.
+ */
+export async function getPostInsights(postId: string): Promise<PostInsights | null> {
+    const session = await auth();
+    if (!session?.user?.id) return null;
+
+    const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { userId: true, _count: { select: { likes: true, comments: true, reposts: true, views: true } } },
+    });
+    if (!post || post.userId !== session.user.id) return null; // owner only
+
+    const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true } });
+    const isPro = me?.plan === "PRO" || me?.plan === "ULTRA";
+
+    const { subDays, format } = await import("date-fns");
+    const today = new Date();
+    const sevenAgo = subDays(today, 6);
+
+    const recentViews = await prisma.postView.findMany({
+        where: { postId, viewedAt: { gte: sevenAgo } },
+        select: { viewedAt: true },
+    });
+    const dayCounts = new Map<string, number>();
+    recentViews.forEach((v) => {
+        const k = format(v.viewedAt, "MMM d");
+        dayCounts.set(k, (dayCounts.get(k) || 0) + 1);
+    });
+    const series: { date: string; count: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+        const k = format(subDays(today, i), "MMM d");
+        series.push({ date: k, count: dayCounts.get(k) || 0 });
+    }
+
+    let viewers: PostInsights["viewers"] = [];
+    if (isPro) {
+        const rows = await prisma.postView.findMany({
+            where: { postId, viewerId: { not: null } },
+            orderBy: { viewedAt: "desc" },
+            take: 60,
+            select: { viewerId: true, viewedAt: true },
+        });
+        const seen = new Set<string>();
+        const distinct: { viewerId: string; viewedAt: Date }[] = [];
+        for (const r of rows) {
+            if (r.viewerId && !seen.has(r.viewerId)) { seen.add(r.viewerId); distinct.push({ viewerId: r.viewerId, viewedAt: r.viewedAt }); }
+        }
+        const users = await prisma.user.findMany({
+            where: { id: { in: distinct.map((d) => d.viewerId) } },
+            select: { id: true, name: true, image: true, role: true, username: true, headline: true },
+        });
+        const umap = new Map(users.map((u) => [u.id, u]));
+        viewers = distinct.slice(0, 25).map((d) => {
+            const u = umap.get(d.viewerId);
+            return u ? { ...u, viewedAt: d.viewedAt.toISOString() } : null;
+        }).filter(Boolean) as PostInsights["viewers"];
+    }
+
+    return {
+        totals: { views: post._count.views, likes: post._count.likes, comments: post._count.comments, reposts: post._count.reposts },
+        series,
+        isPro,
+        viewers,
+    };
+}
+
 export async function votePoll(pollId: string, optionId: string) {
     const session = await auth();
     if (!session?.user?.id) {
