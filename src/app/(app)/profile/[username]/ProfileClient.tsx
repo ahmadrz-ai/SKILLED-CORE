@@ -32,6 +32,7 @@ import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
 import { ShareBadge } from '@/components/skills/ShareBadge';
 import { EndorseSkillTag } from '@/components/skills/EndorseSkillTag';
 import { ReportUserModal } from '@/components/profile/ReportUserModal';
+import { ActivityFeed } from '@/components/profile/ActivityFeed';
 import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
@@ -73,11 +74,12 @@ interface ProfileClientProps {
     isAdmin?: boolean;
     isRestrictedViewer?: boolean;
     endorsements?: { counts: Record<string, number>; mine: string[] };
+    reposts?: any[];
 }
 
-export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false, isRestrictedViewer = false, endorsements = { counts: {}, mine: [] } }: ProfileClientProps) {
+export default function ProfileClient({ user, isOwner, posts, isFollowing = false, connectionStatus = 'NONE', counts = { followers: 0, following: 0 }, isAdmin = false, isRestrictedViewer = false, endorsements = { counts: {}, mine: [] }, reposts = [] }: ProfileClientProps) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'interviews'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'projects' | 'interviews'>('overview');
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Social State
@@ -862,7 +864,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
 
                         {/* Tabs */}
                         <div className="flex items-center gap-8 border-b border-slate-200 px-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-40 pt-4">
-                            {(['overview', 'projects', 'interviews'] as const).map((tab) => {
+                            {(['overview', 'activity', 'projects', 'interviews'] as const).map((tab) => {
                                 if (tab === 'projects' && user.role === 'RECRUITER') return null;
                                 return (
                                     <button
@@ -977,6 +979,23 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         </div>
                                     </section>
 
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'activity' && (
+                                <motion.div
+                                    key="activity"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    className="py-6"
+                                >
+                                    <ActivityFeed
+                                        posts={posts || []}
+                                        reposts={reposts}
+                                        ownerName={user.name || user.username || 'This user'}
+                                        isOwner={isOwner}
+                                    />
                                 </motion.div>
                             )}
 

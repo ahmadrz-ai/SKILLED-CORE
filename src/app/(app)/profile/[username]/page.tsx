@@ -198,6 +198,21 @@ export default async function ProfilePage({ params }: PageProps) {
         const { getEndorsements } = await import("@/app/actions/endorsements");
         const endorsements = await getEndorsements(user.id);
 
+        // This user's reposts (for the Activity tab) — newest first.
+        const reposts = await prisma.repost.findMany({
+            where: { userId: user.id },
+            orderBy: { createdAt: "desc" },
+            take: 50,
+            include: {
+                post: {
+                    include: {
+                        author: { select: { name: true, image: true, username: true, headline: true } },
+                        _count: { select: { likes: true, comments: true } },
+                    },
+                },
+            },
+        }).catch(() => []);
+
         console.log("ProfilePage: Rendering client");
         return (
             <ProfileClient
@@ -210,6 +225,7 @@ export default async function ProfilePage({ params }: PageProps) {
                 isAdmin={isAdmin}
                 isRestrictedViewer={isRestrictedViewer}
                 endorsements={endorsements}
+                reposts={JSON.parse(JSON.stringify(reposts))}
             />
         );
     } catch (e: any) {
