@@ -1,8 +1,8 @@
-import { getNotifications } from "@/app/actions/notifications";
+import { getNotifications, getMutedGroups } from "@/app/actions/notifications";
 import { NotificationsClient } from "./NotificationsClient";
 
 export default async function NotificationsPage() {
-    const { notifications } = await getNotifications();
+    const [{ notifications }, mutedGroups] = await Promise.all([getNotifications(), getMutedGroups()]);
 
     // Map to ensure types (handle nulls if any)
     const sanitizedNotifications = (notifications || []).map(n => ({
@@ -16,7 +16,7 @@ export default async function NotificationsPage() {
 
     return (
         <div className="w-full min-h-[calc(100vh-120px)] rounded-2xl">
-            <NotificationsClient initialData={sanitizedNotifications} />
+            <NotificationsClient initialData={sanitizedNotifications} mutedGroups={mutedGroups} />
         </div>
     );
 }

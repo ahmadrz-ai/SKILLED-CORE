@@ -72,13 +72,13 @@ export async function submitAssessment(assessmentId: string, answers: Record<str
         }
     });
 
-    // If passed, we could trigger other side effects like adding a "Verified" skill to profile
-    // Logic for adding skill to profile string would go here:
+    // On pass, add the skill to the profile as a REGULAR skill — never tagged
+    // "(Verified)". The golden Verified Skill badge is reserved for AI interviews
+    // (finalizeInterview); an MCQ quiz must not mint a verified-looking credential.
     if (passed) {
         const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-        // Simplified: Just appending the assessment title to skills if not present
-        if (user && user.skills && !user.skills.includes(assessment.title)) {
-            const newSkills = user.skills ? `${user.skills}, ${assessment.title} (Verified)` : `${assessment.title} (Verified)`;
+        if (user && !(user.skills || "").toLowerCase().includes(assessment.title.toLowerCase())) {
+            const newSkills = user.skills ? `${user.skills}, ${assessment.title}` : assessment.title;
             await prisma.user.update({
                 where: { id: session.user.id },
                 data: { skills: newSkills }

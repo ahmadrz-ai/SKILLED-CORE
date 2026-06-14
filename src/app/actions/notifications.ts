@@ -117,6 +117,54 @@ export async function markAllAsRead() {
     }
 }
 
+/** Mark a specific set of the caller's notifications as read (e.g. all visible in a filter). */
+export async function markManyRead(ids: string[]) {
+    const session = await auth();
+    if (!session?.user?.id || !ids?.length) return { success: false };
+    try {
+        await prisma.notification.updateMany({
+            where: { id: { in: ids }, userId: session.user.id },
+            data: { read: true },
+        });
+        revalidatePath('/notifications');
+        return { success: true };
+    } catch {
+        return { success: false };
+    }
+}
+
+/** Groups (from notificationTypes) the caller has muted from their in-app inbox. */
+export async function getMutedGroups(): Promise<string[]> {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+    const u = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { notificationMutedGroups: true },
+    });
+    return u?.notificationMutedGroups || [];
+}
+
+/** Mute or unmute a notification group for the caller. */
+export async function setNotificationGroupMuted(group: string, muted: boolean) {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false };
+    try {
+        const u = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { notificationMutedGroups: true },
+        });
+        const set = new Set(u?.notificationMutedGroups || []);
+        if (muted) set.add(group); else set.delete(group);
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { notificationMutedGroups: Array.from(set) },
+        });
+        return { success: true };
+    } catch {
+        return { success: false };
+    }
+}
+
 // Internal utility to create notifications
 export async function createNotification(data: {
     userId: string, // Recipient

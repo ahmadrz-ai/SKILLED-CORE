@@ -64,6 +64,7 @@ model User {
   nodeType                    String                @default("OPEN") // OPEN, BROADCAST
   emailNotifications          Boolean               @default(true)
   marketingEmails             Boolean               @default(false)
+  notificationMutedGroups     String[]              @default([]) // in-app notification groups the user muted
   lastNotificationEmailSentAt DateTime?
   lastLogin                   DateTime?
   credits                     Int                   @default(10) // LEGACY single-bucket — kept for back-compat; superseded by the 3 buckets below

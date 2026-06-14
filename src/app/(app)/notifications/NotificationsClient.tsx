@@ -5,10 +5,20 @@ import { formatDistanceToNow } from "date-fns";
 import { Bell, MoreHorizontal, CheckSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { markAsRead, markAllAsRead } from "@/app/actions/notifications";
+import { markAsRead, markAllAsRead, markManyRead, setNotificationGroupMuted } from "@/app/actions/notifications";
 import { sanitizeRichHtml } from "@/lib/sanitize";
-import { getNotifMeta } from "@/lib/notificationTypes";
+import { getNotifMeta, type NotifGroup } from "@/lib/notificationTypes";
 import { toast } from "sonner";
+
+const MUTABLE_GROUPS: { group: NotifGroup; label: string }[] = [
+    { group: "social", label: "Likes, comments & mentions" },
+    { group: "network", label: "Network & profile views" },
+    { group: "messages", label: "Messages" },
+    { group: "jobs", label: "Jobs & applications" },
+    { group: "interview", label: "Interviews & badges" },
+    { group: "billing", label: "Billing & credits" },
+    { group: "system", label: "System & security" },
+];
 
 interface NotificationItem {
     id: string;
@@ -24,18 +34,40 @@ interface NotificationItem {
     } | null;
 }
 
-export function NotificationsClient({ initialData }: { initialData: NotificationItem[] }) {
+export function NotificationsClient({ initialData, mutedGroups = [] }: { initialData: NotificationItem[]; mutedGroups?: string[] }) {
     const router = useRouter();
     const [filter, setFilter] = useState<'ALL' | 'UNREAD' | 'MENTIONS' | 'SYSTEM'>('ALL');
     const [notifications, setNotifications] = useState(initialData);
+    const [muted, setMuted] = useState<string[]>(mutedGroups);
 
     const filtered = notifications.filter(n => {
+        // Hide muted groups entirely from the inbox.
+        if (muted.includes(getNotifMeta(n.type).group)) return false;
         if (filter === 'ALL') return true;
         if (filter === 'UNREAD') return !n.read;
         if (filter === 'MENTIONS') return n.type === 'MENTION' || n.type === 'COMMENT';
         if (filter === 'SYSTEM') return n.type === 'SYSTEM' || n.type === 'JOB_ALERT';
         return true;
     });
+
+    // Mark everything currently visible (in this filter) as read.
+    const handleMarkVisibleRead = async () => {
+        const ids = filtered.filter(n => !n.read).map(n => n.id);
+        if (!ids.length) { toast.info("Nothing unread here."); return; }
+        setNotifications(prev => prev.map(n => ids.includes(n.id) ? { ...n, read: true } : n));
+        await markManyRead(ids);
+        toast.success(`Marked ${ids.length} as read`);
+    };
+
+    const toggleMute = async (group: string) => {
+        const willMute = !muted.includes(group);
+        setMuted(prev => willMute ? [...prev, group] : prev.filter(g => g !== group));
+        const res = await setNotificationGroupMuted(group, willMute);
+        if (!res.success) {
+            setMuted(prev => willMute ? prev.filter(g => g !== group) : [...prev, group]);
+            toast.error("Could not update preference");
+        }
+    };
 
     const handleRead = async (id: string, path: string | null) => {
         // Optimistic update
@@ -132,10 +164,38 @@ export function NotificationsClient({ initialData }: { initialData: Notification
                             );
                         })}
                     </div>
+
+                    {/* Mute categories */}
+                    <div className="pt-3 mt-1 border-t border-[var(--border-subtle)] space-y-1.5">
+                        <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-1 block">Mute categories</span>
+                        {MUTABLE_GROUPS.map(({ group, label }) => {
+                            const isMuted = muted.includes(group);
+                            return (
+                                <button key={group} onClick={() => toggleMute(group)}
+                                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[var(--text-sidebar-inactive)] hover:bg-[var(--bg-sidebar-hover)] border-none bg-transparent cursor-pointer">
+                                    <span className="truncate text-left">{label}</span>
+                                    <span className={cn(
+                                        "ml-2 shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
+                                        isMuted ? "bg-[var(--sc-gray-200)] text-[var(--sc-gray-600)]" : "bg-[var(--sc-purple-100)] text-[var(--sc-purple-700)]"
+                                    )}>
+                                        {isMuted ? "Muted" : "On"}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Right Column: List of notification cards (flex-1) */}
                 <div className="flex-1 w-full space-y-3">
+                    {filtered.some(n => !n.read) && (
+                        <div className="flex justify-end">
+                            <button onClick={handleMarkVisibleRead}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-brand)] hover:text-[var(--text-brand-hover)] uppercase tracking-wider border-none bg-transparent cursor-pointer">
+                                <CheckSquare className="w-3.5 h-3.5" /> Mark these read
+                            </button>
+                        </div>
+                    )}
                     {filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center text-center min-h-[220px] p-8 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl shadow-sm">
                             <Bell className="w-12 h-12 text-[var(--sc-gray-300)] mt-4" />
