@@ -31,6 +31,7 @@ import { deleteInterview } from '@/app/actions/interview';
 import { GoldenSkillBadge } from '@/components/skills/GoldenSkillBadge';
 import { ShareBadge } from '@/components/skills/ShareBadge';
 import { EndorseSkillTag } from '@/components/skills/EndorseSkillTag';
+import { submitReport } from '@/app/actions/adminReports';
 import { INTERVIEW_PASS_THRESHOLD } from '@/lib/interviewScoring';
 import { PlanBadge } from '@/components/credits/PlanBadge';
 import { SocialIcon } from '@/components/shared/SocialIcon';
@@ -235,6 +236,34 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
         } finally {
             setIsSavingPdf(false);
         }
+    };
+
+    // Share this profile — native share sheet on mobile, clipboard copy elsewhere.
+    const handleShareProfile = async () => {
+        const url = `${window.location.origin}/profile/${user.username || user.id}`;
+        try {
+            if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                await (navigator as any).share({ title: user.name || 'SkilledCore profile', url });
+            } else {
+                await navigator.clipboard.writeText(url);
+                toast.success('Profile link copied to clipboard');
+            }
+        } catch {
+            // user dismissed the native share sheet — no-op
+        }
+    };
+
+    // Report this user → files a support/abuse report for the team to review.
+    const handleReportUser = async () => {
+        const reason = window.prompt(`Report ${user.name || 'this user'} — briefly describe the issue:`);
+        if (!reason || !reason.trim()) return;
+        const res: any = await submitReport(
+            `User report — @${user.username || user.id} (${user.id}): ${reason.trim()}`,
+            'abuse',
+            'high',
+        );
+        if (res?.success) toast.success('Report submitted. Our team will review it.');
+        else toast.error(res?.error || 'Could not submit the report.');
     };
 
     // Helper to render brand icons
@@ -656,10 +685,10 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-white border border-slate-200 text-slate-750 shadow-lg font-medium">
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700">
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => router.push(`/messages?userId=${user.id}`)}>
                                                         <Send className="w-4 h-4 text-slate-400" /> Send profile via message
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={() => setEditSection('share')}>
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-slate-50 focus:bg-slate-50 text-slate-700" onClick={handleShareProfile}>
                                                         <Share2 className="w-4 h-4 text-slate-400" /> Share Profile
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
@@ -668,7 +697,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     >
                                                         <Download className="w-4 h-4 text-slate-400" /> {isSavingPdf ? 'Preparing PDF…' : 'Save to PDF'}
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650">
+                                                    <DropdownMenuItem className="cursor-pointer gap-2 hover:bg-red-50 focus:bg-red-50 text-red-650" onClick={handleReportUser}>
                                                         <Flag className="w-4 h-4 text-red-500" /> Report User
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
