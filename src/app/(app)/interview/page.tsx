@@ -110,6 +110,8 @@ export default function InterviewPage() {
     const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
     const [isVoiceActive, setIsVoiceActive] = useState(false);
     const [isClassifying, setIsClassifying] = useState(false);
+    // "Use a General credit?" confirm when AI Interview credits are exhausted.
+    const [generalConfirm, setGeneralConfirm] = useState<null | { newConfig: any; classification: any; remaining: number }>(null);
 
     useEffect(() => {
         if (status !== 'loading') {
@@ -123,52 +125,51 @@ export default function InterviewPage() {
         }
     }, [status, router]);
 
+    // Activate a session once we have a classification. `confirmGeneral` tells the
+    // server it's OK to spend a General credit when AI Interview credits are gone.
+    const startWithClassification = async (newConfig: any, classification: any, confirmGeneral: boolean) => {
+        const { createInterviewSession } = await import('@/app/actions/interview');
+        const sessionRes: any = await createInterviewSession(
+            newConfig.role,
+            newConfig.difficulty || 3,
+            classification,
+            confirmGeneral
+        );
+
+        // Out of AI Interview credits but General available → ask before spending.
+        if (sessionRes.needsGeneralConfirm) {
+            setGeneralConfirm({ newConfig, classification, remaining: sessionRes.generalRemaining || 0 });
+            return;
+        }
+        if (sessionRes.error || !sessionRes.id) {
+            toast.error(sessionRes.error || "Failed to initialize interview session.");
+            return;
+        }
+
+        setConfig({ ...newConfig, interviewId: sessionRes.id, classification });
+        setSessionId(sessionRes.id);
+        setConfigOpen(false);
+        setSessionActive(true);
+        setInterviewMessages([]);
+        setTelemetry({ confidence: 50, topics: [], feedback: "Waiting for analysis..." });
+        setSessionSaved(false);
+        setSandboxCode(getInitialSandboxCode(newConfig.role));
+        setSandboxOutput([]);
+        setSessionCheated(false);
+        setIsRightPanelOpen(true);
+        if (sessionRes.usedGeneral) toast.info("Used 1 General credit for this interview.");
+    };
+
     const handleStartSession = async (newConfig: any) => {
         setIsClassifying(true);
         try {
-            // Step 1: Call server API to classify the job title
             const classifyRes = await fetch('/api/interview/classify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ jobTitle: newConfig.role })
             });
             const classification = await classifyRes.json();
-
-            // Step 2: Initialize DB session record immediately
-            const { createInterviewSession } = await import('@/app/actions/interview');
-            const sessionRes = await createInterviewSession(
-                newConfig.role,
-                newConfig.difficulty || 3,
-                classification
-            );
-
-            if (sessionRes.error || !sessionRes.id) {
-                toast.error(sessionRes.error || "Failed to initialize interview session.");
-                return;
-            }
-
-            const dbSessionId = sessionRes.id;
-
-            setConfig({
-                ...newConfig,
-                interviewId: dbSessionId,
-                classification
-            });
-
-            setSessionId(dbSessionId);
-            setConfigOpen(false);
-            setSessionActive(true);
-            setInterviewMessages([]);
-            setTelemetry({ confidence: 50, topics: [], feedback: "Waiting for analysis..." });
-            setSessionSaved(false);
-
-            setSandboxCode(getInitialSandboxCode(newConfig.role));
-            setSandboxOutput([]);
-            setSessionCheated(false);
-
-            // Open the right panel workspace by default for all sessions
-            setIsRightPanelOpen(true);
-
+            await startWithClassification(newConfig, classification, false);
         } catch (err: any) {
             console.error("[Start Session Error]:", err);
             toast.error("Failed to initialize interview workspace. Please try again.");
@@ -452,6 +453,44 @@ export default function InterviewPage() {
                 onStart={handleStartSession}
                 onClose={() => setConfigOpen(false)}
             />
+
+            {/* "Use a General credit?" confirm — AI Interview credits exhausted */}
+            {generalConfirm && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-bg-overlay backdrop-blur-md p-4 animate-in fade-in duration-200">
+                    <div className="bg-bg-modal border border-border-modal p-6 rounded-2xl shadow-sc-modal max-w-md w-full space-y-4 text-center">
+                        <div className="w-12 h-12 rounded-full bg-sc-purple-50 border border-sc-purple-200 flex items-center justify-center mx-auto">
+                            <MessageSquarePlus className="w-6 h-6 text-text-brand" />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-text-heading">Out of AI Interview credits</h3>
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                                This interview will use <strong className="text-text-heading">1 General credit</strong> instead.
+                                You have <strong className="text-text-heading">{generalConfirm.remaining}</strong> General credit{generalConfirm.remaining === 1 ? "" : "s"} left.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                            <button
+                                onClick={() => setGeneralConfirm(null)}
+                                className="flex-1 h-10 rounded-xl border border-border-default bg-bg-card text-text-body font-semibold text-sm hover:bg-bg-sidebar-hover transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const pending = generalConfirm;
+                                    setGeneralConfirm(null);
+                                    setIsClassifying(true);
+                                    try { await startWithClassification(pending.newConfig, pending.classification, true); }
+                                    finally { setIsClassifying(false); }
+                                }}
+                                className="flex-1 h-10 rounded-xl bg-sc-purple-600 hover:bg-sc-purple-700 text-white font-semibold text-sm transition-colors"
+                            >
+                                Use 1 General credit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Scorecard
                 isOpen={scorecardOpen}
