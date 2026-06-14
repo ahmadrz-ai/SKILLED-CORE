@@ -26,18 +26,19 @@ export function BookingModal({
     const router = useRouter();
     const [proposedAt, setProposedAt] = useState("");
     const [message, setMessage] = useState("");
+    const [expiresInDays, setExpiresInDays] = useState(7);
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
 
     if (!open || !candidate) return null;
 
-    const reset = () => { setProposedAt(""); setMessage(""); setDone(false); };
+    const reset = () => { setProposedAt(""); setMessage(""); setExpiresInDays(7); setDone(false); };
     const close = () => { reset(); onClose(); };
 
     const submit = async () => {
         if (!proposedAt) { toast.error("Pick a proposed date and time."); return; }
         setLoading(true);
-        const res = await createBooking({ candidateId: candidate.id, proposedAt: new Date(proposedAt).toISOString(), message });
+        const res = await createBooking({ candidateId: candidate.id, proposedAt: new Date(proposedAt).toISOString(), message, expiresInDays });
         setLoading(false);
         if (res.success) {
             setDone(true);
@@ -111,7 +112,21 @@ export function BookingModal({
                             className="w-full rounded-lg border border-border-input bg-bg-input px-3 py-2 text-sm text-text-body placeholder:text-text-placeholder focus:border-border-focus focus:outline-none resize-none"
                         />
 
-                        <p className="text-xs text-text-tertiary mt-3">A video meeting link will be added once the candidate accepts.</p>
+                        <label className="block text-sm font-medium text-text-body-strong mt-4 mb-1.5">Accept window</label>
+                        <select
+                            value={expiresInDays}
+                            onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                            className="w-full rounded-lg border border-border-input bg-bg-input px-3 py-2.5 text-sm text-text-body focus:border-border-focus focus:outline-none cursor-pointer"
+                        >
+                            <option value={1}>1 day to accept</option>
+                            <option value={2}>2 days to accept</option>
+                            <option value={3}>3 days to accept</option>
+                            <option value={7}>7 days to accept (default)</option>
+                            <option value={14}>14 days to accept</option>
+                            <option value={30}>30 days to accept</option>
+                        </select>
+
+                        <p className="text-xs text-text-tertiary mt-3">The request auto-cancels if not accepted within the window. A video meeting link is added once the candidate accepts.</p>
 
                         <button
                             onClick={submit}
