@@ -4,6 +4,25 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyUser } from "@/lib/ably";
+import { spendCredit } from "@/lib/credits";
+
+const DEFAULT_EXPIRY_DAYS = 7;
+
+/** Mark any REQUESTED bookings whose accept-window has passed as EXPIRED. */
+async function expireStaleBookings(userId: string) {
+    try {
+        await prisma.booking.updateMany({
+            where: {
+                candidateId: userId,
+                status: "REQUESTED",
+                expiresAt: { lt: new Date() },
+            },
+            data: { status: "EXPIRED" },
+        });
+    } catch (e) {
+        console.error("expireStaleBookings failed:", e);
+    }
+}
 
 type Role = "ADMIN" | "RECRUITER" | "CANDIDATE" | string;
 
@@ -26,6 +45,7 @@ export async function createBooking(input: {
     proposedAt: string; // ISO datetime
     message?: string;
     jobId?: string;
+    expiresInDays?: number; // accept window; default 7 days
 }): Promise<{ success: boolean; bookingId?: string; message?: string }> {
     const caller = await getCaller();
     if (!caller) return { success: false, message: "Unauthorized" };
@@ -61,6 +81,10 @@ export async function createBooking(input: {
             return { success: false, message: "You already have an active interview with this candidate." };
         }
 
+        // Accept window: recruiter-set (clamped 1–30 days) or default 7 days.
+        const days = Math.min(30, Math.max(1, Math.round(input.expiresInDays || DEFAULT_EXPIRY_DAYS)));
+        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
         const booking = await prisma.booking.create({
             data: {
                 recruiterId: caller.id,
@@ -69,6 +93,7 @@ export async function createBooking(input: {
                 proposedAt: when,
                 message: input.message?.trim() || null,
                 status: "REQUESTED",
+                expiresAt,
             },
         });
 
@@ -104,6 +129,9 @@ export async function getMyBookings(): Promise<{
 }> {
     const caller = await getCaller();
     if (!caller) return { asRecruiter: [], asCandidate: [] };
+
+    // Lazily expire stale requests so the list (and counts) stay honest.
+    await expireStaleBookings(caller.id);
 
     try {
         const [asRecruiter, asCandidate] = await Promise.all([
@@ -145,6 +173,21 @@ export async function respondToBooking(
         if (booking.status !== "REQUESTED") {
             return { success: false, message: "This request has already been handled." };
         }
+        // Accept window closed?
+        if (decision === "CONFIRMED" && booking.expiresAt && booking.expiresAt.getTime() < Date.now()) {
+            await prisma.booking.update({ where: { id: bookingId }, data: { status: "EXPIRED" } }).catch(() => {});
+            return { success: false, message: "This interview request has expired." };
+        }
+
+        // Accepting costs 1 General credit (general → topUp). Declining is free.
+        let creditUsed: "general" | "topup" | undefined;
+        if (decision === "CONFIRMED" && !booking.acceptCostCharged) {
+            const spend = await spendCredit(caller.id, "general");
+            if (!spend.success) {
+                return { success: false, message: "You need at least 1 General credit to accept this interview." };
+            }
+            creditUsed = spend.used as "general" | "topup";
+        }
 
         // On confirm, generate a ready-to-use video room. Jitsi public rooms need no API
         // key or setup, so the link works immediately; the cuid bookingId keeps it
@@ -152,10 +195,23 @@ export async function respondToBooking(
         // changing only this line.
         const meetingUrl = decision === "CONFIRMED" ? `https://meet.jit.si/skilledcore-${bookingId}` : null;
 
-        await prisma.booking.update({
-            where: { id: bookingId },
-            data: { status: decision, ...(meetingUrl ? { meetingUrl } : {}) },
-        });
+        try {
+            await prisma.booking.update({
+                where: { id: bookingId },
+                data: {
+                    status: decision,
+                    ...(meetingUrl ? { meetingUrl } : {}),
+                    ...(decision === "CONFIRMED" ? { acceptCostCharged: true } : {}),
+                },
+            });
+        } catch (updateErr) {
+            // Refund the General credit if the confirm couldn't be saved.
+            if (creditUsed) {
+                const field = creditUsed === "topup" ? "topUpCredits" : "generalCredits";
+                await prisma.user.update({ where: { id: caller.id }, data: { [field]: { increment: 1 } } }).catch(() => {});
+            }
+            throw updateErr;
+        }
 
         try {
             await prisma.notification.create({
@@ -175,6 +231,7 @@ export async function respondToBooking(
         }
 
         revalidatePath("/bookings");
+        revalidatePath("/credits");
         revalidatePath("/", "layout");
         return { success: true };
     } catch (error) {

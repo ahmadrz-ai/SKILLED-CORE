@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarClock, Check, X, Video, Loader2, CalendarDays } from "lucide-react";
+import { CalendarClock, Check, X, Video, Loader2, CalendarDays, Clock, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { getMyBookings, respondToBooking, cancelBooking } from "@/app/actions/bookings";
+import { cn } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
     REQUESTED: "bg-sc-amber-100 text-sc-amber-700",
@@ -12,7 +13,40 @@ const STATUS_STYLE: Record<string, string> = {
     DECLINED: "bg-sc-red-100 text-sc-red-700",
     CANCELLED: "bg-sc-gray-150 text-sc-gray-600",
     COMPLETED: "bg-sc-purple-100 text-sc-purple-700",
+    EXPIRED: "bg-sc-gray-150 text-sc-gray-600",
 };
+
+/** Live "time left to accept" clock with a hover tooltip (days-hours-mins-secs). */
+function ExpiryClock({ expiresAt }: { expiresAt?: string | null }) {
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        const t = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(t);
+    }, []);
+    if (!expiresAt) return null;
+    const ms = new Date(expiresAt).getTime() - now;
+    if (ms <= 0) return <span className="text-[10px] font-bold text-sc-red-600">Expired</span>;
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor((ms % 86400000) / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    const urgent = ms < 24 * 3600000;
+    const compact = d > 0 ? `${d}d` : `${h}:${String(m).padStart(2, "0")}`;
+    const full = d > 0 ? `${d}d ${h}h ${m}m left to accept` : `${h}h ${m}m ${s}s left to accept`;
+    return (
+        <div className="relative group/clock">
+            <span className={cn(
+                "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full cursor-default",
+                urgent ? "bg-sc-red-100 text-sc-red-700" : "bg-sc-amber-100 text-sc-amber-700"
+            )}>
+                <Clock className="w-3 h-3" /> {compact}
+            </span>
+            <span className="pointer-events-none absolute right-0 top-full mt-1 z-20 whitespace-nowrap rounded-md bg-bg-tooltip text-white text-[10px] px-2 py-1 opacity-0 group-hover/clock:opacity-100 transition-opacity shadow-sc-dropdown">
+                {full}
+            </span>
+        </div>
+    );
+}
 
 function StatusBadge({ status }: { status: string }) {
     return (
@@ -124,7 +158,10 @@ export default function BookingsPage() {
                             <div key={b.id} className="rounded-xl border border-border-default bg-bg-card p-4 shadow-sc-card">
                                 <div className="flex items-start justify-between gap-3">
                                     <Person p={b.recruiter} />
-                                    <StatusBadge status={b.status} />
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {b.status === "REQUESTED" && <ExpiryClock expiresAt={b.expiresAt} />}
+                                        <StatusBadge status={b.status} />
+                                    </div>
                                 </div>
                                 <div className="mt-3 flex items-center gap-2 text-sm text-text-body">
                                     <CalendarClock className="w-4 h-4 text-text-tertiary" /> {fmt(b.proposedAt)}
@@ -132,6 +169,7 @@ export default function BookingsPage() {
                                 {b.message && <p className="mt-2 text-sm text-text-secondary bg-sc-gray-50 rounded-lg p-3">{b.message}</p>}
                                 <MeetingRow b={b} />
                                 {b.status === "REQUESTED" && (
+                                    <>
                                     <div className="mt-4 flex gap-2">
                                         <button onClick={() => respond(b.id, "CONFIRMED")} disabled={busy === b.id}
                                             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-sc-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sc-purple-700 disabled:opacity-60">
@@ -142,6 +180,8 @@ export default function BookingsPage() {
                                             <X className="w-4 h-4" /> Decline
                                         </button>
                                     </div>
+                                    <p className="mt-2 flex items-center gap-1 text-[11px] text-text-tertiary"><Coins className="w-3 h-3" /> Accepting uses 1 General credit.</p>
+                                    </>
                                 )}
                             </div>
                         ))}
