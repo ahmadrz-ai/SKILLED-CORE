@@ -69,8 +69,9 @@ export default async function FeedPage() {
                     }
                 },
                 likes: true,
+                reposts: { where: { userId: user.id }, select: { id: true } },
                 _count: {
-                    select: { comments: true }
+                    select: { comments: true, reposts: true }
                 },
                 poll: {
                     include: {
@@ -110,6 +111,8 @@ export default async function FeedPage() {
 
         const postsWithFollowStatus = posts.map(post => ({
             ...post,
+            repostCount: (post as any)._count?.reposts ?? 0,
+            reposted: Array.isArray((post as any).reposts) && (post as any).reposts.length > 0,
             author: {
                 ...post.author,
                 isFollowing: followingIds.has(post.userId),
