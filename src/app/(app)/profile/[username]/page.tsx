@@ -139,9 +139,8 @@ export default async function ProfilePage({ params }: PageProps) {
                                     role: true
                                 }
                             },
-                            likes: true,
                             _count: {
-                                select: { comments: true }
+                                select: { likes: true, comments: true, reposts: true, views: true }
                             },
                             poll: {
                                 include: {

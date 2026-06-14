@@ -409,9 +409,10 @@ export default function AnalyticsPage() {
                                 <thead>
                                     <tr className="border-b border-border-subtle pb-2 text-text-secondary uppercase font-mono font-bold text-[9px] tracking-wider">
                                         <th className="pb-3 font-semibold">Post Content</th>
-                                        <th className="pb-3 font-semibold text-center">Impressions</th>
+                                        <th className="pb-3 font-semibold text-center">Views</th>
                                         <th className="pb-3 font-semibold text-center">Likes</th>
                                         <th className="pb-3 font-semibold text-center">Comments</th>
+                                        <th className="pb-3 font-semibold text-center">Reposts</th>
                                         <th className="pb-3 font-semibold text-right">Engagement</th>
                                     </tr>
                                 </thead>
@@ -429,6 +430,9 @@ export default function AnalyticsPage() {
                                             </td>
                                             <td className="py-3 text-center text-text-secondary font-mono font-semibold">
                                                 {post.comments}
+                                            </td>
+                                            <td className="py-3 text-center text-text-secondary font-mono font-semibold">
+                                                {post.reposts}
                                             </td>
                                             <td className="py-3 text-right font-mono font-bold text-[#16A34A]">
                                                 {post.engagement}%

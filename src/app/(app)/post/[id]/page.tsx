@@ -43,6 +43,10 @@ export default async function SinglePostPage({ params }: { params: Promise<{ id:
         notFound();
     }
 
+    // Record a real view for per-post insights (deduped; author excluded).
+    const { logPostView } = await import("@/app/(app)/feed/actions");
+    await logPostView(id);
+
     // Determine connection status and follow status of the author relative to current user
     const isFollowing = await prisma.follow.findFirst({
         where: {

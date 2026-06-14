@@ -33,6 +33,7 @@ export interface AnalyticsData {
         date: string;
         likes: number;
         comments: number;
+        reposts: number;
         impressions: number;
         engagement: string;
     }[];
@@ -226,21 +227,21 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
         const userPosts = await prisma.post.findMany({
             where: { userId },
             include: {
-                likes: true,
-                comments: true
+                _count: { select: { likes: true, comments: true, reposts: true, views: true } }
             },
             orderBy: { createdAt: 'desc' },
-            take: 10
+            take: 25
         });
 
         const popularPosts = userPosts.map(post => {
-            const likes = post.likes.length;
-            const comments = post.comments.length;
-            const impressions = (likes + comments) * 12 + 5;
-            const engagement = impressions > 0
-                ? (((likes + comments) / impressions) * 100).toFixed(1)
-                : "0.0";
-            
+            const likes = post._count.likes;
+            const comments = post._count.comments;
+            const reposts = post._count.reposts;
+            const impressions = post._count.views; // REAL views (post detail opens), deduped per viewer/day
+            const interactions = likes + comments + reposts;
+            // Engagement = interactions / views. With no views yet, show 0 (honest, no fabricated base).
+            const engagement = impressions > 0 ? ((interactions / impressions) * 100).toFixed(1) : "0.0";
+
             return {
                 id: post.id,
                 content: post.content.length > 60 ? post.content.substring(0, 60) + "..." : post.content,
@@ -248,10 +249,11 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
                 date: format(post.createdAt, "MMM d, yyyy"),
                 likes,
                 comments,
+                reposts,
                 impressions,
                 engagement
             };
-        }).sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments)).slice(0, 5);
+        }).sort((a, b) => (b.impressions + (b.likes + b.comments + b.reposts) * 3) - (a.impressions + (a.likes + a.comments + a.reposts) * 3)).slice(0, 8);
 
         // ---------------------------------------------------------
         // 6. ACTIVE SUPPORT TICKETS

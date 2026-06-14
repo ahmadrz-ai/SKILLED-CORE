@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Repeat, Heart, MessageCircle, FileText } from "lucide-react";
+import { Repeat, Heart, MessageCircle, FileText, Eye, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { sanitizeRichHtml } from "@/lib/sanitize";
 
@@ -13,7 +13,7 @@ type PostLite = {
     createdAt: string | Date;
     author: AuthorLite;
     likes?: unknown[];
-    _count?: { likes?: number; comments?: number };
+    _count?: { likes?: number; comments?: number; reposts?: number; views?: number };
 };
 
 type RepostLite = { createdAt: string | Date; post: PostLite | null };
@@ -87,6 +87,15 @@ export function ActivityFeed({
                             <span className="inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {p._count?.comments ?? 0}</span>
                             <span className="ml-auto">{formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</span>
                         </div>
+
+                        {/* Owner-only per-post insights (views + reposts are only meaningful on your own posts). */}
+                        {isOwner && it.kind === "post" && (
+                            <div className="flex items-center gap-4 mt-2 pt-2 border-t border-dashed border-slate-100 text-[11px] font-semibold text-sc-purple-700">
+                                <BarChart3 className="w-3.5 h-3.5 text-sc-purple-500" />
+                                <span className="inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {p._count?.views ?? 0} views</span>
+                                <span className="inline-flex items-center gap-1"><Repeat className="w-3.5 h-3.5" /> {p._count?.reposts ?? 0} reposts</span>
+                            </div>
+                        )}
                     </div>
                 );
             })}

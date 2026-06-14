@@ -357,8 +357,20 @@ model Post {
   comments    Comment[]
   likes       Like[]
   reposts     Repost[]
+  views       PostView[]
   poll        Poll?
   author      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PostView {
+  id       String   @id @default(uuid())
+  postId   String
+  viewerId String? // null = anonymous/logged-out view
+  viewedAt DateTime @default(now())
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([postId, viewerId, viewedAt])
 }
 
 model Repost {

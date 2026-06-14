@@ -542,6 +542,33 @@ export async function logProfileView(profileId: string) {
     }
 }
 
+/** Record a post view (opened the post detail page). Deduped per viewer per day; the author's own views never count. */
+export async function logPostView(postId: string) {
+    try {
+        const session = await auth();
+        const viewerId = session?.user?.id || null;
+
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { userId: true } });
+        if (!post) return { success: false };
+        if (viewerId && viewerId === post.userId) return { success: false }; // don't count the author
+
+        if (viewerId) {
+            const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recent = await prisma.postView.findFirst({
+                where: { postId, viewerId, viewedAt: { gte: dayAgo } },
+                select: { id: true },
+            });
+            if (recent) return { success: true, deduped: true };
+        }
+
+        await prisma.postView.create({ data: { postId, viewerId } });
+        return { success: true };
+    } catch (error) {
+        console.error("logPostView failed:", error);
+        return { success: false };
+    }
+}
+
 export async function votePoll(pollId: string, optionId: string) {
     const session = await auth();
     if (!session?.user?.id) {
