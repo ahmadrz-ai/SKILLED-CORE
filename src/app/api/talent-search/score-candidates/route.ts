@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { guardAiRoute } from "@/lib/apiGuard";
 
 export const runtime = 'nodejs';
 
@@ -55,6 +56,11 @@ interface Requirement {
 
 export async function POST(req: Request) {
     try {
+        // V1: require auth + rate limit — this runs expensive AI scoring AND
+        // returns candidate profiles; it must not be open to anonymous callers.
+        const guard = await guardAiRoute("score-candidates", 15, 60);
+        if (guard instanceof Response) return guard;
+
         const body = await req.json();
         const { requirements } = body as { requirements: Requirement[] };
 

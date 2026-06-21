@@ -79,11 +79,12 @@ export async function getBadgeCounts(): Promise<BadgeCounts> {
 
 export async function markAsRead(notificationId: string) {
     const session = await auth();
-    if (!session?.user?.email) return { success: false };
+    if (!session?.user?.id) return { success: false };
 
     try {
-        await prisma.notification.update({
-            where: { id: notificationId },
+        // V4: scope by userId so a user can't mark someone else's notification read (IDOR).
+        await prisma.notification.updateMany({
+            where: { id: notificationId, userId: session.user.id },
             data: { read: true }
         });
 

@@ -1,5 +1,7 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
+import { guardAiRoute } from "@/lib/apiGuard";
+import { assertSafeRemoteUrl } from "@/lib/ssrf";
 import * as _pdfParse from "pdf-parse";
 const pdfParse = (_pdfParse as any).default || _pdfParse;
 
@@ -116,6 +118,10 @@ Return exactly this structure:
 
 export async function POST(req: Request) {
     try {
+        // V1: require auth + rate limit (expensive AI parse).
+        const guard = await guardAiRoute("parse-resume", 10, 60);
+        if (guard instanceof Response) return guard;
+
         let pdfBuffer: Buffer;
         let mimeType = "application/pdf";
 
@@ -127,6 +133,8 @@ export async function POST(req: Request) {
                 if (!resumeUrl) {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
                 }
+                // V1: block SSRF — only allow safe public http(s) URLs.
+                await assertSafeRemoteUrl(resumeUrl);
                 const response = await fetch(resumeUrl);
                 if (!response.ok) {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });

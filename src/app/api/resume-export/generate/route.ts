@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { executeAI, parseAIJson } from '@/lib/ai/modelRouter';
+import { guardAiRoute } from '@/lib/apiGuard';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    // V1: require auth + rate limit (expensive AI resume polish).
+    const guard = await guardAiRoute('resume-generate', 10, 60);
+    if (guard instanceof Response) return guard;
+
     const rawData = await req.json();
 
     const prompt = `You are a professional resume writer with 15 years of experience.

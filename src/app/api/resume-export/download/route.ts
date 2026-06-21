@@ -1,11 +1,16 @@
 import { renderToStream } from '@react-pdf/renderer';
 import { SkilledCoreResumeTemplate } from '@/components/resume/SkilledCoreResumeTemplate';
 import { NextResponse } from 'next/server';
+import { guardAiRoute } from '@/lib/apiGuard';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    // V3: require auth + rate limit — PDF rendering is CPU-heavy; don't leave it open.
+    const guard = await guardAiRoute('resume-download', 20, 60);
+    if (guard instanceof Response) return guard;
+
     const { resumeData } = await req.json();
 
     if (!resumeData) {
@@ -17,7 +22,8 @@ export async function POST(req: Request) {
       SkilledCoreResumeTemplate({ data: resumeData })
     );
 
-    const safeFilename = resumeData.name ? resumeData.name.replace(/\s+/g, '_') : 'SkilledCore_Resume';
+    // V3: strip everything but safe chars to prevent Content-Disposition header injection.
+    const safeFilename = (resumeData.name ? String(resumeData.name) : 'SkilledCore_Resume').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'SkilledCore_Resume';
 
     return new Response(stream as unknown as ReadableStream, {
       headers: {

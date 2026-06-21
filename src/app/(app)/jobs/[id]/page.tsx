@@ -100,7 +100,9 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
             {/* FIX-014: JSON-LD injected in page head */}
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
+                // V2: escape "<" so recruiter-controlled job text can't break out of
+                // the script tag (</script> injection → stored XSS).
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema).replace(/</g, "\\u003c") }}
             />
 
             <div className="max-w-4xl mx-auto py-8 px-4">
