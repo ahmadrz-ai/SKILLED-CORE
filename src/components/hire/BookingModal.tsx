@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, CalendarClock, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { createBooking } from "@/app/actions/bookings";
@@ -29,8 +30,13 @@ export function BookingModal({
     const [expiresInDays, setExpiresInDays] = useState(7);
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
+    // Portal target: mount only on the client so the modal can render into
+    // document.body and escape any ancestor with overflow-hidden or a transform
+    // (the candidate card had both, which trapped/clipped the fixed overlay).
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
-    if (!open || !candidate) return null;
+    if (!open || !candidate || !mounted) return null;
 
     const reset = () => { setProposedAt(""); setMessage(""); setExpiresInDays(7); setDone(false); };
     const close = () => { reset(); onClose(); };
@@ -50,7 +56,7 @@ export function BookingModal({
     // Default min = now (local). datetime-local needs "YYYY-MM-DDTHH:mm".
     const minLocal = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16);
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-bg-overlay backdrop-blur-sm" onClick={close} aria-hidden />
             <div className="relative z-10 w-full max-w-md rounded-2xl border border-border-default bg-bg-card shadow-sc-modal p-6 animate-in fade-in zoom-in-95 duration-200">
@@ -138,6 +144,7 @@ export function BookingModal({
                     </>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
