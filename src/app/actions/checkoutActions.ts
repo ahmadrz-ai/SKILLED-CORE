@@ -19,15 +19,18 @@ export async function processDirectCardPayment(
         const refId = "CARD_" + Math.random().toString(36).substring(2, 12).toUpperCase();
         const isPlan = type === 'PLAN' && !!planName;
 
-        // IMPORTANT: plan purchases NEVER auto-activate. They are recorded as PENDING and
-        // a plan is only granted when an admin approves it in the admin billing panel.
-        // Credit top-ups (low-stakes) still activate instantly on card.
+        // SECURITY (V6): there is NO real card charge in this stub, and `amount`/`credits`
+        // are client-supplied. Auto-granting here let any logged-in user mint unlimited
+        // free credits by calling this action directly. So NOTHING auto-activates: every
+        // purchase is recorded PENDING and only granted when an admin verifies + approves
+        // it in the billing panel (approveTransaction → topUp credits / plan + notifies).
+        // Wire a real payment processor (e.g. Stripe webhook) to restore instant grants.
         await prisma.transaction.create({
             data: {
                 userId: session.user.id,
                 amount,
                 credits: isPlan ? 0 : credits,
-                status: isPlan ? 'PENDING' : 'COMPLETED',
+                status: 'PENDING',
                 provider: 'CARD',
                 refId,
                 type,
@@ -35,33 +38,15 @@ export async function processDirectCardPayment(
             }
         });
 
-        if (!isPlan) {
-            await prisma.user.update({
-                where: { id: session.user.id },
-                data: { credits: { increment: credits } }
-            });
-            try {
-                await prisma.notification.create({
-                    data: { userId: session.user.id, type: "CREDITS_GRANTED", message: `💰 ${credits} credits were added to your account.`, resourcePath: "/credits", read: false },
-                });
-                const { notifyUser } = await import("@/lib/ably");
-                await notifyUser(session.user.id);
-            } catch (e) { console.error("CREDITS_GRANTED notify failed:", e); }
-        }
-
-        // Revalidate cache to sync instant UI updates
         revalidatePath('/credits');
-        revalidatePath('/feed');
         revalidatePath('/settings');
         revalidatePath('/admin/billing');
         revalidatePath('/', 'layout');
 
         return {
             success: true,
-            pending: isPlan,
-            message: isPlan
-                ? "Plan request submitted — an admin will review and activate it shortly."
-                : "Payment processed successfully!",
+            pending: true,
+            message: "Payment request submitted — an admin will review and activate it shortly.",
             refId
         };
     } catch (error) {
