@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkRateLimit as checkDistributedRateLimit } from "@/lib/ratelimit";
 
 // FIX-003: Disposable/temporary email domain blocklist
 const BLOCKED_EMAIL_DOMAINS = new Set([
@@ -75,7 +76,18 @@ export async function POST(req: Request) {
         req.headers.get('x-real-ip') ||
         '127.0.0.1';
 
-    // FIX-003: Rate limit check (max 5 attempts/hour per IP)
+    // V5: distributed (Upstash) rate limit — works across serverless instances,
+    // unlike the in-memory map. Falls back to the in-memory check below if Upstash
+    // isn't configured. 5 registrations / hour / IP.
+    const dist = await checkDistributedRateLimit("register", ip, 5, 3600);
+    if (!dist.success) {
+        return NextResponse.json(
+            { error: "Too many registration attempts. Please try again later." },
+            { status: 429 }
+        );
+    }
+
+    // FIX-003: in-memory fallback (per-instance) for when Upstash is unset.
     if (!checkRateLimit(ip)) {
         return NextResponse.json(
             { error: "Too many registration attempts. Please try again later." },

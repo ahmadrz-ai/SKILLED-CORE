@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from "@/auth";
+import { checkRateLimit } from "@/lib/ratelimit";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -27,6 +28,14 @@ export async function getCloudinarySignature(folderName: string = "skilledcore")
     const session = await auth();
     if (!session?.user?.id) {
         return { success: false, message: "Unauthorized: Please log in to upload assets." };
+    }
+
+    // V10: bound how fast a single user can mint upload signatures so a compromised
+    // or abusive account can't flood Cloudinary storage. (Per-file size/type caps are
+    // enforced at the Cloudinary account/upload-preset level.) 40 uploads / minute.
+    const rl = await checkRateLimit("cloudinary-sign", session.user.id, 40, 60);
+    if (!rl.success) {
+        return { success: false, message: "Too many uploads — please slow down and try again shortly." };
     }
 
     try {

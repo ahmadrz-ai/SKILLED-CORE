@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { spendCredit } from "@/lib/credits";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export async function unlockConversation(targetUserId: string) {
     const session = await auth();
@@ -29,6 +30,14 @@ export async function unlockConversation(targetUserId: string) {
 
         if (existingParticipant) {
             return { success: true, conversationId: existingParticipant.conversationId, alreadyUnlocked: true };
+        }
+
+        // Dedup guard: a double-click / concurrent retry could pass the check above
+        // twice and double-charge the user before either conversation is committed.
+        // Allow only one unlock per (user → target) per 10s window.
+        const dedup = await checkRateLimit(`unlock:${currentUserId}:${targetUserId}`, currentUserId, 1, 10);
+        if (!dedup.success) {
+            return { success: false, error: "Unlock already in progress. Please wait a moment." };
         }
 
         // 2. No conversation exists — charge 1 General credit (general → topUp) to unlock.
