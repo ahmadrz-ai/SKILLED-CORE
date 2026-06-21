@@ -862,8 +862,8 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                             </motion.div>
                         )}
 
-                        {/* Tabs */}
-                        <div className="flex items-center gap-8 border-b border-slate-200 px-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-40 pt-4">
+                        {/* Tabs — scroll horizontally on mobile so 4 tabs never overflow the page */}
+                        <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-200 px-2 sticky top-0 bg-slate-50/80 backdrop-blur-md z-40 pt-4 overflow-x-auto scrollbar-none">
                             {(['overview', 'activity', 'projects', 'interviews'] as const).map((tab) => {
                                 if (tab === 'projects' && user.role === 'RECRUITER') return null;
                                 return (
@@ -871,7 +871,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
                                         className={cn(
-                                            "pb-4 text-sm font-bold tracking-wide transition-all relative uppercase",
+                                            "pb-4 text-sm font-bold tracking-wide transition-all relative uppercase shrink-0 whitespace-nowrap",
                                             activeTab === tab ? "text-sc-purple-700" : "text-slate-500 hover:text-slate-800"
                                         )}
                                     >
