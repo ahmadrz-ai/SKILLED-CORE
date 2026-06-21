@@ -3,6 +3,7 @@
 import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import OtpEmail from '@/components/emails/OtpEmail';
+import { randomInt } from 'crypto';
 import * as React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -10,8 +11,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function sendVerificationCode(email: string) {
     try {
         const cleanEmail = email.toLowerCase().trim();
-        // Generate 6-digit code
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        // Generate 6-digit code (crypto-strong RNG — this OTP gates login/reset)
+        const code = randomInt(100000, 1000000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         // Delete existing tokens for this user

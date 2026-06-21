@@ -2,10 +2,19 @@
 
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { checkLoginRateLimit } from '@/lib/ratelimit';
 
 export async function resetPassword(email: string, code: string, newCode: string) {
     if (!email || !code || !newCode) {
         return { error: 'Missing required fields' };
+    }
+
+    // V7: throttle reset attempts per account — the code is a 6-digit OTP, so
+    // without this an attacker could brute-force it (1M combos) and take over the
+    // account. Failed guesses are bounded; legit users get a few tries.
+    const rl = await checkLoginRateLimit(`reset:${email.toLowerCase().trim()}`);
+    if (!rl.success) {
+        return { error: 'Too many attempts. Please wait a few minutes and request a new code.' };
     }
 
     try {

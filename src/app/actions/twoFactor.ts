@@ -7,6 +7,7 @@ import { encrypt, decrypt } from '@/lib/crypto';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { randomBytes } from 'crypto';
 import { generateSecret, generateURI } from 'otplib';
 import { verifyTotpWithSkew } from '@/lib/totp';
 import { checkLoginRateLimit } from '@/lib/ratelimit';
@@ -51,7 +52,7 @@ export async function generate2FASetup(): Promise<{
 
     // Generate 8 backup codes (each 8 chars, alphanumeric)
     const backupCodes = Array.from({ length: 8 }, () =>
-      Math.random().toString(36).substring(2, 10).toUpperCase()
+      randomBytes(5).toString('hex').toUpperCase()
     );
 
     return {
@@ -180,7 +181,7 @@ export async function regenerateBackupCodes(
 
     // Generate 8 new backup codes
     const backupCodes = Array.from({ length: 8 }, () =>
-      Math.random().toString(36).substring(2, 10).toUpperCase()
+      randomBytes(5).toString('hex').toUpperCase()
     );
 
     // Hash new backup codes
@@ -386,7 +387,7 @@ export async function verify2FAAndLogin(
     // Create a single-use NextAuth OTP token, consumed by the credentials provider's
     // 2FA branch in authorize(). 120s window: long enough to survive a Neon cold-start
     // between this action returning and signIn() completing, short enough to stay safe.
-    const otpToken = Math.random().toString(36).substring(2, 12).toUpperCase();
+    const otpToken = randomBytes(16).toString('hex'); // crypto-strong single-use login token
     await prisma.verificationToken.create({
       data: {
         identifier: user.email!.toLowerCase().trim(),

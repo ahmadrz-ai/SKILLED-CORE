@@ -320,6 +320,14 @@ const nextAuth = NextAuth({
                     // ── STANDARD EMAIL + PASSWORD PATH ───────────────────────────────
                     if (!credentials.password) return null;
 
+                    // V8: throttle password attempts per account to stop brute force.
+                    const { checkLoginRateLimit } = await import("./lib/ratelimit");
+                    const rl = await checkLoginRateLimit(`login:${cleanEmail}`);
+                    if (!rl.success) {
+                        console.warn(`[auth] login rate-limited for ${cleanEmail}`);
+                        return null;
+                    }
+
                     const user = await prisma.user.findFirst({
                         where: {
                             OR: [
