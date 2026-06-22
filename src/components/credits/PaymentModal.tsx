@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { createPaymentRequest, getTransactions } from "@/app/actions/billing";
 import { processDirectCardPayment } from "@/app/actions/checkoutActions";
+import { planDisplayName } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 const Slider = (props: any) => {
@@ -540,7 +541,7 @@ export function PaymentModal({ children, mode = 'CREDITS', planName, planCode, f
                                     <div>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             {tx.type === 'PLAN' ? (
-                                                <span className="font-bold text-gray-900 text-xs">Tier: {tx.planName}</span>
+                                                <span className="font-bold text-gray-900 text-xs">Tier: {planDisplayName(tx.planName)}</span>
                                             ) : (
                                                 <span className="font-bold text-gray-900 text-xs">+{tx.credits} Credits</span>
                                             )}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Check, X, Loader2, RefreshCcw, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { planDisplayName } from "@/lib/plans";
 
 export default function AdminBillingPage() {
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -134,7 +135,7 @@ export default function AdminBillingPage() {
                                 <td className="p-4">
                                     {tx.type === 'PLAN' ? (
                                         <span className="inline-flex items-center px-2 py-1 rounded bg-sc-purple-50 text-sc-purple-600 border border-sc-purple-200 text-xs font-bold">
-                                            UPGRADE: {tx.planName}
+                                            UPGRADE: {planDisplayName(tx.planName)}
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center px-2 py-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-bold">

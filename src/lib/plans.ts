@@ -188,6 +188,24 @@ export function normalizePlanCode(raw?: string | null): PlanCode {
 }
 
 /**
+ * Friendly, user-facing plan name for ANY raw/legacy/db plan string. Use this
+ * everywhere a plan code is shown to a user so internal codes (e.g. "ULTRA")
+ * never leak into the UI — "ULTRA" is the legacy code for the "Elite" plan.
+ */
+export function planDisplayName(raw?: string | null): string {
+  switch ((raw || "").toUpperCase()) {
+    case "ULTRA":
+    case "ELITE": return "Elite";
+    case "RECRUITER_UNLIMITED": return "Recruiter Unlimited";
+    case "RECRUITER_PRO": return "Recruiter Pro";
+    case "PRO": return "Pro";
+    case "BASIC":
+    case "FREE": return "Free";
+    default: return raw || "—";
+  }
+}
+
+/**
  * Internal tier compatibility layer.
  *
  * The whole app still gates on the legacy plan strings (BASIC/PRO/ULTRA) in ~20 places.
