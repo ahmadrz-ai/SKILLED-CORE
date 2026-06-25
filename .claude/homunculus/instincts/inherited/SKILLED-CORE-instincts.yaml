@@ -1,0 +1,436 @@
+# Instincts generated from https://github.com/ahmadrz-ai/SKILLED-CORE
+# Generated: 2026-06-25T13:03:50.632Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: SKILLED-CORE-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Commit Length
+
+## Action
+
+Write moderate-length commit messages (~73 characters)
+
+## Evidence
+
+- Average commit message length: 73 chars
+- Based on 5 commits
+
+---
+id: SKILLED-CORE-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: SKILLED-CORE-import-alias
+trigger: "when importing modules"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Import Alias
+
+## Action
+
+Use path aliases (@/, ~/) instead of relative imports
+
+## Evidence
+
+- Import analysis shows alias pattern
+- Example: import { x } from '@/lib/x'
+
+---
+id: SKILLED-CORE-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Export Style
+
+## Action
+
+Prefer default exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: default
+
+---
+id: SKILLED-CORE-arch-type-based
+trigger: "when adding new code"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Arch Type Based
+
+## Action
+
+Place code in the appropriate type folder (components/, services/, utils/, etc.)
+
+## Evidence
+
+- Type-based module organization detected
+- Folders: app, components
+
+---
+id: SKILLED-CORE-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: SKILLED-CORE-workflow-update-roadmap-and-related-feature-implementation
+trigger: "when doing update roadmap and related feature implementation"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Workflow Update Roadmap And Related Feature Implementation
+
+## Action
+
+Follow the update-roadmap-and-related-feature-implementation workflow:
+1. Implement code changes for the feature, fix, or tech debt (could include backend, frontend, schema, or dependencies).
+2. Update MASTER_ROADMAP.md to describe the change, progress, or outstanding issues.
+3. Commit both the code changes and updated roadmap together.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: MASTER_ROADMAP.md, src/app/**, src/components/**
+
+---
+id: SKILLED-CORE-workflow-onboarding-feature-evolution
+trigger: "when doing onboarding feature evolution"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/ahmadrz-ai/SKILLED-CORE
+---
+
+# SKILLED CORE Workflow Onboarding Feature Evolution
+
+## Action
+
+Follow the onboarding-feature-evolution workflow:
+1. Modify onboarding frontend components and logic.
+2. Update or add backend API routes related to onboarding.
+3. Update database schema and generate/apply migrations if needed.
+4. Update MASTER_ROADMAP.md to reflect onboarding changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: src/app/onboarding/**, src/app/api/user/onboarding/route.ts, prisma/schema.prisma
+
+---
+id: skilled-core-instinct-file-naming
+trigger: "When creating a new file in the codebase"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct File Naming
+
+## Action
+
+Name the file using PascalCase (e.g., MyComponent.tsx)
+
+## Evidence
+
+- Pattern in namingConventions.files
+- Consistent with TypeScript/React conventions in src/app and src/components
+
+---
+id: skilled-core-instinct-function-naming
+trigger: "When defining a new function"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Function Naming
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.functions
+- TypeScript code style in src/app and src/components
+
+---
+id: skilled-core-instinct-class-naming
+trigger: "When defining a new class"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Class Naming
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.classes
+- TypeScript code style in src/app and src/components
+
+---
+id: skilled-core-instinct-constant-naming
+trigger: "When declaring a constant intended to be global or shared"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Constant Naming
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in namingConventions.constants
+- TypeScript code style in src/app and src/components
+
+---
+id: skilled-core-instinct-import-alias
+trigger: "When importing modules within the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Import Alias
+
+## Action
+
+Use alias import style instead of relative paths
+
+## Evidence
+
+- Pattern in importStyle: alias
+- Seen in src/app and src/components imports
+
+---
+id: skilled-core-instinct-default-export
+trigger: "When exporting a module or component"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Default Export
+
+## Action
+
+Use default export style
+
+## Evidence
+
+- Pattern in exportStyle: default
+- Seen in src/app and src/components
+
+---
+id: skilled-core-instinct-try-catch-error-handling
+trigger: "When handling errors in async or risky code"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Try Catch Error Handling
+
+## Action
+
+Wrap the code in a try-catch block
+
+## Evidence
+
+- Pattern in errorHandling.style: try-catch
+- No custom error classes or global handler
+
+---
+id: skilled-core-instinct-test-location-separate
+trigger: "When adding new tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Test Location Separate
+
+## Action
+
+Place test files in a separate directory from source code
+
+## Evidence
+
+- Pattern in architecture.testLocation: separate
+- Common in TypeScript monorepos
+
+---
+id: skilled-core-instinct-git-commit-prefix
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Git Commit Prefix
+
+## Action
+
+Start the commit message with a prefix indicating the change type (e.g., feat, fix, docs, security)
+
+## Evidence
+
+- Seen in commit: docs(roadmap): capture DIRECT_URL deploy fix + build-warning tech debt
+- Seen in commit: feat(onboarding): make recruiter steps real — drop fake ATS + compile, persist calibration
+- Pattern in commits.prefixes
+
+---
+id: skilled-core-instinct-git-commit-scope
+trigger: "When the change affects a specific feature or area"
+confidence: 0.8
+domain: git
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Git Commit Scope
+
+## Action
+
+Include the scope in parentheses after the prefix (e.g., feat(onboarding): ...)
+
+## Evidence
+
+- Seen in commit: feat(onboarding): make recruiter steps real — drop fake ATS + compile, persist calibration
+- Pattern in commits.examples
+
+---
+id: skilled-core-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Git Commit Length
+
+## Action
+
+Keep the commit message concise, ideally around 70-80 characters
+
+## Evidence
+
+- Pattern in commits.averageLength: 73
+- Seen in commit examples
+
+---
+id: skilled-core-instinct-roadmap-sync-workflow
+trigger: "When implementing a new feature, fix, or tech debt and updating the roadmap"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Roadmap Sync Workflow
+
+## Action
+
+Update both the relevant code and MASTER_ROADMAP.md, then commit them together
+
+## Evidence
+
+- Workflow: update-roadmap-and-related-feature-implementation
+- Seen in commit: docs(roadmap): capture DIRECT_URL deploy fix + build-warning tech debt
+
+---
+id: skilled-core-instinct-onboarding-evolution-workflow
+trigger: "When adding, removing, or refining onboarding steps"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: ahmadrz-ai/SKILLED-CORE
+---
+
+# Skilled Core Instinct Onboarding Evolution Workflow
+
+## Action
+
+Update onboarding frontend, backend API, schema/migrations, and MASTER_ROADMAP.md in a coordinated commit
+
+## Evidence
+
+- Workflow: onboarding-feature-evolution
+- Seen in commit: fix(onboarding): smooth redirect to /feed; feat: My Company link + SEO slug fix
+
