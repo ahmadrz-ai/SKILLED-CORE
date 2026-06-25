@@ -71,9 +71,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProfilePage({ params }: PageProps) {
     try {
         const session = await auth();
-        console.log("ProfilePage: Session loaded", session?.user?.id);
         const { username } = await params;
-        console.log("ProfilePage: Username", username);
 
         let isAdmin = false;
         let callerRole: string | null = null;
@@ -157,7 +155,6 @@ export default async function ProfilePage({ params }: PageProps) {
         }
 
         if (!user) {
-            console.log("ProfilePage: User not found");
             redirect('/feed');
         }
 
@@ -212,7 +209,6 @@ export default async function ProfilePage({ params }: PageProps) {
             },
         }).catch(() => []);
 
-        console.log("ProfilePage: Rendering client");
         return (
             <ProfileClient
                 user={JSON.parse(JSON.stringify(user))}

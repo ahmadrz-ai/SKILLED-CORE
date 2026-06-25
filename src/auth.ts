@@ -14,7 +14,13 @@ const googleSecret = process.env.AUTH_GOOGLE_SECRET;
 const hasGoogle = googleId && googleSecret && !googleId.includes("placeholder");
 
 if (!process.env.AUTH_SECRET) {
-    console.error("FATAL: AUTH_SECRET is missing. Login will fail.");
+    // In production a missing secret means every session is cryptographically broken,
+    // so fail fast at boot rather than silently serving unverifiable sessions. In dev
+    // we only warn so local work isn't blocked.
+    if (process.env.NODE_ENV === "production") {
+        throw new Error("FATAL: AUTH_SECRET is missing in production. Refusing to start.");
+    }
+    console.error("WARNING: AUTH_SECRET is missing. Set it before deploying — login will fail.");
 }
 
 const nextAuth = NextAuth({
@@ -43,7 +49,8 @@ const nextAuth = NextAuth({
                     ]);
 
                     if (signupRole === "RECRUITER" && emailDomain && PUBLIC_EMAIL_DOMAINS.has(emailDomain)) {
-                        console.log(`[OAuth Block] Blocked recruiter signup for email: ${cleanEmail} (Public domain not allowed)`);
+                        // Don't log the email (PII) — log only the (non-identifying) domain.
+                        console.log(`[OAuth Block] Blocked recruiter signup (public domain: ${emailDomain})`);
                         return "/register?error=RecruiterEmailDomainRequired";
                     }
 
@@ -227,7 +234,8 @@ const nextAuth = NextAuth({
                             role: roleToSave
                         }
                     });
-                    console.log(`[OAuth Registration] Created user: ${user.email} with username: ${uniqueName} and role: ${roleToSave}`);
+                    // Don't log the email (PII) — username + role are enough to trace.
+                    console.log(`[OAuth Registration] Created user: ${uniqueName} (role: ${roleToSave})`);
                 }
 
                 // Welcome the new account.

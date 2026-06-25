@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getCandidates } from "./actions";
 import { getHireCount } from "@/app/actions/bookings";
+import { getRecruiterAccess } from "@/lib/recruiterAccess";
+import { RecruiterPlanWall } from "@/components/recruiter/RecruiterPlanWall";
 import SearchClient from "./SearchClient";
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +14,13 @@ export default async function HirePage() {
     const session = await auth();
     if (!session?.user?.id) {
         redirect('/register?role=recruiter&redirect=/hire');
+    }
+
+    // Soft paywall: recruiters need an active recruiter plan to use talent search.
+    // Admins and (defensively) non-recruiters pass through.
+    const access = await getRecruiterAccess();
+    if (!access.hasAccess) {
+        return <RecruiterPlanWall feature="AI Talent Search" />;
     }
 
     const [candidates, hireCount] = await Promise.all([getCandidates(), getHireCount()]);

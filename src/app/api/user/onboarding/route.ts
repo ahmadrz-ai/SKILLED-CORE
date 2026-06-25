@@ -102,18 +102,47 @@ export async function POST(request: Request) {
 
         // If Recruiter, Create/Connect Company (role may arrive as "RECRUITER" or "recruiter")
         if (typeof role === 'string' && role.toLowerCase() === 'recruiter' && companyName) {
-            // Try to find existing company
+            // Try to find existing company by name
             let company = await prisma.company.findFirst({
                 where: { name: companyName }
             });
 
             if (!company) {
+                // Build a URL-safe, unique slug for the public /company/[slug] page.
+                const base = String(companyName)
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-+|-+$)/g, "")
+                    .slice(0, 50) || "company";
+                let slug = base;
+                let n = 1;
+                // Ensure uniqueness against the @unique slug column.
+                while (await prisma.company.findUnique({ where: { slug } })) {
+                    slug = `${base}-${n++}`;
+                }
+
                 company = await prisma.company.create({
                     data: {
                         name: companyName,
-                        description: industry
+                        slug,
+                        industry: industry || null,
+                        location: location || null,
+                        description: null,
                     }
                 });
+            } else if (!company.slug) {
+                // Backfill a slug for a pre-existing company record that never had one.
+                const base = String(company.name)
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-+|-+$)/g, "")
+                    .slice(0, 50) || "company";
+                let slug = base;
+                let n = 1;
+                while (await prisma.company.findUnique({ where: { slug } })) {
+                    slug = `${base}-${n++}`;
+                }
+                await prisma.company.update({ where: { id: company.id }, data: { slug } });
             }
 
             updateData.companyId = company.id;

@@ -71,9 +71,7 @@ export function SinglePostClient({ post: initialPost, currentUserId }: SinglePos
         window.location.href = "/feed";
     };
 
-    console.log("[SinglePostClient DEBUG] Raw post:", JSON.stringify({ id: post?.id, userId: post?.userId, author: post?.author }, null, 2));
     const uiPost = mapPost(post);
-    console.log("[SinglePostClient DEBUG] Mapped uiPost author:", JSON.stringify(uiPost?.author, null, 2));
 
     return (
         <div className="space-y-4">

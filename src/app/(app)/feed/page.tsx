@@ -56,6 +56,11 @@ export default async function FeedPage() {
 
         const posts = await prisma.post.findMany({
             orderBy: { createdAt: 'desc' },
+            // Bound the feed: previously this fetched EVERY post (and every like row)
+            // in the DB on each load — unbounded growth that degrades the query and
+            // bloats the DOM. Cap to the most recent 50; infinite-scroll pagination
+            // is the follow-up to page beyond this.
+            take: 50,
             include: {
                 author: {
                     select: {
@@ -89,7 +94,6 @@ export default async function FeedPage() {
         const followingIds = new Set(follows.map(f => f.followingId));
 
         // Fetch connections
-        console.log('Prisma Keys:', Object.keys(prisma));
         const connections = await prisma.connection?.findMany({
             where: {
                 OR: [

@@ -482,9 +482,18 @@ model ProfileView {
 model Company {
   id          String   @id @default(uuid())
   name        String
+  slug        String?  @unique // URL identifier for /company/[slug]
   logo        String?
+  banner      String?
+  tagline     String?
   website     String?
   description String?
+  industry    String?
+  location    String?
+  foundedYear String?
+  companySize String? // e.g. "50-100"
+  techStack   String? // comma-separated, e.g. "Next.js,React,Postgres"
+  verified    Boolean  @default(false)
   createdAt   DateTime @default(now())
   jobs        Job[]
   recruiters  User[]

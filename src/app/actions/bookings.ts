@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { notifyUser } from "@/lib/ably";
 import { spendCredit } from "@/lib/credits";
+import { currentPlanCode } from "@/lib/plans";
 
 const DEFAULT_EXPIRY_DAYS = 7;
 
@@ -49,7 +50,7 @@ async function getCaller() {
     if (!session?.user?.id) return null;
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { id: true, name: true, role: true },
+        select: { id: true, name: true, role: true, plan: true },
     });
     return user;
 }
@@ -70,6 +71,11 @@ export async function createBooking(input: {
 
     if (caller.role !== "RECRUITER" && caller.role !== "ADMIN") {
         return { success: false, message: "Only recruiters can book interviews." };
+    }
+    // Soft paywall: a recruiter needs an active recruiter plan to book interviews.
+    // Admins bypass. Mirrors the /hire gate so the wall can't be skipped via profile.
+    if (caller.role === "RECRUITER" && !currentPlanCode(caller.plan, "recruiter")) {
+        return { success: false, message: "An active recruiter plan is required to book interviews. Choose a plan on the Plans & Billing page." };
     }
     if (caller.id === input.candidateId) {
         return { success: false, message: "You can't book an interview with yourself." };

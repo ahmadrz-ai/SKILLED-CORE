@@ -138,10 +138,6 @@ export interface PostProps {
 }
 
 export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?: () => void; onDelete?: (id: string) => void }) {
-    console.log("[PostCard DEBUG] Received post:", {
-        id: post?.id,
-        author: post?.author
-    });
     const router = useRouter();
     const { data: session } = useSession();
     const [isLiked, setIsLiked] = useState(post.isLiked);

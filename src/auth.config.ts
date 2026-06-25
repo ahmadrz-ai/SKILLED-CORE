@@ -1,5 +1,24 @@
 import type { NextAuthConfig } from "next-auth";
 
+/**
+ * Admin allowlist — emails elevated to the ADMIN role on sign-in.
+ *
+ * Security: these used to be hardcoded in source. They now come from the
+ * ADMIN_EMAILS env var (comma-separated) so no privileged account is baked into
+ * the repo. Set ADMIN_EMAILS in .env (local) AND in Vercel (production), e.g.
+ *   ADMIN_EMAILS=ahmad@skilledcore.com,support@skilledcore.com
+ * If unset, NO email is auto-elevated (roles come from the DB only).
+ */
+const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+function isAdminEmail(email?: string | null): boolean {
+    if (!email) return false;
+    return ADMIN_EMAILS.includes(email.toLowerCase().trim());
+}
+
 // Routes that require authentication
 const PROTECTED_ROUTES = [
     '/feed',
@@ -57,9 +76,8 @@ export const authConfig = {
                 // @ts-ignore
                 token.role = user.role;
 
-                // Elevate superusers to ADMIN dynamically
-                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-                if (user.email && cleanEmails.includes(user.email.toLowerCase().trim())) {
+                // Elevate allowlisted superusers to ADMIN dynamically (ADMIN_EMAILS env).
+                if (isAdminEmail(user.email)) {
                     // @ts-ignore
                     token.role = "ADMIN";
                 }
@@ -75,9 +93,8 @@ export const authConfig = {
                 // @ts-ignore
                 session.user.role = token.role as string;
 
-                // Elevate superusers to ADMIN dynamically
-                const cleanEmails = ["ahmadrazaai801@gmail.com", "ahmad@skilledcore.com", "support@skilledcore.com"];
-                if (session.user.email && cleanEmails.includes(session.user.email.toLowerCase().trim())) {
+                // Elevate allowlisted superusers to ADMIN dynamically (ADMIN_EMAILS env).
+                if (isAdminEmail(session.user.email)) {
                     // @ts-ignore
                     session.user.role = "ADMIN";
                 }

@@ -11,10 +11,8 @@ export async function POST(req: Request) {
 
     const { messages } = await req.json();
 
-    console.log("Qodee API Request via executeAI:", {
-        messagesCount: messages?.length,
-        firstMessage: messages?.[0]
-    });
+    // Don't log message content (user PII) — only the count, for basic observability.
+    console.log("Qodee API Request via executeAI:", { messagesCount: messages?.length });
 
     // Define the Gentle Professional Persona and SkilledCore Platform Knowledge Base
     const systemPrompt = `You are Qodee, the official AI Assistant for SkilledCore.
