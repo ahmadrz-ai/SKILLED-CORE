@@ -19,8 +19,23 @@ export async function POST(request: Request) {
         const {
             role, name, username, image, headline, bio, skills,
             companyName, industry, workEmail,
-            location, portfolio, linkedin, github, experience, education
+            location, portfolio, linkedin, github, experience, education,
+            // Recruiter hiring-calibration cohorts (onboarding step 2)
+            heroName, heroRole, heroOntology,
+            missedName, missedRole, missedOntology,
+            mismatchedName, mismatchedRole, mismatchedOntology,
         } = body as Record<string, any>;
+
+        // Assemble the calibration object (only if the recruiter provided any of it).
+        const str = (v: any) => (typeof v === "string" ? v.trim() : "");
+        const calibrationInput = {
+            hero: { name: str(heroName), role: str(heroRole), traits: str(heroOntology) },
+            missed: { name: str(missedName), role: str(missedRole), traits: str(missedOntology) },
+            mismatched: { name: str(mismatchedName), role: str(mismatchedRole), traits: str(mismatchedOntology) },
+        };
+        const hasCalibration = Object.values(calibrationInput).some(
+            (c) => c.name || c.role || c.traits
+        );
 
         // Explicit input validation — return a structured 400 for bad input so the
         // frontend can show a useful message, instead of letting Prisma throw a bare 500.
@@ -128,9 +143,20 @@ export async function POST(request: Request) {
                         industry: industry || null,
                         location: location || null,
                         description: null,
+                        calibration: hasCalibration ? calibrationInput : undefined,
                     }
                 });
-            } else if (!company.slug) {
+            } else {
+                // Existing company: refresh calibration if the recruiter provided it.
+                if (hasCalibration) {
+                    await prisma.company.update({
+                        where: { id: company.id },
+                        data: { calibration: calibrationInput },
+                    });
+                }
+            }
+
+            if (company && !company.slug) {
                 // Backfill a slug for a pre-existing company record that never had one.
                 const base = String(company.name)
                     .toLowerCase()

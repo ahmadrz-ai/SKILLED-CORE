@@ -28,7 +28,15 @@ Last updated: 2026-06-25.
 
 ## 🔄 2. IN PROGRESS
 
-- [ ] **Migrate raw `<img>` → `next/image`** — safe, per-file pass (convert whitelisted-host avatars/media; leave arbitrary user-URL images as raw). On `staging` branch.
+- [x] **Migrate raw `<img>` → `next/image`** — done on `staging` (36 converted, ~17 left raw with reasons).
+- [x] **Made recruiter onboarding real (no more demo theater)** — DROPPED the fake "Bidirectional ATS Sync" step and the fake "Ontology compile" animation. Recruiter onboarding is now 2 real steps: Company HQ → Hiring Calibration → Launch. The 3 calibration cohorts (hero/missed/mismatched) are persisted to `Company.calibration` and injected into the talent-search `parse-query` LLM prompt, so they genuinely shape each search. Copy de-jargoned (no "trains your model" overclaim).
+- [ ] **Real ATS integration (Greenhouse/Lever/Ashby)** — deferred until a paying recruiter actually needs it. Requires the recruiter's own API key/OAuth + per-vendor connectors + webhook endpoints. Not worth building pre-traction.
+
+### Company Profiles — make discoverable + editable (do AFTER onboarding 2&3)
+- [ ] Add a **"My Company"** link for recruiters (sidebar/profile menu) → their `/company/<slug>`.
+- [ ] Make **company names clickable** on job cards/profiles → company page.
+- [ ] **Fix** `jobs/[id]` SEO `sameAs` link: uses `company.id`, must use `company.slug`.
+- [ ] Surface an **edit/manage** entry point (the edit modal exists but is only reachable by typing the URL).
 
 ---
 
