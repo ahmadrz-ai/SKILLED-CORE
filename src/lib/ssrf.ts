@@ -9,7 +9,7 @@ import "server-only";
  * NOTE: also fetch with `redirect: "error"` at the call site so a 30x to an
  * internal host can't bypass this check.
  */
-export function assertSafeRemoteUrl(raw: string): URL {
+export function assertSafeRemoteUrl(raw: string, opts?: { allowHosts?: string[] }): URL {
     let u: URL;
     try {
         u = new URL(raw);
@@ -32,8 +32,22 @@ export function assertSafeRemoteUrl(raw: string): URL {
     if (isPrivateIp(host)) {
         throw new Error("Disallowed host (private/internal address)");
     }
+    // Optional strict allow-list: when provided, the host MUST match one of the
+    // approved hosts exactly (or be a subdomain). This turns the guard from a
+    // deny-list into an allow-list for callers that only ever fetch from known
+    // hosts (e.g. resume URLs always come from our own upload providers), which
+    // both closes SSRF entirely and satisfies static analysis (CodeQL).
+    if (opts?.allowHosts && opts.allowHosts.length > 0) {
+        const ok = opts.allowHosts.some((a) => host === a || host.endsWith("." + a));
+        if (!ok) {
+            throw new Error("Host is not in the allow-list");
+        }
+    }
     return u;
 }
+
+/** Hosts our user-uploaded files (resumes, media) can legitimately live on. */
+export const UPLOAD_HOSTS = ["utfs.io", "ufs.sh", "uploadthing.com", "res.cloudinary.com", "cloudinary.com"];
 
 function isPrivateIp(host: string): boolean {
     // IPv4

@@ -1,7 +1,7 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
 import { guardAiRoute } from "@/lib/apiGuard";
-import { assertSafeRemoteUrl } from "@/lib/ssrf";
+import { assertSafeRemoteUrl, UPLOAD_HOSTS } from "@/lib/ssrf";
 import * as _pdfParse from "pdf-parse";
 const pdfParse = (_pdfParse as any).default || _pdfParse;
 
@@ -133,9 +133,14 @@ export async function POST(req: Request) {
                 if (!resumeUrl) {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 400 });
                 }
-                // V1: block SSRF — only allow safe public http(s) URLs.
-                await assertSafeRemoteUrl(resumeUrl);
-                const response = await fetch(resumeUrl);
+                // Block SSRF: allow-list to our upload providers, and fetch the
+                // VALIDATED url object with redirect:"error" so a 30x can't bounce
+                // to an internal host (previously fetched the raw string directly).
+                const safeUrl = assertSafeRemoteUrl(resumeUrl, { allowHosts: UPLOAD_HOSTS });
+                const response = await fetch(safeUrl, {
+                    redirect: "error",
+                    signal: AbortSignal.timeout(15000),
+                });
                 if (!response.ok) {
                     return NextResponse.json({ error: "Could not retrieve resume file" }, { status: 500 });
                 }

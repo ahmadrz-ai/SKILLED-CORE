@@ -318,7 +318,16 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
         if (!eventLocation.trim()) {
             errors.location = "Location or Link is required.";
         } else if (eventFormat === "online") {
-            const isUrl = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(eventLocation.trim());
+            // Validate via the URL parser instead of a regex — the old pattern had a
+            // nested quantifier `([\/\w .-]*)*` that backtracks catastrophically (ReDoS).
+            const raw = eventLocation.trim();
+            let isUrl = false;
+            try {
+                const u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+                isUrl = u.hostname.includes(".");
+            } catch {
+                isUrl = false;
+            }
             if (!isUrl) {
                 errors.location = "Please enter a valid URL for online format.";
             }
