@@ -717,6 +717,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                                 {draftImage && (
                                     <div className="w-1/2 flex items-center justify-center p-3 bg-[#F9FAFB] relative overflow-hidden">
                                         <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-black/5" style={{ maxHeight: "280px" }}>
+                                            {/* raw img: previewUrl is a blob: object URL (local draft preview) — next/image can't optimize these */}
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={draftImage.previewUrl}
                                                 alt="Draft attachment"
@@ -1168,6 +1170,8 @@ export function StartPostWidget({ onPostCreated }: StartPostWidgetProps) {
                             
                             {articleCoverPreview ? (
                                 <div className="relative aspect-video rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] group">
+                                    {/* raw img: articleCoverPreview is a blob: object URL (URL.createObjectURL) — next/image can't optimize these */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={articleCoverPreview}
                                         alt="Article Cover Preview"

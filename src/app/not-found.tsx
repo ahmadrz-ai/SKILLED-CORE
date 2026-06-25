@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, Home } from 'lucide-react';
 import { QodeeLogo } from '@/components/QodeeLogo';
@@ -19,9 +20,11 @@ export default function NotFound() {
                 
                 {/* Logo top placement */}
                 <div className="flex flex-col items-center gap-2 mb-4">
-                    <img
+                    <Image
                         src="/logo.png"
                         alt="SkilledCore"
+                        width={40}
+                        height={40}
                         className="w-10 h-10 flex-shrink-0 animate-bounce"
                     />
                     <div className="flex flex-col leading-none">

@@ -560,9 +560,11 @@ export default function StorageBrowser({
                                                     {/* Dynamic Preview Thumbnail */}
                                                     <div className="w-10 h-10 rounded-lg bg-bg-secondary-panel border border-border-default flex items-center justify-center text-text-secondary overflow-hidden relative flex-shrink-0">
                                                         {fileIsImage ? (
-                                                            <img 
-                                                                src={fileUrl} 
-                                                                alt={file.name} 
+                                                            /* raw img: relies on an onError handler that mutates the DOM element's style (hide-on-fail) — incompatible with next/image's wrapper, so left as raw */
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={fileUrl}
+                                                                alt={file.name}
                                                                 className="w-full h-full object-cover"
                                                                 onError={(e) => {
                                                                     // Fallback if image fails to load

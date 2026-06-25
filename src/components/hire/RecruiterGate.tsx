@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Lock, ArrowRight, X, MapPin } from "lucide-react";
 
 interface GateCandidate {
@@ -60,8 +61,7 @@ export function RecruiterGate({
                 {/* Candidate mini profile card */}
                 <div className="mt-4 flex flex-col items-center">
                     {candidate.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={candidate.image} alt={candidate.name} className="w-16 h-16 rounded-full object-cover border border-border-default" />
+                        <Image src={candidate.image} alt={candidate.name} width={64} height={64} className="w-16 h-16 rounded-full object-cover border border-border-default" />
                     ) : (
                         <div className="w-16 h-16 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center text-xl font-bold">
                             {candidate.name?.[0] || "?"}

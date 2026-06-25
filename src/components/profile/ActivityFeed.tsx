@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Repeat, Heart, MessageCircle, FileText, Eye, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -65,8 +66,7 @@ export function ActivityFeed({
                         )}
                         <div className="flex items-center gap-3 mb-3">
                             {a.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={a.image} alt={a.name || ""} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                                <Image src={a.image} alt={a.name || ""} width={40} height={40} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
                             ) : (
                                 <div className="w-10 h-10 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center font-bold">{(a.name || "?").charAt(0)}</div>
                             )}
@@ -82,6 +82,7 @@ export function ActivityFeed({
                                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(p.content || "") }}
                             />
                             {p.image && (
+                                /* raw img: full-width responsive post image (w-full + max-h-80, no fixed intrinsic size) — next/image fill/sizing would risk layout change */
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={p.image} alt="" className="mt-3 rounded-lg border border-slate-200 max-h-80 object-cover w-full" />
                             )}

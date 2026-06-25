@@ -81,8 +81,7 @@ export default async function BadgePage({ params }: { params: Promise<{ id: stri
                         {/* Candidate */}
                         <Link href={profileHref} className="mt-6 flex items-center justify-center gap-3 group">
                             {badge.user?.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={badge.user.image} alt={who} className="w-11 h-11 rounded-full object-cover border border-border-default" />
+                                <Image src={badge.user.image} alt={who} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-border-default" />
                             ) : (
                                 <div className="w-11 h-11 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center font-bold">{who[0]}</div>
                             )}

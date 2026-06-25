@@ -833,6 +833,8 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                                 {editImagePreview && (
                                     <div className="w-1/2 flex items-center justify-center p-3 bg-[#F9FAFB] relative overflow-hidden">
                                         <div className="relative w-full rounded-xl overflow-hidden border border-[#E5E7EB] bg-black/5" style={{ maxHeight: "220px" }}>
+                                            {/* raw img: src is a blob: object URL (local edit preview) — next/image can't optimize these */}
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={editImagePreview}
                                                 alt="Post image"
@@ -1154,9 +1156,11 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                     const img = parsedImages[0];
                     return (
                         <div className="relative mt-3 w-full bg-white rounded-xl overflow-hidden border border-[#E5E7EB] flex items-center justify-center max-h-[600px]">
-                            <img 
-                                src={img.url} 
-                                alt={img.alt || "Attachment"} 
+                            {/* raw img: full-width intrinsic-aspect post media (h-auto, object-contain, unknown dimensions) — next/image fill/fixed sizing would risk aspect-ratio/layout change */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={img.url}
+                                alt={img.alt || "Attachment"}
                                 className="w-full h-auto max-h-[600px] object-contain cursor-pointer"
                                 onClick={() => setLightboxIndex(0)}
                                 onMouseEnter={() => setHoveredImageIdx(0)}
@@ -1232,7 +1236,9 @@ export function PostCard({ post, onLike, onDelete }: { post: PostProps; onLike?:
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex-1 relative flex items-center justify-center bg-black min-h-[300px]">
-                                <img 
+                                {/* raw img: flexible-size lightbox media (max-w-full/max-h-[75vh] object-contain, unknown dimensions, src may be empty) — next/image sizing would risk layout change */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
                                     src={(() => {
                                         let parsedImages = [];
                                         if (post.image) {

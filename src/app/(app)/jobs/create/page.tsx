@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -596,11 +597,11 @@ export default function JobWizardPage() {
                                 <div className="flex gap-4 items-start">
                                     <div className="relative group shrink-0">
                                         <div className={cn(
-                                            "w-16 h-16 rounded-xl border flex items-center justify-center overflow-hidden transition-all",
+                                            "relative w-16 h-16 rounded-xl border flex items-center justify-center overflow-hidden transition-all",
                                             formData.companyLogo ? "bg-bg-secondary-panel border-border-default" : "bg-bg-secondary-panel border-border-default border-dashed"
                                         )}>
                                             {formData.companyLogo ? (
-                                                <img src={formData.companyLogo} alt="Logo" className="w-full h-full object-cover" />
+                                                <Image src={formData.companyLogo} alt="Logo" fill sizes="64px" className="object-cover" />
                                             ) : (
                                                 <ImageIcon className="w-6 h-6 text-text-placeholder" />
                                             )}

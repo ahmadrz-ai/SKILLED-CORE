@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, MoreHorizontal, CheckSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -227,7 +228,7 @@ export function NotificationsClient({ initialData, mutedGroups = [] }: { initial
                                 <div className="flex-shrink-0 pt-0.5">
                                     <div className="relative">
                                         {notification.actor?.image ? (
-                                            <img src={notification.actor.image} alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--border-default)]" />
+                                            <Image src={notification.actor.image} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover border border-[var(--border-default)]" />
                                         ) : (
                                             <div className="w-10 h-10 rounded-full bg-[var(--bg-secondary-panel)] flex items-center justify-center border border-[var(--border-default)]">
                                                 {getIcon(notification.type)}

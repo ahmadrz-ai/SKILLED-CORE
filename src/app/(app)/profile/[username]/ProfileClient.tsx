@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
+import Image from 'next/image';
 import { FollowListDialog } from "@/components/profile/FollowListDialog";
 import { Tag as SharedTag } from "@/components/ui/tag";
 import dynamic from 'next/dynamic';
@@ -415,7 +416,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                 {/* Cover Image */}
                 <div className="absolute inset-0 bg-zinc-900">
                     {user.bannerUrl ? (
-                        <img src={user.bannerUrl} alt="Cover" className="w-full h-full object-cover opacity-100" />
+                        <Image src={user.bannerUrl} alt="Cover" fill sizes="100vw" className="object-cover opacity-100" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-r from-violet-900 via-zinc-900 to-teal-900 opacity-50" />
                     )}
@@ -464,7 +465,7 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                 <div className={cn(
                                     "w-32 h-32 rounded-full border-4 overflow-hidden relative z-10 bg-slate-100 flex items-center justify-center text-4xl font-bold border-violet-500 shadow-[0_0_30px_rgba(139,92,246,0.15)] text-slate-700"
                                 )}>
-                                    {user.image ? <img src={user.image} alt="Avatar" className="w-full h-full object-cover" /> : user.name?.charAt(0)}
+                                    {user.image ? <Image src={user.image} alt="Avatar" fill sizes="128px" className="object-cover" /> : user.name?.charAt(0)}
 
                                     {/* Edit Overlay */}
                                     {isOwner && (
@@ -1030,9 +1031,9 @@ export default function ProfileClient({ user, isOwner, posts, isFollowing = fals
                                                     </Button>
                                                 )}
 
-                                                <Link href={`/project/${project.id}`} className="block h-32 w-full overflow-hidden">
+                                                <Link href={`/project/${project.id}`} className="relative block h-32 w-full overflow-hidden">
                                                     {project.imageUrl ? (
-                                                        <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                        <Image src={project.imageUrl} alt={project.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
                                                             <FolderOpen className="w-8 h-8 opacity-50" />

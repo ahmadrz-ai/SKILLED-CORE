@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { User } from '@prisma/client';
 import {
@@ -220,8 +221,8 @@ export default function UsersTable({ users }: UsersTableProps) {
                             <tr key={user.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
-                                            {user.image ? <img src={user.image} alt="" className="w-full h-full object-cover" /> : user.name?.charAt(0)}
+                                        <div className="relative w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
+                                            {user.image ? <Image src={user.image} alt="" fill sizes="32px" className="object-cover" /> : user.name?.charAt(0)}
                                         </div>
                                         <div>
                                             <div className="font-bold text-text-heading">{user.name}</div>

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, Brain, MessageSquare, BookOpen, Sparkles, UserCheck, Star, StarHalf, FileText, Calendar, ShieldCheck, User, ArrowRight, Award, Clock, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DeleteReportButton } from "@/components/interview/DeleteReportButton";
@@ -254,7 +255,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                         <div className="flex items-center justify-end">
                             <div className="flex items-center gap-3 bg-zinc-50/80 border border-zinc-200 p-4 rounded-2xl shadow-xs w-full max-w-[280px] hover:border-violet-300 hover:bg-violet-50/5 transition-all duration-200">
                                 {interview.user.image ? (
-                                    <img src={interview.user.image} alt={interview.user.name ?? "Candidate"} className="w-12 h-12 rounded-xl object-cover border border-zinc-200 shadow-sm" />
+                                    <Image src={interview.user.image} alt={interview.user.name ?? "Candidate"} width={48} height={48} className="w-12 h-12 rounded-xl object-cover border border-zinc-200 shadow-sm" />
                                 ) : (
                                     <div className="w-12 h-12 rounded-xl bg-zinc-200 border border-zinc-300 flex items-center justify-center text-zinc-500 shadow-sm">
                                         <User className="w-6 h-6" />
@@ -446,7 +447,7 @@ export default async function InterviewDetailPage(props: PageProps) {
                                                 </div>
                                             ) : (
                                                 interview.user.image ? (
-                                                    <img src={interview.user.image} alt={interview.user.name ?? "Candidate"} className="w-9 h-9 rounded-full object-cover border border-zinc-200" />
+                                                    <Image src={interview.user.image} alt={interview.user.name ?? "Candidate"} width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-zinc-200" />
                                                 ) : (
                                                     <div className="w-9 h-9 rounded-full bg-zinc-200 flex items-center justify-center border border-zinc-300">
                                                         <User className="w-4 h-4 text-zinc-500" />

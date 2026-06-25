@@ -9,6 +9,7 @@ import { toggleSaveJob } from "@/app/actions/jobs";
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import Image from "next/image";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface Job {
@@ -224,9 +225,9 @@ export default function JobList({ initialJobs, savedJobIds, userId }: { initialJ
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-[#EAE6FD] flex items-center justify-center text-lg font-bold text-[#5B35D5] border border-[#EAE6FD] overflow-hidden flex-shrink-0">
+                                <div className="relative w-12 h-12 rounded-xl bg-[#EAE6FD] flex items-center justify-center text-lg font-bold text-[#5B35D5] border border-[#EAE6FD] overflow-hidden flex-shrink-0">
                                     {job.company.logo ? (
-                                        <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover" />
+                                        <Image src={job.company.logo} alt={job.company.name} fill sizes="48px" className="object-cover" />
                                     ) : (
                                         <span>{job.company.name[0]}</span>
                                     )}

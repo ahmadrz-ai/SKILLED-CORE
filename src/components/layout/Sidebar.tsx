@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { logout } from "@/app/actions/authActions";
@@ -98,9 +99,11 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
       {/* Mobile Top Brand Panel (Hidden on Desktop) */}
       <div className="h-14 flex items-center justify-between px-5 border-b border-border-sidebar flex-shrink-0 lg:hidden bg-bg-topbar">
         <Link href="/feed" className="flex items-center gap-2 group min-h-[44px]">
-          <img
+          <Image
             src="/logo.png"
             alt="SkilledCore"
+            width={28}
+            height={28}
             className="w-7 h-7 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
           />
           <div className="flex flex-col leading-none">

@@ -194,6 +194,8 @@ export default function CloudinaryUpload({
                     <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 z-10">
                         {/* Preview thumbnail with premium styling */}
                         <div className="relative w-20 h-20 rounded-full border border-white/10 overflow-hidden shadow-2xl">
+                            {/* raw img: previewUrl is a data: URI from FileReader (local upload preview) — next/image can't optimize these */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                             {isUploading && (
                                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

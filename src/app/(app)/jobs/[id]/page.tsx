@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import ApplyButton from "./ApplyButton";
 import { Building2, MapPin, DollarSign, Clock, Globe, ArrowLeft } from 'lucide-react';
 import Link from "next/link";
@@ -113,9 +114,9 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                 {/* Header */}
                 <div className="bg-bg-card border border-border-card rounded-2xl p-8 shadow-sc-card mb-8">
                     <div className="flex flex-col md:flex-row gap-6 items-start">
-                        <div className="w-20 h-20 rounded-xl bg-bg-secondary-panel border border-border-default flex items-center justify-center shrink-0 text-3xl font-bold text-text-heading overflow-hidden">
+                        <div className="relative w-20 h-20 rounded-xl bg-bg-secondary-panel border border-border-default flex items-center justify-center shrink-0 text-3xl font-bold text-text-heading overflow-hidden">
                             {job.company.logo
-                                ? <img src={job.company.logo} alt={`${job.company.name} logo`} className="w-full h-full object-cover rounded-xl" />
+                                ? <Image src={job.company.logo} alt={`${job.company.name} logo`} fill sizes="80px" className="object-cover rounded-xl" />
                                 : job.company.name.charAt(0)
                             }
                         </div>

@@ -198,6 +198,8 @@ export const FileUploadArea = ({
 
                 {currentUrl && !isResume ? (
                     <div className="relative group-hover:scale-[1.02] transition-transform duration-300 w-full">
+                        {/* raw img: dual-mode sizing (circular w-32 h-32 vs full-width h-48 via cn()) makes next/image fill/fixed conversion risk a layout change */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={currentUrl}
                             alt="Preview"
