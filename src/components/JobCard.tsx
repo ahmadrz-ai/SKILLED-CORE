@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Clock, Building2, Zap, RefreshCw } from 'lucide-react';
@@ -124,7 +125,7 @@ export default function JobCard({ job, index, onApply }: JobCardProps) {
                     <div className="flex gap-4">
                         <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/10 group-hover:border-violet-500/30 transition-colors relative overflow-hidden">
                             {job.logo ? (
-                                <img src={job.logo} alt={job.company} className="w-full h-full object-cover" />
+                                <Image src={job.logo} alt={job.company} fill sizes="48px" className="object-cover" />
                             ) : (
                                 <Building2 className="w-6 h-6 text-zinc-500 group-hover:text-violet-400 transition-colors" />
                             )}

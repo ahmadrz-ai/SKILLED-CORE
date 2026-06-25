@@ -112,6 +112,8 @@ export function SponsoredPostCard({
               onClick={handleAction}
               className="mt-3 rounded-xl overflow-hidden border border-[#E5E7EB] cursor-pointer hover:border-[#5B35D5] transition-colors group/ad-media"
             >
+              {/* raw img: sponsored/ad imageUrl is an arbitrary external host (e.g. images.unsplash.com) not in remotePatterns — next/image would reject it */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}
                 alt={title}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarClock, Check, X, Video, Loader2, CalendarDays, Clock, Coins } from "lucide-react";
 import { toast } from "sonner";
@@ -104,8 +105,7 @@ export default function BookingsPage() {
     const Person = ({ p }: { p: any }) => (
         <Link href={`/profile/${p?.username || p?.id}`} className="flex items-center gap-3 min-w-0 hover:opacity-90">
             {p?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.image} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-border-default" />
+                <Image src={p.image} alt={p.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-border-default" />
             ) : (
                 <div className="w-11 h-11 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center font-bold">{p?.name?.[0] || "?"}</div>
             )}

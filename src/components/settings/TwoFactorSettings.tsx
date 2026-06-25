@@ -346,6 +346,8 @@ export default function TwoFactorSettings({
             {/* QR display container */}
             <div className="flex flex-col items-center justify-center p-6 bg-bg-secondary-panel rounded-xl border border-border-default w-fit mx-auto">
               {setupQrUrl ? (
+                /* raw img: setupQrUrl is a data: URI (TOTP QR code, qrCodeDataUrl) — next/image can't optimize these */
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={setupQrUrl}
                   width={200}

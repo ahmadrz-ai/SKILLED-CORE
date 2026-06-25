@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { X, Eye, Heart, MessageCircle, Repeat, Loader2, Lock, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -80,8 +81,7 @@ export function PostInsightsModal({ postId, onClose }: { postId: string; onClose
                                     {data.viewers.map((v) => (
                                         <Link key={v.id} href={v.username ? `/profile/${v.username}` : "#"} className="flex items-center gap-3 rounded-lg p-2 hover:bg-bg-sidebar-hover">
                                             {v.image ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={v.image} alt="" className="w-8 h-8 rounded-full object-cover border border-border-default" />
+                                                <Image src={v.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-border-default" />
                                             ) : (
                                                 <div className="w-8 h-8 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center text-xs font-bold">{(v.name || "?").charAt(0)}</div>
                                             )}

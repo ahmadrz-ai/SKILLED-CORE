@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
     ChevronRight, ChevronLeft, Upload, FileText, CheckCircle2,
     X, MapPin, Briefcase, Building2, Globe, Mail, Rocket, AlertCircle, Hexagon, Loader2
@@ -24,9 +24,7 @@ const CANDIDATE_STEPS = [
 
 const RECRUITER_STEPS = [
     { id: 1, title: "Establish Company HQ", description: "Who are you building and hiring for?" },
-    { id: 2, title: "Bidirectional ATS Sync", description: "Integrate native webhooks to eliminate manual data entry." },
-    { id: 3, title: "Cohort Calibration Ingestion", description: "Seed the ontology using past passed and failed candidate benchmarks." },
-    { id: 4, title: "Ontology Model Initialization", description: "Compiling your stack's local calibration criteria." },
+    { id: 2, title: "Calibrate Your Hiring Bar", description: "Show us 3 past candidates so matches fit your team's standards." },
 ];
 
 const SUGGESTED_SKILLS = ["React", "TypeScript", "Node.js", "Python", "Design Systems", "AWS", "GraphQL"];
@@ -34,8 +32,7 @@ const SUGGESTED_SKILLS = ["React", "TypeScript", "Node.js", "Python", "Design Sy
 // Move main logic to inner component
 function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingClientProps) {
     const searchParams = useSearchParams();
-    const router = useRouter();
-    
+
     // Stateful role, resolvedName, and pendingUsername
     const [role, setRole] = useState<'recruiter' | 'candidate'>('candidate');
     const [resolvedName, setResolvedName] = useState<string>(dbName || '');
@@ -53,56 +50,12 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
     const [cohortGuideMinimized, setCohortGuideMinimized] = useState(false);
 
     useEffect(() => {
-        if (role === 'recruiter' && currentStep === 3) {
+        if (role === 'recruiter' && currentStep === 2) {
             setShowCohortGuide(true);
             setCohortGuideMinimized(false);
             setCohortGuideStep(1);
         } else {
             setShowCohortGuide(false);
-        }
-    }, [currentStep, role]);
-
-    // Recruiter Model Calibration Telemetry compiler
-    const [compileProgress, setCompileProgress] = useState(0);
-    const [activeLogs, setActiveLogs] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (role === 'recruiter' && currentStep === 4) {
-            setCompileProgress(0);
-            setActiveLogs(["Initializing connection protocol..."]);
-            const logs = [
-                "Verifying command credentials...",
-                "Configuring bidirectional ATS webhooks...",
-                "Ingesting Hero Hire benchmark telemetry...",
-                "Decomposing Missed Signal parameters...",
-                "Calibrating Mismatched Hire failed assertions...",
-                "Synthesizing custom stack ontology rubric...",
-                "Local execution models fully calibrated!"
-            ];
-            
-            let currentLogIndex = 0;
-            const logInterval = setInterval(() => {
-                if (currentLogIndex < logs.length) {
-                    setActiveLogs(prev => [...prev, logs[currentLogIndex]]);
-                    currentLogIndex++;
-                }
-            }, 550);
-
-            const interval = setInterval(() => {
-                setCompileProgress(prev => {
-                    if (prev >= 100) {
-                        clearInterval(interval);
-                        clearInterval(logInterval);
-                        return 100;
-                    }
-                    return prev + 4;
-                });
-            }, 150);
-
-            return () => {
-                clearInterval(interval);
-                clearInterval(logInterval);
-            };
         }
     }, [currentStep, role]);
 
@@ -119,10 +72,6 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
         workEmail: '',
         experience: [] as any[],
         education: [] as any[],
-        // ATS Integrations
-        atsSystem: 'greenhouse',
-        atsWebhookSync: true,
-        atsAutoPipeline: false,
         // Calibration Cohort Ingestions
         heroName: '',
         heroRole: '',
@@ -236,10 +185,6 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                 if (!formData.industry.trim()) return "Industry is required.";
             }
             if (step === 2) {
-                if (!formData.workEmail.trim()) return "Work Email is required.";
-                if (!formData.workEmail.includes('@')) return "Please enter a valid email address.";
-            }
-            if (step === 3) {
                 if (!formData.heroName.trim()) return "Hero Hire candidate name is required.";
                 if (!formData.heroRole.trim()) return "Hero Hire engineering role is required.";
                 if (!formData.heroOntology.trim()) return "Hero Hire execution characteristics are required.";
@@ -287,8 +232,13 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                     throw new Error(data.error || "Failed to save profile");
                 }
 
-                // Redirect only on a confirmed successful save
-                router.push('/feed');
+                // Redirect only on a confirmed successful save.
+                // HARD navigation (not router.push): a client soft-nav hits Next's
+                // router cache, which may still hold a stale "/feed -> /onboarding"
+                // redirect from before onboarding completed — causing a flash loop
+                // between the two pages until manual refresh. A full load forces a
+                // fresh server render with the now-onboarded session/DB state.
+                window.location.href = '/feed';
             } catch (error: any) {
                 console.error(error);
                 toast.error(error.message || "Failed to save profile");
@@ -328,7 +278,9 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
             }
 
             toast.success("Onboarding completed successfully!");
-            router.push('/feed');
+            // Hard navigation (see note in nextStep) — avoids the stale router-cache
+            // redirect loop between /onboarding and /feed.
+            window.location.href = '/feed';
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || "Failed to finalize onboarding.");
@@ -712,87 +664,11 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                 )}
 
                                                 {currentStep === 2 && (
-                                                    <div className="space-y-6">
-                                                        <div className="space-y-4 border-b border-[var(--border-subtle)] pb-5">
-                                                            <div className="flex items-center gap-2 text-[var(--sc-purple-700)] font-mono text-xs uppercase tracking-wider mb-2 font-bold">
-                                                                <Hexagon className="w-3.5 h-3.5" />
-                                                                1. Verify Command Credentials
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <Label className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wide">Work Email <span className="text-red-500">*</span></Label>
-                                                                <div className="relative">
-                                                                    <Mail className="absolute left-3 top-3 w-4 h-4 text-[var(--icon-muted)]" />
-                                                                    <Input
-                                                                        placeholder="you@company.com"
-                                                                        type="email"
-                                                                        className="pl-10 bg-[var(--bg-input)] border-[var(--border-default)] text-[var(--text-body)] placeholder:text-zinc-400 focus:border-[var(--border-focus)] focus-visible:ring-[var(--border-focus)] transition-colors h-11"
-                                                                        value={formData.workEmail}
-                                                                        onChange={e => setFormData({ ...formData, workEmail: e.target.value })}
-                                                                        autoFocus
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-4">
-                                                            <div className="flex items-center gap-2 text-[var(--sc-purple-700)] font-mono text-xs uppercase tracking-wider font-bold">
-                                                                <Building2 className="w-3.5 h-3.5" />
-                                                                2. Select Primary ATS Integration
-                                                            </div>
-                                                            <div className="grid grid-cols-3 gap-2">
-                                                                {(['greenhouse', 'lever', 'ashby'] as const).map(ats => (
-                                                                    <button
-                                                                        key={ats}
-                                                                        type="button"
-                                                                        onClick={() => setFormData(prev => ({ ...prev, atsSystem: ats }))}
-                                                                        className={cn(
-                                                                            "py-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm",
-                                                                            formData.atsSystem === ats
-                                                                                ? "bg-[var(--sc-purple-50)] border-[var(--sc-purple-300)] text-[var(--sc-purple-700)]"
-                                                                                : "bg-[var(--bg-secondary-panel)] border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)]"
-                                                                        )}
-                                                                    >
-                                                                        {ats}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-
-                                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                                <div className="flex items-center justify-between p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl shadow-sm">
-                                                                    <div>
-                                                                        <div className="text-xs font-bold text-[var(--text-heading)]">Webhook Sync</div>
-                                                                        <div className="text-[10px] text-[var(--text-secondary)]">Real-time bi-directional pipeline update</div>
-                                                                    </div>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={formData.atsWebhookSync}
-                                                                        onChange={e => setFormData(prev => ({ ...prev, atsWebhookSync: e.target.checked }))}
-                                                                        className="w-4 h-4 rounded text-[var(--sc-purple-600)] bg-[var(--bg-input)] border-[var(--border-default)] focus:ring-[var(--sc-purple-500)] cursor-pointer"
-                                                                    />
-                                                                </div>
-                                                                <div className="flex items-center justify-between p-3 bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] rounded-xl shadow-sm">
-                                                                    <div>
-                                                                        <div className="text-xs font-bold text-[var(--text-heading)]">Auto-Pipeline</div>
-                                                                        <div className="text-[10px] text-[var(--text-secondary)]">Automate screening triggers</div>
-                                                                    </div>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={formData.atsAutoPipeline}
-                                                                        onChange={e => setFormData(prev => ({ ...prev, atsAutoPipeline: e.target.checked }))}
-                                                                        className="w-4 h-4 rounded text-[var(--sc-purple-600)] bg-[var(--bg-input)] border-[var(--border-default)] focus:ring-[var(--sc-purple-500)] cursor-pointer"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {currentStep === 3 && (
                                                     <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
                                                         <div className="bg-[var(--sc-purple-50)] border border-[var(--sc-purple-200)] p-3 rounded-xl flex items-start gap-2.5 mb-2 shadow-sm">
                                                             <CheckCircle2 className="w-4 h-4 text-[var(--sc-purple-700)] mt-0.5 shrink-0" />
                                                             <div className="text-xs text-[var(--text-secondary)] leading-relaxed font-semibold">
-                                                                To eliminate the <strong>cold start</strong>, please seed SkilledCore with 3 past benchmark candidates. This trains your local execution model on your exact stack ontology.
+                                                                Give SkilledCore 3 past candidates as reference points. We use them to guide how our AI interprets and ranks your future talent searches — so results fit your team's real standards.
                                                             </div>
                                                         </div>
 
@@ -878,45 +754,6 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                                                 value={formData.mismatchedOntology}
                                                                 onChange={e => setFormData({ ...formData, mismatchedOntology: e.target.value })}
                                                             />
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {currentStep === 4 && (
-                                                    <div className="flex flex-col h-full space-y-5 py-2">
-                                                        <div className="space-y-2 text-center">
-                                                            <div className="text-[var(--text-brand)] font-mono text-xs font-bold uppercase tracking-widest animate-pulse">
-                                                                ONTOLOGY SYNTHESIS IN PROGRESS...
-                                                            </div>
-                                                            <div className="h-2 w-full bg-[var(--border-subtle)] rounded-full overflow-hidden border border-[var(--border-default)]">
-                                                                <motion.div
-                                                                    className="h-full bg-gradient-to-r from-[var(--sc-purple-500)] to-[var(--sc-purple-700)]"
-                                                                    initial={{ width: "0%" }}
-                                                                    animate={{ width: `${compileProgress}%` }}
-                                                                    transition={{ duration: 0.3 }}
-                                                                 />
-                                                            </div>
-                                                            <div className="text-[10px] text-[var(--text-secondary)] font-mono font-bold text-right">
-                                                                {compileProgress}% COMPLETE
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Scrolling Telemetry Logs */}
-                                                        <div className="flex-1 min-h-[160px] max-h-[180px] bg-zinc-950 border border-zinc-800 rounded-xl p-4 overflow-y-auto space-y-1.5 font-mono text-[10px] text-zinc-400 leading-normal scrollbar-thin">
-                                                            {activeLogs.map((log, i) => (
-                                                                <motion.div
-                                                                    key={i}
-                                                                    initial={{ opacity: 0, x: -5 }}
-                                                                    animate={{ opacity: 1, x: 0 }}
-                                                                    className={cn(
-                                                                        "flex gap-2 items-center",
-                                                                        i === activeLogs.length - 1 ? "text-[var(--sc-purple-300)] font-bold" : "text-zinc-400"
-                                                                    )}
-                                                                >
-                                                                    <span className="text-zinc-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                                                                    <span>&gt;&gt; {log}</span>
-                                                                </motion.div>
-                                                            ))}
                                                         </div>
                                                     </div>
                                                 )}
@@ -1010,7 +847,7 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                                             className="space-y-3"
                                         >
                                             <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-semibold">
-                                                A <strong>Calibration Cohort</strong> is a structural learning batch that trains your custom recruitment model on your team's specific stack ontology. 
+                                                A <strong>Calibration Cohort</strong> is a small set of reference candidates that tunes how SkilledCore's AI interprets and ranks your talent searches for your team. 
                                             </p>
                                             <p className="text-xs text-[var(--text-heading)] leading-relaxed font-bold uppercase tracking-wider text-[9px]">
                                                 How it works:

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Calendar, User as UserIcon, Share2, Globe, Clock, Sparkles } from "lucide-react";
@@ -61,10 +62,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             {/* Ambient Background blur */}
             {project.imageUrl && (
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <Image
                         src={project.imageUrl}
                         alt=""
-                        className="w-full h-full object-cover opacity-10 blur-[100px] scale-110"
+                        fill
+                        sizes="100vw"
+                        className="object-cover opacity-10 blur-[100px] scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-page)] via-[var(--bg-page)]/80 to-transparent" />
                 </div>
@@ -90,10 +93,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     <div className="space-y-4">
                         <div className="relative rounded-2xl overflow-hidden shadow-md border border-[var(--border-card)] group bg-[var(--bg-secondary-panel)] aspect-video">
                             {project.imageUrl ? (
-                                <img
+                                <Image
                                     src={project.imageUrl}
                                     alt={project.title}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 66vw"
+                                    className="object-cover transition-transform duration-700 group-hover:scale-102"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -123,9 +128,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
                         {/* Creator Mini-Card */}
                         <div className="flex items-center gap-3.5 p-4 rounded-xl bg-[var(--bg-secondary-panel)] border border-[var(--border-default)] hover:bg-[var(--bg-sidebar-hover)] transition-colors shadow-xs">
-                            <div className="w-10 h-10 rounded-full overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shrink-0">
+                            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shrink-0">
                                 {project.user.image ? (
-                                    <img src={project.user.image} alt={project.user.username || "User"} className="w-full h-full object-cover" />
+                                    <Image src={project.user.image} alt={project.user.username || "User"} fill sizes="40px" className="object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
                                         <UserIcon className="w-5 h-5 text-[var(--icon-muted)]" />

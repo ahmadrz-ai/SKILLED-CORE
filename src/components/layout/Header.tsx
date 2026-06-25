@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Search, ChevronRight, Menu, MessageSquarePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "../NotificationBell";
@@ -81,9 +82,11 @@ export function Header({ credits = 0, onMenuClick }: HeaderProps) {
 
         {/* SkilledCore logo always visible on topbar */}
         <Link href="/feed" className="flex items-center gap-2 group mr-2">
-          <img
+          <Image
             src="/logo.png"
             alt="SkilledCore"
+            width={28}
+            height={28}
             className="w-7 h-7 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
           />
           <div className="flex-col leading-none hidden sm:flex">

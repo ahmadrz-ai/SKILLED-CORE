@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { X, CalendarClock, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -84,8 +85,7 @@ export function BookingModal({
                     <>
                         <div className="flex items-center gap-3 mb-5">
                             {candidate.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={candidate.image} alt={candidate.name} className="w-11 h-11 rounded-full object-cover border border-border-default" />
+                                <Image src={candidate.image} alt={candidate.name} width={44} height={44} className="w-11 h-11 rounded-full object-cover border border-border-default" />
                             ) : (
                                 <div className="w-11 h-11 rounded-full bg-sc-purple-100 text-sc-purple-700 flex items-center justify-center font-bold">
                                     {candidate.name?.[0] || "?"}

@@ -1,13 +1,40 @@
 import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { guardAiRoute } from "@/lib/apiGuard";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export const runtime = 'nodejs';
+
+/**
+ * Build a calibration context block from the recruiter's company hiring calibration
+ * (the hero/missed/mismatched examples captured at onboarding). This is injected into
+ * the query-parsing prompt so requirement extraction reflects the company's real
+ * standards — the onboarding calibration genuinely influences each search.
+ */
+async function getCalibrationContext(userId: string): Promise<string> {
+    try {
+        const me = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { company: { select: { calibration: true } } },
+        });
+        const cal = me?.company?.calibration as any;
+        if (!cal) return "";
+        const lines: string[] = [];
+        if (cal.hero?.traits) lines.push(`- HERO HIRE (the bar to match)${cal.hero.role ? ` — ${cal.hero.role}` : ""}: ${cal.hero.traits}`);
+        if (cal.missed?.traits) lines.push(`- MISSED SIGNAL (a builder they wrongly passed on — value this kind)${cal.missed.role ? ` — ${cal.missed.role}` : ""}: ${cal.missed.traits}`);
+        if (cal.mismatched?.traits) lines.push(`- MISMATCHED HIRE (interviewed well but failed on the job — be skeptical of this kind)${cal.mismatched.role ? ` — ${cal.mismatched.role}` : ""}: ${cal.mismatched.traits}`);
+        if (!lines.length) return "";
+        return `\n\nThis recruiter's company has provided hiring calibration. While still honoring the explicit query above, lean the requirements toward the qualities of the HERO HIRE and MISSED SIGNAL, and de-emphasize traits typical of the MISMATCHED HIRE:\n${lines.join("\n")}\n`;
+    } catch {
+        return "";
+    }
+}
 
 export async function POST(req: Request) {
     // Auth + rate limit — paid LLM call.
     const guard = await guardAiRoute("talent-parse-query", 30, 60);
     if (guard instanceof Response) return guard;
+    const { userId } = guard;
 
     try {
         const body = await req.json();
@@ -17,9 +44,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Query is required" }, { status: 400 });
         }
 
+        const calibrationContext = await getCalibrationContext(userId);
+
         const prompt = `You are an expert technical recruiter assistant.
 A recruiter has typed this search query:
 "${query}"
+${calibrationContext}
 
 Extract all the requirements they are looking for and rank them
 by priority. The first requirement mentioned or the most emphasized

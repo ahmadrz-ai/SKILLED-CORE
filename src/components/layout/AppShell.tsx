@@ -24,9 +24,10 @@ interface AppShellProps {
   plan?: string;
   credits?: number;
   userId?: string;
+  companySlug?: string;
 }
 
-export function AppShell({ children, counts, plan = "BASIC", credits = 0, userId }: AppShellProps) {
+export function AppShell({ children, counts, plan = "BASIC", credits = 0, userId, companySlug }: AppShellProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -170,6 +171,7 @@ export function AppShell({ children, counts, plan = "BASIC", credits = 0, userId
         isMobileOpen={isMobileOpen}
         onMobileClose={() => setIsMobileOpen(false)}
         plan={plan}
+        companySlug={companySlug}
       />
 
       {/* Mobile Drawer Dark Overlay (Correction 2: Lightweight CSS-only overlay) */}

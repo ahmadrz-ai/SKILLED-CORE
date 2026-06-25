@@ -274,6 +274,8 @@ export default function ReportsTable({ reports }: ReportsTableProps) {
                                                                                                     muted
                                                                                                 />
                                                                                             ) : isImage ? (
+                                                                                                // raw img: report attachment may be a data: URI (code explicitly handles data:image/) — next/image can't optimize these
+                                                                                                // eslint-disable-next-line @next/next/no-img-element
                                                                                                 <img
                                                                                                     src={file}
                                                                                                     alt={`Attachment ${i + 1}`}

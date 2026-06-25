@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { VerificationRequest, User } from '@prisma/client';
 import { Check, X, FileText, ExternalLink, Clock } from 'lucide-react';
 import { updateVerificationStatus } from '../actions';
@@ -59,8 +60,8 @@ export default function VerificationsTable({ requests }: VerificationsTableProps
                             <tr key={req.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
-                                            {req.user.image ? <img src={req.user.image} alt="" className="w-full h-full object-cover" /> : req.user.name?.charAt(0)}
+                                        <div className="relative w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
+                                            {req.user.image ? <Image src={req.user.image} alt="" fill sizes="32px" className="object-cover" /> : req.user.name?.charAt(0)}
                                         </div>
                                         <div>
                                             <div className="font-bold text-text-heading">{req.user.name}</div>

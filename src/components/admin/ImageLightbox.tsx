@@ -62,6 +62,8 @@ export function ImageLightbox({ isOpen, onClose, imageUrl, title }: ImageLightbo
                             className="max-w-full max-h-full rounded-lg shadow-2xl"
                         />
                     ) : (
+                        /* raw img: imageUrl may be a data: URI (the component also handles data:video/) and is rendered at flexible full-screen size — next/image can't optimize these */
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={imageUrl}
                             alt={title || 'Attachment'}

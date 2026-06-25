@@ -767,6 +767,8 @@ function RenderMessageContent({ msg, isMe, onAccept }: { msg: any; isMe: boolean
                         {isVideo ? (
                             <video src={msg.attachmentUrl} muted className="max-w-[240px] rounded-lg mb-1" />
                         ) : (
+                            /* raw img: intrinsic-aspect chat attachment (max-w-[240px], auto height, unknown dimensions) — next/image fixed/fill sizing would risk aspect-ratio/layout change */
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={msg.attachmentUrl} alt="Attachment" className="max-w-[240px] rounded-lg mb-1 hover:opacity-90 transition-opacity" />
                         )}
                     </button>

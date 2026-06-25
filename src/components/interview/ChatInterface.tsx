@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Mic, Send, StopCircle, Clock, Zap, User, Bot, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -710,9 +711,9 @@ TERMINAL_OUTPUT: \`\`\`\n${output.join('\n')}\n\`\`\``,
                                 animate={{ opacity: 1, y: 0 }}
                                 className="flex gap-3.5 max-w-full lg:max-w-[85%] ml-auto flex-row-reverse"
                             >
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden shadow-[0_0_12px_rgba(99,102,241,0.25)] bg-zinc-950">
+                                <div className="relative w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-indigo-500/20 overflow-hidden shadow-[0_0_12px_rgba(99,102,241,0.25)] bg-zinc-950">
                                     {dbUser?.image || session?.user?.image ? (
-                                        <img src={dbUser?.image || session?.user?.image} alt="Profile" className="w-full h-full object-cover" />
+                                        <Image src={dbUser?.image || session?.user?.image || ""} alt="Profile" fill sizes="40px" className="object-cover" />
                                     ) : (
                                         <span className="text-xs font-bold font-sans" style={{ color: '#ffffff' }}>
                                             {(dbUser?.name || session?.user?.name || "ME").substring(0, 2).toUpperCase()}

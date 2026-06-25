@@ -494,6 +494,11 @@ model Company {
   companySize String? // e.g. "50-100"
   techStack   String? // comma-separated, e.g. "Next.js,React,Postgres"
   verified    Boolean  @default(false)
+  // Recruiter-seeded hiring calibration captured at onboarding: three example
+  // candidates (hero hire / missed signal / mismatched hire) used to bias the
+  // AI talent-search query parsing toward this company's real hiring standards.
+  // Shape: { hero:{name,role,traits}, missed:{...}, mismatched:{...} }
+  calibration Json?
   createdAt   DateTime @default(now())
   jobs        Job[]
   recruiters  User[]

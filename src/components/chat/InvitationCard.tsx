@@ -333,6 +333,8 @@ const InvitationCardComponent = ({
 
                         {/* Avatar Content */}
                         <div className="pc-content pc-avatar-content">
+                            {/* raw img: avatarUrl defaults to an arbitrary external host (api.dicebear.com SVG) not in remotePatterns, and relies on an onError DOM hide hack — next/image can't handle these */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 className="avatar"
                                 src={avatarUrl}

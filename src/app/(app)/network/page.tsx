@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getNetworkData, sendConnectionRequest, updateConnectionStatus } from './actions';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -254,9 +255,9 @@ export default function NetworkPage() {
                                                 className="bg-bg-secondary-panel border border-border-default p-4 rounded-xl flex items-center justify-between group hover:border-border-selected transition-all"
                                             >
                                                 <Link href={`/profile/${inv.requesterUsername || inv.requesterId}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-                                                    <div className={cn("w-12 h-12 rounded-full flex items-center justify-center font-bold text-text-body shadow bg-bg-secondary-panel overflow-hidden border border-border-default")}>
+                                                    <div className={cn("relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-text-body shadow bg-bg-secondary-panel overflow-hidden border border-border-default")}>
                                                         {inv.avatar ? (
-                                                            <img src={inv.avatar} alt={inv.name} className="w-full h-full object-cover" />
+                                                            <Image src={inv.avatar} alt={inv.name} fill sizes="48px" className="object-cover" />
                                                         ) : (
                                                             inv.name.charAt(0)
                                                         )}
@@ -318,9 +319,9 @@ export default function NetworkPage() {
                                             className="bg-bg-card border border-border-card p-4 rounded-xl flex items-center justify-between shadow-sc-card hover:border-border-selected transition-all group"
                                         >
                                             <Link href={`/profile/${conn.username || conn.id}`} className="flex items-center gap-4 flex-1">
-                                                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-text-body shadow bg-bg-secondary-panel overflow-hidden border border-border-default group-hover:border-border-selected transition-colors">
+                                                <div className="relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-text-body shadow bg-bg-secondary-panel overflow-hidden border border-border-default group-hover:border-border-selected transition-colors">
                                                     {conn.image ? (
-                                                        <img src={conn.image} alt={conn.name} className="w-full h-full object-cover" />
+                                                        <Image src={conn.image} alt={conn.name} fill sizes="48px" className="object-cover" />
                                                     ) : (
                                                         conn.name.charAt(0)
                                                     )}
@@ -364,9 +365,9 @@ export default function NetworkPage() {
                                 <p className="text-xs font-bold text-text-secondary mb-4 tracking-wider uppercase">Add to your feed</p>
 
                                 <div className="flex items-start gap-3 mb-4">
-                                    <div className="w-10 h-10 rounded-full bg-bg-secondary-panel border border-border-default flex-shrink-0 overflow-hidden">
+                                    <div className="relative w-10 h-10 rounded-full bg-bg-secondary-panel border border-border-default flex-shrink-0 overflow-hidden">
                                         {data.promoted.image ? (
-                                            <img src={data.promoted.image} alt={data.promoted.name} className="w-full h-full object-cover" />
+                                            <Image src={data.promoted.image} alt={data.promoted.name} fill sizes="40px" className="object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xs font-bold text-text-body bg-bg-secondary-panel">{data.promoted.name.charAt(0)}</div>
                                         )}
@@ -398,9 +399,9 @@ export default function NetworkPage() {
                                     <div key={user.id} className="flex flex-col gap-2 pb-4 border-b border-border-subtle last:border-0">
                                         <div className="flex items-start gap-3">
                                             <Link href={`/profile/${user.username || user.id}`} className="flex-shrink-0">
-                                                <div className="w-10 h-10 rounded-full bg-bg-secondary-panel border border-border-default overflow-hidden">
+                                                <div className="relative w-10 h-10 rounded-full bg-bg-secondary-panel border border-border-default overflow-hidden">
                                                     {user.image ? (
-                                                        <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                                                        <Image src={user.image} alt={user.name} fill sizes="40px" className="object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-xs font-bold text-text-body bg-bg-secondary-panel">{user.name.charAt(0)}</div>
                                                     )}

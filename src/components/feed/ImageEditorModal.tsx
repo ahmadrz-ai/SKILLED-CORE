@@ -365,6 +365,8 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                                 className="relative max-w-full max-h-[450px] overflow-hidden rounded-xl border border-white/10 group cursor-crosshair"
                                 onClick={handleCanvasClick}
                             >
+                                {/* raw img: src is a blob: object URL (image editor preview/crop) — next/image can't optimize these */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={activeImg.croppedUrl || activeImg.previewUrl}
                                     alt="Active edit view"
@@ -466,9 +468,11 @@ export default function ImageEditorModal({ isOpen, onClose, initialFiles, onAppl
                             <div className="flex-1 flex flex-col justify-center items-center py-4">
                                 <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-sm text-center w-full max-w-[240px] flex flex-col items-center">
                                     <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-[#E5E7EB] mb-4 bg-zinc-50 flex items-center justify-center flex-shrink-0">
-                                        <img 
-                                            src={activeImg.croppedUrl || activeImg.previewUrl} 
-                                            alt="Edit preview" 
+                                        {/* raw img: src is a blob: object URL (image editor preview/crop) — next/image can't optimize these */}
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={activeImg.croppedUrl || activeImg.previewUrl}
+                                            alt="Edit preview"
                                             className="max-w-full max-h-full object-contain"
                                         />
                                     </div>

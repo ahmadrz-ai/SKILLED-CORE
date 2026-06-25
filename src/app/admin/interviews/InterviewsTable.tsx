@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
     Search, Trash2, CheckCircle2, Eye, Brain,
     ArrowUp, ArrowDown, ArrowUpDown, Star, StarHalf, Loader2, Award
@@ -270,9 +271,9 @@ export default function InterviewsTable({ interviews }: InterviewsTableProps) {
                             <tr key={item.id} className="border-b border-border-subtle hover:bg-bg-sidebar-hover transition-colors">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
+                                        <div className="relative w-8 h-8 rounded-full bg-bg-secondary-panel flex items-center justify-center overflow-hidden border border-border-default">
                                             {item.user?.image ? (
-                                                <img src={item.user.image} alt="" className="w-full h-full object-cover" />
+                                                <Image src={item.user.image} alt="" fill sizes="32px" className="object-cover" />
                                             ) : (
                                                 item.user?.name?.charAt(0) || 'U'
                                             )}

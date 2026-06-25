@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -83,9 +84,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <aside className="w-64 border-r border-border-sidebar flex flex-col fixed h-full bg-bg-sidebar z-50">
                 <div className="p-6 border-b border-border-sidebar flex flex-col gap-1">
                     <Link href="/feed" className="flex items-center gap-2.5 group">
-                        <img
+                        <Image
                             src="/logo.png"
                             alt="SkilledCore"
+                            width={32}
+                            height={32}
                             className="w-8 h-8 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
                         />
                         <div className="flex flex-col leading-none">
