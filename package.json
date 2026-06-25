@@ -60,7 +60,7 @@
     "emoji-picker-react": "^4.16.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.561.0",
-    "next": "16.0.10",
+    "next": "^16.2.9",
     "next-auth": "^5.0.0-beta.30",
     "otplib": "^13.4.1",
     "pdf-parse": "^1.1.1",
@@ -92,11 +92,13 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/react-pdf": "^6.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "dompurify": "^3.4.11"
   }
 }

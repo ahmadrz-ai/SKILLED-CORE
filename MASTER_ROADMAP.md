@@ -81,6 +81,16 @@ Last updated: 2026-06-25.
 
 ## 🔐 6. SECURITY UPGRADES
 
+### Dependency vulnerabilities — status 2026-06-25 (31 → 11; 0 critical)
+Fixed (build-verified): **CRITICAL vitest** (→v4, dev), **next 16.0.10 → 16.2.9** (cleared a large batch of high-severity DoS/SSRF/middleware/XSS advisories), **pdfjs-dist HIGH** (removed dead `@types/react-pdf` — the `react-pdf` viewer was never imported), **DOMPurify XSS moderate** (override → 3.4.11), plus non-breaking transitives (minimatch/flatted/picomatch).
+Remaining **11 (4 high / 2 mod / 5 low)** — ALL have only feature-breaking or bogus "fixes," so accepted with rationale:
+- [ ] **uploadthing chain** (4 high: uploadthing/@uploadthing/*/`effect`) — no upstream fix; `uploadthing@latest` (7.7.4) still pins vulnerable `effect@3.17.7`. npm's "fix" downgrades to 6.x = breaks uploads. Revisit when uploadthing ships an `effect` bump.
+- [ ] **@ai-sdk/* + ai** (5 low) — fix needs AI SDK **v6 major**, which would break the whole AI layer (modelRouter/executeAI/streaming). Not worth it for LOW. Plan deliberately.
+- [ ] **next + postcss** (2 moderate) — npm's only "fix" is downgrading to **next@9.3.3** (absurd). No forward fix; accept until a newer next bumps postcss.
+- [x] **Secret scanning** — investigated: the flagged "leaked secrets" are EXAMPLE values inside committed-then-untracked Claude skill docs (`.agents/.claude/skills` reference files), lingering in git history. NOT real credentials → no rotation. Already gitignored. Dismiss the GitHub alerts as false-positives (or purge history if a clean slate is wanted — destructive force-push).
+- [ ] **Code scanning (CodeQL) alerts** — couldn't read them (`gh` CLI not installed, no token). Install `gh` + `gh auth login`, or run `semgrep`, to triage.
+
+
 - [ ] Nonce-based CSP so `unsafe-inline` no longer applies to scripts.
 - [ ] DB-backed admin permissions table + audit log (replace env allowlist long-term).
 - [ ] Rate-limit `/api/ably/token`.
