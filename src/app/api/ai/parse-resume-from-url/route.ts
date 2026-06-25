@@ -2,7 +2,7 @@ import { executeAI, parseAIJson } from "@/lib/ai/modelRouter";
 import { NextResponse } from "next/server";
 import * as _pdfParse from "pdf-parse";
 import { guardAiRoute } from "@/lib/apiGuard";
-import { assertSafeRemoteUrl } from "@/lib/ssrf";
+import { assertSafeRemoteUrl, UPLOAD_HOSTS } from "@/lib/ssrf";
 const pdfParse = (_pdfParse as any).default || _pdfParse;
 
 export const runtime = 'nodejs';
@@ -12,7 +12,9 @@ export const dynamic = 'force-dynamic';
 // internal ranges and refuses redirects (which could bounce to an internal host),
 // with a hard timeout and size cap. Returns the PDF bytes + mime.
 async function fetchRemoteResume(rawUrl: string): Promise<{ buffer: Buffer; mime: string }> {
-    const url = assertSafeRemoteUrl(rawUrl);
+    // Allow-list to our upload providers only — resume URLs never legitimately
+    // point anywhere else, so this closes SSRF rather than just blocking private IPs.
+    const url = assertSafeRemoteUrl(rawUrl, { allowHosts: UPLOAD_HOSTS });
     const res = await fetch(url, {
         redirect: "error",
         signal: AbortSignal.timeout(15000),

@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { urlHostMatches } from "@/lib/urlAllow";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 import { v2 as cloudinary } from "cloudinary";
@@ -462,10 +463,10 @@ export async function scanStorageForOrphans() {
         const referencedUtKeys = new Set<string>();
         const referencedCloudIds = new Set<string>();
         for (const url of referencedUrls) {
-            if (url.includes("cloudinary.com")) {
+            if (urlHostMatches(url, ["cloudinary.com"])) {
                 const id = cloudinaryPublicIdFromUrl(url);
                 if (id) referencedCloudIds.add(id);
-            } else if (url.includes("utfs.io") || url.includes("ufs.sh") || url.includes("uploadthing")) {
+            } else if (urlHostMatches(url, ["utfs.io", "ufs.sh", "uploadthing.com"])) {
                 const key = uploadthingKeyFromUrl(url);
                 if (key) referencedUtKeys.add(key);
             }

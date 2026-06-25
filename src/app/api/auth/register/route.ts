@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { checkRateLimit as checkDistributedRateLimit } from "@/lib/ratelimit";
 
 // FIX-003: Disposable/temporary email domain blocklist
@@ -145,9 +146,10 @@ export async function POST(req: Request) {
             );
         }
 
-        // Generate username if not provided
+        // Generate username if not provided. Use crypto RNG (not Math.random) for
+        // the random suffix so it isn't predictable.
         const finalUsername = username?.trim() ||
-            `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            `user_${Date.now()}_${randomBytes(4).toString("hex")}`;
 
         // Check for existing account
         const existingUser = await prisma.user.findFirst({

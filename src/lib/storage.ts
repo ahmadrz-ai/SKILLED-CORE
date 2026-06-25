@@ -1,5 +1,6 @@
 import { UTApi } from "uploadthing/server";
 import { v2 as cloudinary } from "cloudinary";
+import { urlHostMatches } from "@/lib/urlAllow";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,7 +19,7 @@ export async function deleteFileFromStorage(url: string) {
 
     try {
         // 1. Cloudinary Asset Detection & Deletion
-        if (url.includes("cloudinary.com")) {
+        if (urlHostMatches(url, ["cloudinary.com"])) {
             // Cloudinary URL format: 
             // https://res.cloudinary.com/[cloud_name]/image/upload/v[version]/[public_id].[ext]
             // We need to parse out the public ID (excluding extension and version structure)
@@ -56,7 +57,7 @@ export async function deleteFileFromStorage(url: string) {
         // Match ALL UploadThing domains. Older uploads use utfs.io / uploadthing.com,
         // but current SDK versions return the newer `<appId>.ufs.sh` domain — missing
         // that here is why old resumes/avatars were never actually deleted on re-upload.
-        if (url.includes("utfs.io") || url.includes("ufs.sh") || url.includes("uploadthing")) {
+        if (urlHostMatches(url, ["utfs.io", "ufs.sh", "uploadthing.com"])) {
             // URL formats: https://utfs.io/f/<key>, https://<appId>.ufs.sh/f/<key>,
             // or https://utfs.io/a/<appId>/<key>. The key is the last path segment.
             const fileKey = url.split("?")[0].split("/").filter(Boolean).pop();
