@@ -7,9 +7,10 @@ Last updated: 2026-06-25.
 
 ## 🚨 0. DEPLOY ACTION ITEMS (do before/at next deploy)
 
-- [ ] **Run the Company migration** — `prisma/migrations/20260624120000_company_profile_fields/migration.sql` is written but NOT applied. Run `npx prisma migrate deploy` against Neon (adds Company profile fields + slug, backfills slugs).
-- [ ] **Set `ADMIN_EMAILS` in Vercel** — admin allowlist moved out of source into the `ADMIN_EMAILS` env var (comma-separated). Already in local `.env`. If unset in prod, no email auto-elevates to ADMIN.
-  Value: `ahmadrazaai801@gmail.com,ahmad@skilledcore.com,support@skilledcore.com`
+- [ ] **Add `DIRECT_URL` to Vercel env** — the build's `prisma db push` FAILS without it (`P1012: Environment variable not found: DIRECT_URL`) and is silently swallowed by `|| true`, so the new Company columns never reach the DB. Copy the non-pooled Neon connection string from local `.env`, then redeploy. Until then `/company/[slug]` and recruiter onboarding throw "column does not exist".
+- [x] **Set `ADMIN_EMAILS` in Vercel** — done (verify value): `ahmadrazaai801@gmail.com,ahmad@skilledcore.com,support@skilledcore.com`. If unset, no email auto-elevates to ADMIN.
+- [ ] **(Optional) Remove `|| true` from the build's `prisma db push`** — so schema-sync failures fail the build loudly instead of shipping a broken DB.
+- [ ] **Company migration file** — `prisma/migrations/20260624120000_company_profile_fields/migration.sql` exists as a record; not required since the pipeline uses `db push` (syncs straight from schema once `DIRECT_URL` is set).
 
 ---
 
@@ -37,6 +38,7 @@ Last updated: 2026-06-25.
 - [ ] **Live payment gateway (Pakistan)** — integrate **Safepay** (subscriptions + Visa/MC/AMEX, developer-friendly) to replace the manual admin-approval flow; or register a US/Delaware entity for Stripe. Wire webhooks → auto-grant plan/credits.
 - [ ] **Feed infinite-scroll pagination** — complete the feed fix: cursor-based paging beyond the 50-post cap (+ optional DOM virtualization).
 - [ ] **Automated tests for critical flows** — credits engine, badge issuance (`finalizeInterview`), booking flow, recruiter gate.
+- [ ] **Tech debt (from build warnings):** rename `src/middleware.ts` → `src/proxy.ts` (Next 16 deprecation); plan Prisma 5.22 → 7.x major upgrade; refresh `baseline-browser-mapping`.
 
 ---
 
