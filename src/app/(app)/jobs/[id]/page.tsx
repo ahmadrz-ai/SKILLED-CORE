@@ -71,7 +71,7 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
         "hiringOrganization": {
             "@type": "Organization",
             "name": job.company.name,
-            "sameAs": job.company.website || `https://skilledcore.com/company/${job.company.id}`,
+            "sameAs": job.company.website || `https://skilledcore.com/company/${job.company.slug || job.company.id}`,
         },
         "jobLocation": {
             "@type": "Place",

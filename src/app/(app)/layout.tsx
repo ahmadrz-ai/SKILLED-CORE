@@ -17,7 +17,7 @@ export default async function AppLayout({
     let learningCount = 0;
     let hasAnalytics = false;
 
-    let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null; onboardedAt: Date | null } | null = null;
+    let user: { plan: string; credits: number; headline: string | null; role: string; companyId: string | null; onboardedAt: Date | null; company: { slug: string | null } | null } | null = null;
 
     let shouldRedirectToOnboarding = false;
 
@@ -42,7 +42,7 @@ export default async function AppLayout({
             ] = await Promise.all([
                 prisma.user.findUnique({
                     where: { id: uid },
-                    select: { plan: true, credits: true, headline: true, role: true, companyId: true, onboardedAt: true }
+                    select: { plan: true, credits: true, headline: true, role: true, companyId: true, onboardedAt: true, company: { select: { slug: true } } }
                 }),
                 prisma.connection.count({ where: { addresseeId: uid, status: "PENDING" } }),
                 prisma.notification.count({ where: { userId: uid, read: false } }),
@@ -101,6 +101,7 @@ export default async function AppLayout({
             plan={plan}
             credits={totalCredits}
             userId={session?.user?.id}
+            companySlug={user?.company?.slug || undefined}
         >
             {children}
         </AppShell>

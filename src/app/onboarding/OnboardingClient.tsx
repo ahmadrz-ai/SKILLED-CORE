@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
     ChevronRight, ChevronLeft, Upload, FileText, CheckCircle2,
     X, MapPin, Briefcase, Building2, Globe, Mail, Rocket, AlertCircle, Hexagon, Loader2
@@ -32,8 +32,7 @@ const SUGGESTED_SKILLS = ["React", "TypeScript", "Node.js", "Python", "Design Sy
 // Move main logic to inner component
 function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingClientProps) {
     const searchParams = useSearchParams();
-    const router = useRouter();
-    
+
     // Stateful role, resolvedName, and pendingUsername
     const [role, setRole] = useState<'recruiter' | 'candidate'>('candidate');
     const [resolvedName, setResolvedName] = useState<string>(dbName || '');
@@ -233,8 +232,13 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
                     throw new Error(data.error || "Failed to save profile");
                 }
 
-                // Redirect only on a confirmed successful save
-                router.push('/feed');
+                // Redirect only on a confirmed successful save.
+                // HARD navigation (not router.push): a client soft-nav hits Next's
+                // router cache, which may still hold a stale "/feed -> /onboarding"
+                // redirect from before onboarding completed — causing a flash loop
+                // between the two pages until manual refresh. A full load forces a
+                // fresh server render with the now-onboarded session/DB state.
+                window.location.href = '/feed';
             } catch (error: any) {
                 console.error(error);
                 toast.error(error.message || "Failed to save profile");
@@ -274,7 +278,9 @@ function OnboardingContent({ dbRole, dbName, dbUsername, dbEmail }: OnboardingCl
             }
 
             toast.success("Onboarding completed successfully!");
-            router.push('/feed');
+            // Hard navigation (see note in nextStep) — avoids the stale router-cache
+            // redirect loop between /onboarding and /feed.
+            window.location.href = '/feed';
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || "Failed to finalize onboarding.");

@@ -11,7 +11,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   Home, Users, Briefcase, MessageSquare, BarChart, CreditCard,
   MoreHorizontal, LogOut, Settings, PlusCircle, Sparkles, DollarSign,
-  BookOpen, MessageSquarePlus, LifeBuoy, ChevronLeft, ChevronRight, X, CalendarDays
+  BookOpen, MessageSquarePlus, LifeBuoy, ChevronLeft, ChevronRight, X, CalendarDays, Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,13 +56,17 @@ interface SidebarProps {
     salary?: boolean;
   };
   plan?: string;
+  companySlug?: string;
 }
 
-export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileClose, plan }: SidebarProps) {
+export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, onMobileClose, plan, companySlug }: SidebarProps) {
   const pathname = usePathname();
   const { counts: rt } = useBadges();
   const { data: session } = useSession();
   const user = session?.user;
+  const role = (user as any)?.role;
+  // Recruiters/admins get a quick link to manage their company page.
+  const showMyCompany = !!companySlug && (role === "RECRUITER" || role === "ADMIN");
   const recruiterGuard = useRoleGuard("RECRUITER");
 
   const handleProtectedNav = (e: React.MouseEvent, path: string, required: "RECRUITER") => {
@@ -277,6 +281,13 @@ export function Sidebar({ isCollapsed = false, onToggle, isMobileOpen = false, o
                 <Users className="w-4 h-4 mr-2 text-icon-default" /> Profile
               </Link>
             </DropdownMenuItem>
+            {showMyCompany && (
+              <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
+                <Link href={`/company/${companySlug}`} prefetch={false}>
+                  <Building2 className="w-4 h-4 mr-2 text-icon-default" /> My Company
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem asChild className="hover:bg-bg-card-hover focus:bg-bg-card-hover cursor-pointer text-text-body text-xs py-2">
               <Link href="/settings" prefetch={false}>
                 <Settings className="w-4 h-4 mr-2 text-icon-default" /> Settings
