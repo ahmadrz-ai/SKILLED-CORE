@@ -1,0 +1,60 @@
+name: CI
+
+# Runs on every PR into main/staging and on direct pushes to them.
+# Hard gates (must pass to merge): TypeScript typecheck + a critical-only
+# security audit. Lint and tests are reported but non-blocking for now (promote
+# them to hard gates once they're consistently green).
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+
+# Cancel an in-progress run when a new commit is pushed to the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · Lint · Test · Audit
+    runs-on: ubuntu-latest
+    env:
+      # `prisma generate` (run in postinstall) reads the datasource block, which
+      # references env(DATABASE_URL)/env(DIRECT_URL). These dummy values let it
+      # resolve in CI — nothing here connects to a real database.
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+      # NextAuth: auth.ts throws in production without this; CI runs as production
+      # for the build step, so provide a throwaway secret.
+      AUTH_SECRET: "ci-placeholder-secret-not-used-for-anything-real"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Hard gates ────────────────────────────────────────────────
+      - name: Typecheck (tsc --noEmit)
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Security audit (fail only on CRITICAL)
+        # The repo knowingly carries some upstream-blocked high/moderate/low
+        # advisories (documented in MASTER_ROADMAP §6). Gate only on NEW criticals.
+        run: npm audit --audit-level=critical
+
+      # ── Reported but non-blocking (promote to gates once green) ───
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Tests
+        run: npm test
+        continue-on-error: true

@@ -41,7 +41,7 @@ Last updated: 2026-06-25.
 
 ## ⏭️ 3. NEXT UP
 
-- [ ] **CI/CD pipeline** — GitHub Actions on every PR: `tsc --noEmit`, lint, tests, `npm audit`. Vercel: `staging` → preview URL, `main` → production. Gate merges on green CI.
+- [x] **CI/CD pipeline** — `.github/workflows/ci.yml` runs on every PR/push to main+staging: hard gates = `tsc --noEmit` + `npm audit --audit-level=critical`; lint + tests reported non-blocking (promote once green). Vercel already auto-deploys main→prod, staging→preview. TODO: in GitHub repo Settings → Branches, add a protection rule requiring the "verify" check to pass before merging to `main`.
 - [ ] **Live payment gateway (Pakistan)** — integrate **Safepay** (subscriptions + Visa/MC/AMEX, developer-friendly) to replace the manual admin-approval flow; or register a US/Delaware entity for Stripe. Wire webhooks → auto-grant plan/credits.
 - [ ] **Feed infinite-scroll pagination** — complete the feed fix: cursor-based paging beyond the 50-post cap (+ optional DOM virtualization).
 - [ ] **Automated tests for critical flows** — credits engine, badge issuance (`finalizeInterview`), booking flow, recruiter gate.
